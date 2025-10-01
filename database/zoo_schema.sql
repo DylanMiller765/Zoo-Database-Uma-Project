@@ -18,24 +18,7 @@ CREATE TABLE employees (
     status ENUM('active', 'inactive') DEFAULT 'active'
 );
 
--- Animals Table
-CREATE TABLE animals (
-    animal_id INT PRIMARY KEY AUTO_INCREMENT,
-    name VARCHAR(100) NOT NULL,
-    species VARCHAR(100) NOT NULL,
-    breed VARCHAR(100),
-    date_of_birth DATE,
-    arrival_date DATE,
-    gender ENUM('male', 'female', 'unknown'),
-    habitat VARCHAR(100),
-    diet_type VARCHAR(50),
-    medical_notes TEXT,
-    status ENUM('active', 'transferred', 'deceased') DEFAULT 'active',
-    keeper_id INT,
-    FOREIGN KEY (keeper_id) REFERENCES employees(employee_id)
-);
-
--- Attractions Table
+-- Attractions Table (Moved up - needed before habitats)
 CREATE TABLE attractions (
     attraction_id INT PRIMARY KEY AUTO_INCREMENT,
     name VARCHAR(100) NOT NULL,
@@ -47,6 +30,44 @@ CREATE TABLE attractions (
     ticket_price DECIMAL(8, 2),
     status ENUM('open', 'closed', 'maintenance') DEFAULT 'open'
 );
+
+-- Habitats Table (NEW - Links Attractions to Animals)
+CREATE TABLE habitats (
+    habitat_id INT PRIMARY KEY AUTO_INCREMENT,
+    habitat_name VARCHAR(100) NOT NULL,
+    attraction_id INT,
+    habitat_type VARCHAR(50),
+    size VARCHAR(50),
+    environment_type VARCHAR(50),
+    temperature_range VARCHAR(50),
+    capacity INT DEFAULT 10,
+    features TEXT,
+    cleaning_schedule VARCHAR(100),
+    last_maintenance DATE,
+    status ENUM('active', 'maintenance', 'renovation', 'closed') DEFAULT 'active',
+    created_date DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (attraction_id) REFERENCES attractions(attraction_id)
+);
+
+-- Animals Table
+CREATE TABLE animals (
+    animal_id INT PRIMARY KEY AUTO_INCREMENT,
+    name VARCHAR(100) NOT NULL,
+    species VARCHAR(100) NOT NULL,
+    breed VARCHAR(100),
+    date_of_birth DATE,
+    arrival_date DATE,
+    gender ENUM('male', 'female', 'unknown'),
+    habitat VARCHAR(100), -- Kept for backward compatibility, will use habitat_id going forward
+    habitat_id INT, -- NEW: Links to habitats table
+    diet_type VARCHAR(50),
+    medical_notes TEXT,
+    status ENUM('active', 'transferred', 'deceased') DEFAULT 'active',
+    keeper_id INT,
+    FOREIGN KEY (keeper_id) REFERENCES employees(employee_id),
+    FOREIGN KEY (habitat_id) REFERENCES habitats(habitat_id)
+);
+
 
 -- Customers Table
 CREATE TABLE customers (
