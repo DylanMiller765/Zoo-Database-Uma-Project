@@ -1,8 +1,8 @@
 -- Zoo Database Schema
 -- Team Project Database Design
 
-CREATE DATABASE IF NOT EXISTS zoo_database;
-USE zoo_database;
+-- Use Railway's default database so it shows up in the dashboard
+USE railway;
 
 -- Employees Table
 CREATE TABLE employees (
@@ -18,7 +18,7 @@ CREATE TABLE employees (
     status ENUM('active', 'inactive') DEFAULT 'active'
 );
 
--- Attractions Table (Moved up - needed before habitats)
+-- Attractions Table
 CREATE TABLE attractions (
     attraction_id INT PRIMARY KEY AUTO_INCREMENT,
     name VARCHAR(100) NOT NULL,
@@ -31,7 +31,7 @@ CREATE TABLE attractions (
     status ENUM('open', 'closed', 'maintenance') DEFAULT 'open'
 );
 
--- Habitats Table (NEW - Links Attractions to Animals)
+-- Habitats Table
 CREATE TABLE habitats (
     habitat_id INT PRIMARY KEY AUTO_INCREMENT,
     habitat_name VARCHAR(100) NOT NULL,
@@ -58,8 +58,8 @@ CREATE TABLE animals (
     date_of_birth DATE,
     arrival_date DATE,
     gender ENUM('male', 'female', 'unknown'),
-    habitat VARCHAR(100), -- Kept for backward compatibility, will use habitat_id going forward
-    habitat_id INT, -- NEW: Links to habitats table
+    habitat VARCHAR(100),
+    habitat_id INT,
     diet_type VARCHAR(50),
     medical_notes TEXT,
     status ENUM('active', 'transferred', 'deceased') DEFAULT 'active',
@@ -67,7 +67,6 @@ CREATE TABLE animals (
     FOREIGN KEY (keeper_id) REFERENCES employees(employee_id),
     FOREIGN KEY (habitat_id) REFERENCES habitats(habitat_id)
 );
-
 
 -- Customers Table
 CREATE TABLE customers (
@@ -165,7 +164,7 @@ CREATE TABLE food_sales (
     FOREIGN KEY (employee_id) REFERENCES employees(employee_id)
 );
 
--- Food Sale Items (for detailed order tracking)
+-- Food Sale Items Table
 CREATE TABLE food_sale_items (
     sale_item_id INT PRIMARY KEY AUTO_INCREMENT,
     sale_id INT,
@@ -214,7 +213,7 @@ SELECT
 FROM tickets t
 GROUP BY DATE(t.purchase_date);
 
--- Indexes for better performance
+-- Indexes
 CREATE INDEX idx_ticket_date ON tickets(visit_date);
 CREATE INDEX idx_animal_species ON animals(species);
 CREATE INDEX idx_customer_email ON customers(email);
