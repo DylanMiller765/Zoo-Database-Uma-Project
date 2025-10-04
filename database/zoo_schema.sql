@@ -5,9 +5,9 @@
 USE railway;
 
 -- This script is designed to be rerunnable. It will drop the existing database to ensure a clean start.
-DROP DATABASE IF EXISTS zoo_db;
-CREATE DATABASE zoo_db;
-USE zoo_db;
+DROP DATABASE IF EXISTS zoo_database;
+CREATE DATABASE zoo_database;
+USE zoo_database;
 
 
 CREATE TABLE `employees` (
