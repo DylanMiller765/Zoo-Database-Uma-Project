@@ -224,15 +224,15 @@ The system implements JWT-based authentication with role-based access control:
 
 ### ✅ Completed
 - [x] Project scaffolding
-- [x] Backend foundation (config, middleware, utils)
-- [x] Authentication system (JWT, bcrypt)
+- [x] Backend foundation (config, middleware, utils
 - [x] Frontend setup with Next.js 14
 - [x] Tailwind configuration with custom palette
-- [x] API client and auth service
 - [x] Database connection to Railway
-- [x] Type definitions for TypeScript
+
 
 ### 🚧 In Progress / Next Steps
+- [ ] Backend foundation (config, middleware, utils)
+- [ ] Authentication system (JWT, bcrypt)
 - [ ] Complete backend services (animals, employees, etc.)
 - [ ] Create all frontend pages
 - [ ] Build reusable UI components
