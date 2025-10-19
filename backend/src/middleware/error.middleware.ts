@@ -1,9 +1,25 @@
 import { Request, Response, NextFunction } from 'express';
 
-// TODO: Define ApiError interface
+export const errorHandler = (
+  error: any,
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  const statusCode = error.statusCode || 500;
+  const message = error.message || 'Internal Server Error';
 
-// TODO: Implement errorHandler middleware
+  console.error(`[ERROR] ${statusCode} - ${message}`, error);
 
-// TODO: Implement notFound middleware
+  res.status(statusCode).json({
+    success: false,
+    message
+  });
+};
 
-// TODO: Define AppError class
+export const notFound = (req: Request, res: Response, next: NextFunction) => {
+  res.status(404).json({
+    success: false,
+    message: `Route not found - ${req.originalUrl}`
+  });
+};
