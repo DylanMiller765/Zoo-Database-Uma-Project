@@ -213,9 +213,9 @@ The system implements JWT-based authentication with role-based access control:
 - `GET /api/auth/profile` - Get profile
 
 **Coming Soon:**
-- `/api/animals` - Animal management
-- `/api/employees` - Employee CRUD
-- `/api/tickets` - Ticket sales
+Abdullah - `/api/animals` - Animal management 
+Abdullah - `/api/employees` - Employee CRUD
+Abdullah - `/api/tickets` - Ticket sales
 - `/api/events` - Event management
 - `/api/dashboard` - Dashboard metrics
 - `/api/reports` - Analytics
