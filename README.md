@@ -187,7 +187,6 @@ The system implements JWT-based authentication with role-based access control:
 
 - **[SETUP.md](SETUP.md)** - Detailed setup instructions
 - **[PROJECT_STRUCTURE.md](PROJECT_STRUCTURE.md)** - Complete project architecture
-- **[CLAUDE.md](CLAUDE.md)** - Development guidelines
 
 ## 🛠️ Development
 
