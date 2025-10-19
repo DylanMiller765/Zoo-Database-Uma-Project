@@ -2,6 +2,46 @@
 @tailwind components;
 @tailwind utilities;
 
-/* TODO: Add CSS custom properties for theme colors */
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 146 43% 20%;
 
-/* TODO: Add base styles */
+    --primary: 146 43% 30%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 146 32% 44%;
+    --secondary-foreground: 0 0% 100%;
+
+    --accent: 29 64% 55%;
+    --accent-foreground: 0 0% 100%;
+
+    --border: 146 20% 88%;
+    --input: 146 20% 88%;
+    --ring: 146 43% 30%;
+
+    --radius: 0.5rem;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+@layer components {
+  .input-field {
+    @apply w-full px-5 py-4 text-base border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-dark_spring_green-400 focus:border-dark_spring_green-400 transition-all duration-200 bg-gray-50 hover:bg-white;
+  }
+
+  .btn-primary {
+    @apply w-full bg-dark_spring_green-500 text-white py-4 px-6 rounded-xl text-base font-semibold hover:bg-dark_spring_green-600 hover:shadow-lg hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-dark_spring_green-500 focus:ring-offset-2 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100;
+  }
+
+  .btn-secondary {
+    @apply w-full bg-sea_green-500 text-white py-4 px-6 rounded-xl text-base font-semibold hover:bg-sea_green-600 focus:outline-none focus:ring-2 focus:ring-sea_green-500 focus:ring-offset-2 transition-all duration-200;
+  }
+}
