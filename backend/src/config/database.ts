@@ -3,10 +3,31 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
-// TODO: Create database connection pool
+const pool = mysql.createPool({
+  host: process.env.DB_HOST,
+  port: parseInt(process.env.DB_PORT || '3306'),
+  user: process.env.DB_USER,
+  password: process.env.DB_PASSWORD,
+  database: process.env.DB_NAME,
+  waitForConnections: true,
+  connectionLimit: 10,
+  queueLimit: 0,
+});
 
-// TODO: Export query helper function
+export const query = async <T = any>(sql: string, params?: any[]): Promise<T> => {
+  const [results] = await pool.execute(sql, params);
+  return results as T;
+};
 
-// TODO: Export connection test function
+export const testConnection = async (): Promise<boolean> => {
+  try {
+    await pool.getConnection();
+    console.log('✅ Database connected successfully');
+    return true;
+  } catch (error) {
+    console.error('❌ Database connection failed:', error);
+    return false;
+  }
+};
 
-export default {};
+export default pool;
