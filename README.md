@@ -212,9 +212,9 @@ The system implements JWT-based authentication with role-based access control:
 - `GET /api/auth/profile` - Get profile
 
 **Coming Soon:**
-Abdullah - `/api/animals` - Animal management 
-Abdullah - `/api/employees` - Employee CRUD
-Abdullah - `/api/tickets` - Ticket sales
+- `/api/animals` - Animal management | Abdullah 
+- `/api/employees` - Employee CRUD | Abdullah 
+- `/api/tickets` - Ticket sales | Abdullah 
 - `/api/events` - Event management
 - `/api/dashboard` - Dashboard metrics
 - `/api/reports` - Analytics
@@ -223,7 +223,7 @@ Abdullah - `/api/tickets` - Ticket sales
 
 ### ✅ Completed
 - [x] Project scaffolding
-- [x] Backend foundation (config, middleware, utils
+- [x] Backend foundation (config, middleware, utils)
 - [x] Frontend setup with Next.js 14
 - [x] Tailwind configuration with custom palette
 - [x] Database connection to Railway
