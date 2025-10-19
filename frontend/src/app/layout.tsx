@@ -1,18 +1,19 @@
-import type { Metadata } from 'next'
-import './globals.css'
+import type { Metadata } from "next";
+import "./globals.css";
+import Header from "@/components/Header";
 
-// TODO: Import and configure font
+export const metadata: Metadata = {
+  title: "ZooVerse 12",
+  description: "Simple zoo template",
+};
 
-// TODO: Define metadata
-
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode
-}) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body className="min-h-screen bg-gray-50 text-gray-900 antialiased">
+        <Header />
+        <main className="mx-auto max-w-6xl px-4">{children}</main>
+      </body>
     </html>
-  )
+  );
 }
