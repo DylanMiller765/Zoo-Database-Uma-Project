@@ -1,0 +1,469 @@
+This file is a merged representation of the entire codebase, combined into a single document by Repomix.
+
+<file_summary>
+This section contains a summary of this file.
+
+<purpose>
+This file contains a packed representation of the entire repository's contents.
+It is designed to be easily consumable by AI systems for analysis, code review,
+or other automated processes.
+</purpose>
+
+<file_format>
+The content is organized as follows:
+1. This summary section
+2. Repository information
+3. Directory structure
+4. Repository files (if enabled)
+5. Multiple file entries, each consisting of:
+  - File path as an attribute
+  - Full contents of the file
+</file_format>
+
+<usage_guidelines>
+- This file should be treated as read-only. Any changes should be made to the
+  original repository files, not this packed version.
+- When processing this file, use the file path to distinguish
+  between different files in the repository.
+- Be aware that this file may contain sensitive information. Handle it with
+  the same level of security as you would the original repository.
+</usage_guidelines>
+
+<notes>
+- Some files may have been excluded based on .gitignore rules and Repomix's configuration
+- Binary files are not included in this packed representation. Please refer to the Repository Structure section for a complete list of file paths, including binary files
+- Files matching patterns in .gitignore are excluded
+- Files matching default ignore patterns are excluded
+- Files are sorted by Git change count (files with more changes are at the bottom)
+</notes>
+
+</file_summary>
+
+<directory_structure>
+globals.css
+layout.tsx
+login/page.tsx
+page.tsx
+</directory_structure>
+
+<files>
+This section contains the contents of the repository's files.
+
+<file path="globals.css">
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 146 43% 20%;
+
+    --primary: 146 43% 30%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 146 32% 44%;
+    --secondary-foreground: 0 0% 100%;
+
+    --accent: 29 64% 55%;
+    --accent-foreground: 0 0% 100%;
+
+    --border: 146 20% 88%;
+    --input: 146 20% 88%;
+    --ring: 146 43% 30%;
+
+    --radius: 0.5rem;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+@layer components {
+  .input-field {
+    @apply w-full px-5 py-4 text-base border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-dark_spring_green-400 focus:border-dark_spring_green-400 transition-all duration-200 bg-gray-50 hover:bg-white;
+  }
+
+  .btn-primary {
+    @apply w-full bg-dark_spring_green-500 text-white py-4 px-6 rounded-xl text-base font-semibold hover:bg-dark_spring_green-600 hover:shadow-lg hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-dark_spring_green-500 focus:ring-offset-2 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100;
+  }
+
+  .btn-secondary {
+    @apply w-full bg-sea_green-500 text-white py-4 px-6 rounded-xl text-base font-semibold hover:bg-sea_green-600 focus:outline-none focus:ring-2 focus:ring-sea_green-500 focus:ring-offset-2 transition-all duration-200;
+  }
+}
+</file>
+
+<file path="layout.tsx">
+import type { Metadata } from "next";
+import "./globals.css";
+import Header from "@/components/Header";
+
+export const metadata: Metadata = {
+  title: "ZooVerse 12",
+  description: "Simple zoo template",
+};
+
+export default function RootLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <html lang="en">
+      <body className="min-h-screen bg-gray-50 text-gray-900 antialiased">
+        <Header />
+        <main className="mx-auto max-w-6xl px-4">{children}</main>
+      </body>
+    </html>
+  );
+}
+</file>
+
+<file path="login/page.tsx">
+'use client';
+
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import authService from '@/services/auth.service';
+import { Eye, EyeOff, Loader2 } from 'lucide-react';
+
+export default function LoginPage() {
+  const router = useRouter();
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+    setIsLoading(true);
+
+    try {
+      const response = await authService.login({ email, password });
+
+      if (response.success) {
+        // Redirect based on role
+        if (response.data.user.role === 'employee') {
+          router.push('/dashboard');
+        } else {
+          router.push('/');
+        }
+      }
+    } catch (err: any) {
+      setError(err.response?.data?.message || 'Invalid email or password');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  return (
+    <div className="min-h-screen flex">
+      {/* Left Side - Nature-Inspired Branding */}
+      <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-dark_spring_green-500 via-sea_green-400 to-dark_spring_green-600 p-12 flex-col justify-between relative overflow-hidden">
+        {/* Organic decorative elements - like leaves floating */}
+        <div className="absolute top-10 right-20 w-32 h-32 bg-light_yellow-300/20 rounded-full blur-2xl"></div>
+        <div className="absolute top-40 right-10 w-24 h-24 bg-melon-300/20 rounded-full blur-xl"></div>
+        <div className="absolute bottom-20 left-10 w-40 h-40 bg-white/10 rounded-full blur-3xl"></div>
+        <div className="absolute bottom-60 left-40 w-20 h-20 bg-persian_orange-300/20 rounded-full blur-xl"></div>
+
+        {/* Subtle leaf/nature pattern overlay */}
+        <div className="absolute inset-0 opacity-5" style={{
+          backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M30 0c-8.284 0-15 6.716-15 15 0 8.284 6.716 15 15 15 8.284 0 15-6.716 15-15 0-8.284-6.716-15-15-15zm0 25c-5.523 0-10-4.477-10-10s4.477-10 10-10 10 4.477 10 10-4.477 10-10 10z' fill='%23ffffff' fill-opacity='1'/%3E%3C/svg%3E")`,
+          backgroundSize: '30px 30px'
+        }}></div>
+
+        <div className="relative z-10">
+          <div className="inline-flex items-center gap-2 mb-6">
+            <span className="text-5xl">🌿</span>
+          </div>
+          <h1 className="text-5xl font-bold text-white mb-4 leading-tight">
+            Welcome back to the Zoo
+          </h1>
+          <p className="text-xl text-white/90 font-light">
+            Manage your zoo operations with care and precision
+          </p>
+        </div>
+
+        <div className="relative z-10 space-y-5 text-white/90">
+          <div className="flex items-start space-x-4 bg-white/10 backdrop-blur-sm p-4 rounded-2xl border border-white/20">
+            <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center flex-shrink-0">
+              <span className="text-2xl">🐾</span>
+            </div>
+            <div>
+              <h3 className="font-semibold text-white text-lg mb-1">Animal Care</h3>
+              <p className="text-sm text-white/80">Monitor health, feeding, and habitat needs</p>
+            </div>
+          </div>
+
+          <div className="flex items-start space-x-4 bg-white/10 backdrop-blur-sm p-4 rounded-2xl border border-white/20">
+            <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center flex-shrink-0">
+              <span className="text-2xl">🎫</span>
+            </div>
+            <div>
+              <h3 className="font-semibold text-white text-lg mb-1">Guest Services</h3>
+              <p className="text-sm text-white/80">Handle ticketing and visitor experiences</p>
+            </div>
+          </div>
+
+          <div className="flex items-start space-x-4 bg-white/10 backdrop-blur-sm p-4 rounded-2xl border border-white/20">
+            <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center flex-shrink-0">
+              <span className="text-2xl">📊</span>
+            </div>
+            <div>
+              <h3 className="font-semibold text-white text-lg mb-1">Insights</h3>
+              <p className="text-sm text-white/80">View analytics and generate reports</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Right Side - Clean Login Form */}
+      <div className="w-full lg:w-1/2 flex items-center justify-center p-8 bg-white">
+        <div className="w-full max-w-md space-y-8">
+          {/* Mobile Logo */}
+          <div className="lg:hidden text-center">
+            <h1 className="text-3xl font-bold text-dark_spring_green-600 mb-2">
+              Zoo Management
+            </h1>
+            <p className="text-gray-600">Sign in to your account</p>
+          </div>
+
+          {/* Desktop Header */}
+          <div className="hidden lg:block">
+            <h2 className="text-4xl font-bold text-gray-900 mb-3">
+              Sign In
+            </h2>
+            <p className="text-gray-600 text-lg">
+              Enter your credentials to access the system
+            </p>
+          </div>
+
+          {/* Login Form */}
+          <form onSubmit={handleSubmit} className="mt-10 space-y-6">
+            {error && (
+              <div className="bg-red-50 border-l-4 border-red-400 text-red-700 px-5 py-4 rounded-lg text-sm">
+                {error}
+              </div>
+            )}
+
+            <div className="space-y-5">
+              {/* Email Field */}
+              <div>
+                <label htmlFor="email" className="block text-sm font-semibold text-gray-700 mb-2">
+                  Email Address
+                </label>
+                <input
+                  id="email"
+                  name="email"
+                  type="email"
+                  autoComplete="email"
+                  required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="input-field"
+                  placeholder="you@example.com"
+                  disabled={isLoading}
+                />
+              </div>
+
+              {/* Password Field */}
+              <div>
+                <label htmlFor="password" className="block text-sm font-semibold text-gray-700 mb-2">
+                  Password
+                </label>
+                <div className="relative">
+                  <input
+                    id="password"
+                    name="password"
+                    type={showPassword ? 'text' : 'password'}
+                    autoComplete="current-password"
+                    required
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="input-field pr-12"
+                    placeholder="••••••••"
+                    disabled={isLoading}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 focus:outline-none"
+                    tabIndex={-1}
+                  >
+                    {showPassword ? (
+                      <EyeOff className="w-5 h-5" />
+                    ) : (
+                      <Eye className="w-5 h-5" />
+                    )}
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Submit Button */}
+            <button
+              type="submit"
+              disabled={isLoading}
+              className="btn-primary flex items-center justify-center space-x-2"
+            >
+              {isLoading ? (
+                <>
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                  <span>Signing in...</span>
+                </>
+              ) : (
+                <span>Sign in</span>
+              )}
+            </button>
+          </form>
+
+          {/* Footer */}
+          <div className="text-center text-sm text-gray-600">
+            <p>Zoo Database Management System</p>
+            <p className="mt-1">For authorized personnel only</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+</file>
+
+<file path="page.tsx">
+"use client";
+
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+
+export default function HomePage() {
+  return (
+    <div className="space-y-16 pb-16">
+      {/* HERO (simple gradient placeholder background) */}
+      <section className="relative isolate rounded-xl border bg-white">
+        <div className="absolute inset-0 -z-10 rounded-xl bg-gradient-to-br from-gray-100 to-gray-200" />
+        <div className="px-6 py-16 text-center sm:py-20">
+          <span className="mb-3 inline-block rounded-full border px-3 py-1 text-xs text-gray-600">
+            Welcome to
+          </span>
+          <h1 className="text-4xl font-extrabold tracking-tight sm:text-5xl">ZooVerse 12</h1>
+          <p className="mx-auto mt-3 max-w-2xl text-gray-600">
+            Come explore the wildverse of nature! Discover amazing animals, attractions, and fun for the whole family.
+          </p>
+          <div className="mt-6 flex justify-center gap-3">
+            {/*<Button asChild><Link href="/exhibits">Explore Exhibits</Link></Button>*/}
+            <Button asChild variant="outline"><Link href="/tickets">Get Tickets</Link></Button>
+          </div>
+          <div className="mt-8 grid grid-cols-3 gap-4 text-sm text-gray-700 sm:mx-auto sm:max-w-md">
+            <Stat value="100+" label="Species" />
+            <Stat value="8" label="Habitats" />
+            <Stat value="50,000+" label="Visitors" />
+          </div>
+        </div>
+      </section>
+
+      {/* FEATURED EXHIBITS (no images, neutral) */}
+      <section className="space-y-2">
+        <h2 className="text-2xl font-bold">Featured Exhibits</h2>
+        <p className="text-sm text-gray-600">A few examples. Link to the full list.</p>
+
+        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          {[
+            { title: "African Savanna", desc: "Lions, zebras, giraffes. Placeholder copy." },
+            { title: "Rainforest", desc: "Tropical birds and amphibians. Placeholder copy." },
+            { title: "Elephant Valley", desc: "Family herd viewing area. Placeholder copy." },
+          ].map((e) => (
+            <Card key={e.title} className="overflow-hidden">
+              <div className="h-28 w-full bg-gray-200" />
+              <CardHeader><CardTitle className="text-lg">{e.title}</CardTitle></CardHeader>
+              <CardContent className="text-sm text-gray-700">
+                <p>{e.desc}</p>
+                <div className="mt-3">
+                  <Link href="/exhibits" className="text-gray-900 underline">Learn more</Link>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      </section>
+
+      {/* ATTRACTIONS (Gift Shop + Café + optional extras) */}
+      <section className="space-y-2">
+        <h2 className="text-2xl font-bold">Attractions</h2>
+        <p className="text-sm text-gray-600">Keep it simple. Edit names and links later.</p>
+
+        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+          {[
+            { title: "Gift Shop", desc: "Souvenirs & plush." },
+            { title: "Café", desc: "Coffee & snacks." },
+            {/*{ title: "Train Ride", desc: "Scenic loop." },*/},
+            { title: "Play Zone", desc: "Kids area." },
+          ].map((a) => (
+            <Card key={a.title}>
+              <CardHeader><CardTitle className="text-lg">{a.title}</CardTitle></CardHeader>
+              <CardContent className="text-sm text-gray-700">
+                <p>{a.desc}</p>
+                <div className="mt-3">
+                  <Link href="/attractions" className="text-gray-900 underline">Details</Link>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      </section>
+
+      {/* PLAN YOUR VISIT (Hours, Admission, Location, Memberships) */}
+      <section className="space-y-2">
+        <h2 className="text-2xl font-bold">Plan Your Visit</h2>
+        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+          <SimpleCard title="Hours">
+            Mon–Fri: 9:00–5:00<br />Sat–Sun: 8:00–4:00
+          </SimpleCard>
+          <SimpleCard title="Admission">
+            Adults $29.95<br />Children $19.95<br />Seniors $24.95
+          </SimpleCard>
+          <SimpleCard title="Location">
+            123 Wildlife Dr<br />City, ST 00000
+          </SimpleCard>
+          <SimpleCard title="Memberships">
+            Annual $149<br />Family $299
+          </SimpleCard>
+        </div>
+      </section>
+
+      {/* DONATE CTA */}
+      <section className="rounded-xl border bg-white p-6 text-center">
+        <h3 className="text-xl font-semibold">Support Conservation</h3>
+        <p className="mt-2 text-gray-600">Donations help care for animals and protect habitats.</p>
+        <div className="mt-4">
+          <Button asChild><Link href="/donate">Donate Now</Link></Button>
+        </div>
+      </section>
+    </div>
+  );
+}
+
+function Stat({ value, label }: { value: string; label: string }) {
+  return (
+    <div className="rounded-lg border bg-white/80 px-4 py-3">
+      <div className="text-lg font-semibold">{value}</div>
+      <div className="text-xs text-gray-600">{label}</div>
+    </div>
+  );
+}
+
+function SimpleCard({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <Card>
+      <CardHeader><CardTitle className="text-lg">{title}</CardTitle></CardHeader>
+      <CardContent className="text-sm text-gray-700">{children}</CardContent>
+    </Card>
+  );
+}
+</file>
+
+</files>
