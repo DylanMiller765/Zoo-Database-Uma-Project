@@ -1,34 +1,15 @@
 import jwt from 'jsonwebtoken';
 
-// 1. Define JWT payload interface
-export interface JWTPayload {
-  accountId: number;
-  role: string; // This will store the employee's job_role or 'customer'
-}
+const JWT_SECRET = process.env.JWT_SECRET || 'your_jwt_secret';
 
-// 2. Implement generateToken function
-export const generateToken = (payload: JWTPayload): string => {
-  const secret = process.env.JWT_SECRET;
-  if (!secret) {
-    throw new Error('JWT_SECRET is not defined in environment variables');
-  }
-
-  return jwt.sign(payload, secret, {
-    expiresIn: process.env.JWT_EXPIRES_IN || '1d',
-  });
+export const signToken = (payload: object): string => {
+  return jwt.sign(payload, JWT_SECRET);
 };
 
-// 3. Implement verifyToken function
-export const verifyToken = (token: string): JWTPayload | null => {
-  const secret = process.env.JWT_SECRET;
-  if (!secret) {
-    throw new Error('JWT_SECRET is not defined in environment variables');
-  }
-
+export const verifyToken = (token: string): object | string => {
   try {
-    const decoded = jwt.verify(token, secret) as JWTPayload;
-    return decoded;
+    return jwt.verify(token, JWT_SECRET);
   } catch (error) {
-    return null; // Token is invalid or expired
+    throw new Error('Invalid token');
   }
 };

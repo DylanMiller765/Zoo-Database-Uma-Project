@@ -1,13 +1,10 @@
-import { body, param, query } from 'express-validator';
+import { Request, Response, NextFunction } from 'express';
+import { validationResult } from 'express-validator';
 
-// TODO: Add validation rules for auth (login, register)
-
-// TODO: Add validation rules for animals
-
-// TODO: Add validation rules for employees
-
-// TODO: Add validation rules for tickets
-
-// TODO: Add validation rules for events
-
-// TODO: Add validation rules for pagination and ID params
+export const validate = (req: Request, res: Response, next: NextFunction) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ errors: errors.array() });
+  }
+  next();
+};

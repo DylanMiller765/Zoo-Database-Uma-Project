@@ -47,7 +47,8 @@ export interface Customer {
   registration_date?: Date;
 }
 
-export interface AuthUser extends User {
+export interface AuthUser extends Omit<User, 'role'> {
+  role: UserRole;
   employee?: Employee;
   customer?: Customer;
 }

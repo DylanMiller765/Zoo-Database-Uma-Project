@@ -1,6 +1,8 @@
 import { query } from '../config/database';
+import { signToken } from '../utils/jwt.util';
 
 interface LoginResponse {
+  token: string;
   user: {
     account_id: number;
     email: string;
@@ -39,7 +41,11 @@ class AuthService {
       throw new Error('Invalid email or password');
     }
 
+    // Step 3: Generate JWT
+    const token = signToken({ id: user.account_id, role: user.role });
+
     return {
+      token,
       user: {
         account_id: user.account_id,
         email: user.email,
@@ -70,6 +76,32 @@ class AuthService {
     }
 
     return user;
+  }
+
+  async register(userData: any) {
+    const { first_name, last_name, email, phone, address, city, state, zip_code, password } = userData;
+
+    // Step 1: Create a new customer
+    const customerResult = await query<any>(
+      'INSERT INTO customers (first_name, last_name, email, phone, address, city, state, zip_code, registration_date) VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW())',
+      [first_name, last_name, email, phone, address, city, state, zip_code]
+    );
+    const customerId = customerResult.insertId;
+
+    // Step 2: Create a user account
+    const userAccountResult = await query<any>(
+      'INSERT INTO user_accounts (email, role, customer_id) VALUES (?, ?, ?)',
+      [email, 'customer', customerId]
+    );
+    const accountId = userAccountResult.insertId;
+
+    // Step 3: Save the password in plaintext
+    await query('INSERT INTO passwords (account_id, password_hash) VALUES (?, ?)', [accountId, password]);
+
+    // Step 4: Generate JWT
+    const token = signToken({ id: accountId, role: 'customer' });
+
+    return { token, user: { account_id: accountId, email, role: 'customer', first_name, last_name } };
   }
 }
 

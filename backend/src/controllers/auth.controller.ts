@@ -28,6 +28,23 @@ class AuthController {
     }
   }
 
+  async register(req: Request, res: Response, next: NextFunction) {
+    try {
+      const result = await authService.register(req.body);
+
+      res.status(201).json({
+        success: true,
+        message: 'Registration successful',
+        data: result
+      });
+    } catch (error: any) {
+      res.status(500).json({
+        success: false,
+        message: error.message || 'Registration failed'
+      });
+    }
+  }
+
   async getProfile(req: Request, res: Response, next: NextFunction) {
     try {
       const userId = req.body.userId || req.query.userId;

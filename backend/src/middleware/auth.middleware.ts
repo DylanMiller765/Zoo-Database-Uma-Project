@@ -1,7 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
-import { verifyToken, JWTPayload } from '../utils/jwt.util';
-import { pool } from '../config/database';
-import { AuthUser, User, Employee } from '../types/user.types';
+import { verifyToken } from '../utils/jwt.util';
+import { query } from '../config/database';
 
 export const protect = async (req: Request, res: Response, next: NextFunction) => {
   let token;
@@ -11,47 +10,28 @@ export const protect = async (req: Request, res: Response, next: NextFunction) =
   }
 
   if (!token) {
-    return res.status(401).json({ message: 'Not authorized, no token' });
-  }
-
-  const decoded = verifyToken(token);
-
-  if (!decoded) {
-    return res.status(401).json({ message: 'Not authorized, token failed' });
+    return res.status(401).json({ success: false, message: 'Not authorized to access this route' });
   }
 
   try {
-    const [userRows] = await pool.query('SELECT * FROM user_accounts WHERE account_id = ?', [decoded.accountId]);
-    const user = (userRows as User[])[0];
+    const decoded = verifyToken(token) as { id: number, role: string };
+    const [user] = await query<any[]>('SELECT * FROM user_accounts WHERE account_id = ?', [decoded.id]);
 
     if (!user) {
-      return res.status(401).json({ message: 'User not found' });
+      return res.status(401).json({ success: false, message: 'User not found' });
     }
 
-    let authUser: AuthUser = { ...user };
-
-    if (user.role === 'employee' && user.employee_id) {
-      const [employeeRows] = await pool.query('SELECT * FROM employees WHERE employee_id = ?', [user.employee_id]);
-      const employee = (employeeRows as Employee[])[0];
-      if (employee) {
-        authUser.employee = employee;
-        // IMPORTANT: Override the general 'employee' role with the specific job_role for permissions
-        authUser.role = employee.job_role;
-      }
-    }
-    // TODO: Add customer fetching logic if needed in the future
-
-    req.user = authUser;
+    (req as any).user = user[0];
     next();
   } catch (error) {
-    return res.status(500).json({ message: 'Server error during authentication' });
+    return res.status(401).json({ success: false, message: 'Not authorized to access this route' });
   }
 };
 
 export const restrictTo = (...roles: string[]) => {
   return (req: Request, res: Response, next: NextFunction) => {
-    if (!req.user || !roles.includes(req.user.role)) {
-      return res.status(403).json({ message: 'You do not have permission to perform this action' });
+    if (!roles.includes((req as any).user.job_role)) {
+      return res.status(403).json({ success: false, message: 'You do not have permission to perform this action' });
     }
     next();
   };
