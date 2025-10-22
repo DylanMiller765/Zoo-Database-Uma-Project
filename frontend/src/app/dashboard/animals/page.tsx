@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -69,31 +69,23 @@ export default function AnimalsPage() {
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
-  // --- direct backend call using apiClient (same pattern as your auth example) ---
-  const fetchAnimals = async (overrides?: Partial<{ search: string; habitat: string; health: string; status: string }>) => {
+  // GET /animals?search=&habitat=&health=&status=
+  const fetchAnimals = async () => {
     try {
       setLoading(true);
       setErr(null);
 
       const params: Record<string, string> = {};
-      const search = overrides?.search ?? q.trim();
-      const hbt   = overrides?.habitat ?? habitat;
-      const hlt   = overrides?.health ?? (health as string);
-      const sts   = overrides?.status ?? (status as string);
-
-      if (search) params.search = search;
-      if (hbt !== 'All') params.habitat = hbt;
-      if (hlt !== 'All') params.health = hlt;
-      if (sts !== 'All') params.status = sts;
+      if (q.trim()) params.search = q.trim();
+      if (habitat !== 'All') params.habitat = habitat;
+      if (health !== 'All') params.health = health;
+      if (status !== 'All') params.status = status;
 
       const res = await apiClient.get('/animals', { params });
-      const payload = res?.data;
-      const data = (payload?.data ?? payload) as unknown;
+      const data = (res?.data?.data || res?.data) as Animal[] | undefined;
 
       if (Array.isArray(data)) {
-        setAnimals(data as Animal[]);
-      } else if (payload?.success && Array.isArray(payload?.data)) {
-        setAnimals(payload.data as Animal[]);
+        setAnimals(data);
       } else {
         setErr('Unexpected response from /animals; showing sample data.');
         setAnimals(MOCK_ANIMALS);
@@ -106,31 +98,16 @@ export default function AnimalsPage() {
     }
   };
 
-  // initial load
   useEffect(() => {
     fetchAnimals();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  // debounced refetch when filters change
-  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  useEffect(() => {
-    if (debounceRef.current) clearTimeout(debounceRef.current);
-    debounceRef.current = setTimeout(() => {
-      fetchAnimals();
-    }, 400);
-    return () => {
-      if (debounceRef.current) clearTimeout(debounceRef.current);
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [q, habitat, health, status]);
 
   const habitats = useMemo(
     () => ['All', ...Array.from(new Set(animals.map((a) => a.habitat_name).filter(Boolean)))],
     [animals]
   );
 
-  // optional client-side filter safety net
   const filtered = useMemo(() => {
     const needle = q.trim().toLowerCase();
     return animals.filter((a) => {
@@ -228,7 +205,6 @@ export default function AnimalsPage() {
                   setHabitat('All');
                   setHealth('All');
                   setStatus('All');
-                  fetchAnimals({ search: '', habitat: 'All', health: 'All', status: 'All' });
                 }}
               >
                 Reset
@@ -236,7 +212,7 @@ export default function AnimalsPage() {
 
               <Button
                 className="btn-secondary w-full sm:w-auto sm:min-w-[8rem]"
-                onClick={() => fetchAnimals()}
+                onClick={fetchAnimals}
                 disabled={loading}
                 title="Refresh from server"
               >
