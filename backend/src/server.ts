@@ -4,6 +4,10 @@ import dotenv from 'dotenv';
 import { testConnection } from './config/database';
 import { errorHandler, notFound } from './middleware/error.middleware';
 import authRoutes from './routes/auth.routes';
+import eventRoutes from './routes/event.routes';
+import animalRoutes from './routes/animal.routes';
+import employeeRoutes from './routes/employee.routes';
+import customerRoutes from './routes/customer.routes';
 
 dotenv.config();
 
@@ -29,6 +33,10 @@ app.get('/health', (req, res) => {
 
 // API Routes
 app.use('/api/auth', authRoutes);
+app.use('/api/events', eventRoutes);
+app.use('/api/animals', animalRoutes);
+app.use('/api/employees', employeeRoutes);
+app.use('/api/customers', customerRoutes);
 
 // Error handling
 app.use(notFound);

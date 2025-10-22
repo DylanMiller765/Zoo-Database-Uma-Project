@@ -16,20 +16,18 @@ CREATE TABLE `employees` (
     `last_name` VARCHAR(50) NOT NULL,
     `email` VARCHAR(100) UNIQUE,
     `phone` VARCHAR(20),
-    `hire_date` DATE,
-    `job_title` VARCHAR(50),
-    `department` VARCHAR(50),
+    `ssn` CHAR(11) UNIQUE NOT NULL,
     `job_role` ENUM('keeper', 'manager', 'coordinator', 'cashier', 'guide', 'veterinarian', 'maintenance', 'security', 'other') NOT NULL,
+    `employment_type` ENUM('full_time', 'part_time') NOT NULL DEFAULT 'full_time',
     `salary` DECIMAL(10, 2),
     `status` ENUM('active', 'inactive') DEFAULT 'active',
-    `ssn` CHAR(11) UNIQUE NOT NULL,
+    `hire_date` DATE,
     `address` VARCHAR(255),
     `city` VARCHAR(50),
     `state` VARCHAR(50),
     `zip_code` VARCHAR(10),
     `gender` ENUM('male', 'female', 'other', 'prefer_not_to_say'),
     `birthday` DATE,
-    `employment_type` ENUM('full_time', 'part_time') NOT NULL DEFAULT 'full_time',
     CONSTRAINT `chk_salary` CHECK ((`employment_type` = 'full_time' AND `salary` IS NOT NULL) OR (`employment_type` = 'part_time' AND `salary` IS NULL))
 );
 
@@ -106,6 +104,16 @@ CREATE TABLE `user_accounts` (
     CONSTRAINT `chk_user_owner` CHECK ((`employee_id` IS NOT NULL AND `customer_id` IS NULL) OR (`employee_id` IS NULL AND `customer_id` IS NOT NULL)),
     FOREIGN KEY (`employee_id`) REFERENCES `employees`(`employee_id`) ON DELETE CASCADE,
     FOREIGN KEY (`customer_id`) REFERENCES `customers`(`customer_id`) ON DELETE CASCADE
+);
+
+-- NEW: Passwords table for user authentication
+CREATE TABLE `passwords` (
+    `password_id` INT PRIMARY KEY AUTO_INCREMENT,
+    `account_id` INT NOT NULL UNIQUE,
+    `password_hash` VARCHAR(255) NOT NULL,
+    `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
+    `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (`account_id`) REFERENCES `user_accounts`(`account_id`) ON DELETE CASCADE
 );
 
 CREATE TABLE `habitats` (
