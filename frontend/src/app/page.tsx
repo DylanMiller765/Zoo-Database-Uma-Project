@@ -3,10 +3,14 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import Header from "@/components/Header";
 
 export default function HomePage() {
   return (
-    <div className="space-y-16 pb-16">
+    <>
+      <Header />
+      <main className="mx-auto max-w-6xl px-4">
+        <div className="space-y-16 pb-16">
       {/* HERO (simple gradient placeholder background) */}
       <section className="relative isolate rounded-xl border bg-white">
         <div className="absolute inset-0 -z-10 rounded-xl bg-gradient-to-br from-gray-100 to-gray-200" />
@@ -107,7 +111,9 @@ export default function HomePage() {
           <Button asChild><Link href="/donate">Donate Now</Link></Button>
         </div>
       </section>
-    </div>
+        </div>
+      </main>
+    </>
   );
 }
 

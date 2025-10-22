@@ -15,13 +15,21 @@ export const protect = async (req: Request, res: Response, next: NextFunction) =
 
   try {
     const decoded = verifyToken(token) as { id: number, role: string };
-    const [user] = await query<any[]>('SELECT * FROM user_accounts WHERE account_id = ?', [decoded.id]);
+
+    // Fetch user with employee data (including job_role)
+    const [user] = await query<any[]>(
+      `SELECT u.*, e.job_role, e.first_name, e.last_name
+       FROM user_accounts u
+       LEFT JOIN employees e ON u.employee_id = e.employee_id
+       WHERE u.account_id = ?`,
+      [decoded.id]
+    );
 
     if (!user) {
       return res.status(401).json({ success: false, message: 'User not found' });
     }
 
-    (req as any).user = user[0];
+    (req as any).user = user;
     next();
   } catch (error) {
     return res.status(401).json({ success: false, message: 'Not authorized to access this route' });
