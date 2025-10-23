@@ -9,57 +9,67 @@ export default function HomePage() {
   return (
     <>
       <Header />
-      <main className="mx-auto max-w-6xl px-4">
+      <main className="mx-auto max-w-[90rem] 2xl:max-w-none px-4 sm:px-6 lg:px-8">
         <div className="space-y-16 pb-16">
-      {/* HERO (simple gradient placeholder background) */}
-      <section className="relative isolate rounded-xl border bg-white">
-        <div className="absolute inset-0 -z-10 rounded-xl bg-gradient-to-br from-gray-100 to-gray-200" />
-        <div className="px-6 py-16 text-center sm:py-20">
-          <span className="mb-3 inline-block rounded-full border px-3 py-1 text-xs text-gray-600">
+      {/* HERO - Beautiful Gradient Design */}
+      <section className="relative isolate overflow-hidden rounded-3xl border shadow-sm
+                    min-h-[70vh] px-6 sm:px-10 lg:px-14 py-16 sm:py-20">
+        {/* Gradient background */}
+        <div className="absolute inset-0 -z-10 bg-gradient-to-br
+                      from-dark_spring_green-500 via-sea_green-400 to-dark_spring_green-600 rounded-3xl" />
+
+        {/* Soft blobs */}
+        <div className="pointer-events-none absolute -top-6 right-10 h-24 w-24 rounded-full bg-light_yellow-300/30 blur-2xl" />
+        <div className="pointer-events-none absolute top-20 right-24 h-16 w-16 rounded-full bg-melon-300/30 blur-xl" />
+        <div className="pointer-events-none absolute -bottom-10 left-10 h-36 w-36 rounded-full bg-white/10 blur-3xl" />
+
+        {/* Subtle pattern overlay */}
+        <div
+          className="absolute inset-0 opacity-10 rounded-3xl"
+          style={{
+            backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M30 0c-8.284 0-15 6.716-15 15 0 8.284 6.716 15 15 15 8.284 0 15-6.716 15-15 0-8.284-6.716-15-15-15zm0 25c-5.523 0-10-4.477-10-10s4.477-10 10-10 10 4.477 10 10-4.477 10-10 10z' fill='%23ffffff'/%3E%3C/svg%3E")`,
+            backgroundSize: "30px 30px",
+          }}
+        />
+
+        {/* Centered content */}
+        <div className="relative z-10 mx-auto max-w-4xl text-center text-white">
+          <span className="mb-3 inline-block rounded-full bg-white/10 px-3 py-1 text-xs">
             Welcome to
           </span>
-          <h1 className="text-4xl font-extrabold tracking-tight sm:text-5xl">ZooVerse 12</h1>
-          <p className="mx-auto mt-3 max-w-2xl text-gray-600">
-            Come explore the wildverse of nature! Discover amazing animals, attractions, and fun for the whole family.
+          <h1 className="text-5xl font-extrabold tracking-tight sm:text-6xl">
+            ZooVerse 12
+          </h1>
+          <p className="mx-auto mt-4 max-w-2xl text-white/90">
+            Explore the wild—discover amazing animals, habitats, and family-friendly attractions.
           </p>
-          <div className="mt-6 flex justify-center gap-3">
-            {/*<Button asChild><Link href="/exhibits">Explore Exhibits</Link></Button>*/}
-            <Button asChild variant="outline"><Link href="/tickets">Get Tickets</Link></Button>
+
+          <div className="mt-7 flex justify-center gap-4">
+            <Button
+              asChild
+              className="rounded-full bg-sea_green-500 hover:bg-sea_green-600 text-white px-5 py-2 text-sm font-medium shadow-sm"
+            >
+              <Link href="/exhibits">Explore Exhibits</Link>
+            </Button>
+            <Button
+              asChild
+              variant="outline"
+              className="rounded-full border-white/70 text-white hover:bg-white/10 px-5 py-2 text-sm"
+            >
+              <Link href="/tickets">Get Tickets</Link>
+            </Button>
           </div>
-          <div className="mt-8 grid grid-cols-3 gap-4 text-sm text-gray-700 sm:mx-auto sm:max-w-md">
+
+          <div className="mt-10 grid grid-cols-3 gap-4 text-sm text-white/90 sm:mx-auto sm:max-w-md">
             <Stat value="100+" label="Species" />
             <Stat value="8" label="Habitats" />
-            <Stat value="50,000+" label="Visitors" />
+            <Stat value="50,000+" label="Visitors / yr" />
           </div>
         </div>
       </section>
 
-    <div className="mt-7 flex justify-center gap-4">
-      <Button
-        asChild
-        className="rounded-full bg-sea_green-500 hover:bg-sea_green-600 text-white px-5 py-2 text-sm font-medium shadow-sm"
-      >
-        <Link href="/exhibits">Explore Exhibits</Link>
-      </Button>
-      <Button
-        asChild
-        variant="outline"
-        className="rounded-full border-white/70 text-white hover:bg-white/10 px-5 py-2 text-sm"
-      >
-        <Link href="/tickets">Get Tickets</Link>
-      </Button>
-    </div>
-
-    <div className="mt-10 grid grid-cols-3 gap-4 text-sm text-white/90 sm:mx-auto sm:max-w-md">
-      <Stat value="100+" label="Species" />
-      <Stat value="8" label="Habitats" />
-      <Stat value="50,000+" label="Visitors / yr" />
-    </div>
-  </div>
-</section>
-
-  {/* FEATURED EXHIBITS — no image bars, clean cards */}
-  <section id="exhibits" className="space-y-2 rounded-2xl bg-gray-50 p-4 sm:p-6">
+      {/* FEATURED EXHIBITS - Enhanced with Images */}
+      <section id="exhibits" className="space-y-2 rounded-2xl bg-gray-50 p-4 sm:p-6">
         <div className="flex items-center gap-3">
           <h2 className="text-2xl font-bold">Featured Exhibits</h2>
           <a
@@ -69,7 +79,7 @@ export default function HomePage() {
             See more <span aria-hidden="true">→</span>
           </a>
         </div>
-  <p className="text-sm text-gray-600">Discover our most popular exhibits and crowd favorites!</p>
+        <p className="text-sm text-gray-600">Discover our most popular exhibits and crowd favorites!</p>
 
         <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
           {[
@@ -129,10 +139,10 @@ export default function HomePage() {
             </Card>
           ))}
         </div>
-  </section>
+      </section>
 
-  {/* ATTRACTIONS — match Featured Exhibits styling */}
-  <section id="attractions" className="space-y-2 rounded-2xl bg-gray-50 p-4 sm:p-6">
+      {/* ATTRACTIONS - Enhanced with Images */}
+      <section id="attractions" className="space-y-2 rounded-2xl bg-gray-50 p-4 sm:p-6">
         <div className="flex items-center gap-3">
           <h2 className="text-2xl font-bold">Attractions</h2>
           <a
@@ -144,7 +154,7 @@ export default function HomePage() {
         </div>
         <p className="text-sm text-gray-600">Visit our family favorites around the park.</p>
 
-  <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
           {[
             { title: "Gift Shop", desc: "Souvenirs & plush.", img: "/images/attractions/gift-shop.jpg" },
             { title: "Café", desc: "Coffee & snacks.", img: "/images/attractions/cafe.jpg" },
@@ -182,10 +192,10 @@ export default function HomePage() {
             </Card>
           ))}
         </div>
-  </section>
+      </section>
 
-  {/* PLAN YOUR VISIT */}
-  <section id="plan" className="space-y-2">
+      {/* PLAN YOUR VISIT */}
+      <section id="plan" className="space-y-2">
         <h2 className="text-2xl font-bold">Plan Your Visit</h2>
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
           <SimpleCard title="Hours">
@@ -201,10 +211,10 @@ export default function HomePage() {
             Annual $149<br />Family $299
           </SimpleCard>
         </div>
-  </section>
+      </section>
 
-  {/* DONATE CTA */}
-  <section id="donate" className="rounded-xl border bg-white p-6 text-center">
+      {/* DONATE CTA */}
+      <section id="donate" className="rounded-xl border bg-white p-6 text-center">
         <h3 className="text-xl font-semibold">Support Conservation</h3>
         <p className="mt-2 text-gray-600">Donations help care for animals and protect habitats.</p>
         <div className="mt-4">
