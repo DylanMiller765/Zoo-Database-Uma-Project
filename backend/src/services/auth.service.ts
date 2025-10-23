@@ -1,5 +1,6 @@
 import { query } from '../config/database';
 import { signToken } from '../utils/jwt.util';
+import bcrypt from 'bcrypt';
 
 interface LoginResponse {
   token: string;
@@ -31,13 +32,15 @@ class AuthService {
       throw new Error('Invalid email or password');
     }
 
-    // Step 2: Check password from separate passwords table (best practice)
+    // Step 2: Check password from separate passwords table
     const [passwordRecord] = await query<any[]>(
       `SELECT password_hash FROM passwords WHERE account_id = ?`,
       [user.account_id]
     );
 
-    if (!passwordRecord || passwordRecord.password_hash !== password) {
+    const isPasswordValid = passwordRecord && await bcrypt.compare(password, passwordRecord.password_hash);
+
+    if (!isPasswordValid) {
       throw new Error('Invalid email or password');
     }
 
@@ -95,8 +98,10 @@ class AuthService {
     );
     const accountId = userAccountResult.insertId;
 
-    // Step 3: Save the password in plaintext
-    await query('INSERT INTO passwords (account_id, password_hash) VALUES (?, ?)', [accountId, password]);
+    // Step 3: Hash and save the password
+    const saltRounds = 10;
+    const hashedPassword = await bcrypt.hash(password, saltRounds);
+    await query('INSERT INTO passwords (account_id, password_hash) VALUES (?, ?)', [accountId, hashedPassword]);
 
     // Step 4: Generate JWT
     const token = signToken({ id: accountId, role: 'customer' });

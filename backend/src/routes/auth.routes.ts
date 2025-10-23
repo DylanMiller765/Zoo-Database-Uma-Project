@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { body } from 'express-validator';
 import authController from '../controllers/auth.controller';
 import { validate } from '../middleware/validation.middleware';
+import { protect } from '../middleware/auth.middleware';
 
 const router = Router();
 
@@ -27,7 +28,7 @@ router.post(
   authController.login
 );
 
-router.get('/profile', authController.getProfile);
+router.get('/profile', protect, authController.getProfile);
 router.post('/logout', authController.logout);
 
 export default router;
