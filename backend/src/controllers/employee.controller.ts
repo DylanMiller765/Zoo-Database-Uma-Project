@@ -6,17 +6,44 @@ export class EmployeeController {
     try {
       const employees = await EmployeeService.getAllEmployees();
       res.status(200).json(employees);
-    } catch (error) {
-      res.status(500).json({ message: 'Error fetching employees', error });
+    } catch (error: any) {
+      console.error('Error fetching employees:', error);
+      res.status(500).json({
+        success: false,
+        message: error.message || 'Error fetching employees'
+      });
     }
   }
 
   static async createEmployee(req: Request, res: Response): Promise<void> {
     try {
+      console.log('Creating employee with data:', JSON.stringify(req.body, null, 2));
       const newEmployee = await EmployeeService.createEmployee(req.body);
+      console.log('Employee created successfully:', newEmployee);
       res.status(201).json(newEmployee);
-    } catch (error) {
-      res.status(500).json({ message: 'Error creating employee', error });
+    } catch (error: any) {
+      console.error('Error creating employee:', error);
+      console.error('Error message:', error.message);
+      console.error('Error stack:', error.stack);
+
+      // Extract user-friendly error message
+      let errorMessage = 'Error creating employee';
+      if (error.code === 'ER_DUP_ENTRY') {
+        if (error.message.includes('email')) {
+          errorMessage = 'Email address already exists';
+        } else if (error.message.includes('ssn')) {
+          errorMessage = 'SSN already exists';
+        } else {
+          errorMessage = 'Duplicate entry found';
+        }
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+
+      res.status(500).json({
+        success: false,
+        message: errorMessage
+      });
     }
   }
 
@@ -26,10 +53,14 @@ export class EmployeeController {
       if (employee) {
         res.status(200).json(employee);
       } else {
-        res.status(404).json({ message: 'Employee not found' });
+        res.status(404).json({ success: false, message: 'Employee not found' });
       }
-    } catch (error) {
-      res.status(500).json({ message: 'Error fetching employee', error });
+    } catch (error: any) {
+      console.error('Error fetching employee:', error);
+      res.status(500).json({
+        success: false,
+        message: error.message || 'Error fetching employee'
+      });
     }
   }
 
@@ -39,10 +70,29 @@ export class EmployeeController {
       if (updatedEmployee) {
         res.status(200).json(updatedEmployee);
       } else {
-        res.status(404).json({ message: 'Employee not found' });
+        res.status(404).json({ success: false, message: 'Employee not found' });
       }
-    } catch (error) {
-      res.status(500).json({ message: 'Error updating employee', error });
+    } catch (error: any) {
+      console.error('Error updating employee:', error);
+
+      // Extract user-friendly error message
+      let errorMessage = 'Error updating employee';
+      if (error.code === 'ER_DUP_ENTRY') {
+        if (error.message.includes('email')) {
+          errorMessage = 'Email address already exists';
+        } else if (error.message.includes('ssn')) {
+          errorMessage = 'SSN already exists';
+        } else {
+          errorMessage = 'Duplicate entry found';
+        }
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+
+      res.status(500).json({
+        success: false,
+        message: errorMessage
+      });
     }
   }
 
@@ -50,8 +100,12 @@ export class EmployeeController {
     try {
       await EmployeeService.deleteEmployee(parseInt(req.params.id));
       res.status(204).send();
-    } catch (error) {
-      res.status(500).json({ message: 'Error deleting employee', error });
+    } catch (error: any) {
+      console.error('Error deleting employee:', error);
+      res.status(500).json({
+        success: false,
+        message: error.message || 'Error deleting employee'
+      });
     }
   }
 }
