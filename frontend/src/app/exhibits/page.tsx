@@ -3,6 +3,7 @@
 import { useMemo, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import Header from '@/components/Header';
 
 type Exhibit = {
   id: string;
@@ -87,7 +88,10 @@ export default function ExhibitsPage() {
   }, [q, habitat]);
 
   return (
-    <div className="min-h-[calc(100vh-6rem)] py-10">
+    <>
+      <Header />
+      <main className="mx-auto max-w-6xl px-4">
+        <div className="min-h-[calc(100vh-6rem)] py-10">
       {/* Top Banner */}
       <section className="relative overflow-hidden rounded-2xl border">
         <div className="absolute inset-0 -z-10 bg-gradient-to-br from-dark_spring_green-500 via-sea_green-400 to-dark_spring_green-600" />
@@ -186,6 +190,8 @@ export default function ExhibitsPage() {
           )}
         </div>
       </section>
-    </div>
+        </div>
+      </main>
+    </>
   );
 }

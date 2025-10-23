@@ -1,43 +1,34 @@
 import apiClient from '@/lib/api';
-
-export interface LoginCredentials {
-  email: string;
-  password: string;
-}
-
-export interface AuthResponse {
-  success: boolean;
-  message: string;
-  data: {
-    user: {
-      account_id: number;
-      email: string;
-      role: 'employee' | 'customer';
-      first_name: string;
-      last_name: string;
-      job_role?: string;
-    };
-  };
-}
-
-export interface User {
-  account_id: number;
-  email: string;
-  role: 'employee' | 'customer';
-  first_name: string;
-  last_name: string;
-  job_role?: string;
-}
+import { LoginCredentials, AuthResponse, User } from '@/types';
 
 class AuthService {
   async login(credentials: LoginCredentials): Promise<AuthResponse> {
     const response = await apiClient.post<AuthResponse>('/auth/login', credentials);
 
-    if (response.data.success) {
-      localStorage.setItem('user', JSON.stringify(response.data.data.user));
+    if (response.data.success && response.data.data.token && response.data.data.user) {
+      this.setAuthData(response.data.data.token, response.data.data.user);
     }
 
     return response.data;
+  }
+
+  async register(data: any): Promise<AuthResponse> {
+    const response = await apiClient.post<AuthResponse>('/auth/register', data);
+
+    if (response.data.success && response.data.data.token && response.data.data.user) {
+      this.setAuthData(response.data.data.token, response.data.data.user);
+    }
+
+    return response.data;
+  }
+
+  async getCurrentUser(): Promise<User | null> {
+    try {
+      const response = await apiClient.get<{ success: boolean; user: User }>('/auth/me');
+      return response.data.user;
+    } catch (error) {
+      return null;
+    }
   }
 
   async getProfile(userId: number) {
@@ -47,10 +38,15 @@ class AuthService {
 
   logout() {
     localStorage.removeItem('user');
-    window.location.href = '/login';
+    localStorage.removeItem('token');
   }
 
-  getCurrentUser(): User | null {
+  setAuthData(token: string, user: User): void {
+    localStorage.setItem('token', token);
+    localStorage.setItem('user', JSON.stringify(user));
+  }
+
+  getStoredUser(): User | null {
     if (typeof window === 'undefined') return null;
 
     const userStr = localStorage.getItem('user');
@@ -63,9 +59,14 @@ class AuthService {
     }
   }
 
+  getStoredToken(): string | null {
+    if (typeof window === 'undefined') return null;
+    return localStorage.getItem('token');
+  }
+
   isAuthenticated(): boolean {
     if (typeof window === 'undefined') return false;
-    return !!localStorage.getItem('user');
+    return !!localStorage.getItem('token') && !!localStorage.getItem('user');
   }
 }
 

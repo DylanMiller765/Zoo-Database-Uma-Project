@@ -3,41 +3,36 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import Header from "@/components/Header";
 
 export default function HomePage() {
   return (
     <>
-        <section className="relative isolate overflow-hidden rounded-3xl border shadow-sm
-                    min-h-[70vh] px-6 sm:px-10 lg:px-14 py-16 sm:py-20">
-  {/* Gradient background */}
-  <div className="absolute inset-0 -z-10 bg-gradient-to-br
-                  from-dark_spring_green-500 via-sea_green-400 to-dark_spring_green-600 rounded-3xl" />
-
-  {/* soft blobs */}
-  <div className="pointer-events-none absolute -top-6 right-10 h-24 w-24 rounded-full bg-light_yellow-300/30 blur-2xl" />
-  <div className="pointer-events-none absolute top-20 right-24 h-16 w-16 rounded-full bg-melon-300/30 blur-xl" />
-  <div className="pointer-events-none absolute -bottom-10 left-10 h-36 w-36 rounded-full bg-white/10 blur-3xl" />
-
-  {/* subtle pattern overlay */}
-  <div
-    className="absolute inset-0 opacity-10 rounded-3xl"
-    style={{
-      backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M30 0c-8.284 0-15 6.716-15 15 0 8.284 6.716 15 15 15 8.284 0 15-6.716 15-15 0-8.284-6.716-15-15-15zm0 25c-5.523 0-10-4.477-10-10s4.477-10 10-10 10 4.477 10 10-4.477 10-10 10z' fill='%23ffffff'/%3E%3C/svg%3E")`,
-      backgroundSize: "30px 30px",
-    }}
-  />
-
-  {/* Centered content */}
-  <div className="relative z-10 mx-auto max-w-4xl text-center text-white">
-    <span className="mb-3 inline-block rounded-full bg-white/10 px-3 py-1 text-xs">
-      Welcome to
-    </span>
-    <h1 className="text-5xl font-extrabold tracking-tight sm:text-6xl">
-      ZooVerse 12
-    </h1>
-    <p className="mx-auto mt-4 max-w-2xl text-white/90">
-      Explore the wild—discover amazing animals, habitats, and family-friendly attractions.
-    </p>
+      <Header />
+      <main className="mx-auto max-w-6xl px-4">
+        <div className="space-y-16 pb-16">
+      {/* HERO (simple gradient placeholder background) */}
+      <section className="relative isolate rounded-xl border bg-white">
+        <div className="absolute inset-0 -z-10 rounded-xl bg-gradient-to-br from-gray-100 to-gray-200" />
+        <div className="px-6 py-16 text-center sm:py-20">
+          <span className="mb-3 inline-block rounded-full border px-3 py-1 text-xs text-gray-600">
+            Welcome to
+          </span>
+          <h1 className="text-4xl font-extrabold tracking-tight sm:text-5xl">ZooVerse 12</h1>
+          <p className="mx-auto mt-3 max-w-2xl text-gray-600">
+            Come explore the wildverse of nature! Discover amazing animals, attractions, and fun for the whole family.
+          </p>
+          <div className="mt-6 flex justify-center gap-3">
+            {/*<Button asChild><Link href="/exhibits">Explore Exhibits</Link></Button>*/}
+            <Button asChild variant="outline"><Link href="/tickets">Get Tickets</Link></Button>
+          </div>
+          <div className="mt-8 grid grid-cols-3 gap-4 text-sm text-gray-700 sm:mx-auto sm:max-w-md">
+            <Stat value="100+" label="Species" />
+            <Stat value="8" label="Habitats" />
+            <Stat value="50,000+" label="Visitors" />
+          </div>
+        </div>
+      </section>
 
     <div className="mt-7 flex justify-center gap-4">
       <Button
@@ -218,8 +213,8 @@ export default function HomePage() {
           </Button>
         </div>
       </section>
-  {/* End content wrapper */}
-  </div>
+        </div>
+      </main>
     </>
   );
 }
