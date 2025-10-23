@@ -32,6 +32,10 @@
   }
 }
 
+html {
+  scroll-behavior: smooth;
+}
+
 @layer components {
   .input-field {
     @apply w-full px-5 py-4 text-base border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-dark_spring_green-400 focus:border-dark_spring_green-400 transition-all duration-200 bg-gray-50 hover:bg-white;

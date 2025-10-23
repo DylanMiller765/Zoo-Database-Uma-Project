@@ -222,6 +222,17 @@ function StatusPill({ status }: { status: 'open' | 'closed' | 'maintenance' }) {
     closed: { label: 'Closed', cls: 'bg-gray-100 text-gray-800 border-gray-300' },
     maintenance: { label: 'Maintenance', cls: 'bg-melon-100 text-persian_orange-900 border-melon-300' },
   };
+
+  const EXHIBITS = [
+    { id: 'wild-plains', name: 'Wild Plains', habitat: 'Savanna', description: 'Lions, zebras, and giraffes roaming open grasslands.' },
+    { id: 'elephant-grove', name: 'Elephant Grove', habitat: 'Savanna', description: 'A gentle elephant family splashing in shady ponds.' },
+    { id: 'tropical-trails', name: 'Tropical Trails', habitat: 'Rainforest', description: 'Monkeys, parrots, and colorful frogs beneath the canopy.' },
+    { id: 'desert-dwellers', name: 'Desert Dwellers', habitat: 'Desert', description: 'Meerkats, lizards, and other sun-loving animals.' },
+    { id: 'wetland-wonders', name: 'Wetland Wonders', habitat: 'Wetlands', description: 'Otters, alligators, and wading birds by the water’s edge.' },
+    { id: 'penguin-cove', name: 'Penguin Cove', habitat: 'Polar', description: 'Playful penguins diving through icy blue waters.' },
+    { id: 'aviary-gardens', name: 'Aviary Gardens', habitat: 'Global', description: 'Macaws, toucans, and flamingos in a lush open-air dome.' },
+    { id: 'reptile-realm', name: 'Reptile Realm', habitat: 'Global', description: 'Snakes, turtles, and frogs from around the world.' },
+  ];
   const { label, cls } = map[status] ?? map.open;
   return (
     <span className={`inline-flex items-center rounded-full border px-2.5 py-1 text-xs font-medium ${cls}`}>
