@@ -47,14 +47,9 @@ class AuthController {
 
   async getProfile(req: Request, res: Response, next: NextFunction) {
     try {
-      const userId = req.body.userId || req.query.userId;
-
-      if (!userId) {
-        return res.status(400).json({
-          success: false,
-          message: 'User ID is required'
-        });
-      }
+      // The 'protect' middleware attaches the user to the request.
+      // We use the account_id from there to ensure users can only fetch their own profile.
+      const userId = (req as any).user.account_id;
 
       const profile = await authService.getProfile(Number(userId));
 

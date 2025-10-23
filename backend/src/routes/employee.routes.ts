@@ -1,12 +1,18 @@
 import { Router } from 'express';
 import { EmployeeController } from '../controllers/employee.controller';
+import { protect, restrictTo } from '../middleware/auth.middleware';
 
 const router = Router();
 
-router.get('/', EmployeeController.getAllEmployees);
-router.post('/', EmployeeController.createEmployee);
-router.get('/:id', EmployeeController.getEmployeeById);
-router.put('/:id', EmployeeController.updateEmployee);
-router.delete('/:id', EmployeeController.deleteEmployee);
+// Protect all routes in this file and restrict to managers
+router.use(protect, restrictTo('manager'));
+
+router.route('/').get(EmployeeController.getAllEmployees).post(EmployeeController.createEmployee);
+
+router
+  .route('/:id')
+  .get(EmployeeController.getEmployeeById)
+  .put(EmployeeController.updateEmployee)
+  .delete(EmployeeController.deleteEmployee);
 
 export default router;
