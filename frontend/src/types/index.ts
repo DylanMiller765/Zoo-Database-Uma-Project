@@ -1,0 +1,145 @@
+// User and Auth Types
+export interface User {
+  account_id: number;
+  email: string;
+  role: 'employee' | 'customer';
+  first_name: string;
+  last_name: string;
+  job_role?: string;
+}
+
+export type UserRole =
+  | 'keeper'
+  | 'manager'
+  | 'coordinator'
+  | 'cashier'
+  | 'guide'
+  | 'veterinarian'
+  | 'maintenance'
+  | 'security'
+  | 'other';
+
+export interface LoginCredentials {
+  email: string;
+  password: string;
+}
+
+export interface AuthResponse {
+  success: boolean;
+  message: string;
+  data: {
+    token: string;
+    user: User;
+  };
+}
+
+// Employee Types
+export interface Employee {
+  employee_id: number;
+  first_name: string;
+  last_name: string;
+  email?: string;
+  phone?: string;
+  ssn: string;
+  job_role: UserRole;
+  employment_type: 'full_time' | 'part_time';
+  salary?: number;
+  status: 'active' | 'inactive';
+  hire_date?: string;
+  address?: string;
+  city?: string;
+  state?: string;
+  zip_code?: string;
+  gender?: 'male' | 'female' | 'other' | 'prefer_not_to_say';
+  birthday?: string;
+}
+
+export interface CreateEmployeeData extends Omit<Employee, 'employee_id'> {}
+
+// Animal Types
+export interface Animal {
+  animal_id: number;
+  name: string;
+  scientific_name?: string;
+  species: string;
+  date_of_birth?: string;
+  arrival_date: string;
+  gender?: 'male' | 'female' | 'unknown';
+  place_of_origin?: string;
+  habitat_id?: number;
+  medical_notes?: string;
+  health_status?: 'excellent' | 'good' | 'fair' | 'poor' | 'critical';
+  active_status?: 'active' | 'transferred' | 'deceased';
+  endangerment_status?: 'least_concern' | 'near_threatened' | 'vulnerable' | 'endangered' | 'critically_endangered' | 'extinct_in_the_wild' | 'extinct';
+  weight?: number;
+  created_date?: string;
+  updated_date?: string;
+}
+
+export interface CreateAnimalData extends Omit<Animal, 'animal_id' | 'created_date' | 'updated_date'> {}
+
+// Event Types
+export interface Event {
+  event_id: number;
+  event_name: string;
+  description?: string;
+  event_date: string;
+  start_time: string;
+  end_time: string;
+  location?: string;
+  max_capacity?: number;
+  current_registrations?: number;
+  status: 'scheduled' | 'ongoing' | 'completed' | 'cancelled';
+  created_by?: number;
+  created_at?: string;
+}
+
+export interface CreateEventData extends Omit<Event, 'event_id' | 'current_registrations' | 'created_at'> {}
+
+// Customer Types
+export interface Customer {
+  customer_id: number;
+  first_name: string;
+  last_name: string;
+  email?: string;
+  phone?: string;
+  address?: string;
+  city?: string;
+  state?: string;
+  zip_code?: string;
+  membership_type?: 'none' | 'basic' | 'premium' | 'family';
+  membership_start_date?: string;
+  membership_end_date?: string;
+  created_date?: string;
+}
+
+export interface CreateCustomerData extends Omit<Customer, 'customer_id' | 'created_date'> {}
+
+// API Response Types
+export interface ApiResponse<T> {
+  success: boolean;
+  data?: T;
+  message?: string;
+  error?: string;
+}
+
+export interface PaginatedResponse<T> {
+  success: boolean;
+  data: T[];
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+  };
+}
+
+// Dashboard Stats Types
+export interface DashboardStats {
+  totalAnimals: number;
+  totalEmployees: number;
+  upcomingEvents: number;
+  activeHabitats: number;
+  todaysVisitors: number;
+  monthlyRevenue: number;
+}

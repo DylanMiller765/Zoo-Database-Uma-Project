@@ -17,10 +17,9 @@ class ApiClient {
     this.client.interceptors.request.use(
       (config) => {
         if (typeof window !== 'undefined') {
-          const user = localStorage.getItem('user');
-          if (user) {
-            // You can add token header here if needed
-            // config.headers.Authorization = `Bearer ${token}`;
+          const token = localStorage.getItem('token');
+          if (token) {
+            config.headers.Authorization = `Bearer ${token}`;
           }
         }
         return config;
@@ -38,7 +37,8 @@ class ApiClient {
           // Unauthorized - clear user and redirect to login
           if (typeof window !== 'undefined') {
             localStorage.removeItem('user');
-            window.location.href = '/login';
+            localStorage.removeItem('token');
+            window.location.href = '/admin/login';
           }
         }
         return Promise.reject(error);

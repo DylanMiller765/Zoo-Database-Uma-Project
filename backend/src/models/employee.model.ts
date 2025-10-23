@@ -29,9 +29,19 @@ export class EmployeeModel {
   }
 
   static async create(employee: Omit<Employee, 'employee_id'>): Promise<Employee> {
-    const sql = 'INSERT INTO employees SET ?';
-    const result = await query<any>(sql, [employee]);
-    return { employee_id: result.insertId, ...employee };
+    // Filter out undefined values to avoid MySQL errors
+    const cleanData = Object.fromEntries(
+      Object.entries(employee).filter(([_, value]) => value !== undefined)
+    );
+
+    // Build dynamic SQL query
+    const columns = Object.keys(cleanData);
+    const placeholders = columns.map(() => '?').join(', ');
+    const values = Object.values(cleanData);
+
+    const sql = `INSERT INTO employees (${columns.join(', ')}) VALUES (${placeholders})`;
+    const result = await query<any>(sql, values);
+    return { employee_id: result.insertId, ...cleanData } as Employee;
   }
 
   static async findById(id: number): Promise<Employee | null> {
@@ -41,8 +51,18 @@ export class EmployeeModel {
   }
 
   static async update(id: number, updates: Partial<Employee>): Promise<Employee | null> {
-    const sql = 'UPDATE employees SET ? WHERE employee_id = ?';
-    await query(sql, [updates, id]);
+    // Filter out undefined values to avoid MySQL errors
+    const cleanData = Object.fromEntries(
+      Object.entries(updates).filter(([_, value]) => value !== undefined)
+    );
+
+    // Build dynamic SQL query
+    const columns = Object.keys(cleanData);
+    const setClause = columns.map(col => `${col} = ?`).join(', ');
+    const values = [...Object.values(cleanData), id];
+
+    const sql = `UPDATE employees SET ${setClause} WHERE employee_id = ?`;
+    await query(sql, values);
     return await this.findById(id);
   }
 
