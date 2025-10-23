@@ -1,7 +1,6 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 
@@ -13,12 +12,58 @@ type Exhibit = {
 };
 
 const MOCK_EXHIBITS: Exhibit[] = [
-  { id: 'savanna', name: 'African Savanna', habitat: 'Savanna', summary: 'Lions, zebras, giraffes; open grasslands.' },
-  { id: 'rainforest', name: 'Tropical Rainforest', habitat: 'Rainforest', summary: 'Colorful birds, amphibians, and dense canopy.' },
-  { id: 'desert', name: 'Desert Dunes', habitat: 'Desert', summary: 'Heat-adapted reptiles and nocturnal mammals.' },
-  { id: 'wetlands', name: 'Wetlands Boardwalk', habitat: 'Wetlands', summary: 'Otters, wading birds, and aquatic plants.' },
-  { id: 'elephants', name: 'Elephant Valley', habitat: 'Savanna', summary: 'Multi-generational elephant family.' },
+  {
+    id: 'african-savanna',
+    name: 'African Savanna',
+    habitat: 'Savanna',
+    summary: 'Lions, zebras, and giraffes roaming open grasslands.',
+  },
+  {
+    id: 'rainforest-terrace',
+    name: 'Tropical Rainforest',
+    habitat: 'Rainforest',
+    summary: 'Towering canopy with colorful birds, primates, and amphibians.',
+  },
+  {
+    id: 'elephant-valley',
+    name: 'Elephant Valley',
+    habitat: 'Savanna',
+    summary: 'A matriarch-led herd of elephants in a spacious landscape.',
+  },
+  {
+    id: 'desert-dunes',
+    name: 'Desert Dunes',
+    habitat: 'Desert',
+    summary: 'Adapted reptiles and nocturnal mammals thriving in arid dunes.',
+  },
+  {
+    id: 'penguin-point',
+    name: 'Penguin Point',
+    habitat: 'Polar',
+    summary: 'Playful penguins diving and waddling across rocky shores.',
+  },
+  {
+    id: 'wetlands-boardwalk',
+    name: 'Wetlands Boardwalk',
+    habitat: 'Wetlands',
+    summary: 'Marshes and waterways home to otters, herons, and amphibians.',
+  },
+  {
+    id: 'aviary-gardens',
+    name: 'Aviary Gadens',
+    habitat: 'Global',
+    summary: 'A paradise for colorful parrots, raptors, and exotic songbirds.',
+  },
+  {
+    id: 'reptile-house',
+    name: 'Reptile House',
+    habitat: 'Global',
+    summary: 'A curated collection of snakes, lizards, and turtles.',
+  },
 ];
+
+// Helper to build an image path for each exhibit by id.
+const imageFor = (id: string) => `/images/exhibits/${id}.jpg`;
 
 export default function ExhibitsPage() {
   const [q, setQ] = useState('');
@@ -120,18 +165,16 @@ export default function ExhibitsPage() {
               </CardHeader>
 
               <CardContent className="px-6 pb-6 text-sm text-gray-700">
-                <p className="leading-relaxed">{ex.summary}</p>
-
-                {/* Left-aligned rounded button with green background */}
-                <div className="mt-5 flex justify-start">
-                  <Button
-                    asChild
-                    size="sm"
-                    className="rounded-full bg-sea_green-500 text-white hover:bg-sea_green-600 px-5"
-                  >
-                    <Link href="/tickets">Get tickets</Link>
-                  </Button>
+                {/* Exhibit image */}
+                <div className="mb-4 h-40 w-full overflow-hidden rounded-lg bg-gray-100">
+                  <img
+                    src={imageFor(ex.id)}
+                    alt={`${ex.name} — ${ex.habitat}`}
+                    className="h-full w-full object-cover"
+                  />
                 </div>
+
+                <p className="leading-relaxed">{ex.summary}</p>
               </CardContent>
             </Card>
           ))}

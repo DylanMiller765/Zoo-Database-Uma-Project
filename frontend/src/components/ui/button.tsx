@@ -5,7 +5,8 @@ import React from "react";
 
 export type ButtonProps = React.ComponentPropsWithoutRef<"button"> & {
 	asChild?: boolean;
-	variant?: string;
+	variant?: 'default' | 'outline' | string;
+	size?: 'sm' | 'md' | 'lg' | string;
 };
 
 export const Button = ({ asChild, children, ...props }: ButtonProps) => {
