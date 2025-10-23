@@ -7,8 +7,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 export default function HomePage() {
   return (
     <>
-        <section className="relative isolate overflow-hidden rounded-3xl border shadow-sm
-                    min-h-[70vh] px-6 sm:px-10 lg:px-14 py-16 sm:py-20">
+  <section className="relative isolate overflow-hidden rounded-3xl border shadow-sm
+        min-h-[70vh] px-6 sm:px-10 lg:px-14 py-20 sm:py-24">
   {/* Gradient background */}
   <div className="absolute inset-0 -z-10 bg-gradient-to-br
                   from-dark_spring_green-500 via-sea_green-400 to-dark_spring_green-600 rounded-3xl" />
@@ -29,39 +29,42 @@ export default function HomePage() {
 
   {/* Centered content */}
   <div className="relative z-10 mx-auto max-w-4xl text-center text-white">
-    <span className="mb-3 inline-block rounded-full bg-white/10 px-3 py-1 text-xs">
+    <span className="mb-4 inline-block rounded-full bg-white/10 px-4 py-1.5 text-sm">
       Welcome to
     </span>
-    <h1 className="text-5xl font-extrabold tracking-tight sm:text-6xl">
+    <h1 className="text-5xl sm:text-6xl md:text-7xl font-extrabold tracking-tight">
       ZooVerse 12
     </h1>
-    <p className="mx-auto mt-4 max-w-2xl text-white/90">
-      Explore the wild—discover amazing animals, habitats, and family-friendly attractions.
+    <p className="mx-auto mt-4 max-w-2xl text-white/90 text-lg">
+      Discover amazing animals, immersive habitats, and unforgettable family-friendly adventures at ZooVerse 12
     </p>
 
-    <div className="mt-7 flex justify-center gap-4">
-      <Button
-        asChild
-        className="rounded-full bg-sea_green-500 hover:bg-sea_green-600 text-white px-5 py-2 text-sm font-medium shadow-sm"
-      >
+    <div className="mt-8 flex flex-wrap justify-center gap-4">
+      <Button asChild className="rounded-full bg-white text-dark_spring_green-700 hover:bg-white/90 px-6 py-3 text-sm sm:text-base font-semibold shadow-sm">
         <Link href="/exhibits">Explore Exhibits</Link>
       </Button>
-      <Button
-        asChild
-        variant="outline"
-        className="rounded-full border-white/70 text-white hover:bg-white/10 px-5 py-2 text-sm"
-      >
+      <Button asChild variant="outline" className="rounded-full border-white/80 text-white hover:bg-white/10 px-6 py-3 text-sm sm:text-base">
         <Link href="/tickets">Get Tickets</Link>
       </Button>
     </div>
-
-    <div className="mt-10 grid grid-cols-3 gap-4 text-sm text-white/90 sm:mx-auto sm:max-w-md">
-      <Stat value="100+" label="Species" />
-      <Stat value="8" label="Habitats" />
-      <Stat value="50,000+" label="Visitors / yr" />
-    </div>
+  </div>
+  {/* Bottom wave to blend into white content */}
+  <div className="pointer-events-none absolute inset-x-0 bottom-0 -z-10">
+    <svg viewBox="0 0 1440 120" preserveAspectRatio="none" className="h-16 w-full fill-white">
+      <path d="M0,64 C240,120 480,0 720,32 C960,64 1200,160 1440,96 L1440,120 L0,120 Z" />
+    </svg>
   </div>
 </section>
+
+{/* Stats overlapping the hero bottom edge */}
+<div className="relative z-20 -mt-8 sm:-mt-12 grid grid-cols-1 gap-4 sm:grid-cols-3">
+  {[{v:"100+",l:"Species"},{v:"8",l:"Habitats"},{v:"50,000+",l:"Visitors / yr"}].map((s) => (
+    <div key={s.l} className="rounded-2xl bg-white shadow-lg ring-1 ring-black/5 px-6 py-6 text-center">
+      <div className="text-4xl font-extrabold text-dark_spring_green-600">{s.v}</div>
+      <div className="mt-1 text-sm text-gray-600">{s.l}</div>
+    </div>
+  ))}
+</div>
 
   {/* FEATURED EXHIBITS — no image bars, clean cards */}
   <section id="exhibits" className="space-y-2 rounded-2xl bg-gray-50 p-4 sm:p-6">
@@ -117,19 +120,6 @@ export default function HomePage() {
               </CardHeader>
               <CardContent className="px-6 pb-6 text-sm text-gray-700">
                 <p className="leading-relaxed">{e.desc}</p>
-                <div className="mt-4 flex items-center gap-3">
-                  <Button asChild size="sm" className="rounded-full bg-sea_green-500 hover:bg-sea_green-600 text-white">
-                    <Link href={e.href ?? '/exhibits'}>Learn more</Link>
-                  </Button>
-                  <Button
-                    asChild
-                    size="sm"
-                    variant="outline"
-                    className="rounded-full border-dark_spring_green-500 text-dark_spring_green-600 hover:bg-light_yellow-200"
-                  >
-                    <Link href="/tickets">Get tickets</Link>
-                  </Button>
-                </div>
               </CardContent>
             </Card>
           ))}
@@ -178,11 +168,55 @@ export default function HomePage() {
               </CardHeader>
               <CardContent className="px-6 pb-6 text-sm text-gray-700">
                 <p className="leading-relaxed">{a.desc}</p>
-                <div className="mt-4 flex items-center gap-3">
-                  <Button asChild size="sm" className="rounded-full bg-sea_green-500 hover:bg-sea_green-600 text-white">
-                    <Link href="/attractions">Details</Link>
-                  </Button>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+  </section>
+
+  {/* EVENTS */}
+  <section id="events" className="space-y-2 rounded-2xl bg-gray-50 p-4 sm:p-6">
+        <div className="flex items-center gap-3">
+          <h2 className="text-2xl font-bold">Upcoming Events</h2>
+          <a
+            href="/events"
+            className="inline-flex items-center gap-1 rounded-full bg-sea_green-500 px-4 py-1.5 text-white text-sm font-medium hover:bg-sea_green-600 transition"
+          >
+            See more <span aria-hidden="true">→</span>
+          </a>
+        </div>
+        <p className="text-sm text-gray-600">Join us for special events and educational programs!</p>
+
+        <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
+          {[
+            { title: "Giraffe Feeding", desc: "Watch our giraffes enjoy their breakfast and learn about their unique eating habits.", img: "/images/events/giraffe-feeding.jpg", time: "10:00 AM", location: "Giraffe Overlook" },
+            { title: "Penguin Feeding", desc: "See our playful penguins dive for fish while keepers share fun facts about their care.", img: "/images/events/penguin-feeding.jpg", time: "11:30 AM", location: "Penguin Cove" },
+            { title: "Otter Snack Time", desc: "Enjoy the otters' playful antics as they crack shells and splash around during feeding.", img: "/images/events/otter-snack.jpg", time: "1:00 PM", location: "Otter Stream" },
+            { title: "Big Cat Chat", desc: "Meet our lion keepers and learn how we care for these powerful predators up close.", img: "/images/events/big-cat-chat.jpg", time: "2:30 PM", location: "Wild Plains" },
+          ].map((event) => (
+            <Card
+              key={event.title}
+              className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
+            >
+              <CardHeader className="px-0 pt-0 pb-3">
+                <div className="w-full overflow-hidden rounded-t-lg">
+                  <img
+                    src={event.img}
+                    alt={event.title}
+                    loading="lazy"
+                    className="h-44 w-full object-cover"
+                    onError={(ev) => {
+                      (ev.currentTarget as HTMLImageElement).src = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='600' height='300'><rect fill='%23e5e7eb' width='100%25' height='100%25'/><text x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' fill='%239ca3af' font-size='18'>Image coming soon</text></svg>";
+                    }}
+                  />
                 </div>
+                <div className="px-6 pt-4">
+                  <CardTitle className="text-lg text-dark_spring_green-700">{event.title}</CardTitle>
+                  <p className="text-xs text-sea_green-600 font-medium mt-1">{event.time} • {event.location}</p>
+                </div>
+              </CardHeader>
+              <CardContent className="px-6 pb-6 text-sm text-gray-700">
+                <p className="leading-relaxed">{event.desc}</p>
               </CardContent>
             </Card>
           ))}
@@ -190,21 +224,68 @@ export default function HomePage() {
   </section>
 
   {/* PLAN YOUR VISIT */}
-  <section id="plan" className="space-y-2">
-        <h2 className="text-2xl font-bold">Plan Your Visit</h2>
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-          <SimpleCard title="Hours">
-            Mon–Fri: 9:00–5:00<br />Sat–Sun: 8:00–4:00
-          </SimpleCard>
-          <SimpleCard title="Admission">
-            Adults $29.95<br />Children $19.95<br />Seniors $24.95
-          </SimpleCard>
-          <SimpleCard title="Location">
-            123 Wildlife Dr<br />City, ST 00000
-          </SimpleCard>
-          <SimpleCard title="Memberships">
-            Annual $149<br />Family $299
-          </SimpleCard>
+  <section id="plan" className="space-y-6 mt-12" style={{ scrollMarginTop: '-10vh' }}>
+        <h2 className="text-3xl font-bold text-center text-gray-900">Plan Your Visit</h2>
+        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-2">
+          {/* Hours Card */}
+          <Card className="rounded-2xl border border-gray-200 bg-white shadow-md p-8 text-center">
+            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-sea_green-100">
+              <svg className="h-8 w-8 text-sea_green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <circle cx="12" cy="12" r="10" strokeWidth="2"/>
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6l4 2"/>
+              </svg>
+            </div>
+            <CardTitle className="text-xl font-bold text-gray-900 mb-4">Hours</CardTitle>
+            <CardContent className="text-gray-600 space-y-1">
+              <p>Mon–Fri: 9:00–5:00</p>
+              <p>Sat–Sun: 8:00–4:00</p>
+            </CardContent>
+          </Card>
+
+          {/* Admission Card */}
+          <Card className="rounded-2xl border border-gray-200 bg-white shadow-md p-8 text-center">
+            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-sea_green-100">
+              <svg className="h-8 w-8 text-sea_green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <rect x="3" y="4" width="18" height="16" rx="2" strokeWidth="2"/>
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 8h.01M7 12h.01"/>
+              </svg>
+            </div>
+            <CardTitle className="text-xl font-bold text-gray-900 mb-4">One-Time Admission</CardTitle>
+            <CardContent className="text-gray-600 space-y-1">
+              <p>Adults $29.95</p>
+              <p>Children $19.95</p>
+              <p>Seniors $24.95</p>
+            </CardContent>
+          </Card>
+
+          {/* Location Card */}
+          <Card className="rounded-2xl border border-gray-200 bg-white shadow-md p-8 text-center">
+            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-sea_green-100">
+              <svg className="h-8 w-8 text-sea_green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+              </svg>
+            </div>
+            <CardTitle className="text-xl font-bold text-gray-900 mb-4">Location</CardTitle>
+            <CardContent className="text-gray-600 space-y-1">
+              <p>123 Wildlife Dr</p>
+              <p>City, ST 00000</p>
+            </CardContent>
+          </Card>
+
+          {/* Memberships Card */}
+          <Card className="rounded-2xl border border-gray-200 bg-white shadow-md p-8 text-center">
+            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-sea_green-100">
+              <svg className="h-8 w-8 text-sea_green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"/>
+              </svg>
+            </div>
+            <CardTitle className="text-xl font-bold text-gray-900 mb-4">Annual Membership</CardTitle>
+            <CardContent className="text-gray-600 space-y-1">
+              <p>Annual $149</p>
+              <p>Family $299</p>
+            </CardContent>
+          </Card>
         </div>
   </section>
 
@@ -218,8 +299,7 @@ export default function HomePage() {
           </Button>
         </div>
       </section>
-  {/* End content wrapper */}
-  </div>
+  {/* End page content */}
     </>
   );
 }
