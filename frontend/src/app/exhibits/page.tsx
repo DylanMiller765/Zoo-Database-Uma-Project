@@ -3,7 +3,6 @@
 import { useMemo, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import Header from '@/components/Header';
 
 type Exhibit = {
   id: string;
@@ -89,8 +88,7 @@ export default function ExhibitsPage() {
 
   return (
     <>
-      <Header />
-      <main className="mx-auto max-w-6xl px-4">
+      <div className="mx-auto max-w-6xl px-4">
         <div className="min-h-[calc(100vh-6rem)] py-10">
       {/* Top Banner */}
       <section className="relative overflow-hidden rounded-2xl border">
@@ -136,7 +134,7 @@ export default function ExhibitsPage() {
               </select>
               <Button
                 variant="default"
-                className="btn-secondary w-full sm:w-auto"
+                className="btn-secondary w-full sm:w-auto self-center sm:self-auto"
                 onClick={() => {
                   setQ('');
                   setHabitat('All');
@@ -191,7 +189,7 @@ export default function ExhibitsPage() {
         </div>
       </section>
         </div>
-      </main>
+      </div>
     </>
   );
 }
