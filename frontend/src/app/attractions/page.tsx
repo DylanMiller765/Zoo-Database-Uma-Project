@@ -4,7 +4,6 @@ import { useMemo, useState } from 'react';
 import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import Header from '@/components/Header';
 
 type Attraction = {
   id: string;
@@ -90,8 +89,7 @@ export default function AttractionsPage() {
 
   return (
     <>
-      <Header />
-      <main className="mx-auto max-w-6xl px-4">
+      <div className="mx-auto max-w-6xl px-4">
         <div className="min-h-[calc(100vh-6rem)] py-10">
       {/* Top Banner — matches Exhibits style */}
       <section className="relative overflow-hidden rounded-2xl border">
@@ -147,7 +145,7 @@ export default function AttractionsPage() {
                 <option value="maintenance">Maintenance</option>
               </select>
               <Button
-                className="btn-secondary w-full sm:w-auto"
+                className="btn-secondary w-full sm:w-auto self-center sm:self-auto"
                 onClick={() => {
                   setQ('');
                   setLoc('All');
@@ -210,7 +208,7 @@ export default function AttractionsPage() {
         </div>
       </section>
         </div>
-      </main>
+      </div>
     </>
   );
 }

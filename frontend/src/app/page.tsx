@@ -3,13 +3,11 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import Header from "@/components/Header";
+// Header is rendered in Root layout
 
 export default function HomePage() {
   return (
     <>
-      <Header />
-      <main className="mx-auto max-w-[90rem] 2xl:max-w-none px-4 sm:px-6 lg:px-8">
         <div className="space-y-16 pb-16">
       {/* HERO - Beautiful Gradient Design */}
       <section className="relative isolate overflow-hidden rounded-3xl border shadow-sm
@@ -54,13 +52,13 @@ export default function HomePage() {
             <Button
               asChild
               variant="outline"
-              className="rounded-full border-white/70 text-white hover:bg-white/10 px-5 py-2 text-sm"
+              className="rounded-full border-sea_green-500/70 bg-sea_green-500/60 text-white hover:bg-sea_green-500/70 px-5 py-2 text-sm font-medium"
             >
               <Link href="/tickets">Get Tickets</Link>
             </Button>
           </div>
 
-          <div className="mt-10 grid grid-cols-3 gap-4 text-sm text-white/90 sm:mx-auto sm:max-w-md">
+          <div className="mt-10 grid grid-cols-3 gap-4 sm:gap-6">
             <Stat value="100+" label="Species" />
             <Stat value="8" label="Habitats" />
             <Stat value="50,000+" label="Visitors / yr" />
@@ -122,19 +120,6 @@ export default function HomePage() {
               </CardHeader>
               <CardContent className="px-6 pb-6 text-sm text-gray-700">
                 <p className="leading-relaxed">{e.desc}</p>
-                <div className="mt-4 flex items-center gap-3">
-                  <Button asChild size="sm" className="rounded-full bg-sea_green-500 hover:bg-sea_green-600 text-white">
-                    <Link href={e.href ?? '/exhibits'}>Learn more</Link>
-                  </Button>
-                  <Button
-                    asChild
-                    size="sm"
-                    variant="outline"
-                    className="rounded-full border-dark_spring_green-500 text-dark_spring_green-600 hover:bg-light_yellow-200"
-                  >
-                    <Link href="/tickets">Get tickets</Link>
-                  </Button>
-                </div>
               </CardContent>
             </Card>
           ))}
@@ -183,11 +168,55 @@ export default function HomePage() {
               </CardHeader>
               <CardContent className="px-6 pb-6 text-sm text-gray-700">
                 <p className="leading-relaxed">{a.desc}</p>
-                <div className="mt-4 flex items-center gap-3">
-                  <Button asChild size="sm" className="rounded-full bg-sea_green-500 hover:bg-sea_green-600 text-white">
-                    <Link href="/attractions">Details</Link>
-                  </Button>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+  </section>
+
+  {/* EVENTS */}
+  <section id="events" className="space-y-2 rounded-2xl bg-gray-50 p-4 sm:p-6">
+        <div className="flex items-center gap-3">
+          <h2 className="text-2xl font-bold">Upcoming Events</h2>
+          <a
+            href="/events"
+            className="inline-flex items-center gap-1 rounded-full bg-sea_green-500 px-4 py-1.5 text-white text-sm font-medium hover:bg-sea_green-600 transition"
+          >
+            See more <span aria-hidden="true">→</span>
+          </a>
+        </div>
+        <p className="text-sm text-gray-600">Join us for special events and educational programs!</p>
+
+        <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
+          {[
+            { title: "Giraffe Feeding", desc: "Watch our giraffes enjoy their breakfast and learn about their unique eating habits.", img: "/images/events/giraffe-feeding.jpg", time: "10:00 AM", location: "Giraffe Overlook" },
+            { title: "Penguin Feeding", desc: "See our playful penguins dive for fish while keepers share fun facts about their care.", img: "/images/events/penguin-feeding.jpg", time: "11:30 AM", location: "Penguin Cove" },
+            { title: "Otter Snack Time", desc: "Enjoy the otters' playful antics as they crack shells and splash around during feeding.", img: "/images/events/otter-snack.jpg", time: "1:00 PM", location: "Otter Stream" },
+            { title: "Big Cat Chat", desc: "Meet our lion keepers and learn how we care for these powerful predators up close.", img: "/images/events/big-cat-chat.jpg", time: "2:30 PM", location: "Wild Plains" },
+          ].map((event) => (
+            <Card
+              key={event.title}
+              className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
+            >
+              <CardHeader className="px-0 pt-0 pb-3">
+                <div className="w-full overflow-hidden rounded-t-lg">
+                  <img
+                    src={event.img}
+                    alt={event.title}
+                    loading="lazy"
+                    className="h-44 w-full object-cover"
+                    onError={(ev) => {
+                      (ev.currentTarget as HTMLImageElement).src = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='600' height='300'><rect fill='%23e5e7eb' width='100%25' height='100%25'/><text x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' fill='%239ca3af' font-size='18'>Image coming soon</text></svg>";
+                    }}
+                  />
                 </div>
+                <div className="px-6 pt-4">
+                  <CardTitle className="text-lg text-dark_spring_green-700">{event.title}</CardTitle>
+                  <p className="text-xs text-sea_green-600 font-medium mt-1">{event.time} • {event.location}</p>
+                </div>
+              </CardHeader>
+              <CardContent className="px-6 pb-6 text-sm text-gray-700">
+                <p className="leading-relaxed">{event.desc}</p>
               </CardContent>
             </Card>
           ))}
@@ -195,21 +224,39 @@ export default function HomePage() {
       </section>
 
       {/* PLAN YOUR VISIT */}
-      <section id="plan" className="space-y-2">
-        <h2 className="text-2xl font-bold">Plan Your Visit</h2>
+      <section id="plan" className="space-y-2 rounded-2xl bg-gray-50 p-4 sm:p-6">
+        <div className="flex items-center gap-3">
+          <h2 className="text-2xl font-bold">Plan Your Visit</h2>
+          <a
+            href="/visit"
+            className="inline-flex items-center gap-1 rounded-full bg-sea_green-500 px-4 py-1.5 text-white text-sm font-medium hover:bg-sea_green-600 transition"
+          >
+            See more <span aria-hidden="true">→</span>
+          </a>
+        </div>
+        <p className="text-sm text-gray-600">Everything you need to know before you visit.</p>
+
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-          <SimpleCard title="Hours">
-            Mon–Fri: 9:00–5:00<br />Sat–Sun: 8:00–4:00
-          </SimpleCard>
-          <SimpleCard title="Admission">
-            Adults $29.95<br />Children $19.95<br />Seniors $24.95
-          </SimpleCard>
-          <SimpleCard title="Location">
-            123 Wildlife Dr<br />City, ST 00000
-          </SimpleCard>
-          <SimpleCard title="Memberships">
-            Annual $149<br />Family $299
-          </SimpleCard>
+          <PlanCard 
+            icon={<ClockIcon />}
+            title="Hours"
+            content={<>Mon–Fri: 9:00–5:00<br />Sat–Sun: 8:00–4:00</>}
+          />
+          <PlanCard 
+            icon={<TicketIcon />}
+            title="Admission"
+            content={<>Adults $29.95<br />Children $19.95<br />Seniors $24.95</>}
+          />
+          <PlanCard 
+            icon={<LocationIcon />}
+            title="Location"
+            content={<>123 Wildlife Dr<br />City, ST 00000</>}
+          />
+          <PlanCard 
+            icon={<StarIcon />}
+            title="Memberships"
+            content={<>Annual $149<br />Family $299</>}
+          />
         </div>
       </section>
 
@@ -223,17 +270,18 @@ export default function HomePage() {
           </Button>
         </div>
       </section>
-        </div>
-      </main>
-    </>
+
+    </div>
+</>
+
   );
 }
 
 function Stat({ value, label }: { value: string; label: string }) {
   return (
-    <div className="rounded-lg border bg-white/10 px-4 py-3 sm:bg-white/80 sm:text-gray-700">
-      <div className="text-lg font-semibold text-white sm:text-gray-900">{value}</div>
-      <div className="text-xs text-white/90 sm:text-gray-600">{label}</div>
+    <div className="rounded-2xl bg-white px-6 py-6 shadow-lg">
+      <div className="text-3xl font-bold text-sea_green-600">{value}</div>
+      <div className="mt-1 text-sm text-gray-600">{label}</div>
     </div>
   );
 }
@@ -248,3 +296,51 @@ function SimpleCard({ title, children }: { title: string; children: React.ReactN
     </Card>
   );
 }
+
+function PlanCard({ icon, title, content }: { icon: React.ReactNode; title: string; content: React.ReactNode }) {
+  return (
+    <div className="flex flex-col items-center rounded-2xl bg-white p-8 shadow-lg text-center">
+      <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-sea_green-100">
+        {icon}
+      </div>
+      <h3 className="mb-3 text-xl font-bold text-gray-800">{title}</h3>
+      <div className="text-sm text-gray-600 leading-relaxed">{content}</div>
+    </div>
+  );
+}
+
+function ClockIcon() {
+  return (
+    <svg className="h-8 w-8 text-sea_green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <circle cx="12" cy="12" r="10" strokeWidth="2" />
+      <path strokeWidth="2" strokeLinecap="round" d="M12 6v6l4 2" />
+    </svg>
+  );
+}
+
+function TicketIcon() {
+  return (
+    <svg className="h-8 w-8 text-sea_green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <rect x="3" y="6" width="18" height="12" rx="2" strokeWidth="2" />
+      <path strokeWidth="2" d="M3 10h18M3 14h18" />
+    </svg>
+  );
+}
+
+function LocationIcon() {
+  return (
+    <svg className="h-8 w-8 text-sea_green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" d="M12 21c-4-4-8-8-8-11a8 8 0 1116 0c0 3-4 7-8 11z" />
+      <circle cx="12" cy="10" r="3" strokeWidth="2" />
+    </svg>
+  );
+}
+
+function StarIcon() {
+  return (
+    <svg className="h-8 w-8 text-sea_green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+    </svg>
+  );
+}
+
