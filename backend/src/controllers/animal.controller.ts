@@ -13,9 +13,13 @@ export class AnimalController {
 
   static async createAnimal(req: Request, res: Response): Promise<void> {
     try {
+      console.log('🦁 Creating animal with data:', JSON.stringify(req.body, null, 2));
       const newAnimal = await AnimalService.createAnimal(req.body);
+      console.log('✅ Animal created successfully:', newAnimal);
       res.status(201).json(newAnimal);
     } catch (error) {
+      console.error('❌ Error creating animal:', error);
+      console.error('Error details:', JSON.stringify(error, Object.getOwnPropertyNames(error), 2));
       res.status(500).json({ message: 'Error creating animal', error });
     }
   }
