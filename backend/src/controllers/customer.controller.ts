@@ -13,9 +13,12 @@ export class CustomerController {
 
   static async createCustomer(req: Request, res: Response): Promise<void> {
     try {
+      console.log('👤 Creating customer with data:', JSON.stringify(req.body, null, 2));
       const newCustomer = await CustomerService.createCustomer(req.body);
+      console.log('✅ Customer created successfully:', newCustomer);
       res.status(201).json(newCustomer);
     } catch (error) {
+      console.error('❌ Error creating customer:', error);
       res.status(500).json({ message: 'Error creating customer', error });
     }
   }

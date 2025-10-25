@@ -15,9 +15,12 @@ export const getUpcomingEvents = async (req: Request, res: Response) => {
 
 export const createEvent = async (req: Request, res: Response) => {
   try {
+    console.log('📅 Creating event with data:', JSON.stringify(req.body, null, 2));
     const newEvent = await eventService.createEvent(req.body);
+    console.log('✅ Event created successfully:', newEvent);
     res.status(201).json(newEvent);
   } catch (error) {
+    console.error('❌ Error creating event:', error);
     res.status(500).json({ message: 'Error creating event', error });
   }
 };

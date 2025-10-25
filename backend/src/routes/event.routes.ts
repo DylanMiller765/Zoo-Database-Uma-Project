@@ -36,4 +36,14 @@ router.put(
   eventController.updateEvent
 );
 
+// @route   DELETE /api/events/:id
+// @desc    Delete an event
+// @access  Private (Event Coordinator, General Manager)
+router.delete(
+  '/:id',
+  protect,
+  restrictTo('coordinator', 'manager'),
+  eventController.deleteEvent
+);
+
 export default router;
