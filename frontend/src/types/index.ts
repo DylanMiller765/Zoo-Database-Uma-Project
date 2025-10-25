@@ -107,13 +107,11 @@ export interface Customer {
   city?: string;
   state?: string;
   zip_code?: string;
-  membership_type?: 'none' | 'basic' | 'premium' | 'family';
-  membership_start_date?: string;
-  membership_end_date?: string;
-  created_date?: string;
+  annual_pass?: 'yes' | 'no';
+  registration_date?: string;
 }
 
-export interface CreateCustomerData extends Omit<Customer, 'customer_id' | 'created_date'> {}
+export interface CreateCustomerData extends Omit<Customer, 'customer_id'> {}
 
 // API Response Types
 export interface ApiResponse<T> {
@@ -143,3 +141,40 @@ export interface DashboardStats {
   todaysVisitors: number;
   monthlyRevenue: number;
 }
+
+// Ticket Types
+export interface Ticket {
+  ticket_id: number;
+  customer_id?: number;
+  purchase_date: string;
+  visit_date: string;
+  ticket_type: 'adult' | 'child' | 'senior' | 'student';
+  price: number;
+  payment_method?: 'cash' | 'credit' | 'debit' | 'online';
+}
+
+export interface CreateTicketData extends Omit<Ticket, 'ticket_id' | 'purchase_date'> {}
+
+// Cafe Types
+export interface Cafe {
+  cafe_id: number;
+  name: string;
+  location?: string;
+  opening_time?: string;
+  closing_time?: string;
+  manager_id?: number;
+}
+
+export interface CreateCafeData extends Omit<Cafe, 'cafe_id'> {}
+
+// Gift Shop Types
+export interface GiftShop {
+  gift_shop_id: number;
+  name: string;
+  location?: string;
+  opening_time?: string;
+  closing_time?: string;
+  manager_id?: number;
+}
+
+export interface CreateGiftShopData extends Omit<GiftShop, 'gift_shop_id'> {}
