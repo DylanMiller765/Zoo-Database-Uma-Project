@@ -18,6 +18,7 @@ import cafeRoutes from './routes/cafe.routes';
 import cafeItemRoutes from './routes/cafeItem.routes';
 import cafeSaleRoutes from './routes/cafeSale.routes';
 import eventRegistrationRoutes from './routes/eventRegistration.routes';
+import dashboardRoutes from './routes/dashboard.routes';
 
 dotenv.config();
 
@@ -43,6 +44,7 @@ app.get('/health', (req, res) => {
 
 // API Routes
 app.use('/api/auth', authRoutes);
+app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/events', eventRoutes);
 app.use('/api/animals', animalRoutes);
 app.use('/api/employees', employeeRoutes);

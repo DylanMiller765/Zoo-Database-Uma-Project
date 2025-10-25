@@ -3,6 +3,8 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
+import { dashboardService } from '@/services/dashboard.service';
+import { DashboardStats } from '@/types';
 import { StatsCard } from '@/components/admin/StatsCard';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -21,14 +23,15 @@ import Link from 'next/link';
 export default function AdminDashboard() {
   const { user, isAuthenticated, loading } = useAuth();
   const router = useRouter();
-  const [stats, setStats] = useState({
-    totalAnimals: 156,
-    totalEmployees: 48,
-    upcomingEvents: 12,
-    activeHabitats: 8,
-    todaysVisitors: 342,
-    monthlyRevenue: 125430,
+  const [stats, setStats] = useState<DashboardStats>({
+    totalAnimals: 0,
+    totalEmployees: 0,
+    upcomingEvents: 0,
+    activeHabitats: 0,
+    todaysVisitors: 0,
+    monthlyRevenue: 0,
   });
+  const [statsLoading, setStatsLoading] = useState(true);
 
   useEffect(() => {
     if (!loading && !isAuthenticated) {
@@ -36,7 +39,25 @@ export default function AdminDashboard() {
     }
   }, [isAuthenticated, loading, router]);
 
-  if (loading) {
+  useEffect(() => {
+    if (isAuthenticated) {
+      loadStats();
+    }
+  }, [isAuthenticated]);
+
+  const loadStats = async () => {
+    try {
+      setStatsLoading(true);
+      const data = await dashboardService.getStats();
+      setStats(data);
+    } catch (error) {
+      console.error('Failed to load dashboard stats:', error);
+    } finally {
+      setStatsLoading(false);
+    }
+  };
+
+  if (loading || statsLoading) {
     return (
       <div className="flex items-center justify-center h-screen">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-dark_spring_green-600"></div>
