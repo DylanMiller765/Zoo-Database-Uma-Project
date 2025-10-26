@@ -104,6 +104,14 @@ export default function EventsPage() {
     return variants[status] as any || 'default';
   };
 
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const year = date.getFullYear();
+    return `${month}/${day}/${year}`;
+  };
+
   if (authLoading || loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -163,7 +171,7 @@ export default function EventsPage() {
             {filteredEvents.map((event) => (
               <TableRow key={event.event_id}>
                 <TableCell className="font-medium">{event.event_name}</TableCell>
-                <TableCell>{event.event_date}</TableCell>
+                <TableCell>{formatDate(event.event_date)}</TableCell>
                 <TableCell>
                   {event.start_time} - {event.end_time}
                 </TableCell>

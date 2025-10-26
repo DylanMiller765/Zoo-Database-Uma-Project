@@ -12,7 +12,9 @@ import {
   Coffee,
   Ticket,
   Menu,
-  X
+  X,
+  MapPin,
+  BarChart3
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useState } from 'react';
@@ -38,6 +40,9 @@ const menuItems: MenuItem[] = [
   { href: '/admin/tickets', icon: Ticket, label: 'Tickets', roles: ['manager', 'cashier'] },
   { href: '/admin/gift-shops', icon: Store, label: 'Gift Shops', roles: ['manager', 'cashier'] },
   { href: '/admin/cafes', icon: Coffee, label: 'Cafes', roles: ['manager', 'cashier'] },
+  { href: '/admin/queries/animals-by-habitat', icon: MapPin, label: 'Animals by Habitat', roles: ['manager', 'keeper', 'veterinarian'] },
+  { href: '/admin/queries/event-attendance', icon: BarChart3, label: 'Event Attendance', roles: ['manager', 'coordinator'] },
+  { href: '/admin/queries/visitor-statistics', icon: BarChart3, label: 'Visitor Statistics', roles: ['manager', 'cashier'] },
 ];
 
 export function Sidebar({ className }: SidebarProps) {

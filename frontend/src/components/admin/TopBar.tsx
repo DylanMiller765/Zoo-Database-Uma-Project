@@ -2,7 +2,7 @@
 
 import { useAuth } from '@/context/AuthContext';
 import { Button } from '@/components/ui/button';
-import { LogOut, User, Bell } from 'lucide-react';
+import { LogOut, User } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 
 export function TopBar() {
@@ -27,12 +27,6 @@ export function TopBar() {
 
         {/* Right side - User info and actions */}
         <div className="flex items-center space-x-4">
-          {/* Notifications */}
-          <button className="relative p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
-            <Bell className="h-5 w-5" />
-            <span className="absolute top-1 right-1 h-2 w-2 bg-persian_orange-500 rounded-full"></span>
-          </button>
-
           {/* User info */}
           <div className="flex items-center space-x-3 px-3 py-2 bg-gray-50 rounded-lg">
             <div className="flex items-center justify-center h-8 w-8 rounded-full bg-dark_spring_green-100 text-dark_spring_green-700 font-semibold">

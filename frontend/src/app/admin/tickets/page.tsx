@@ -95,6 +95,14 @@ export default function TicketsPage() {
     return variants[method || 'cash'] as any || 'default';
   };
 
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const year = date.getFullYear();
+    return `${month}/${day}/${year}`;
+  };
+
   if (authLoading || loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -161,9 +169,9 @@ export default function TicketsPage() {
                     {ticket.ticket_type}
                   </Badge>
                 </TableCell>
-                <TableCell>{ticket.visit_date}</TableCell>
+                <TableCell>{formatDate(ticket.visit_date)}</TableCell>
                 <TableCell className="text-sm text-gray-600">
-                  {new Date(ticket.purchase_date).toLocaleDateString()}
+                  {formatDate(ticket.purchase_date)}
                 </TableCell>
                 <TableCell className="font-semibold">${Number(ticket.price).toFixed(2)}</TableCell>
                 <TableCell>
