@@ -178,3 +178,19 @@ export interface GiftShop {
 }
 
 export interface CreateGiftShopData extends Omit<GiftShop, 'gift_shop_id'> {}
+
+// Attraction Types
+export interface Attraction {
+  attraction_id: number; // Primary key from DB
+  name: string; // Required field
+  location?: string | null; // Optional string field
+  human_capacity?: number | null; // Optional number field, corresponds to `capacity` in DB
+  opening_time?: string | null; // Optional time string (e.g., "09:00:00")
+  closing_time?: string | null; // Optional time string (e.g., "18:00:00")
+  status?: 'open' | 'closed' | 'maintenance' | null; // Optional status enum
+  // Optional: Add description if needed, even though it's missing in backend/src/types/attraction.types.ts
+  description?: string | null;
+}
+
+// Optional: Define a type for creating/updating attractions (without the ID)
+export interface AttractionData extends Omit<Attraction, 'attraction_id'> {}
