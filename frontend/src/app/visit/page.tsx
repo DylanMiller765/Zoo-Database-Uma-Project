@@ -190,7 +190,7 @@ export default function VisitPage() {
 
             <div className="mt-6 text-center">
               <Button asChild className="rounded-full bg-sea_green-500 hover:bg-sea_green-600 px-8 py-3">
-                <Link href="/tickets">Get Your Membership</Link>
+                <Link href="/membership">Get Your Membership</Link>
               </Button>
             </div>
           </section>

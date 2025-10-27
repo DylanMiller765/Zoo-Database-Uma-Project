@@ -27,7 +27,7 @@ export default function LoginPage() {
         if (response.data.user.role === 'employee') {
           router.push('/dashboard');
         } else {
-          router.push('/');
+          router.push('/customer');
         }
       }
     } catch (err: any) {
