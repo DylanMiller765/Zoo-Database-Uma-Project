@@ -176,8 +176,8 @@ export default function EventsPage() {
                   {event.current_registrations || 0} / {event.max_capacity || 'Unlimited'}
                 </TableCell>
                 <TableCell>
-                  <Badge variant={getStatusBadge(event.status)} className="capitalize">
-                    {event.status}
+                  <Badge variant={getStatusBadge(event.status || 'scheduled')} className="capitalize">
+                    {event.status || 'scheduled'}
                   </Badge>
                 </TableCell>
                 <TableCell className="text-right">
