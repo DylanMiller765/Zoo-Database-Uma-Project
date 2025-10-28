@@ -1,90 +1,86 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { habitatService } from '@/services/habitat.service';
+import { animalService } from '@/services/animal.service';
+import { Habitat, Animal } from '@/types';
+import { Loader2 } from 'lucide-react';
 
-type Exhibit = {
-  id: string;
-  name: string;
-  habitat: string;
-  summary: string;
+type ExhibitData = Habitat & {
+  animals: Animal[];
+  animalCount: number;
 };
-
-const MOCK_EXHIBITS: Exhibit[] = [
-  {
-    id: 'african-savanna',
-    name: 'African Savanna',
-    habitat: 'Savanna',
-    summary: 'Lions, zebras, and giraffes roaming open grasslands.',
-  },
-  {
-    id: 'rainforest-terrace',
-    name: 'Tropical Rainforest',
-    habitat: 'Rainforest',
-    summary: 'Towering canopy with colorful birds, primates, and amphibians.',
-  },
-  {
-    id: 'elephant-valley',
-    name: 'Elephant Valley',
-    habitat: 'Savanna',
-    summary: 'A matriarch-led herd of elephants in a spacious landscape.',
-  },
-  {
-    id: 'desert-dunes',
-    name: 'Desert Dunes',
-    habitat: 'Desert',
-    summary: 'Adapted reptiles and nocturnal mammals thriving in arid dunes.',
-  },
-  {
-    id: 'penguin-point',
-    name: 'Penguin Point',
-    habitat: 'Polar',
-    summary: 'Playful penguins diving and waddling across rocky shores.',
-  },
-  {
-    id: 'wetlands-boardwalk',
-    name: 'Wetlands Boardwalk',
-    habitat: 'Wetlands',
-    summary: 'Marshes and waterways home to otters, herons, and amphibians.',
-  },
-  {
-    id: 'aviary-gardens',
-    name: 'Aviary Gadens',
-    habitat: 'Global',
-    summary: 'A paradise for colorful parrots, raptors, and exotic songbirds.',
-  },
-  {
-    id: 'reptile-house',
-    name: 'Reptile House',
-    habitat: 'Global',
-    summary: 'A curated collection of snakes, lizards, and turtles.',
-  },
-];
-
-// Helper to build an image path for each exhibit by id.
-const imageFor = (id: string) => `/images/exhibits/${id}.jpg`;
 
 export default function ExhibitsPage() {
   const [q, setQ] = useState('');
-  const [habitat, setHabitat] = useState('All');
+  const [habitatFilter, setHabitatFilter] = useState('All');
+  const [habitats, setHabitats] = useState<ExhibitData[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const habitats = useMemo(
-    () => ['All', ...Array.from(new Set(MOCK_EXHIBITS.map(e => e.habitat)))],
-    []
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setIsLoading(true);
+        setError(null);
+
+        const [habitatsData, animalsData] = await Promise.all([
+          habitatService.getAll(),
+          animalService.getAll(),
+        ]);
+
+        // Group animals by habitat
+        const habitatMap = new Map<number, Animal[]>();
+        animalsData.forEach((animal) => {
+          if (animal.habitat_id) {
+            if (!habitatMap.has(animal.habitat_id)) {
+              habitatMap.set(animal.habitat_id, []);
+            }
+            habitatMap.get(animal.habitat_id)!.push(animal);
+          }
+        });
+
+        // Combine habitats with their animals
+        const exhibitData: ExhibitData[] = habitatsData.map((habitat) => ({
+          ...habitat,
+          animals: habitatMap.get(habitat.habitat_id) || [],
+          animalCount: habitatMap.get(habitat.habitat_id)?.length || 0,
+        }));
+
+        setHabitats(exhibitData);
+      } catch (err: any) {
+        console.error('Error fetching exhibits:', err);
+        setError(err.message || 'Failed to load exhibits');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
+
+  const environmentTypes = useMemo(
+    () => ['All', ...Array.from(new Set(habitats.map(h => h.environment_type)))],
+    [habitats]
   );
 
   const filtered = useMemo(() => {
     const needle = q.trim().toLowerCase();
-    return MOCK_EXHIBITS.filter(e => {
+    return habitats.filter(h => {
       const textMatch =
         !needle ||
-        e.name.toLowerCase().includes(needle) ||
-        e.summary.toLowerCase().includes(needle);
-      const habitatMatch = habitat === 'All' || e.habitat === habitat;
-      return textMatch && habitatMatch;
+        h.habitat_name.toLowerCase().includes(needle) ||
+        h.environment_type.toLowerCase().includes(needle) ||
+        h.animals.some(a =>
+          a.name.toLowerCase().includes(needle) ||
+          a.species.toLowerCase().includes(needle)
+        );
+      const habitatMatch = habitatFilter === 'All' || h.environment_type === habitatFilter;
+      return textMatch && habitatMatch && h.status === 'active';
     });
-  }, [q, habitat]);
+  }, [q, habitatFilter, habitats]);
 
   return (
     <>
@@ -122,13 +118,15 @@ export default function ExhibitsPage() {
                 onChange={(e) => setQ(e.target.value)}
                 placeholder="Search exhibits…"
                 className="input-field bg-white/95 text-gray-900 placeholder:text-gray-500 sm:w-72"
+                disabled={isLoading}
               />
               <select
-                value={habitat}
-                onChange={(e) => setHabitat(e.target.value)}
+                value={habitatFilter}
+                onChange={(e) => setHabitatFilter(e.target.value)}
                 className="input-field bg-white/95 text-gray-900 sm:w-56"
+                disabled={isLoading}
               >
-                {habitats.map(h => (
+                {environmentTypes.map(h => (
                   <option key={h} value={h}>{h}</option>
                 ))}
               </select>
@@ -137,8 +135,9 @@ export default function ExhibitsPage() {
                 className="btn-secondary w-full sm:w-auto self-center sm:self-auto"
                 onClick={() => {
                   setQ('');
-                  setHabitat('All');
+                  setHabitatFilter('All');
                 }}
+                disabled={isLoading}
               >
                 Reset
               </Button>
@@ -149,44 +148,90 @@ export default function ExhibitsPage() {
 
       {/* Exhibits Grid */}
       <section className="mt-8 rounded-2xl bg-gray-50 p-4 sm:p-6">
-        <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
-          {filtered.map(ex => (
-            <Card
-              key={ex.id}
-              className="
-                group overflow-hidden rounded-xl
-                border border-gray-200 bg-white shadow-sm
-                transition hover:-translate-y-0.5 hover:shadow-md
-              "
-            >
-              <CardHeader className="px-6 pt-6 pb-3">
-                <CardTitle className="text-lg text-dark_spring_green-700">
-                  {ex.name}
-                </CardTitle>
-                <div className="text-xs text-sea_green-700">{ex.habitat}</div>
-              </CardHeader>
+        {isLoading && (
+          <div className="flex items-center justify-center py-20">
+            <Loader2 className="h-8 w-8 animate-spin text-dark_spring_green-500" />
+            <span className="ml-3 text-gray-600">Loading exhibits...</span>
+          </div>
+        )}
 
-              <CardContent className="px-6 pb-6 text-sm text-gray-700">
-                {/* Exhibit image */}
-                <div className="mb-4 h-40 w-full overflow-hidden rounded-lg bg-gray-100">
-                  <img
-                    src={imageFor(ex.id)}
-                    alt={`${ex.name} — ${ex.habitat}`}
-                    className="h-full w-full object-cover"
-                  />
-                </div>
+        {error && (
+          <div className="rounded-xl border border-red-200 bg-red-50 p-6 text-center text-red-700">
+            <p className="font-semibold">Error loading exhibits</p>
+            <p className="mt-1 text-sm">{error}</p>
+          </div>
+        )}
 
-                <p className="leading-relaxed">{ex.summary}</p>
-              </CardContent>
-            </Card>
-          ))}
+        {!isLoading && !error && (
+          <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
+            {filtered.map(habitat => (
+              <Card
+                key={habitat.habitat_id}
+                className="
+                  group overflow-hidden rounded-xl
+                  border border-gray-200 bg-white shadow-sm
+                  transition hover:-translate-y-0.5 hover:shadow-md
+                "
+              >
+                <CardHeader className="px-6 pt-6 pb-3">
+                  <CardTitle className="text-lg text-dark_spring_green-700">
+                    {habitat.habitat_name}
+                  </CardTitle>
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-sea_green-700">{habitat.environment_type}</span>
+                    <span className="rounded-full bg-dark_spring_green-100 px-2 py-1 text-dark_spring_green-700">
+                      {habitat.animalCount} {habitat.animalCount === 1 ? 'animal' : 'animals'}
+                    </span>
+                  </div>
+                </CardHeader>
 
-          {filtered.length === 0 && (
-            <div className="col-span-full rounded-xl border bg-light_yellow-100 p-6 text-center text-gray-700">
-              No exhibits match your filters.
-            </div>
-          )}
-        </div>
+                <CardContent className="px-6 pb-6 text-sm text-gray-700">
+                  <div className="space-y-3">
+                    <div>
+                      <p className="font-semibold text-dark_spring_green-600">Habitat Details:</p>
+                      <p className="text-xs text-gray-600 mt-1">
+                        Size: {habitat.size} • Capacity: {habitat.animal_capacity} animals
+                      </p>
+                      <p className="text-xs text-gray-600">
+                        Status: <span className="capitalize font-medium text-sea_green-600">{habitat.status}</span>
+                      </p>
+                    </div>
+
+                    {habitat.animals.length > 0 && (
+                      <div>
+                        <p className="font-semibold text-dark_spring_green-600">Featured Animals:</p>
+                        <ul className="mt-1 space-y-1">
+                          {habitat.animals.slice(0, 5).map((animal) => (
+                            <li key={animal.animal_id} className="text-xs text-gray-700">
+                              • {animal.name} ({animal.species})
+                            </li>
+                          ))}
+                          {habitat.animals.length > 5 && (
+                            <li className="text-xs italic text-gray-500">
+                              + {habitat.animals.length - 5} more...
+                            </li>
+                          )}
+                        </ul>
+                      </div>
+                    )}
+
+                    {habitat.animals.length === 0 && (
+                      <p className="text-xs italic text-gray-500">
+                        No animals currently housed in this habitat.
+                      </p>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+
+            {filtered.length === 0 && !isLoading && (
+              <div className="col-span-full rounded-xl border bg-light_yellow-100 p-6 text-center text-gray-700">
+                No exhibits match your filters.
+              </div>
+            )}
+          </div>
+        )}
       </section>
         </div>
       </div>

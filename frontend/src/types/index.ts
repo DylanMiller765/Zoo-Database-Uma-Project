@@ -194,3 +194,19 @@ export interface Attraction {
 
 // Optional: Define a type for creating/updating attractions (without the ID)
 export interface AttractionData extends Omit<Attraction, 'attraction_id'> {}
+
+// Habitat Types
+export interface Habitat {
+  habitat_id: number;
+  habitat_name: string;
+  attraction_id: number;
+  size: string;
+  environment_type: string;
+  animal_capacity: number;
+  cleaning_schedule: string;
+  last_maintenance: string;
+  status: 'active' | 'maintenance' | 'renovation' | 'closed';
+  created_date: string;
+}
+
+export interface CreateHabitatData extends Omit<Habitat, 'habitat_id' | 'created_date'> {}
