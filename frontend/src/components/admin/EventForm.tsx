@@ -165,16 +165,6 @@ export function EventForm({ event, onSuccess, onCancel }: EventFormProps) {
             placeholder="Leave blank for unlimited"
           />
         </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="status">Status</Label>
-          <Select id="status" name="status" value={formData.status} onChange={handleChange}>
-            <option value="scheduled">Scheduled</option>
-            <option value="ongoing">Ongoing</option>
-            <option value="completed">Completed</option>
-            <option value="cancelled">Cancelled</option>
-          </Select>
-        </div>
       </div>
 
       <div className="flex items-center gap-3 justify-end pt-4">
