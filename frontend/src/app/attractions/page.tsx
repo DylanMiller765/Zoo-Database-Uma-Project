@@ -122,9 +122,19 @@ export default function AttractionsPage() {
     <>
       <div className="mx-auto max-w-6xl px-4">
         <div className="min-h-[calc(100vh-6rem)] py-10">
-          {/* Top Banner (remains the same) */}
+          {/* Top Banner */}
           <section className="relative overflow-hidden rounded-2xl border">
-            {/* ... (Banner content) ... */}
+            <div className="absolute inset-0 -z-10 bg-gradient-to-br from-dark_spring_green-500 via-sea_green-400 to-dark_spring_green-600" />
+            <div className="pointer-events-none absolute -top-6 right-10 h-24 w-24 rounded-full bg-light_yellow-300/30 blur-2xl" />
+            <div className="pointer-events-none absolute top-20 right-24 h-16 w-16 rounded-full bg-melon-300/30 blur-xl" />
+            <div className="pointer-events-none absolute -bottom-10 left-10 h-36 w-36 rounded-full bg-white/10 blur-3xl" />
+            <div
+              className="absolute inset-0 opacity-5"
+              style={{
+                backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M30 0c-8.284 0-15 6.716-15 15 0 8.284 6.716 15 15 15 8.284 0 15-6.716 15-15 0-8.284-6.716-15-15-15zm0 25c-5.523 0-10-4.477-10-10s4.477-10 10-10 10 4.477 10 10-4.477 10-10 10z' fill='%23ffffff'/%3E%3C/svg%3E")`,
+                backgroundSize: '30px 30px',
+              }}
+            />
             <div className="relative z-10 px-6 py-10 text-white sm:px-10">
               <div className="flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div>
@@ -144,7 +154,7 @@ export default function AttractionsPage() {
                     onChange={(e) => setQ(e.target.value)}
                     placeholder="Search attractions…"
                     className="input-field bg-white/95 text-gray-900 placeholder:text-gray-500 sm:w-64"
-                    disabled={loading} // Optionally disable filters while loading
+                    disabled={loading}
                   />
                   <select
                     value={loc}
@@ -228,16 +238,6 @@ export default function AttractionsPage() {
                         <span className="font-semibold text-gray-700">Hours:</span>{' '}
                         {/* Handle potential null times */}
                         {a.opening_time || 'N/A'}–{a.closing_time || 'N/A'}
-                      </div>
-
-                      <div className="mt-5 flex justify-start">
-                        <Button
-                          asChild
-                          size="sm"
-                          className="rounded-full bg-sea_green-500 text-white hover:bg-sea_green-600 px-5"
-                        >
-                          <Link href="/tickets">Get tickets</Link>
-                        </Button>
                       </div>
                     </CardContent>
                   </Card>
