@@ -45,7 +45,7 @@ export function HabitatForm({ habitat, onSuccess, onCancel }: HabitatFormProps) 
         environment_type: habitat.environment_type,
         animal_capacity: habitat.animal_capacity,
         cleaning_schedule: habitat.cleaning_schedule,
-        last_maintenance: habitat.last_maintenance.split('T')[0],
+        last_maintenance: habitat.last_maintenance ? habitat.last_maintenance.split('T')[0] : new Date().toISOString().split('T')[0],
         status: habitat.status,
       });
     }

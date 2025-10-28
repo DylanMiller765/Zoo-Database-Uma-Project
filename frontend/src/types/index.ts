@@ -6,6 +6,8 @@ export interface User {
   first_name: string;
   last_name: string;
   job_role?: string;
+  customer_id?: number;
+  employee_id?: number;
 }
 
 export type UserRole =
