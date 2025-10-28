@@ -46,7 +46,9 @@ export default function MembershipPage() {
   const [donationAmount, setDonationAmount] = useState(25);
   const [customDonation, setCustomDonation] = useState('');
 
-  const membershipPrice = MEMBERSHIP_PLANS[selectedPlan].price;
+  // Disable family plan for now; ensure pricing/routes use the individual plan even if family is somehow selected
+  const effectivePlan: 'individual' = selectedPlan === 'family' ? 'individual' : selectedPlan;
+  const membershipPrice = MEMBERSHIP_PLANS[effectivePlan].price;
   const finalDonation = customDonation 
     ? parseFloat(customDonation) || 0 
     : donationAmount;
@@ -59,7 +61,7 @@ export default function MembershipPage() {
     }
     // In a real app, this would process payment and create membership
     // Redirect to confirmation page with plan name
-    router.push(`/membership/confirmation?plan=${MEMBERSHIP_PLANS[selectedPlan].name}`);
+  router.push(`/membership/confirmation?plan=${MEMBERSHIP_PLANS[effectivePlan].name}`);
   };
 
   return (
@@ -128,24 +130,21 @@ export default function MembershipPage() {
                 </CardContent>
               </Card>
 
-              {/* Family Plan */}
+              {/* Family Plan (disabled) */}
               <Card
-                className={`rounded-xl border-2 cursor-pointer transition-all ${
+                className={`rounded-xl border-2 transition-all opacity-50 pointer-events-none select-none ${
                   selectedPlan === 'family'
                     ? 'border-sea_green-500 bg-sea_green-50 shadow-lg'
-                    : 'border-gray-200 bg-white hover:border-sea_green-300'
+                    : 'border-gray-200 bg-white'
                 }`}
-                onClick={() => setSelectedPlan('family')}
               >
                 <CardHeader className="px-6 pt-6 pb-3">
                   <div className="flex items-center justify-between">
                     <CardTitle className="text-lg text-dark_spring_green-700">Family</CardTitle>
-                    {selectedPlan === 'family' && (
-                      <span className="text-sea_green-600">✓</span>
-                    )}
+                    <span className="text-gray-500 text-xs">Unavailable</span>
                   </div>
-                  <div className="mt-1 inline-block rounded-full bg-persian_orange-100 px-2 py-0.5 text-xs font-semibold text-persian_orange-700">
-                    Best Value
+                  <div className="mt-1 inline-block rounded-full bg-gray-100 px-2 py-0.5 text-xs font-semibold text-gray-600">
+                    Currently unavailable
                   </div>
                 </CardHeader>
                 <CardContent className="px-6 pb-6">

@@ -78,7 +78,8 @@ class AuthService {
               e.first_name as employee_first_name, e.last_name as employee_last_name,
               e.email as employee_email, e.phone as employee_phone, e.job_role,
               c.first_name as customer_first_name, c.last_name as customer_last_name,
-              c.email as customer_email, c.phone as customer_phone, c.annual_pass
+              c.email as customer_email, c.phone as customer_phone, c.annual_pass,
+              c.registration_date as registration_date
        FROM user_accounts u
        LEFT JOIN employees e ON u.employee_id = e.employee_id
        LEFT JOIN customers c ON u.customer_id = c.customer_id
