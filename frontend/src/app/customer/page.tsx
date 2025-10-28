@@ -102,6 +102,17 @@ export default function CustomerDashboard() {
     return { status, detail };
   }, [profile]);
 
+  const membershipDates = React.useMemo(() => {
+    if (membership.status !== 'Active') return { start: null as Date | null, expiry: null as Date | null };
+    const raw = (profile?.membership_purchase_date || profile?.registration_date) as string | Date | undefined;
+    if (!raw) return { start: null as Date | null, expiry: null as Date | null };
+    const startDate = new Date(raw);
+    if (Number.isNaN(startDate.getTime())) return { start: null as Date | null, expiry: null as Date | null };
+    const expiry = new Date(startDate);
+    expiry.setFullYear(expiry.getFullYear() + 1);
+    return { start: startDate, expiry };
+  }, [membership.status, profile]);
+
   const handleLogout = () => {
     try {
       if (typeof window !== "undefined") {
@@ -310,6 +321,15 @@ export default function CustomerDashboard() {
                     </div>
                   </div>
 
+                  {membershipDates.expiry && (
+                    <div className="rounded-xl border border-sea_green-200 bg-white p-4 mb-4">
+                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 text-sm">
+                        <span className="text-gray-700">Member since <span className="font-semibold">{formatDate(membershipDates.start!)}</span></span>
+                        <span className="text-gray-700">Expires on <span className="font-semibold">{formatDate(membershipDates.expiry)}</span></span>
+                      </div>
+                    </div>
+                  )}
+
                   <div className="rounded-xl border-2 border-sea_green-200 bg-sea_green-50 p-6">
                     <h4 className="font-semibold text-gray-900 mb-3">Your Member Benefits</h4>
                     <ul className="text-sm text-gray-700 space-y-2">
@@ -369,6 +389,9 @@ export default function CustomerDashboard() {
               <div><span className="text-gray-500">ZIP Code:</span> <span className="font-medium">{profile?.zip_code || '—'}</span></div>
               <div><span className="text-gray-500">Annual Pass:</span> <span className="font-medium">{profile?.annual_pass || 'no'}</span></div>
               <div><span className="text-gray-500">Registered:</span> <span className="font-medium">{formatDate(profile?.registration_date)}</span></div>
+              {membership.status === 'Active' && (
+                <div><span className="text-gray-500">Membership Expires:</span> <span className="font-medium">{membershipDates.expiry ? formatDate(membershipDates.expiry) : '—'}</span></div>
+              )}
             </CardContent>
           </Card>
         )}
