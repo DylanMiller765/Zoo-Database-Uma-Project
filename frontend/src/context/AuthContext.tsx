@@ -36,10 +36,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (response.success && response.data.user) {
         setUser(response.data.user);
         // Redirect based on role
+        console.log('Login successful, user role:', response.data.user.role);
         if (response.data.user.role === 'employee') {
-          router.push('/admin');
+          console.log('Redirecting to /admin');
+          window.location.href = '/admin';
         } else {
-          router.push('/customer');
+          console.log('Redirecting to /customer');
+          window.location.href = '/customer';
         }
       } else {
         throw new Error(response.message || 'Login failed');
