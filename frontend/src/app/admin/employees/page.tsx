@@ -32,9 +32,7 @@ export default function EmployeesPage() {
   const [employeeToDelete, setEmployeeToDelete] = useState<Employee | null>(null);
 
   useEffect(() => {
-    if (!authLoading && !isAuthenticated) {
-      router.push('/admin/login');
-    }
+
   }, [isAuthenticated, authLoading, router]);
 
   useEffect(() => {

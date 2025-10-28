@@ -4,7 +4,7 @@
 
 **URL**: `http://localhost:3000/admin/login`
 
-All employees can login with their email address and the password: `password`
+All users (employees and customers) can login with their email address and the password: `password`
 
 ## Employee Accounts
 

@@ -6,6 +6,7 @@ interface LoginResponse {
   user: {
     account_id: number;
     email: string;
+    username: string;
     role: 'employee' | 'customer';
     first_name: string;
     last_name: string;
@@ -17,7 +18,7 @@ class AuthService {
   async login(email: string, password: string): Promise<LoginResponse> {
     // Step 1: Find user by email
     const [user] = await query<any[]>(
-      `SELECT u.account_id, u.email, u.role, u.employee_id, u.customer_id,
+      `SELECT u.account_id, u.email, u.role, u.employee_id, u.customer_id, u.username,
               e.first_name as employee_first_name, e.last_name as employee_last_name, e.job_role,
               c.first_name as customer_first_name, c.last_name as customer_last_name
        FROM user_accounts u
@@ -31,11 +32,15 @@ class AuthService {
       throw new Error('Invalid email or password');
     }
 
+    console.log('User:', user);
+
     // Step 2: Check password from separate passwords table
     const [passwordRecord] = await query<any[]>(
       `SELECT password_hash FROM passwords WHERE account_id = ?`,
       [user.account_id]
     );
+
+    console.log('Password Record:', passwordRecord);
 
     // Plain text password comparison (no hashing)
     const isPasswordValid = passwordRecord && password === passwordRecord.password_hash;
@@ -52,6 +57,7 @@ class AuthService {
       user: {
         account_id: user.account_id,
         email: user.email,
+        username: user.username,
         role: user.role,
         first_name: user.role === 'employee' ? user.employee_first_name : user.customer_first_name,
         last_name: user.role === 'employee' ? user.employee_last_name : user.customer_last_name,
