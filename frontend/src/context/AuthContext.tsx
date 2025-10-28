@@ -39,7 +39,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (response.data.user.role === 'employee') {
           router.push('/admin');
         } else {
-          router.push('/');
+          router.push('/customer');
         }
       } else {
         throw new Error(response.message || 'Login failed');

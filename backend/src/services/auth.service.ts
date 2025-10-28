@@ -112,6 +112,54 @@ class AuthService {
 
     return { token, user: { account_id: accountId, email, role: 'customer', first_name, last_name } };
   }
+
+  async updateProfile(userId: number, role: 'employee' | 'customer', data: any) {
+    if (role !== 'customer') {
+      const err: any = new Error('Forbidden');
+      err.statusCode = 403;
+      throw err;
+    }
+
+    const [user] = await query<any[]>(
+      'SELECT account_id, customer_id FROM user_accounts WHERE account_id = ?',
+      [userId]
+    );
+
+    if (!user || !user.customer_id) {
+      const err: any = new Error('Customer record not found');
+      err.statusCode = 404;
+      throw err;
+    }
+
+    const customerId = user.customer_id as number;
+
+    const allowedCustomerFields = ['first_name', 'last_name', 'email', 'phone', 'address', 'city', 'state', 'zip_code'];
+    const customerUpdates: string[] = [];
+    const customerValues: any[] = [];
+
+    for (const key of allowedCustomerFields) {
+      if (data[key] !== undefined) {
+        customerUpdates.push(`${key} = ?`);
+        customerValues.push(data[key]);
+      }
+    }
+
+    if (customerUpdates.length > 0) {
+      await query(
+        `UPDATE customers SET ${customerUpdates.join(', ')} WHERE customer_id = ?`,
+        [...customerValues, customerId]
+      );
+    }
+
+    if (data.email !== undefined) {
+      await query(
+        'UPDATE user_accounts SET email = ? WHERE account_id = ?',
+        [data.email, userId]
+      );
+    }
+
+    return true;
+  }
 }
 
 export default new AuthService();
