@@ -8,6 +8,7 @@ import { Event } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import { Select } from '@/components/ui/select';
 import {
   Table,
   TableBody,
@@ -26,6 +27,9 @@ export default function EventsPage() {
   const [events, setEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [dateFilter, setDateFilter] = useState('all');
+  const [sortBy, setSortBy] = useState('date');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -85,10 +89,42 @@ export default function EventsPage() {
     await loadEvents();
   };
 
-  const filteredEvents = events.filter(event =>
-    event.event_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    event.location?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredEvents = events
+    .filter(event => {
+      // Search filter
+      const matchesSearch = event.event_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        event.location?.toLowerCase().includes(searchTerm.toLowerCase());
+
+      // Status filter
+      const matchesStatus = statusFilter === 'all' || (event.status || 'scheduled') === statusFilter;
+
+      // Date filter
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const eventDate = new Date(event.event_date);
+      eventDate.setHours(0, 0, 0, 0);
+
+      const matchesDate = dateFilter === 'all' ||
+        (dateFilter === 'upcoming' && eventDate >= today) ||
+        (dateFilter === 'past' && eventDate < today);
+
+      return matchesSearch && matchesStatus && matchesDate;
+    })
+    .sort((a, b) => {
+      // Sorting
+      if (sortBy === 'date') {
+        const dateA = new Date(a.event_date).getTime();
+        const dateB = new Date(b.event_date).getTime();
+        return dateA - dateB; // Soonest first
+      } else if (sortBy === 'name') {
+        return a.event_name.localeCompare(b.event_name);
+      } else if (sortBy === 'capacity') {
+        const registrationsA = a.current_registrations || 0;
+        const registrationsB = b.current_registrations || 0;
+        return registrationsB - registrationsA; // Most registered first
+      }
+      return 0;
+    });
 
   const getStatusBadge = (status?: string): "default" | "secondary" | "success" | "warning" | "danger" => {
     if (!status) return 'default';
@@ -135,8 +171,9 @@ export default function EventsPage() {
         </Button>
       </div>
 
-      <div className="flex items-center gap-4">
-        <div className="relative flex-1 max-w-md">
+      {/* Search and Filters */}
+      <div className="flex flex-wrap items-center gap-4">
+        <div className="relative flex-1 min-w-[300px]">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
           <Input
             type="text"
@@ -146,6 +183,33 @@ export default function EventsPage() {
             className="pl-10"
           />
         </div>
+
+        <div className="w-auto">
+          <Select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
+            <option value="all">All Status</option>
+            <option value="scheduled">Scheduled</option>
+            <option value="ongoing">Ongoing</option>
+            <option value="completed">Completed</option>
+            <option value="cancelled">Cancelled</option>
+          </Select>
+        </div>
+
+        <div className="w-auto">
+          <Select value={dateFilter} onChange={(e) => setDateFilter(e.target.value)}>
+            <option value="all">All Dates</option>
+            <option value="upcoming">Upcoming</option>
+            <option value="past">Past</option>
+          </Select>
+        </div>
+
+        <div className="w-auto">
+          <Select value={sortBy} onChange={(e) => setSortBy(e.target.value)}>
+            <option value="date">Sort by Date</option>
+            <option value="name">Sort by Name</option>
+            <option value="capacity">Sort by Registrations</option>
+          </Select>
+        </div>
+
         <Badge variant="outline" className="text-sm">
           {filteredEvents.length} event{filteredEvents.length !== 1 ? 's' : ''}
         </Badge>

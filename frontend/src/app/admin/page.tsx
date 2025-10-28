@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
-import { dashboardService } from '@/services/dashboard.service';
+import { dashboardService, RecentActivity } from '@/services/dashboard.service';
 import { DashboardStats } from '@/types';
 import { StatsCard } from '@/components/admin/StatsCard';
 import { Button } from '@/components/ui/button';
@@ -32,12 +32,15 @@ export default function AdminDashboard() {
     monthlyRevenue: 0,
   });
   const [statsLoading, setStatsLoading] = useState(true);
+  const [recentActivities, setRecentActivities] = useState<RecentActivity[]>([]);
+  const [activitiesLoading, setActivitiesLoading] = useState(true);
 
 
 
   useEffect(() => {
     if (isAuthenticated) {
       loadStats();
+      loadRecentActivity();
     }
   }, [isAuthenticated]);
 
@@ -53,6 +56,61 @@ export default function AdminDashboard() {
     }
   };
 
+  const loadRecentActivity = async () => {
+    try {
+      setActivitiesLoading(true);
+      const data = await dashboardService.getRecentActivity();
+      setRecentActivities(data);
+    } catch (error) {
+      console.error('Failed to load recent activity:', error);
+    } finally {
+      setActivitiesLoading(false);
+    }
+  };
+
+  const getTimeAgo = (timestamp: string): string => {
+    const now = new Date();
+    const activityDate = new Date(timestamp);
+    const diffMs = now.getTime() - activityDate.getTime();
+    const diffMins = Math.floor(diffMs / (1000 * 60));
+    const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+    if (diffMins < 60) {
+      return diffMins <= 1 ? '1 minute ago' : `${diffMins} minutes ago`;
+    } else if (diffHours < 24) {
+      return diffHours === 1 ? '1 hour ago' : `${diffHours} hours ago`;
+    } else {
+      return diffDays === 1 ? '1 day ago' : `${diffDays} days ago`;
+    }
+  };
+
+  const getActivityIcon = (type: string) => {
+    switch (type) {
+      case 'animal':
+        return Leaf;
+      case 'event':
+        return Calendar;
+      case 'employee':
+        return Users;
+      default:
+        return TrendingUp;
+    }
+  };
+
+  const getActivityIconColor = (type: string): string => {
+    switch (type) {
+      case 'animal':
+        return 'text-sea_green-600';
+      case 'event':
+        return 'text-persian_orange-600';
+      case 'employee':
+        return 'text-dark_spring_green-600';
+      default:
+        return 'text-gray-600';
+    }
+  };
+
   if (loading || statsLoading) {
     return (
       <div className="flex items-center justify-center h-screen">
@@ -64,33 +122,6 @@ export default function AdminDashboard() {
   if (!isAuthenticated) {
     return null;
   }
-
-  const recentActivities = [
-    {
-      id: 1,
-      icon: Leaf,
-      iconColor: 'text-sea_green-600',
-      title: 'New animal added',
-      description: 'Mango the Bengal Tiger was added to Tropical Forest',
-      time: '2 hours ago',
-    },
-    {
-      id: 2,
-      icon: Calendar,
-      iconColor: 'text-persian_orange-600',
-      title: 'Event scheduled',
-      description: 'Dolphin Performance scheduled for Oct 17',
-      time: '5 hours ago',
-    },
-    {
-      id: 3,
-      icon: Users,
-      iconColor: 'text-dark_spring_green-600',
-      title: 'New employee onboarded',
-      description: 'Emma Davis joined as Zookeeper',
-      time: '1 day ago',
-    },
-  ];
 
   const quickActions = [
     { href: '/admin/animals', icon: Leaf, label: 'Add New Animal', description: 'Register a new animal to the zoo' },
@@ -113,14 +144,12 @@ export default function AdminDashboard() {
           value={stats.totalAnimals}
           icon={Leaf}
           iconColor="text-sea_green-600"
-          trend={{ value: 8, isPositive: true }}
         />
         <StatsCard
           title="Total Employees"
           value={stats.totalEmployees}
           icon={Users}
           iconColor="text-dark_spring_green-600"
-          trend={{ value: 3, isPositive: true }}
         />
         <StatsCard
           title="Upcoming Events"
@@ -139,14 +168,12 @@ export default function AdminDashboard() {
           value={stats.todaysVisitors}
           icon={UserCircle}
           iconColor="text-dark_spring_green-600"
-          trend={{ value: 12, isPositive: true }}
         />
         <StatsCard
           title="Monthly Revenue"
           value={`$${stats.monthlyRevenue.toLocaleString()}`}
           icon={DollarSign}
           iconColor="text-persian_orange-600"
-          trend={{ value: 15, isPositive: true }}
         />
       </div>
 
@@ -161,23 +188,34 @@ export default function AdminDashboard() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
-              {recentActivities.map((activity) => {
-                const Icon = activity.icon;
-                return (
-                  <div key={activity.id} className="flex items-start space-x-3 pb-4 border-b border-gray-100 last:border-0 last:pb-0">
-                    <div className={`p-2 rounded-lg bg-gray-50`}>
-                      <Icon className={`h-4 w-4 ${activity.iconColor}`} />
+            {activitiesLoading ? (
+              <div className="flex items-center justify-center py-8">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-dark_spring_green-600"></div>
+              </div>
+            ) : recentActivities.length === 0 ? (
+              <div className="text-center py-8">
+                <p className="text-gray-500">No recent activity</p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {recentActivities.map((activity, index) => {
+                  const Icon = getActivityIcon(activity.type);
+                  const iconColor = getActivityIconColor(activity.type);
+                  return (
+                    <div key={index} className="flex items-start space-x-3 pb-4 border-b border-gray-100 last:border-0 last:pb-0">
+                      <div className={`p-2 rounded-lg bg-gray-50`}>
+                        <Icon className={`h-4 w-4 ${iconColor}`} />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-gray-900">{activity.title}</p>
+                        <p className="text-sm text-gray-600 mt-0.5">{activity.description}</p>
+                        <p className="text-xs text-gray-500 mt-1">{getTimeAgo(activity.timestamp)}</p>
+                      </div>
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-gray-900">{activity.title}</p>
-                      <p className="text-sm text-gray-600 mt-0.5">{activity.description}</p>
-                      <p className="text-xs text-gray-500 mt-1">{activity.time}</p>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
+                  );
+                })}
+              </div>
+            )}
           </CardContent>
         </Card>
 

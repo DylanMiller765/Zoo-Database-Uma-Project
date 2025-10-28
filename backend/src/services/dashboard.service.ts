@@ -47,4 +47,53 @@ export class DashboardService {
       monthlyRevenue,
     };
   }
+
+  static async getRecentActivity() {
+    const activities: any[] = [];
+
+    // Get recent animals (last 5)
+    const recentAnimals = await query<any[]>(
+      'SELECT animal_id, name, species, created_date FROM animals ORDER BY created_date DESC LIMIT 5'
+    );
+    recentAnimals.forEach(animal => {
+      activities.push({
+        type: 'animal',
+        title: 'New animal added',
+        description: `${animal.name} the ${animal.species} was added to the zoo`,
+        timestamp: animal.created_date,
+      });
+    });
+
+    // Get recent events (last 5)
+    const recentEvents = await query<any[]>(
+      'SELECT event_id, name, event_date FROM events ORDER BY event_id DESC LIMIT 5'
+    );
+    recentEvents.forEach(event => {
+      activities.push({
+        type: 'event',
+        title: 'Event scheduled',
+        description: `${event.name} scheduled for ${new Date(event.event_date).toLocaleDateString()}`,
+        timestamp: event.event_date,
+      });
+    });
+
+    // Get recent employees (last 5)
+    const recentEmployees = await query<any[]>(
+      'SELECT employee_id, first_name, last_name, job_role, hire_date FROM employees ORDER BY hire_date DESC LIMIT 5'
+    );
+    recentEmployees.forEach(employee => {
+      activities.push({
+        type: 'employee',
+        title: 'New employee onboarded',
+        description: `${employee.first_name} ${employee.last_name} joined as ${employee.job_role}`,
+        timestamp: employee.hire_date,
+      });
+    });
+
+    // Sort all activities by timestamp (most recent first)
+    activities.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+
+    // Return top 3
+    return activities.slice(0, 3);
+  }
 }

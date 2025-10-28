@@ -8,6 +8,7 @@ import { Employee } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import { Select } from '@/components/ui/select';
 import {
   Table,
   TableBody,
@@ -26,6 +27,10 @@ export default function EmployeesPage() {
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [roleFilter, setRoleFilter] = useState('all');
+  const [employmentTypeFilter, setEmploymentTypeFilter] = useState('all');
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [sortBy, setSortBy] = useState('name');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -87,12 +92,40 @@ export default function EmployeesPage() {
     await loadEmployees();
   };
 
-  const filteredEmployees = employees.filter(emp =>
-    emp.first_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    emp.last_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    emp.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    emp.job_role.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredEmployees = employees
+    .filter(emp => {
+      // Search filter
+      const matchesSearch = emp.first_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        emp.last_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        emp.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        emp.job_role.toLowerCase().includes(searchTerm.toLowerCase());
+
+      // Role filter
+      const matchesRole = roleFilter === 'all' || emp.job_role === roleFilter;
+
+      // Employment type filter
+      const matchesEmploymentType = employmentTypeFilter === 'all' || emp.employment_type === employmentTypeFilter;
+
+      // Status filter
+      const matchesStatus = statusFilter === 'all' || emp.status === statusFilter;
+
+      return matchesSearch && matchesRole && matchesEmploymentType && matchesStatus;
+    })
+    .sort((a, b) => {
+      // Sorting
+      if (sortBy === 'name') {
+        return `${a.first_name} ${a.last_name}`.localeCompare(`${b.first_name} ${b.last_name}`);
+      } else if (sortBy === 'hire_date') {
+        const dateA = a.hire_date ? new Date(a.hire_date).getTime() : 0;
+        const dateB = b.hire_date ? new Date(b.hire_date).getTime() : 0;
+        return dateB - dateA; // Newest first
+      } else if (sortBy === 'salary') {
+        const salaryA = a.salary || 0;
+        const salaryB = b.salary || 0;
+        return salaryB - salaryA; // Highest first
+      }
+      return 0;
+    });
 
   const getRoleBadgeColor = (role: string): "default" | "secondary" | "warning" => {
     if (role === 'manager') return 'warning';
@@ -127,9 +160,9 @@ export default function EmployeesPage() {
         </Button>
       </div>
 
-      {/* Search */}
-      <div className="flex items-center gap-4">
-        <div className="relative flex-1 max-w-md">
+      {/* Search and Filters */}
+      <div className="flex flex-wrap items-center gap-4">
+        <div className="relative flex-1 min-w-[300px]">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
           <Input
             type="text"
@@ -139,6 +172,43 @@ export default function EmployeesPage() {
             className="pl-10"
           />
         </div>
+
+        <div className="w-auto">
+          <Select value={roleFilter} onChange={(e) => setRoleFilter(e.target.value)}>
+            <option value="all">All Roles</option>
+            <option value="keeper">Keeper</option>
+            <option value="manager">Manager</option>
+            <option value="veterinarian">Veterinarian</option>
+            <option value="coordinator">Coordinator</option>
+            <option value="maintenance">Maintenance</option>
+            <option value="cashier">Cashier</option>
+          </Select>
+        </div>
+
+        <div className="w-auto">
+          <Select value={employmentTypeFilter} onChange={(e) => setEmploymentTypeFilter(e.target.value)}>
+            <option value="all">All Types</option>
+            <option value="full_time">Full Time</option>
+            <option value="part_time">Part Time</option>
+          </Select>
+        </div>
+
+        <div className="w-auto">
+          <Select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
+            <option value="all">All Status</option>
+            <option value="active">Active</option>
+            <option value="inactive">Inactive</option>
+          </Select>
+        </div>
+
+        <div className="w-auto">
+          <Select value={sortBy} onChange={(e) => setSortBy(e.target.value)}>
+            <option value="name">Sort by Name</option>
+            <option value="hire_date">Sort by Hire Date</option>
+            <option value="salary">Sort by Salary</option>
+          </Select>
+        </div>
+
         <Badge variant="outline" className="text-sm">
           {filteredEmployees.length} employee{filteredEmployees.length !== 1 ? 's' : ''}
         </Badge>
