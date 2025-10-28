@@ -33,11 +33,7 @@ export default function AdminDashboard() {
   });
   const [statsLoading, setStatsLoading] = useState(true);
 
-  useEffect(() => {
-    if (!loading && !isAuthenticated) {
-      router.push('/admin/login');
-    }
-  }, [isAuthenticated, loading, router]);
+
 
   useEffect(() => {
     if (isAuthenticated) {

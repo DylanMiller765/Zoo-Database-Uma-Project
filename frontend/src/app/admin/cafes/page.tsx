@@ -31,11 +31,7 @@ export default function CafesPage() {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [cafeToDelete, setCafeToDelete] = useState<Cafe | null>(null);
 
-  useEffect(() => {
-    if (!authLoading && !isAuthenticated) {
-      router.push('/admin/login');
-    }
-  }, [isAuthenticated, authLoading, router]);
+
 
   useEffect(() => {
     if (isAuthenticated) {

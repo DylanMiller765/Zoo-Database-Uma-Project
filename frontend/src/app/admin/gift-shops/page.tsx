@@ -31,11 +31,7 @@ export default function GiftShopsPage() {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [shopToDelete, setShopToDelete] = useState<GiftShop | null>(null);
 
-  useEffect(() => {
-    if (!authLoading && !isAuthenticated) {
-      router.push('/admin/login');
-    }
-  }, [isAuthenticated, authLoading, router]);
+
 
   useEffect(() => {
     if (isAuthenticated) {

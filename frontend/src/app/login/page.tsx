@@ -15,7 +15,7 @@ export default function LoginPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
+
     setIsLoading(true);
 
     try {
@@ -85,7 +85,10 @@ export default function LoginPage() {
                   autoComplete="email"
                   required
                   value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  onChange={(e) => {
+                    setEmail(e.target.value);
+                    setError('');
+                  }}
                   className="input-field"
                   placeholder="you@example.com"
                   disabled={isLoading}
@@ -104,7 +107,10 @@ export default function LoginPage() {
                     autoComplete="current-password"
                     required
                     value={password}
-                    onChange={(e) => setPassword(e.target.value)}
+                    onChange={(e) => {
+                      setPassword(e.target.value);
+                      setError('');
+                    }}
                     className="input-field pr-12"
                     placeholder="••••••••"
                     disabled={isLoading}

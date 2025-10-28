@@ -28,11 +28,7 @@ export default function VisitorStatisticsPage() {
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
 
-  useEffect(() => {
-    if (!authLoading && !isAuthenticated) {
-      router.push('/admin/login');
-    }
-  }, [isAuthenticated, authLoading, router]);
+
 
   useEffect(() => {
     if (isAuthenticated) {

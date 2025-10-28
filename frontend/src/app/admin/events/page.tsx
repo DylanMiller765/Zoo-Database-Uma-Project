@@ -31,11 +31,7 @@ export default function EventsPage() {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [eventToDelete, setEventToDelete] = useState<Event | null>(null);
 
-  useEffect(() => {
-    if (!authLoading && !isAuthenticated) {
-      router.push('/admin/login');
-    }
-  }, [isAuthenticated, authLoading, router]);
+
 
   useEffect(() => {
     if (isAuthenticated) {

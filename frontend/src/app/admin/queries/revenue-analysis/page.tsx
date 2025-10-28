@@ -22,11 +22,7 @@ export default function RevenueAnalysisPage() {
   const [data, setData] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    if (!authLoading && !isAuthenticated) {
-      router.push('/admin/login');
-    }
-  }, [isAuthenticated, authLoading, router]);
+
 
   useEffect(() => {
     if (isAuthenticated) {
