@@ -58,7 +58,7 @@ export default function TicketsPage() {
     try {
       // Get current user if logged in (customer_id will be null for guest checkout)
       const user = authService.getStoredUser();
-      const customerId = user?.role === 'customer' ? user.account_id : undefined;
+      const customerId = user?.role === 'customer' && user.customer_id ? user.customer_id : undefined;
 
       // Create ticket records for each ticket type
       const ticketPromises = [];
