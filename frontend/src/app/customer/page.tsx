@@ -2,14 +2,12 @@
 
 import React from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
 import apiClient from "@/lib/api";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
   Home,
-  Calendar,
   Ticket,
   CreditCard,
   Settings,
@@ -28,7 +26,6 @@ type SummaryResponse = {
   data: {
     membership: { annual_pass: 'yes' | 'no' };
     ticketsUpcoming: any[];
-    eventRegsUpcoming: any[];
     visitsRecent: any[];
   };
 };
@@ -57,7 +54,6 @@ export default function CustomerDashboard() {
   const [active, setActive] = React.useState<string>("dashboard");
   const [tickets, setTickets] = React.useState<any[]>([]);
   const [upcomingTickets, setUpcomingTickets] = React.useState<any[]>([]);
-  const [registrations, setRegistrations] = React.useState<any[]>([]);
   const [visits, setVisits] = React.useState<any[]>([]);
 
   React.useEffect(() => {
@@ -74,17 +70,15 @@ export default function CustomerDashboard() {
   const load = async () => {
     try {
       setFetching(true);
-      const [profileRes, summaryRes, ticketsRes, regsRes, visitsRes] = await Promise.all([
+      const [profileRes, summaryRes, ticketsRes, visitsRes] = await Promise.all([
         apiClient.get<ProfileResponse>("/auth/profile"),
         apiClient.get<SummaryResponse>("/me/summary"),
         apiClient.get<{ success: boolean; data: any[] }>("/me/tickets"),
-        apiClient.get<{ success: boolean; data: any[] }>("/me/event-registrations"),
         apiClient.get<{ success: boolean; data: any[] }>("/me/visits"),
       ]);
 
       setProfile(profileRes.data.data);
       setUpcomingTickets(summaryRes.data.data.ticketsUpcoming || []);
-      setRegistrations(regsRes.data.data || []);
       setVisits(visitsRes.data.data || []);
       setTickets(ticketsRes.data.data || []);
     } catch (e: any) {
@@ -133,38 +127,7 @@ export default function CustomerDashboard() {
 
   const firstName = profile?.customer_first_name || user?.first_name || 'Guest';
 
-  const recentActivity = [
-    {
-      id: 1,
-      icon: Ticket,
-      iconColor: 'text-sea_green-600',
-      title: 'Ticket Purchase',
-      description: 'Adult ticket for Nov 2, 2025',
-      time: '2 days ago',
-    },
-    {
-      id: 2,
-      icon: Calendar,
-      iconColor: 'text-persian_orange-600',
-      title: 'Event Registration',
-      description: 'Registered for Dolphin Performance',
-      time: '1 week ago',
-    },
-    {
-      id: 3,
-      icon: CreditCard,
-      iconColor: 'text-dark_spring_green-600',
-      title: 'Membership Renewed',
-      description: 'Annual Pass extended to Oct 2026',
-      time: '2 weeks ago',
-    },
-  ];
-
-  const quickActions = [
-    { href: '/tickets', icon: Ticket, label: 'Buy Tickets', description: 'Purchase tickets for your visit' },
-    { href: '/events', icon: Calendar, label: 'Browse Events', description: 'View upcoming zoo events' },
-    { href: '/customer/profile', icon: Settings, label: 'Edit Profile', description: 'Update your account details' },
-  ];
+  // Removed events-related quick actions and recent activity to eliminate event references
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-[260px_1fr] gap-6">
@@ -178,9 +141,6 @@ export default function CustomerDashboard() {
               </button>
               <button onClick={() => setActive("tickets")} className={`w-full flex items-center gap-2 rounded-lg px-3 py-2 text-left ${active === "tickets" ? "bg-dark_spring_green-100 text-dark_spring_green-800" : "hover:bg-gray-50"}`}>
                 <Ticket className="h-4 w-4" /> My Tickets
-              </button>
-              <button onClick={() => setActive("events")} className={`w-full flex items-center gap-2 rounded-lg px-3 py-2 text-left ${active === "events" ? "bg-dark_spring_green-100 text-dark_spring_green-800" : "hover:bg-gray-50"}`}>
-                <Calendar className="h-4 w-4" /> Events
               </button>
               <button onClick={() => setActive("visits")} className={`w-full flex items-center gap-2 rounded-lg px-3 py-2 text-left ${active === "visits" ? "bg-dark_spring_green-100 text-dark_spring_green-800" : "hover:bg-gray-50"}`}>
                 <MapPin className="h-4 w-4" /> Visit History
@@ -213,14 +173,13 @@ export default function CustomerDashboard() {
         {/* Dashboard Overview */}
         {active === 'dashboard' && (
           <>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               <StatsCard title="Tickets Purchased" value={3} icon={Ticket} iconColor="text-sea_green-600" />
-              <StatsCard title="Events Registered" value={2} icon={Calendar} iconColor="text-persian_orange-600" />
               <StatsCard title="Total Visits" value={8} icon={MapPin} iconColor="text-dark_spring_green-600" />
               <StatsCard title="Membership" value={membership.status} icon={CreditCard} iconColor="text-dark_spring_green-600" />
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 gap-6">
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2"><Ticket className="h-5 w-5 text-sea_green-600" /> Upcoming Tickets</CardTitle>
@@ -236,24 +195,6 @@ export default function CustomerDashboard() {
                         <span className="rounded-full bg-green-500/10 text-green-700 text-xs px-3 py-1">Confirmed</span>
                         <span className="font-semibold text-gray-900">${Number(t.price).toFixed(2)}</span>
                       </div>
-                    </div>
-                  ))}
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <div className="flex items-center justify-between">
-                    <CardTitle className="flex items-center gap-2"><Calendar className="h-5 w-5 text-persian_orange-600" /> Upcoming Events</CardTitle>
-                    <Link href="/events" className="text-sm text-dark_spring_green-700 hover:underline">Look for more events →</Link>
-                  </div>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  {registrations.filter((r:any)=> !r.event_date || new Date(r.event_date) >= new Date()).slice(0,2).map((e:any,i:number)=> (
-                    <div key={e.registration_id ?? i} className="rounded-xl border border-gray-200 bg-purple-50 p-4">
-                      <p className="font-medium text-gray-900">{e.event_name}</p>
-                      <p className="text-sm text-gray-600">{e.event_date ? new Date(e.event_date).toLocaleDateString() : ''}{e.start_time ? ` at ${e.start_time}` : ''}</p>
-                      <p className="text-sm text-gray-600">{e.location}</p>
                     </div>
                   ))}
                 </CardContent>
@@ -293,29 +234,7 @@ export default function CustomerDashboard() {
           </Card>
         )}
 
-        {/* Events */}
-        {active === 'events' && (
-          <Card>
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <CardTitle className="flex items-center gap-2"><Calendar className="h-5 w-5 text-purple-600" /> Registered Events</CardTitle>
-                <Link href="/events" className="text-sm text-dark_spring_green-700 hover:underline">Look for more events →</Link>
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {registrations.map((e:any)=> (
-                <div key={e.registration_id} className="rounded-xl border-2 border-purple-200 bg-purple-50 p-4">
-                  <p className="font-semibold text-gray-900">{e.event_name}</p>
-                  <div className="text-sm text-gray-700 mt-1">Date <span className="font-medium">{e.event_date ? new Date(e.event_date).toLocaleDateString() : '—'}</span>{e.start_time ? <> · Time <span className="font-medium">{e.start_time}</span></> : null}</div>
-                  <div className="text-sm text-gray-700">Location <span className="font-medium">{e.location || '—'}</span></div>
-                  <div className="mt-3">
-                    <Button className="bg-purple-600 hover:bg-purple-700">Add to Calendar</Button>
-                  </div>
-                </div>
-              ))}
-            </CardContent>
-          </Card>
-        )}
+        {/* Events section removed as requested */}
 
         {/* Visits */}
         {active === 'visits' && (
