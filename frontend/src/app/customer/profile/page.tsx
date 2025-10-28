@@ -86,6 +86,16 @@ export default function CustomerProfilePage() {
     }
   };
 
+  const onSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    // Basic required-field guard; browser will also enforce `required`
+    if (!form.first_name || !form.last_name || !form.email) {
+      setError("Please fill in all required fields (First name, Last name, Email).");
+      return;
+    }
+    await onSave();
+  };
+
   if (loading || fetching) {
     return (
       <div className="flex items-center justify-center h-screen">
@@ -95,7 +105,7 @@ export default function CustomerProfilePage() {
   }
 
   return (
-    <div className="space-y-6">
+    <form className="space-y-6" onSubmit={onSubmit} noValidate>
       {/* Header with Back Button */}
       <div className="flex items-center gap-4">
         <Button onClick={() => router.push("/customer")} variant="outline" className="flex items-center gap-2">
@@ -122,30 +132,33 @@ export default function CustomerProfilePage() {
         <CardContent>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
             <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-700">First Name</label>
+              <label className="text-sm font-medium text-gray-700">First Name<span className="text-red-600"> *</span></label>
               <input 
                 name="first_name" 
                 value={form.first_name} 
                 onChange={onChange} 
+                required
                 className="w-full rounded-lg border border-gray-300 p-3 focus:outline-none focus:ring-2 focus:ring-dark_spring_green-500" 
               />
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-700">Last Name</label>
+              <label className="text-sm font-medium text-gray-700">Last Name<span className="text-red-600"> *</span></label>
               <input 
                 name="last_name" 
                 value={form.last_name} 
                 onChange={onChange} 
+                required
                 className="w-full rounded-lg border border-gray-300 p-3 focus:outline-none focus:ring-2 focus:ring-dark_spring_green-500" 
               />
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-700">Email</label>
+              <label className="text-sm font-medium text-gray-700">Email<span className="text-red-600"> *</span></label>
               <input 
                 name="email" 
                 type="email"
                 value={form.email} 
                 onChange={onChange} 
+                required
                 className="w-full rounded-lg border border-gray-300 p-3 focus:outline-none focus:ring-2 focus:ring-dark_spring_green-500" 
               />
             </div>
@@ -213,13 +226,13 @@ export default function CustomerProfilePage() {
 
       {/* Save Button */}
       <div className="flex gap-3">
-        <Button onClick={onSave} disabled={saving} className="px-6">
+        <Button type="submit" disabled={saving} className="px-6">
           {saving ? "Saving…" : "Save Changes"}
         </Button>
         <Button onClick={() => router.push("/customer")} variant="outline">
           Cancel
         </Button>
       </div>
-    </div>
+    </form>
   );
 }

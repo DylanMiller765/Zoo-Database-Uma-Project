@@ -2,22 +2,23 @@
 
 import React from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
-import { authService } from "@/services/auth.service";
 import apiClient from "@/lib/api";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
-  User,
+  Home,
   Calendar,
   Ticket,
   CreditCard,
-  ShoppingBag,
   Settings,
   MapPin,
   TrendingUp,
-} from 'lucide-react';
-import Link from 'next/link';
+  LogOut,
+  ChevronRight,
+  Award,
+} from "lucide-react";
 
 type ProfileResponse = {
   success: boolean;
@@ -45,6 +46,7 @@ export default function CustomerDashboard() {
   const { user, isAuthenticated, loading } = useAuth();
   const [fetching, setFetching] = React.useState(true);
   const [profile, setProfile] = React.useState<any>(null);
+  const [active, setActive] = React.useState<string>("dashboard");
 
   React.useEffect(() => {
     if (!loading) {
@@ -82,6 +84,17 @@ export default function CustomerDashboard() {
     const detail = annualPass === "yes" ? "Annual Pass" : "No membership";
     return { status, detail };
   }, [profile]);
+
+  const handleLogout = () => {
+    try {
+      if (typeof window !== "undefined") {
+        localStorage.removeItem("token");
+        localStorage.removeItem("user");
+      }
+    } finally {
+      router.replace("/login");
+    }
+  };
 
   if (loading || fetching) {
     return (
@@ -131,130 +144,202 @@ export default function CustomerDashboard() {
   ];
 
   return (
-    <div className="space-y-6">
-      {/* Page Header */}
-      <div>
-        <h1 className="text-3xl font-bold text-gray-900">Welcome back, {firstName}!</h1>
-        <p className="text-gray-600 mt-1">Your customer dashboard</p>
-      </div>
-
-      {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <StatsCard
-          title="Membership Status"
-          value={membership.status}
-          icon={CreditCard}
-          iconColor="text-dark_spring_green-600"
-        />
-        <StatsCard
-          title="Tickets Purchased"
-          value={3}
-          icon={Ticket}
-          iconColor="text-sea_green-600"
-        />
-        <StatsCard
-          title="Events Registered"
-          value={2}
-          icon={Calendar}
-          iconColor="text-persian_orange-600"
-        />
-        <StatsCard
-          title="Total Visits"
-          value={8}
-          icon={MapPin}
-          iconColor="text-dark_spring_green-600"
-        />
-      </div>
-
-      {/* Main Content Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Recent Activity */}
+    <div className="grid grid-cols-1 lg:grid-cols-[260px_1fr] gap-6">
+      {/* Sidebar */}
+      <aside className="hidden lg:block">
         <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center space-x-2">
-              <TrendingUp className="h-5 w-5 text-dark_spring_green-600" />
-              <span>Recent Activity</span>
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {recentActivity.map((activity) => {
-                const Icon = activity.icon;
-                return (
-                  <div key={activity.id} className="flex items-start space-x-3 pb-4 border-b border-gray-100 last:border-0 last:pb-0">
-                    <div className={`p-2 rounded-lg bg-gray-50`}>
-                      <Icon className={`h-4 w-4 ${activity.iconColor}`} />
+          <CardContent className="p-3">
+            <nav className="space-y-1">
+              <button onClick={() => setActive("dashboard")} className={`w-full flex items-center gap-2 rounded-lg px-3 py-2 text-left ${active === "dashboard" ? "bg-dark_spring_green-100 text-dark_spring_green-800" : "hover:bg-gray-50"}`}>
+                <Home className="h-4 w-4" /> Dashboard
+              </button>
+              <Link href="/tickets" className="w-full flex items-center gap-2 rounded-lg px-3 py-2 hover:bg-gray-50">
+                <Ticket className="h-4 w-4" /> My Tickets
+              </Link>
+              <Link href="/events" className="w-full flex items-center gap-2 rounded-lg px-3 py-2 hover:bg-gray-50">
+                <Calendar className="h-4 w-4" /> Events
+              </Link>
+              <button disabled className="w-full flex items-center gap-2 rounded-lg px-3 py-2 text-gray-400 cursor-not-allowed">
+                <MapPin className="h-4 w-4" /> Visit History
+                <span className="ml-auto text-xs">coming soon</span>
+              </button>
+              <button onClick={() => router.push("/membership")} className="w-full flex items-center gap-2 rounded-lg px-3 py-2 hover:bg-gray-50">
+                <Award className="h-4 w-4" /> Membership
+              </button>
+              <Link href="/customer/profile" className="w-full flex items-center gap-2 rounded-lg px-3 py-2 hover:bg-gray-50">
+                <Settings className="h-4 w-4" /> Profile Settings
+              </Link>
+              <button onClick={handleLogout} className="w-full flex items-center gap-2 rounded-lg px-3 py-2 text-red-600 hover:bg-red-50">
+                <LogOut className="h-4 w-4" /> Logout
+              </button>
+            </nav>
+          </CardContent>
+        </Card>
+      </aside>
+
+      {/* Main content */}
+      <div className="space-y-6">
+        {/* Page Header */}
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">Welcome back, {firstName}! 🦁</h1>
+            <p className="text-gray-600 mt-1">Your zoo adventure dashboard</p>
+          </div>
+          <Button variant="outline" onClick={() => router.push("/customer/profile")}>{firstName}'s Account</Button>
+        </div>
+
+        {/* Stats Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <StatsCard title="Tickets Purchased" value={3} icon={Ticket} iconColor="text-sea_green-600" />
+          <StatsCard title="Events Registered" value={2} icon={Calendar} iconColor="text-persian_orange-600" />
+          <StatsCard title="Total Visits" value={8} icon={MapPin} iconColor="text-dark_spring_green-600" />
+          <StatsCard title="Membership" value={membership.status} icon={CreditCard} iconColor="text-dark_spring_green-600" />
+        </div>
+
+        {/* Upcoming Tickets + Events */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2"><Ticket className="h-5 w-5 text-sea_green-600" /> Upcoming Tickets</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {[{title:'Adult Ticket', date:'Nov 2, 2025', visitors:2, price:'$45.00'},{title:'Family Pass', date:'Nov 15, 2025', visitors:4, price:'$120.00'}].map((t,i)=> (
+                <div key={i} className="rounded-xl border border-gray-200 bg-dark_spring_green-50 p-4 flex items-center justify-between">
+                  <div>
+                    <p className="font-medium text-gray-900">{t.title}</p>
+                    <p className="text-sm text-gray-600">{t.date}</p>
+                  </div>
+                  <div className="flex items-center gap-4">
+                    <span className="rounded-full bg-green-500/10 text-green-700 text-xs px-3 py-1">Confirmed</span>
+                    <span className="font-semibold text-gray-900">{t.price}</span>
+                  </div>
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2"><Calendar className="h-5 w-5 text-persian_orange-600" /> Upcoming Events</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {[{title:'Dolphin Performance', date:'Nov 5, 2025 at 2:00 PM', location:'Aquatic Arena'},{title:'Lion Feeding Show', date:'Nov 12, 2025 at 11:30 AM', location:'Savanna Zone'}].map((e,i)=> (
+                <div key={i} className="rounded-xl border border-gray-200 bg-purple-50 p-4">
+                  <p className="font-medium text-gray-900">{e.title}</p>
+                  <p className="text-sm text-gray-600">{e.date}</p>
+                  <p className="text-sm text-gray-600">{e.location}</p>
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* My Tickets + Registered Events */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2"><Ticket className="h-5 w-5 text-sea_green-600" /> My Tickets</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {[{title:'Adult Ticket', date:'Nov 2, 2025', visitors:2, price:'$45.00'},{title:'Family Pass', date:'Nov 15, 2025', visitors:4, price:'$120.00'}].map((t,i)=> (
+                <div key={i} className="rounded-xl border-2 border-gray-200 p-4">
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <p className="font-semibold text-gray-900">{t.title}</p>
+                      <p className="text-sm text-gray-600">{t.date}</p>
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-gray-900">{activity.title}</p>
-                      <p className="text-sm text-gray-600 mt-0.5">{activity.description}</p>
-                      <p className="text-xs text-gray-500 mt-1">{activity.time}</p>
+                    <span className="rounded-full bg-green-500/10 text-green-700 text-xs px-3 py-1">Confirmed</span>
+                  </div>
+                  <div className="mt-3 flex items-center justify-between">
+                    <div className="text-sm text-gray-700 space-x-6">
+                      <span><span className="text-gray-500">Number of Visitors</span> <span className="font-semibold">{t.visitors}</span></span>
+                      <span><span className="text-gray-500">Total Price</span> <span className="font-semibold">{t.price}</span></span>
+                    </div>
+                    <div className="flex gap-3">
+                      <Button size="sm">View Ticket</Button>
+                      <Button size="sm" variant="outline">Download PDF</Button>
                     </div>
                   </div>
-                );
-              })}
-            </div>
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2"><Calendar className="h-5 w-5 text-purple-600" /> Registered Events</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {[{title:'Dolphin Performance', date:'Nov 5, 2025', time:'2:00 PM', location:'Aquatic Arena'},{title:'Lion Feeding Show', date:'Nov 12, 2025', time:'11:30 AM', location:'Savanna Zone'}].map((e,i)=> (
+                <div key={i} className="rounded-xl border-2 border-purple-200 bg-purple-50 p-4">
+                  <p className="font-semibold text-gray-900">{e.title}</p>
+                  <div className="text-sm text-gray-700 mt-1">Date <span className="font-medium">{e.date}</span> · Time <span className="font-medium">{e.time}</span></div>
+                  <div className="text-sm text-gray-700">Location <span className="font-medium">{e.location}</span></div>
+                  <div className="mt-3">
+                    <Button className="bg-purple-600 hover:bg-purple-700">Add to Calendar</Button>
+                  </div>
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Visit History */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2"><MapPin className="h-5 w-5 text-amber-600" /> Visit History</CardTitle>
+          </CardHeader>
+          <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {[{date:'Oct 20, 2025', hours:'4 hours · 2 visitors', highlights:'Elephant Show, Panda Viewing'},{date:'Sep 15, 2025', hours:'5 hours · 3 visitors', highlights:'Safari Tour, Bird Paradise'},{date:'Aug 10, 2025', hours:'3 hours · 2 visitors', highlights:'Reptile House, Aquarium'}].map((v,i)=> (
+              <div key={i} className="rounded-xl border-2 border-amber-200 bg-amber-50 p-4">
+                <p className="font-semibold text-gray-900">{v.date}</p>
+                <p className="text-sm text-gray-700">{v.hours}</p>
+                <p className="text-sm text-gray-700 mt-2"><span className="text-gray-500">Highlights</span> {v.highlights}</p>
+              </div>
+            ))}
           </CardContent>
         </Card>
 
-        {/* Quick Actions */}
+        {/* Membership Section */}
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center space-x-2">
-              <ShoppingBag className="h-5 w-5 text-dark_spring_green-600" />
-              <span>Quick Actions</span>
-            </CardTitle>
+            <CardTitle className="flex items-center gap-2"><CreditCard className="h-5 w-5 text-dark_spring_green-600" /> Current Status: {membership.status}</CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              {quickActions.map((action) => {
-                const Icon = action.icon;
-                return (
-                  <Link key={action.href} href={action.href}>
-                    <div className="flex items-center space-x-3 p-4 rounded-lg border-2 border-gray-300 hover:border-dark_spring_green-400 hover:bg-dark_spring_green-50 transition-all cursor-pointer group shadow-sm hover:shadow-md">
-                      <div className="p-2 rounded-lg bg-dark_spring_green-100 group-hover:bg-dark_spring_green-200 transition-colors">
-                        <Icon className="h-5 w-5 text-dark_spring_green-600" />
-                      </div>
-                      <div className="flex-1">
-                        <p className="text-sm font-medium text-gray-900 group-hover:text-dark_spring_green-700">
-                          {action.label}
-                        </p>
-                        <p className="text-xs text-gray-600">{action.description}</p>
-                      </div>
-                    </div>
-                  </Link>
-                );
-              })}
+          <CardContent className="space-y-4">
+            {membership.status === "None" && (
+              <div className="rounded-xl bg-gradient-to-r from-amber-400 to-orange-500 text-white p-5 shadow">
+                <p className="text-sm">You don't have an active membership</p>
+              </div>
+            )}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="rounded-2xl border-2 border-gray-200 p-5">
+                <p className="font-semibold text-gray-900">Individual Pass</p>
+                <p className="text-3xl font-bold text-gray-900 mt-2">$89<span className="text-base font-normal">/year</span></p>
+                <ul className="mt-3 text-sm text-gray-700 list-disc list-inside space-y-1">
+                  <li>Unlimited visits</li>
+                  <li>10% gift shop discount</li>
+                  <li>Free parking</li>
+                  <li>Member-only events</li>
+                </ul>
+                <Button className="mt-4">Get Started</Button>
+              </div>
+              <div className="rounded-2xl border-2 border-purple-300 p-5">
+                <div className="text-center text-xs font-semibold text-purple-700 -mt-6 mb-2">MOST POPULAR</div>
+                <p className="font-semibold text-gray-900">Family Pass</p>
+                <p className="text-3xl font-bold text-gray-900 mt-2">$199<span className="text-base font-normal">/year</span></p>
+                <ul className="mt-3 text-sm text-gray-700 list-disc list-inside space-y-1">
+                  <li>Up to 4 family members</li>
+                  <li>Unlimited visits</li>
+                  <li>15% gift shop discount</li>
+                  <li>Priority event access</li>
+                  <li>Free guest passes (2/year)</li>
+                </ul>
+                <Button className="mt-4 bg-purple-600 hover:bg-purple-700">Get Started</Button>
+              </div>
             </div>
           </CardContent>
         </Card>
       </div>
-
-      {/* Membership Card */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center space-x-2">
-            <CreditCard className="h-5 w-5 text-dark_spring_green-600" />
-            <span>Membership Information</span>
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600">Status</p>
-              <p className="text-xl font-bold text-gray-900 mt-1">{membership.status}</p>
-              <p className="text-sm text-gray-600 mt-1">{membership.detail}</p>
-            </div>
-            <div>
-              {membership.status === "None" ? (
-                <Button onClick={() => router.push("/membership")}>Get Membership</Button>
-              ) : (
-                <Button onClick={() => router.push("/membership/confirmation")} variant="outline">Manage Membership</Button>
-              )}
-            </div>
-          </div>
-        </CardContent>
-      </Card>
     </div>
   );
 }
