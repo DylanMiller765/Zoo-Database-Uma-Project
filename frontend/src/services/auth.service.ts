@@ -36,6 +36,11 @@ class AuthService {
     return response.data;
   }
 
+  async updateProfile(data: Partial<{ email: string; first_name: string; last_name: string; phone: string; address: string; city: string; state: string; zip_code: string }>) {
+    const response = await apiClient.put(`/auth/profile`, data);
+    return response.data;
+  }
+
   logout() {
     localStorage.removeItem('user');
     localStorage.removeItem('token');

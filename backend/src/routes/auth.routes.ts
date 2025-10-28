@@ -29,6 +29,7 @@ router.post(
 );
 
 router.get('/profile', protect, authController.getProfile);
+router.put('/profile', protect, authController.updateProfile);
 router.post('/logout', authController.logout);
 
 export default router;

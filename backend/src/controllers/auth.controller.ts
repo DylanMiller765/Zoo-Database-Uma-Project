@@ -65,6 +65,22 @@ class AuthController {
     }
   }
 
+  async updateProfile(req: Request, res: Response, next: NextFunction) {
+    try {
+      const userId = (req as any).user.account_id;
+      const role = (req as any).user.role;
+
+      await authService.updateProfile(Number(userId), role, req.body);
+
+      // Return fresh profile after update
+      const profile = await authService.getProfile(Number(userId));
+      res.json({ success: true, data: profile });
+    } catch (error: any) {
+      const status = error.statusCode || (error.message === 'Forbidden' ? 403 : 400);
+      res.status(status).json({ success: false, message: error.message || 'Update failed' });
+    }
+  }
+
   async logout(req: Request, res: Response, next: NextFunction) {
     try {
       res.json({
