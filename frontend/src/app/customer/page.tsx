@@ -7,31 +7,44 @@ import { authService } from "@/services/auth.service";
 import apiClient from "@/lib/api";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import {
+  User,
+  Calendar,
+  Ticket,
+  CreditCard,
+  ShoppingBag,
+  Settings,
+  MapPin,
+  TrendingUp,
+} from 'lucide-react';
+import Link from 'next/link';
 
 type ProfileResponse = {
   success: boolean;
   data: any;
 };
 
+const StatsCard = ({ title, value, icon: Icon, iconColor }: { title: string; value: string | number; icon: any; iconColor: string }) => (
+  <Card>
+    <CardContent className="pt-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <p className="text-sm font-medium text-gray-600">{title}</p>
+          <p className="text-2xl font-bold text-gray-900 mt-2">{value}</p>
+        </div>
+        <div className={`p-3 rounded-lg bg-gray-50`}>
+          <Icon className={`h-6 w-6 ${iconColor}`} />
+        </div>
+      </div>
+    </CardContent>
+  </Card>
+);
+
 export default function CustomerDashboard() {
   const router = useRouter();
-  const { isAuthenticated, loading } = useAuth();
+  const { user, isAuthenticated, loading } = useAuth();
   const [fetching, setFetching] = React.useState(true);
-  const [saving, setSaving] = React.useState(false);
-  const [error, setError] = React.useState<string | null>(null);
   const [profile, setProfile] = React.useState<any>(null);
-  const [edit, setEdit] = React.useState(false);
-
-  const [form, setForm] = React.useState({
-    email: "",
-    first_name: "",
-    last_name: "",
-    phone: "",
-    address: "",
-    city: "",
-    state: "",
-    zip_code: "",
-  });
 
   React.useEffect(() => {
     if (!loading) {
@@ -48,41 +61,11 @@ export default function CustomerDashboard() {
     try {
       setFetching(true);
       const res = await apiClient.get<ProfileResponse>("/auth/profile");
-      const data = res.data.data;
-      setProfile(data);
-      setForm({
-        email: data?.customer_email || data?.email || "",
-        first_name: data?.customer_first_name || data?.employee_first_name || "",
-        last_name: data?.customer_last_name || data?.employee_last_name || "",
-        phone: data?.customer_phone || data?.employee_phone || "",
-        address: data?.address || "",
-        city: data?.city || "",
-        state: data?.state || "",
-        zip_code: data?.zip_code || "",
-      });
-      setError(null);
+      setProfile(res.data.data);
     } catch (e: any) {
-      setError(e?.response?.data?.message || e?.message || "Failed to load profile");
+      console.error("Failed to load profile", e);
     } finally {
       setFetching(false);
-    }
-  };
-
-  const onChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setForm((f) => ({ ...f, [name]: value }));
-  };
-
-  const onSave = async () => {
-    try {
-      setSaving(true);
-      await authService.updateProfile(form);
-      await load();
-      setEdit(false);
-    } catch (e: any) {
-      setError(e?.response?.data?.message || e?.message || "Failed to save profile");
-    } finally {
-      setSaving(false);
     }
   };
 
@@ -94,187 +77,184 @@ export default function CustomerDashboard() {
   };
 
   const membership = React.useMemo(() => {
-    const type = profile?.membership_type as string | undefined;
-    const end = profile?.membership_end_date as string | undefined;
     const annualPass = profile?.annual_pass as "yes" | "no" | undefined;
-
-    let status = "None";
-    let detail = "No membership";
-    if (type && type !== "none") {
-      if (end) {
-        const expired = new Date(end).getTime() < Date.now();
-        status = expired ? "Expired" : "Active";
-        detail = `${type} · Ends ${formatDate(end)}`;
-      } else {
-        status = "Active";
-        detail = `${type}`;
-      }
-    } else if (annualPass) {
-      status = annualPass === "yes" ? "Active" : "None";
-      detail = annualPass === "yes" ? "Annual Pass" : "No membership";
-    }
+    const status = annualPass === "yes" ? "Active" : "None";
+    const detail = annualPass === "yes" ? "Annual Pass" : "No membership";
     return { status, detail };
   }, [profile]);
 
   if (loading || fetching) {
     return (
-      <div className="flex items-center justify-center h-[60vh]">
+      <div className="flex items-center justify-center h-screen">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-dark_spring_green-600"></div>
       </div>
     );
   }
 
-  if (error) {
-    return (
-      <div className="max-w-4xl mx-auto p-6">
+  if (!isAuthenticated) {
+    return null;
+  }
+
+  const firstName = profile?.customer_first_name || user?.first_name || 'Guest';
+
+  const recentActivity = [
+    {
+      id: 1,
+      icon: Ticket,
+      iconColor: 'text-sea_green-600',
+      title: 'Ticket Purchase',
+      description: 'Adult ticket for Nov 2, 2025',
+      time: '2 days ago',
+    },
+    {
+      id: 2,
+      icon: Calendar,
+      iconColor: 'text-persian_orange-600',
+      title: 'Event Registration',
+      description: 'Registered for Dolphin Performance',
+      time: '1 week ago',
+    },
+    {
+      id: 3,
+      icon: CreditCard,
+      iconColor: 'text-dark_spring_green-600',
+      title: 'Membership Renewed',
+      description: 'Annual Pass extended to Oct 2026',
+      time: '2 weeks ago',
+    },
+  ];
+
+  const quickActions = [
+    { href: '/tickets', icon: Ticket, label: 'Buy Tickets', description: 'Purchase tickets for your visit' },
+    { href: '/events', icon: Calendar, label: 'Browse Events', description: 'View upcoming zoo events' },
+    { href: '/customer/profile', icon: Settings, label: 'Edit Profile', description: 'Update your account details' },
+  ];
+
+  return (
+    <div className="space-y-6">
+      {/* Page Header */}
+      <div>
+        <h1 className="text-3xl font-bold text-gray-900">Welcome back, {firstName}!</h1>
+        <p className="text-gray-600 mt-1">Your customer dashboard</p>
+      </div>
+
+      {/* Stats Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <StatsCard
+          title="Membership Status"
+          value={membership.status}
+          icon={CreditCard}
+          iconColor="text-dark_spring_green-600"
+        />
+        <StatsCard
+          title="Tickets Purchased"
+          value={3}
+          icon={Ticket}
+          iconColor="text-sea_green-600"
+        />
+        <StatsCard
+          title="Events Registered"
+          value={2}
+          icon={Calendar}
+          iconColor="text-persian_orange-600"
+        />
+        <StatsCard
+          title="Total Visits"
+          value={8}
+          icon={MapPin}
+          iconColor="text-dark_spring_green-600"
+        />
+      </div>
+
+      {/* Main Content Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Recent Activity */}
         <Card>
           <CardHeader>
-            <CardTitle>My Account</CardTitle>
+            <CardTitle className="flex items-center space-x-2">
+              <TrendingUp className="h-5 w-5 text-dark_spring_green-600" />
+              <span>Recent Activity</span>
+            </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-red-600">{error}</div>
-            <div className="mt-4">
-              <Button onClick={load}>Retry</Button>
+            <div className="space-y-4">
+              {recentActivity.map((activity) => {
+                const Icon = activity.icon;
+                return (
+                  <div key={activity.id} className="flex items-start space-x-3 pb-4 border-b border-gray-100 last:border-0 last:pb-0">
+                    <div className={`p-2 rounded-lg bg-gray-50`}>
+                      <Icon className={`h-4 w-4 ${activity.iconColor}`} />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-gray-900">{activity.title}</p>
+                      <p className="text-sm text-gray-600 mt-0.5">{activity.description}</p>
+                      <p className="text-xs text-gray-500 mt-1">{activity.time}</p>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Quick Actions */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center space-x-2">
+              <ShoppingBag className="h-5 w-5 text-dark_spring_green-600" />
+              <span>Quick Actions</span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {quickActions.map((action) => {
+                const Icon = action.icon;
+                return (
+                  <Link key={action.href} href={action.href}>
+                    <div className="flex items-center space-x-3 p-4 rounded-lg border-2 border-gray-300 hover:border-dark_spring_green-400 hover:bg-dark_spring_green-50 transition-all cursor-pointer group shadow-sm hover:shadow-md">
+                      <div className="p-2 rounded-lg bg-dark_spring_green-100 group-hover:bg-dark_spring_green-200 transition-colors">
+                        <Icon className="h-5 w-5 text-dark_spring_green-600" />
+                      </div>
+                      <div className="flex-1">
+                        <p className="text-sm font-medium text-gray-900 group-hover:text-dark_spring_green-700">
+                          {action.label}
+                        </p>
+                        <p className="text-xs text-gray-600">{action.description}</p>
+                      </div>
+                    </div>
+                  </Link>
+                );
+              })}
             </div>
           </CardContent>
         </Card>
       </div>
-    );
-  }
 
-  return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold text-gray-900">My Account</h1>
-        <p className="text-gray-600 mt-1">View and update your account information</p>
-      </div>
-
-      {/* Account Details */}
+      {/* Membership Card */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg">Account Details</CardTitle>
+          <CardTitle className="flex items-center space-x-2">
+            <CreditCard className="h-5 w-5 text-dark_spring_green-600" />
+            <span>Membership Information</span>
+          </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <Field label="Email">
-              {edit ? (
-                <input name="email" value={form.email} onChange={onChange} className="w-full rounded border p-2" />
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-600">Status</p>
+              <p className="text-xl font-bold text-gray-900 mt-1">{membership.status}</p>
+              <p className="text-sm text-gray-600 mt-1">{membership.detail}</p>
+            </div>
+            <div>
+              {membership.status === "None" ? (
+                <Button onClick={() => router.push("/membership")}>Get Membership</Button>
               ) : (
-                <span>{form.email || "—"}</span>
+                <Button onClick={() => router.push("/membership/confirmation")} variant="outline">Manage Membership</Button>
               )}
-            </Field>
-            <Field label="Account ID">
-              <span>{String(profile?.account_id ?? "—")}</span>
-            </Field>
-            <Field label="Role">
-              <span>{profile?.role}</span>
-            </Field>
-            <Field label="Last Login">
-              <span>{formatDate(profile?.last_login_at)}</span>
-            </Field>
+            </div>
           </div>
         </CardContent>
       </Card>
-
-      {/* Personal Details */}
-      <Card>
-        <CardHeader className="flex items-center justify-between">
-          <CardTitle className="text-lg">Personal Details</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <Field label="First Name">
-              {edit ? (
-                <input name="first_name" value={form.first_name} onChange={onChange} className="w-full rounded border p-2" />
-              ) : (
-                <span>{form.first_name || "—"}</span>
-              )}
-            </Field>
-            <Field label="Last Name">
-              {edit ? (
-                <input name="last_name" value={form.last_name} onChange={onChange} className="w-full rounded border p-2" />
-              ) : (
-                <span>{form.last_name || "—"}</span>
-              )}
-            </Field>
-            <Field label="Phone">
-              {edit ? (
-                <input name="phone" value={form.phone} onChange={onChange} className="w-full rounded border p-2" />
-              ) : (
-                <span>{form.phone || "—"}</span>
-              )}
-            </Field>
-            <Field label="Address">
-              {edit ? (
-                <input name="address" value={form.address} onChange={onChange} className="w-full rounded border p-2" />
-              ) : (
-                <span>{form.address || "—"}</span>
-              )}
-            </Field>
-            <Field label="City">
-              {edit ? (
-                <input name="city" value={form.city} onChange={onChange} className="w-full rounded border p-2" />
-              ) : (
-                <span>{form.city || "—"}</span>
-              )}
-            </Field>
-            <Field label="State">
-              {edit ? (
-                <input name="state" value={form.state} onChange={onChange} className="w-full rounded border p-2" />
-              ) : (
-                <span>{form.state || "—"}</span>
-              )}
-            </Field>
-            <Field label="ZIP Code">
-              {edit ? (
-                <input name="zip_code" value={form.zip_code} onChange={onChange} className="w-full rounded border p-2" />
-              ) : (
-                <span>{form.zip_code || "—"}</span>
-              )}
-            </Field>
-          </div>
-
-          <div className="mt-4 flex gap-3">
-            {!edit ? (
-              <Button onClick={() => setEdit(true)}>Edit</Button>
-            ) : (
-              <>
-                <Button onClick={onSave} disabled={saving}>{saving ? "Saving…" : "Save"}</Button>
-                <Button onClick={() => { setEdit(false); load(); }} variant="outline">Cancel</Button>
-              </>
-            )}
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Membership */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg">Membership</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <Field label="Status"><span>{membership.status}</span></Field>
-            <Field label="Details"><span>{membership.detail}</span></Field>
-          </div>
-          <div className="mt-4">
-            {membership.status === "None" || membership.status === "Expired" ? (
-              <Button onClick={() => router.push("/membership")}>Get Membership</Button>
-            ) : (
-              <Button onClick={() => router.push("/membership/confirmation")}>Manage Membership</Button>
-            )}
-          </div>
-        </CardContent>
-      </Card>
-    </div>
-  );
-}
-
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <div className="space-y-1">
-      <div className="text-xs text-gray-500">{label}</div>
-      <div className="text-gray-900">{children}</div>
     </div>
   );
 }
