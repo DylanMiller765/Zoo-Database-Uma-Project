@@ -31,11 +31,7 @@ export default function CustomersPage() {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [customerToDelete, setCustomerToDelete] = useState<Customer | null>(null);
 
-  useEffect(() => {
-    if (!authLoading && !isAuthenticated) {
-      router.push('/admin/login');
-    }
-  }, [isAuthenticated, authLoading, router]);
+
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -95,14 +91,8 @@ export default function CustomersPage() {
     customer.email?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const getMembershipBadge = (type?: string): "default" | "secondary" | "success" | "warning" => {
-    const variants: Record<string, typeof type> = {
-      none: 'default',
-      basic: 'secondary',
-      premium: 'warning',
-      family: 'success',
-    };
-    return variants[type || 'none'] as any || 'default';
+  const getAnnualPassBadge = (annualPass?: string): "default" | "success" => {
+    return annualPass === 'yes' ? 'success' : 'default';
   };
 
   if (authLoading || loading) {
@@ -154,8 +144,8 @@ export default function CustomersPage() {
               <TableHead>Name</TableHead>
               <TableHead>Email</TableHead>
               <TableHead>Phone</TableHead>
-              <TableHead>Membership</TableHead>
-              <TableHead>Membership Period</TableHead>
+              <TableHead>Annual Pass</TableHead>
+              <TableHead>Registration Date</TableHead>
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
@@ -168,14 +158,12 @@ export default function CustomersPage() {
                 <TableCell>{customer.email || 'N/A'}</TableCell>
                 <TableCell>{customer.phone || 'N/A'}</TableCell>
                 <TableCell>
-                  <Badge variant={getMembershipBadge(customer.membership_type)} className="capitalize">
-                    {customer.membership_type || 'None'}
+                  <Badge variant={getAnnualPassBadge(customer.annual_pass)} className="capitalize">
+                    {customer.annual_pass === 'yes' ? 'Yes' : 'No'}
                   </Badge>
                 </TableCell>
                 <TableCell className="text-sm text-gray-600">
-                  {customer.membership_start_date && customer.membership_end_date
-                    ? `${customer.membership_start_date} - ${customer.membership_end_date}`
-                    : 'N/A'}
+                  {customer.registration_date || 'N/A'}
                 </TableCell>
                 <TableCell className="text-right">
                   <div className="flex items-center justify-end gap-2">

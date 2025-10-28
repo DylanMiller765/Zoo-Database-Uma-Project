@@ -141,13 +141,14 @@ export function AnimalForm({ animal, onSuccess, onCancel }: AnimalFormProps) {
 
         {/* Date of Birth */}
         <div className="space-y-2">
-          <Label htmlFor="date_of_birth">Date of Birth</Label>
+          <Label htmlFor="date_of_birth">Date of Birth *</Label>
           <Input
             type="date"
             id="date_of_birth"
             name="date_of_birth"
             value={formData.date_of_birth}
             onChange={handleChange}
+            required
           />
         </div>
 

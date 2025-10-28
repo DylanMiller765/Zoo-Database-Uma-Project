@@ -52,6 +52,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const logout = () => {
     authService.logout();
     setUser(null);
+    router.push('/login');
   };
 
   const hasRole = (roles: string | string[]): boolean => {

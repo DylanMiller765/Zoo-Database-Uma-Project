@@ -26,8 +26,12 @@ export class AnimalModel {
   }
 
   static async create(animal: Omit<Animal, 'animal_id'>): Promise<Animal> {
-    const sql = 'INSERT INTO animals SET ?';
-    const result = await query<any>(sql, [animal]);
+    const columns = Object.keys(animal).join(', ');
+    const placeholders = Object.keys(animal).map(() => '?').join(', ');
+    const values = Object.values(animal);
+
+    const sql = `INSERT INTO animals (${columns}) VALUES (${placeholders})`;
+    const result = await query<any>(sql, values);
     return { animal_id: result.insertId, ...animal };
   }
 
@@ -38,8 +42,11 @@ export class AnimalModel {
   }
 
   static async update(id: number, updates: Partial<Animal>): Promise<Animal | null> {
-    const sql = 'UPDATE animals SET ? WHERE animal_id = ?';
-    await query(sql, [updates, id]);
+    const setClause = Object.keys(updates).map(key => `${key} = ?`).join(', ');
+    const values = [...Object.values(updates), id];
+
+    const sql = `UPDATE animals SET ${setClause} WHERE animal_id = ?`;
+    await query(sql, values);
     return await this.findById(id);
   }
 

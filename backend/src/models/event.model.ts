@@ -22,8 +22,11 @@ export class EventModel {
   }
 
   static async update(eventId: number, eventData: Partial<Event>): Promise<Event | null> {
-    const sql = 'UPDATE events SET ? WHERE event_id = ?';
-    await query(sql, [eventData, eventId]);
+    const setClause = Object.keys(eventData).map(key => `${key} = ?`).join(', ');
+    const values = [...Object.values(eventData), eventId];
+
+    const sql = `UPDATE events SET ${setClause} WHERE event_id = ?`;
+    await query(sql, values);
     return await this.findById(eventId);
   }
 

@@ -81,17 +81,15 @@ export interface CreateAnimalData extends Omit<Animal, 'animal_id' | 'created_da
 // Event Types
 export interface Event {
   event_id: number;
-  event_name: string;
+  name: string;
   description?: string;
   event_date: string;
   start_time: string;
   end_time: string;
   location?: string;
-  max_capacity?: number;
-  current_registrations?: number;
-  status: 'scheduled' | 'ongoing' | 'completed' | 'cancelled';
-  created_by?: number;
-  created_at?: string;
+  max_participants?: number;
+  ticket_price?: number;
+  coordinator_id?: number;
 }
 
 export interface CreateEventData extends Omit<Event, 'event_id' | 'current_registrations' | 'created_at'> {}
@@ -107,13 +105,11 @@ export interface Customer {
   city?: string;
   state?: string;
   zip_code?: string;
-  membership_type?: 'none' | 'basic' | 'premium' | 'family';
-  membership_start_date?: string;
-  membership_end_date?: string;
-  created_date?: string;
+  annual_pass?: 'yes' | 'no';
+  registration_date?: string;
 }
 
-export interface CreateCustomerData extends Omit<Customer, 'customer_id' | 'created_date'> {}
+export interface CreateCustomerData extends Omit<Customer, 'customer_id'> {}
 
 // API Response Types
 export interface ApiResponse<T> {
@@ -143,3 +139,56 @@ export interface DashboardStats {
   todaysVisitors: number;
   monthlyRevenue: number;
 }
+
+// Ticket Types
+export interface Ticket {
+  ticket_id: number;
+  customer_id?: number;
+  purchase_date: string;
+  visit_date: string;
+  ticket_type: 'adult' | 'child' | 'senior' | 'student';
+  price: number;
+  payment_method?: 'cash' | 'credit' | 'debit' | 'online';
+}
+
+export interface CreateTicketData extends Omit<Ticket, 'ticket_id' | 'purchase_date'> {}
+
+// Cafe Types
+export interface Cafe {
+  cafe_id: number;
+  name: string;
+  location?: string;
+  opening_time?: string;
+  closing_time?: string;
+  manager_id?: number;
+}
+
+export interface CreateCafeData extends Omit<Cafe, 'cafe_id'> {}
+
+// Gift Shop Types
+export interface GiftShop {
+  gift_shop_id: number;
+  name: string;
+  location?: string;
+  opening_time?: string;
+  closing_time?: string;
+  manager_id?: number;
+}
+
+export interface CreateGiftShopData extends Omit<GiftShop, 'gift_shop_id'> {}
+
+// Attraction Types
+export interface Attraction {
+  attraction_id: number; // Primary key from DB
+  name: string; // Required field
+  location?: string | null; // Optional string field
+  human_capacity?: number | null; // Optional number field, corresponds to `capacity` in DB
+  opening_time?: string | null; // Optional time string (e.g., "09:00:00")
+  closing_time?: string | null; // Optional time string (e.g., "18:00:00")
+  status?: 'open' | 'closed' | 'maintenance' | null; // Optional status enum
+  // Optional: Add description if needed, even though it's missing in backend/src/types/attraction.types.ts
+  description?: string | null;
+}
+
+// Optional: Define a type for creating/updating attractions (without the ID)
+export interface AttractionData extends Omit<Attraction, 'attraction_id'> {}

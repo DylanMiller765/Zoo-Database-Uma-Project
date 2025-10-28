@@ -21,8 +21,12 @@ export class CustomerModel {
   }
 
   static async create(customer: Omit<Customer, 'customer_id'>): Promise<Customer> {
-    const sql = 'INSERT INTO customers SET ?';
-    const result = await query<any>(sql, [customer]);
+    const columns = Object.keys(customer).join(', ');
+    const placeholders = Object.keys(customer).map(() => '?').join(', ');
+    const values = Object.values(customer);
+
+    const sql = `INSERT INTO customers (${columns}) VALUES (${placeholders})`;
+    const result = await query<any>(sql, values);
     return { customer_id: result.insertId, ...customer };
   }
 
@@ -33,8 +37,11 @@ export class CustomerModel {
   }
 
   static async update(id: number, updates: Partial<Customer>): Promise<Customer | null> {
-    const sql = 'UPDATE customers SET ? WHERE customer_id = ?';
-    await query(sql, [updates, id]);
+    const setClause = Object.keys(updates).map(key => `${key} = ?`).join(', ');
+    const values = [...Object.values(updates), id];
+
+    const sql = `UPDATE customers SET ${setClause} WHERE customer_id = ?`;
+    await query(sql, values);
     return await this.findById(id);
   }
 

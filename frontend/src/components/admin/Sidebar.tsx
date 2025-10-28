@@ -12,29 +12,48 @@ import {
   Coffee,
   Ticket,
   Menu,
-  X
+  X,
+  MapPin,
+  BarChart3
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useState } from 'react';
+import { useAuth } from '@/context/AuthContext';
 
 interface SidebarProps {
   className?: string;
 }
 
-const menuItems = [
-  { href: '/admin', icon: LayoutDashboard, label: 'Dashboard' },
-  { href: '/admin/animals', icon: Leaf, label: 'Animals' },
-  { href: '/admin/employees', icon: Users, label: 'Employees' },
-  { href: '/admin/events', icon: Calendar, label: 'Events' },
-  { href: '/admin/customers', icon: UserCircle, label: 'Customers' },
-  { href: '/admin/tickets', icon: Ticket, label: 'Tickets' },
-  { href: '/admin/gift-shops', icon: Store, label: 'Gift Shops' },
-  { href: '/admin/cafes', icon: Coffee, label: 'Cafes' },
+interface MenuItem {
+  href: string;
+  icon: any;
+  label: string;
+  roles: string[]; // Which roles can access this page
+}
+
+const menuItems: MenuItem[] = [
+  { href: '/admin', icon: LayoutDashboard, label: 'Dashboard', roles: ['manager', 'keeper', 'veterinarian', 'coordinator', 'cashier', 'guide', 'maintenance', 'security', 'other'] },
+  { href: '/admin/animals', icon: Leaf, label: 'Animals', roles: ['manager', 'veterinarian', 'keeper'] },
+  { href: '/admin/employees', icon: Users, label: 'Employees', roles: ['manager'] },
+  { href: '/admin/events', icon: Calendar, label: 'Events', roles: ['manager', 'coordinator', 'guide'] },
+  { href: '/admin/customers', icon: UserCircle, label: 'Customers', roles: ['manager', 'cashier'] },
+  { href: '/admin/tickets', icon: Ticket, label: 'Tickets', roles: ['manager', 'cashier'] },
+  { href: '/admin/gift-shops', icon: Store, label: 'Gift Shops', roles: ['manager', 'cashier'] },
+  { href: '/admin/cafes', icon: Coffee, label: 'Cafes', roles: ['manager', 'cashier'] },
+  { href: '/admin/queries/animals-by-habitat', icon: MapPin, label: 'Animals by Habitat', roles: ['manager', 'keeper', 'veterinarian'] },
+  { href: '/admin/queries/event-attendance', icon: BarChart3, label: 'Event Attendance', roles: ['manager', 'coordinator'] },
+  { href: '/admin/queries/visitor-statistics', icon: BarChart3, label: 'Visitor Statistics', roles: ['manager', 'cashier'] },
 ];
 
 export function Sidebar({ className }: SidebarProps) {
   const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
+  const { user } = useAuth();
+
+  // Filter menu items based on user's role
+  const visibleMenuItems = menuItems.filter(item =>
+    user?.job_role && item.roles.includes(user.job_role)
+  );
 
   return (
     <>
@@ -73,7 +92,7 @@ export function Sidebar({ className }: SidebarProps) {
         {/* Navigation */}
         <nav className="flex-1 overflow-y-auto py-4">
           <ul className="space-y-1 px-3">
-            {menuItems.map((item) => {
+            {visibleMenuItems.map((item) => {
               const isActive = pathname === item.href;
               const Icon = item.icon;
 

@@ -31,11 +31,7 @@ export default function AnimalsPage() {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [animalToDelete, setAnimalToDelete] = useState<Animal | null>(null);
 
-  useEffect(() => {
-    if (!authLoading && !isAuthenticated) {
-      router.push('/admin/login');
-    }
-  }, [isAuthenticated, authLoading, router]);
+
 
   useEffect(() => {
     if (isAuthenticated) {

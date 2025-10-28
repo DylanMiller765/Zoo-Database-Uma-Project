@@ -27,9 +27,8 @@ export function CustomerForm({ customer, onSuccess, onCancel }: CustomerFormProp
     city: '',
     state: '',
     zip_code: '',
-    membership_type: 'none',
-    membership_start_date: '',
-    membership_end_date: '',
+    annual_pass: 'no',
+    registration_date: new Date().toISOString().split('T')[0],
   });
 
   useEffect(() => {
@@ -43,9 +42,8 @@ export function CustomerForm({ customer, onSuccess, onCancel }: CustomerFormProp
         city: customer.city || '',
         state: customer.state || '',
         zip_code: customer.zip_code || '',
-        membership_type: customer.membership_type || 'none',
-        membership_start_date: customer.membership_start_date || '',
-        membership_end_date: customer.membership_end_date || '',
+        annual_pass: customer.annual_pass || 'no',
+        registration_date: customer.registration_date || new Date().toISOString().split('T')[0],
       });
     }
   }, [customer]);
@@ -167,34 +165,22 @@ export function CustomerForm({ customer, onSuccess, onCancel }: CustomerFormProp
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="membership_type">Membership Type</Label>
-          <Select id="membership_type" name="membership_type" value={formData.membership_type} onChange={handleChange}>
-            <option value="none">None</option>
-            <option value="basic">Basic</option>
-            <option value="premium">Premium</option>
-            <option value="family">Family</option>
+          <Label htmlFor="annual_pass">Annual Pass</Label>
+          <Select id="annual_pass" name="annual_pass" value={formData.annual_pass} onChange={handleChange}>
+            <option value="no">No</option>
+            <option value="yes">Yes</option>
           </Select>
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="membership_start_date">Membership Start Date</Label>
+          <Label htmlFor="registration_date">Registration Date *</Label>
           <Input
             type="date"
-            id="membership_start_date"
-            name="membership_start_date"
-            value={formData.membership_start_date}
+            id="registration_date"
+            name="registration_date"
+            value={formData.registration_date}
             onChange={handleChange}
-          />
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="membership_end_date">Membership End Date</Label>
-          <Input
-            type="date"
-            id="membership_end_date"
-            name="membership_end_date"
-            value={formData.membership_end_date}
-            onChange={handleChange}
+            required
           />
         </div>
       </div>

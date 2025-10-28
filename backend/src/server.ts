@@ -11,11 +11,15 @@ import customerRoutes from './routes/customer.routes';
 import attractionRoutes from './routes/attraction.routes';
 import habitatRoutes from './routes/habitat.routes';
 import ticketRoutes from './routes/ticket.routes';
+import giftShopRoutes from './routes/giftShop.routes';
 import giftShopItemRoutes from './routes/giftShopItem.routes';
 import giftShopSaleRoutes from './routes/giftShopSale.routes';
+import cafeRoutes from './routes/cafe.routes';
 import cafeItemRoutes from './routes/cafeItem.routes';
 import cafeSaleRoutes from './routes/cafeSale.routes';
 import eventRegistrationRoutes from './routes/eventRegistration.routes';
+import dashboardRoutes from './routes/dashboard.routes';
+import queryRoutes from './routes/query.routes';
 
 dotenv.config();
 
@@ -41,6 +45,8 @@ app.get('/health', (req, res) => {
 
 // API Routes
 app.use('/api/auth', authRoutes);
+app.use('/api/dashboard', dashboardRoutes);
+app.use('/api/queries', queryRoutes);
 app.use('/api/events', eventRoutes);
 app.use('/api/animals', animalRoutes);
 app.use('/api/employees', employeeRoutes);
@@ -48,8 +54,10 @@ app.use('/api/customers', customerRoutes);
 app.use('/api/attractions', attractionRoutes);
 app.use('/api/habitats', habitatRoutes);
 app.use('/api/tickets', ticketRoutes);
+app.use('/api/gift-shops', giftShopRoutes);
 app.use('/api/gift-shop-items', giftShopItemRoutes);
 app.use('/api/gift-shop-sales', giftShopSaleRoutes);
+app.use('/api/cafes', cafeRoutes);
 app.use('/api/cafe-items', cafeItemRoutes);
 app.use('/api/cafe-sales', cafeSaleRoutes);
 app.use('/api/event-registrations', eventRegistrationRoutes);
