@@ -201,7 +201,7 @@ export default function HabitatsPage() {
 
       {/* Add/Edit Modal */}
       <Modal
-        isOpen={isModalOpen}
+        open={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         title={selectedHabitat ? 'Edit Habitat' : 'Add New Habitat'}
       >
@@ -214,7 +214,7 @@ export default function HabitatsPage() {
 
       {/* Delete Confirmation Modal */}
       <Modal
-        isOpen={isDeleteModalOpen}
+        open={isDeleteModalOpen}
         onClose={() => setIsDeleteModalOpen(false)}
         title="Confirm Deletion"
       >
