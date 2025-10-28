@@ -90,7 +90,8 @@ export default function EventsPage() {
     event.location?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const getStatusBadge = (status: string): "default" | "secondary" | "success" | "warning" | "danger" => {
+  const getStatusBadge = (status?: string): "default" | "secondary" | "success" | "warning" | "danger" => {
+    if (!status) return 'default';
     const variants: Record<string, typeof status> = {
       scheduled: 'secondary',
       ongoing: 'success',
