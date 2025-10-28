@@ -1,14 +1,14 @@
 "use client";
 
-import { useEffect, useState } from 'react';
-import { useAuth } from '@/context/AuthContext';
-import { useRouter } from 'next/navigation';
-import { queryService } from '@/services/query.service';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useEffect, useState, useCallback, useMemo } from "react";
+import { useAuth } from "@/context/AuthContext";
+import { useRouter } from "next/navigation";
+import { queryService } from "@/services/query.service";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Table,
   TableBody,
@@ -16,94 +16,212 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table';
-import { UserCircle, DollarSign, TrendingUp, Ticket } from 'lucide-react';
+} from "@/components/ui/table";
+import {
+  UserCircle,
+  DollarSign,
+  TrendingUp,
+  Ticket,
+  FileDown,
+} from "lucide-react";
+
+type VisitorRow = {
+  visit_date: string;
+  ticket_type: string;
+  payment_method: string | null;
+  ticket_count: number;
+  total_revenue: string | number | null;
+  avg_price: string | number | null;
+};
+
+type VisitorSummary = {
+  total_tickets: number | string | null;
+  total_revenue: number | string | null;
+  avg_ticket_price: number | string | null;
+  unique_customers: number | string | null;
+};
 
 export default function VisitorStatisticsPage() {
   const { isAuthenticated, loading: authLoading } = useAuth();
   const router = useRouter();
-  const [data, setData] = useState<any[]>([]);
-  const [summary, setSummary] = useState<any>({});
+
+  const [data, setData] = useState<VisitorRow[]>([]);
+  const [summary, setSummary] = useState<VisitorSummary>({
+    total_tickets: 0,
+    total_revenue: 0,
+    avg_ticket_price: 0,
+    unique_customers: 0,
+  });
   const [loading, setLoading] = useState(true);
-  const [startDate, setStartDate] = useState('');
-  const [endDate, setEndDate] = useState('');
 
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
 
-
-  useEffect(() => {
-    if (isAuthenticated) {
-      loadData();
-    }
-  }, [isAuthenticated]);
-
-  const loadData = async () => {
-    try {
-      setLoading(true);
-      const result = await queryService.getVisitorStatistics(startDate, endDate);
-      setData(result.data);
-      setSummary(result.summary);
-    } catch (error) {
-      console.error('Failed to load visitor statistics:', error);
-    } finally {
-      setLoading(false);
-    }
+  const parseNum = (value: unknown): number => {
+    if (value === null || value === undefined) return 0;
+    const n = parseFloat(String(value));
+    return isNaN(n) ? 0 : n;
   };
 
-  const handleFilter = () => {
-    loadData();
-  };
-
-  const handleClearFilter = () => {
-    setStartDate('');
-    setEndDate('');
-    setTimeout(() => loadData(), 0);
-  };
-
-  if (authLoading || loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-dark_spring_green-600"></div>
-      </div>
-    );
-  }
-
-  if (!isAuthenticated) return null;
-
-  const getTicketTypeBadge = (type: string) => {
-    const variants: Record<string, any> = {
-      adult: 'default',
-      child: 'secondary',
-      senior: 'warning',
-      student: 'success',
-    };
-    return variants[type] || 'default';
-  };
+  const formatMoney = (value: unknown) =>
+    parseNum(value).toLocaleString("en-US", { minimumFractionDigits: 2 });
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    const year = String(date.getFullYear()).slice(-2);
-    return `${month}/${day}/${year}`;
+    const m = String(date.getMonth() + 1).padStart(2, "0");
+    const d = String(date.getDate()).padStart(2, "0");
+    const y = String(date.getFullYear()).slice(-2);
+    return `${m}/${d}/${y}`;
   };
+
+  const getTicketTypeBadge = (type: string) => {
+    const variants: Record<string, any> = {
+      adult: "default",
+      child: "secondary",
+      senior: "warning",
+      student: "success",
+    };
+    return variants[type] || "default";
+  };
+
+  const loadData = useCallback(async () => {
+    try {
+      setLoading(true);
+      const result = await queryService.getVisitorStatistics(startDate, endDate);
+      setData(result.data || []);
+      setSummary(result.summary || {});
+    } catch (err) {
+      console.error("Failed to load visitor statistics:", err);
+    } finally {
+      setLoading(false);
+    }
+  }, [startDate, endDate]);
+
+  useEffect(() => {
+    if (isAuthenticated) loadData();
+  }, [isAuthenticated, loadData]);
+
+  const handleFilter = () => loadData();
+  const handleClearFilter = () => {
+    setStartDate("");
+    setEndDate("");
+    setTimeout(() => loadData(), 0);
+  };
+
+  const derivedStats = useMemo(() => {
+    const totalTicketsFromRows = data.reduce(
+      (sum, row) => sum + parseNum(row.ticket_count),
+      0
+    );
+    const totalRevenueFromRows = data.reduce(
+      (sum, row) => sum + parseNum(row.total_revenue),
+      0
+    );
+    return { totalTicketsFromRows, totalRevenueFromRows };
+  }, [data]);
+
+  // ---------- CSV generation (clean header) ----------
+  const generateCsv = useCallback(() => {
+    const ticketsValue =
+      summary.total_tickets ?? derivedStats.totalTicketsFromRows ?? 0;
+    const revenueValue =
+      summary.total_revenue ?? derivedStats.totalRevenueFromRows ?? 0;
+
+    // ✅ Clean, professional summary section (no date rows)
+    const summaryRows: string[][] = [
+      ["Report Summary", ""],
+      ["Total Tickets Sold", String(ticketsValue)],
+      ["Total Revenue (USD)", `$${formatMoney(revenueValue)}`],
+      ["Avg Ticket Price (USD)", `$${formatMoney(summary.avg_ticket_price)}`],
+      ["Unique Customers", String(summary.unique_customers ?? 0)],
+    ];
+
+    const blankRow: string[] = [""];
+
+    const detailHeaders = [
+      "visit_date",
+      "ticket_type",
+      "payment_method",
+      "ticket_count",
+      "total_revenue_usd",
+      "avg_price_usd",
+    ];
+
+    const detailRows: string[][] = data.map((r) => [
+      r.visit_date ? `'${formatDate(r.visit_date)}` : "",
+      r.ticket_type ?? "",
+      r.payment_method ?? "N/A",
+      String(r.ticket_count ?? 0),
+      `$${formatMoney(r.total_revenue)}`,
+      `$${formatMoney(r.avg_price)}`,
+    ]);
+
+    const escapeCell = (v: string) =>
+      v.includes(",") || v.includes('"') || v.includes("\n")
+        ? `"${v.replace(/"/g, '""')}"`
+        : v;
+
+    const csvLines: string[] = [];
+    summaryRows.forEach((r) => csvLines.push(r.map(escapeCell).join(",")));
+    csvLines.push(blankRow.map(escapeCell).join(","));
+    csvLines.push(detailHeaders.map(escapeCell).join(","));
+    detailRows.forEach((r) => csvLines.push(r.map(escapeCell).join(",")));
+
+    const blob = new Blob([csvLines.join("\n")], {
+      type: "text/csv;charset=utf-8;",
+    });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.setAttribute(
+      "download",
+      `visitor_statistics_${new Date().toISOString().slice(0, 10)}.csv`
+    );
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  }, [data, summary, derivedStats]);
+
+  if (authLoading || loading)
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-dark_spring_green-600" />
+      </div>
+    );
+
+  if (!isAuthenticated) return null;
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-2">
-          <UserCircle className="h-8 w-8 text-sea_green-600" />
-          Visitor Statistics
-        </h1>
-        <p className="text-gray-600 mt-1">Analyze ticket sales and visitor trends</p>
+      {/* HEADER */}
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-2">
+            <UserCircle className="h-8 w-8 text-sea_green-600" />
+            Visitor Statistics
+          </h1>
+          <p className="text-gray-600 mt-1">
+            Analyze ticket sales and visitor trends
+          </p>
+        </div>
+
+        <Button
+          onClick={generateCsv}
+          className="flex items-center gap-2 bg-sea_green-600 hover:bg-sea_green-700 text-white"
+        >
+          <FileDown className="h-4 w-4" />
+          Export CSV
+        </Button>
       </div>
 
-      {/* Filter Section */}
+      {/* FILTER */}
       <Card>
         <CardHeader>
           <CardTitle>Date Range Filter</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="flex items-end gap-4">
+          <div className="flex flex-col gap-4 md:flex-row md:items-end">
             <div className="flex-1">
               <Label htmlFor="startDate">Start Date</Label>
               <Input
@@ -122,13 +240,24 @@ export default function VisitorStatisticsPage() {
                 onChange={(e) => setEndDate(e.target.value)}
               />
             </div>
-            <Button onClick={handleFilter}>Apply Filter</Button>
-            <Button variant="outline" onClick={handleClearFilter}>Clear</Button>
+            <Button
+              onClick={handleFilter}
+              className="bg-dark_spring_green-600 hover:bg-dark_spring_green-700 text-white"
+            >
+              Apply Filter
+            </Button>
+            <Button
+              variant="outline"
+              onClick={handleClearFilter}
+              className="border-dark_spring_green-600 text-dark_spring_green-600 hover:bg-dark_spring_green-50"
+            >
+              Clear
+            </Button>
           </div>
         </CardContent>
       </Card>
 
-      {/* Summary Cards */}
+      {/* SUMMARY CARDS */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <Card>
           <CardHeader>
@@ -153,7 +282,10 @@ export default function VisitorStatisticsPage() {
           </CardHeader>
           <CardContent>
             <p className="text-2xl font-bold text-persian_orange-600">
-              ${parseFloat(summary.total_revenue || 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}
+              $
+              {parseNum(summary.total_revenue).toLocaleString("en-US", {
+                minimumFractionDigits: 2,
+              })}
             </p>
           </CardContent>
         </Card>
@@ -167,7 +299,10 @@ export default function VisitorStatisticsPage() {
           </CardHeader>
           <CardContent>
             <p className="text-2xl font-bold text-dark_spring_green-600">
-              ${parseFloat(summary.avg_ticket_price || 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}
+              $
+              {parseNum(summary.avg_ticket_price).toLocaleString("en-US", {
+                minimumFractionDigits: 2,
+              })}
             </p>
           </CardContent>
         </Card>
@@ -187,7 +322,7 @@ export default function VisitorStatisticsPage() {
         </Card>
       </div>
 
-      {/* Data Table */}
+      {/* TABLE */}
       <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
         <Table>
           <TableHeader>
@@ -201,25 +336,30 @@ export default function VisitorStatisticsPage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {data.map((item, idx) => (
-              <TableRow key={idx}>
-                <TableCell className="font-medium">{formatDate(item.visit_date)}</TableCell>
+            {data.map((row, i) => (
+              <TableRow key={i}>
+                <TableCell className="font-medium">
+                  {formatDate(row.visit_date)}
+                </TableCell>
                 <TableCell>
-                  <Badge variant={getTicketTypeBadge(item.ticket_type)} className="capitalize">
-                    {item.ticket_type}
+                  <Badge
+                    variant={getTicketTypeBadge(row.ticket_type)}
+                    className="capitalize"
+                  >
+                    {row.ticket_type}
                   </Badge>
                 </TableCell>
                 <TableCell>
                   <Badge variant="outline" className="capitalize">
-                    {item.payment_method || 'N/A'}
+                    {row.payment_method || "N/A"}
                   </Badge>
                 </TableCell>
-                <TableCell>{item.ticket_count}</TableCell>
+                <TableCell>{row.ticket_count}</TableCell>
                 <TableCell className="font-semibold text-persian_orange-600">
-                  ${parseFloat(item.total_revenue || 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                  ${formatMoney(row.total_revenue)}
                 </TableCell>
                 <TableCell className="text-sm text-gray-600">
-                  ${parseFloat(item.avg_price || 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                  ${formatMoney(row.avg_price)}
                 </TableCell>
               </TableRow>
             ))}
@@ -230,6 +370,9 @@ export default function VisitorStatisticsPage() {
           <div className="text-center py-12">
             <UserCircle className="h-12 w-12 text-gray-400 mx-auto mb-4" />
             <p className="text-gray-600">No visitor statistics found</p>
+            <p className="text-gray-500 text-sm">
+              Try clearing the date filter to see all activity.
+            </p>
           </div>
         )}
       </div>
