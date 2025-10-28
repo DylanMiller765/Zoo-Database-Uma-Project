@@ -206,13 +206,13 @@ export default function HomePage() {
                   <div className="w-full overflow-hidden rounded-t-lg">
                     <img
                       src={`/images/events/giraffe-feeding.jpg`}
-                      alt={event.name}
+                      alt={event.event_name}
                       loading="lazy"
                       className="h-44 w-full object-cover"
                     />
                   </div>
                   <div className="px-6 pt-4">
-                    <CardTitle className="text-lg text-dark_spring_green-700">{event.name}</CardTitle>
+                    <CardTitle className="text-lg text-dark_spring_green-700">{event.event_name}</CardTitle>
                     <p className="text-xs text-sea_green-600 font-medium mt-1">{event.start_time} • {event.location}</p>
                   </div>
                 </CardHeader>

@@ -27,7 +27,6 @@ export function EventForm({ event, onSuccess, onCancel }: EventFormProps) {
     end_time: '',
     location: '',
     max_capacity: undefined,
-    status: 'scheduled',
     created_by: undefined,
   });
 
@@ -41,7 +40,6 @@ export function EventForm({ event, onSuccess, onCancel }: EventFormProps) {
         end_time: event.end_time,
         location: event.location || '',
         max_capacity: event.max_capacity,
-        status: event.status,
         created_by: event.created_by,
       });
     }
