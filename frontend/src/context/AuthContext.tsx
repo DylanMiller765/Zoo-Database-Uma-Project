@@ -33,28 +33,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const login = async (credentials: LoginCredentials) => {
     try {
       const response = await authService.login(credentials);
-      console.log('Full response from authService.login:', response);
-      console.log('response.success:', response.success);
-      console.log('response.data:', response.data);
-      console.log('response.data.user:', response.data?.user);
-      
       if (response.success && response.data.user) {
         setUser(response.data.user);
         // Redirect based on role
-        console.log('Login successful, user role:', response.data.user.role);
         if (response.data.user.role === 'employee') {
-          console.log('Redirecting to /admin');
-          window.location.href = '/admin';
+          router.push('/admin');
         } else {
-          console.log('Redirecting to /customer');
-          window.location.href = '/customer';
+          router.push('/customer');
         }
       } else {
-        console.log('Login condition failed!');
         throw new Error(response.message || 'Login failed');
       }
     } catch (error: any) {
-      console.error('Login error:', error);
       throw new Error(error.response?.data?.message || 'Login failed');
     }
   };
