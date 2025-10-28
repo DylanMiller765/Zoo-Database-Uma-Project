@@ -220,7 +220,10 @@ export default function CustomerDashboard() {
 
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2"><Calendar className="h-5 w-5 text-persian_orange-600" /> Upcoming Events</CardTitle>
+              <div className="flex items-center justify-between">
+                <CardTitle className="flex items-center gap-2"><Calendar className="h-5 w-5 text-persian_orange-600" /> Upcoming Events</CardTitle>
+                <Link href="/events" className="text-sm text-dark_spring_green-700 hover:underline">Look for more events →</Link>
+              </div>
             </CardHeader>
             <CardContent className="space-y-3">
               {[{title:'Dolphin Performance', date:'Nov 5, 2025 at 2:00 PM', location:'Aquatic Arena'},{title:'Lion Feeding Show', date:'Nov 12, 2025 at 11:30 AM', location:'Savanna Zone'}].map((e,i)=> (
@@ -257,7 +260,6 @@ export default function CustomerDashboard() {
                     </div>
                     <div className="flex gap-3">
                       <Button size="sm">View Ticket</Button>
-                      <Button size="sm" variant="outline">Download PDF</Button>
                     </div>
                   </div>
                 </div>
@@ -311,32 +313,59 @@ export default function CustomerDashboard() {
                 <p className="text-sm">You don't have an active membership</p>
               </div>
             )}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="rounded-2xl border-2 border-gray-200 p-5">
-                <p className="font-semibold text-gray-900">Individual Pass</p>
-                <p className="text-3xl font-bold text-gray-900 mt-2">$89<span className="text-base font-normal">/year</span></p>
-                <ul className="mt-3 text-sm text-gray-700 list-disc list-inside space-y-1">
-                  <li>Unlimited visits</li>
-                  <li>10% gift shop discount</li>
-                  <li>Free parking</li>
-                  <li>Member-only events</li>
-                </ul>
-                <Button className="mt-4">Get Started</Button>
+            {membership.status === "None" ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="rounded-2xl border-2 border-gray-200 p-5">
+                  <p className="font-semibold text-gray-900">Individual Pass</p>
+                  <p className="text-3xl font-bold text-gray-900 mt-2">$89<span className="text-base font-normal">/year</span></p>
+                  <ul className="mt-3 text-sm text-gray-700 list-disc list-inside space-y-1">
+                    <li>Unlimited visits</li>
+                    <li>10% gift shop discount</li>
+                    <li>Free parking</li>
+                    <li>Member-only events</li>
+                  </ul>
+                  <Button className="mt-4">Get Started</Button>
+                </div>
+                <div className="rounded-2xl border-2 border-purple-300 p-5">
+                  <div className="text-center text-xs font-semibold text-purple-700 -mt-6 mb-2">MOST POPULAR</div>
+                  <p className="font-semibold text-gray-900">Family Pass</p>
+                  <p className="text-3xl font-bold text-gray-900 mt-2">$199<span className="text-base font-normal">/year</span></p>
+                  <ul className="mt-3 text-sm text-gray-700 list-disc list-inside space-y-1">
+                    <li>Up to 4 family members</li>
+                    <li>Unlimited visits</li>
+                    <li>15% gift shop discount</li>
+                    <li>Priority event access</li>
+                    <li>Free guest passes (2/year)</li>
+                  </ul>
+                  <Button className="mt-4 bg-purple-600 hover:bg-purple-700">Get Started</Button>
+                </div>
               </div>
-              <div className="rounded-2xl border-2 border-purple-300 p-5">
-                <div className="text-center text-xs font-semibold text-purple-700 -mt-6 mb-2">MOST POPULAR</div>
-                <p className="font-semibold text-gray-900">Family Pass</p>
-                <p className="text-3xl font-bold text-gray-900 mt-2">$199<span className="text-base font-normal">/year</span></p>
-                <ul className="mt-3 text-sm text-gray-700 list-disc list-inside space-y-1">
-                  <li>Up to 4 family members</li>
-                  <li>Unlimited visits</li>
-                  <li>15% gift shop discount</li>
-                  <li>Priority event access</li>
-                  <li>Free guest passes (2/year)</li>
-                </ul>
-                <Button className="mt-4 bg-purple-600 hover:bg-purple-700">Get Started</Button>
+            ) : (
+              <div className="flex items-center justify-between rounded-xl border p-4">
+                <div>
+                  <p className="text-sm text-gray-600">Membership</p>
+                  <p className="text-lg font-semibold">{membership.detail}</p>
+                </div>
+                <Button variant="outline" onClick={() => router.push('/membership/confirmation')}>Manage Membership</Button>
               </div>
-            </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Account Details (from schema) */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Account Details</CardTitle>
+          </CardHeader>
+          <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-3 text-sm">
+            <div><span className="text-gray-500">Email:</span> <span className="font-medium">{profile?.customer_email || profile?.email || '—'}</span></div>
+            <div><span className="text-gray-500">Phone:</span> <span className="font-medium">{profile?.customer_phone || '—'}</span></div>
+            <div><span className="text-gray-500">Address:</span> <span className="font-medium">{profile?.address || '—'}</span></div>
+            <div><span className="text-gray-500">City:</span> <span className="font-medium">{profile?.city || '—'}</span></div>
+            <div><span className="text-gray-500">State:</span> <span className="font-medium">{profile?.state || '—'}</span></div>
+            <div><span className="text-gray-500">ZIP Code:</span> <span className="font-medium">{profile?.zip_code || '—'}</span></div>
+            <div><span className="text-gray-500">Annual Pass:</span> <span className="font-medium">{profile?.annual_pass || 'no'}</span></div>
+            <div><span className="text-gray-500">Registered:</span> <span className="font-medium">{formatDate(profile?.registration_date)}</span></div>
           </CardContent>
         </Card>
       </div>
