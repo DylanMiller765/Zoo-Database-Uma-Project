@@ -81,17 +81,15 @@ export interface CreateAnimalData extends Omit<Animal, 'animal_id' | 'created_da
 // Event Types
 export interface Event {
   event_id: number;
-  event_name: string;
+  name: string;
   description?: string;
   event_date: string;
   start_time: string;
   end_time: string;
   location?: string;
-  max_capacity?: number;
-  current_registrations?: number;
-  status: 'scheduled' | 'ongoing' | 'completed' | 'cancelled';
-  created_by?: number;
-  created_at?: string;
+  max_participants?: number;
+  ticket_price?: number;
+  coordinator_id?: number;
 }
 
 export interface CreateEventData extends Omit<Event, 'event_id' | 'current_registrations' | 'created_at'> {}
