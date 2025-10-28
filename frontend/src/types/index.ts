@@ -96,7 +96,9 @@ export interface Event {
   current_registrations?: number;
 }
 
-export interface CreateEventData extends Omit<Event, 'event_id' | 'current_registrations' | 'created_at' | 'status'> {}
+export interface CreateEventData extends Omit<Event, 'event_id' | 'current_registrations' | 'created_at'> {
+  status?: 'scheduled' | 'ongoing' | 'completed' | 'cancelled';
+}
 
 // Customer Types
 export interface Customer {

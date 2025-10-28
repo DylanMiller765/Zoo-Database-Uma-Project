@@ -28,6 +28,7 @@ export function EventForm({ event, onSuccess, onCancel }: EventFormProps) {
     location: '',
     max_capacity: undefined,
     created_by: undefined,
+    status: 'scheduled',
   });
 
   useEffect(() => {
@@ -41,6 +42,7 @@ export function EventForm({ event, onSuccess, onCancel }: EventFormProps) {
         location: event.location || '',
         max_capacity: event.max_capacity,
         created_by: event.created_by,
+        status: event.status || 'scheduled',
       });
     }
   }, [event]);
@@ -162,6 +164,16 @@ export function EventForm({ event, onSuccess, onCancel }: EventFormProps) {
             onChange={handleChange}
             placeholder="Leave blank for unlimited"
           />
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="status">Status</Label>
+          <Select id="status" name="status" value={formData.status} onChange={handleChange}>
+            <option value="scheduled">Scheduled</option>
+            <option value="ongoing">Ongoing</option>
+            <option value="completed">Completed</option>
+            <option value="cancelled">Cancelled</option>
+          </Select>
         </div>
       </div>
 
