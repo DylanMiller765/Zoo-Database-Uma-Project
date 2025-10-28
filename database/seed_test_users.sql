@@ -40,17 +40,17 @@ INSERT INTO user_accounts (username, email, role, customer_id) VALUES
 -- Add passwords for all users (simple passwords for testing)
 -- Employee passwords: all use "password123"
 INSERT INTO passwords (account_id, password_hash) VALUES
-(1, 'password123'),  -- Sarah Johnson (Manager)
-(2, 'password123'),  -- Mike Chen (Keeper)
-(3, 'password123'),  -- Emily Rodriguez (Veterinarian)
-(4, 'password123'),  -- David Kim (Coordinator)
-(5, 'password123'),  -- Lisa Thompson (Cashier)
-(6, 'password123'),  -- James Wilson (Guide)
-(7, 'password123'),  -- Anna Martinez (Keeper)
-(8, 'password123'),  -- Tom Brown (Maintenance)
-(9, 'password123'),  -- John Smith (Customer)
-(10, 'password123'), -- Maria Garcia (Customer)
-(11, 'password123'); -- Robert Davis (Customer)
+(1, 'password'),  -- Sarah Johnson (Manager)
+(2, 'password'),  -- Mike Chen (Keeper)
+(3, 'password'),  -- Emily Rodriguez (Veterinarian)
+(4, 'password'),  -- David Kim (Coordinator)
+(5, 'password'),  -- Lisa Thompson (Cashier)
+(6, 'password'),  -- James Wilson (Guide)
+(7, 'password'),  -- Anna Martinez (Keeper)
+(8, 'password'),  -- Tom Brown (Maintenance)
+(9, 'password'),  -- John Smith (Customer)
+(10, 'password'), -- Maria Garcia (Customer)
+(11, 'password'); -- Robert Davis (Customer)
 
 -- Verify the data
 SELECT 'Employees Created:' as Status;
