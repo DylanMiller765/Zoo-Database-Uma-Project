@@ -70,7 +70,7 @@ class AuthService {
     const [user] = await query<any[]>(
       `SELECT u.*,
               e.first_name as employee_first_name, e.last_name as employee_last_name,
-              e.email as employee_email, e.phone as employee_phone, e.job_role, e.department,
+              e.email as employee_email, e.phone as employee_phone, e.job_role,
               c.first_name as customer_first_name, c.last_name as customer_last_name,
               c.email as customer_email, c.phone as customer_phone, c.annual_pass
        FROM user_accounts u
