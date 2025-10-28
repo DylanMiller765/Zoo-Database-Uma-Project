@@ -261,13 +261,34 @@ export default function HomePage() {
       </section>
 
       {/* DONATE CTA */}
-      <section id="donate" className="rounded-xl border bg-white p-6 text-center">
-        <h3 className="text-xl font-semibold">Support Conservation</h3>
-        <p className="mt-2 text-gray-600">Donations help care for animals and protect habitats.</p>
-        <div className="mt-4">
-          <Button asChild className="rounded-full bg-sea_green-500 hover:bg-sea_green-600">
-            <Link href="/donate">Donate Now</Link>
-          </Button>
+      <section id="donate" className="rounded-xl border bg-white p-6 sm:p-8">
+        <div className="mx-auto max-w-3xl text-center">
+          <h3 className="text-2xl font-semibold">Support Conservation</h3>
+          <p className="mt-3 text-gray-600">Your donations make a real impact. Here's how:</p>
+          
+          <div className="mt-6 grid gap-4 sm:grid-cols-3 text-left">
+            <div className="rounded-lg bg-gray-50 p-4">
+              <div className="text-3xl mb-2">🦁</div>
+              <h4 className="font-semibold text-gray-900">Animal Care</h4>
+              <p className="mt-1 text-sm text-gray-600">Provide nutritious food, medical care, and enrichment for over 100 species.</p>
+            </div>
+            <div className="rounded-lg bg-gray-50 p-4">
+              <div className="text-3xl mb-2">🌍</div>
+              <h4 className="font-semibold text-gray-900">Habitat Protection</h4>
+              <p className="mt-1 text-sm text-gray-600">Fund global conservation projects protecting endangered species in the wild.</p>
+            </div>
+            <div className="rounded-lg bg-gray-50 p-4">
+              <div className="text-3xl mb-2">📚</div>
+              <h4 className="font-semibold text-gray-900">Education Programs</h4>
+              <p className="mt-1 text-sm text-gray-600">Support school visits, workshops, and community outreach inspiring the next generation.</p>
+            </div>
+          </div>
+
+          <div className="mt-6">
+            <Button asChild className="rounded-full bg-sea_green-500 hover:bg-sea_green-600">
+              <Link href="/tickets">Donate Now</Link>
+            </Button>
+          </div>
         </div>
       </section>
 
