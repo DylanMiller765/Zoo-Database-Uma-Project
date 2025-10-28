@@ -164,12 +164,14 @@ Expected response:
 
 Open browser to http://localhost:3000
 
-You should see the Zoo landing page with:
-- Welcome message
-- "Explore Animals" button
-- "Buy Tickets" button
-- "Login" button
-- Stats cards (156 Animals, 8 Habitats, Daily Events)
+You should see the ZooVerse 12 landing page with:
+- Hero section with welcome message
+- "Get Tickets" and explore buttons
+- Stats cards (100+ Species, 8 Habitats, 50,000+ Visitors)
+- Featured exhibits section
+- Attractions section (Gift Shop, Cafe, Play Zone)
+- Plan your visit information (Hours, Admission, Location, Memberships)
+- Conservation donation call-to-action
 
 ### 3. Test Database Connection
 
@@ -202,6 +204,18 @@ Expected tables:
 - feeding_logs, feeding_schedules, gift_shop_items
 - gift_shop_sale_items, gift_shop_sales_transactions
 - gift_shops, habitats, tickets, user_accounts, zookeeper_assignments
+
+## ⚠️ Security Warning
+
+**CRITICAL SECURITY ISSUE:** This application currently stores passwords in **plain text** in the database. This is a major security vulnerability and should be fixed before any production use.
+
+**Required Fix:**
+1. Implement bcrypt password hashing in the authentication service
+2. Hash passwords before storing in the database
+3. Never log or display passwords
+4. Update all existing passwords to hashed versions
+
+See `backend/src/config/auth.ts` and `backend/src/services/auth.service.ts` for implementation.
 
 ## Common Issues
 
@@ -243,28 +257,69 @@ cd frontend
 npm run build
 ```
 
+## Testing the Application
+
+### Test User Credentials
+
+The system comes with test users (see `database/seed_test_users.sql` if available):
+
+**Default Test Credentials:**
+- Manager: `manager@zoo.com` / `password123`
+- Keeper: `keeper@zoo.com` / `password123`
+- Veterinarian: `vet@zoo.com` / `password123`
+- Coordinator: `coordinator@zoo.com` / `password123`
+- Cashier: `cashier@zoo.com` / `password123`
+
+**Note:** These are example credentials. Check your actual database for valid test users.
+
+### Key Features to Test
+
+1. **Authentication:**
+   - Login at `/login`
+   - Employees redirect to `/admin` dashboard
+   - Customers redirect to `/customer` dashboard
+   - Role-based access control
+
+2. **Customer Portal:**
+   - Browse animals at `/exhibits`
+   - Purchase tickets at `/tickets`
+   - View and register for events at `/events`
+   - Buy memberships at `/membership`
+
+3. **Employee Dashboard:**
+   - View dashboard stats at `/admin`
+   - Manage animals at `/admin/animals`
+   - Manage employees at `/admin/employees`
+   - Manage events at `/admin/events`
+   - View analytics at `/admin/queries/*`
+
+4. **CRUD Operations:**
+   - Create, read, update, delete animals
+   - Create, read, update, delete employees
+   - Create, read, update, delete events
+   - Process ticket sales
+   - Process event registrations
+
 ## Next Steps
 
 1. **Explore the Codebase:**
-   - Backend: `backend/src/`
-   - Frontend: `frontend/src/`
+   - Backend services: `backend/src/services/`
+   - Backend routes: `backend/src/routes/`
+   - Frontend pages: `frontend/src/app/`
+   - Frontend components: `frontend/src/components/`
 
 2. **Read Documentation:**
-   - `CLAUDE.md` - Claude Code guidance
-   - `PROJECT_STRUCTURE.md` - Detailed project structure
-   - `README.md` - Project overview
+   - [PROJECT_STRUCTURE.md](PROJECT_STRUCTURE.md) - Complete architecture
+   - [BACKEND_API_DOCS.md](BACKEND_API_DOCS.md) - API reference
+   - [README.md](README.md) - Project overview
 
-3. **Start Development:**
-   - Implement remaining backend services
-   - Create frontend pages and components
-   - Add authentication flows
-   - Build dashboard features
-
-4. **Test Features:**
-   - User registration/login
-   - Employee dashboard
-   - Customer portal
-   - Role-based access control
+3. **Current System Status:**
+   - ✅ All backend services implemented (17 services)
+   - ✅ All frontend pages created (20+ pages)
+   - ✅ Authentication and authorization working
+   - ✅ CRUD operations for all entities
+   - ✅ Dashboard and analytics
+   - ⚠️ **CRITICAL:** Password hashing not implemented (plain text)
 
 ## Production Deployment
 

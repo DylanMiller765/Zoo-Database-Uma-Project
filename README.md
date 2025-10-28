@@ -4,23 +4,31 @@
 
 ## 📌 Project Overview
 
-A modern web application for managing all aspects of zoo operations, featuring:
+A comprehensive full-stack web application for managing all aspects of zoo operations. The system features a complete CRUD implementation for all entities, role-based access control, and extensive analytics capabilities.
 
-### Customer Portal
-- 🐾 Browse animals and habitats
-- 🎟️ Purchase tickets online
-- 📅 View and register for events
-- 👤 Customer account management
+### Customer Portal Features
+- 🐾 Browse animals and habitats with detailed information
+- 🎟️ Purchase tickets online (adult, child, senior pricing)
+- 📅 View, search, and register for events
+- 👤 Customer account management with profile updates
+- 🎁 Annual membership/pass purchasing
+- 💚 Conservation donation system
 - 📱 Responsive mobile-friendly design
 
-### Employee Dashboard
-- 📊 Real-time dashboard with metrics
-- 🔐 Role-based access control
-- 🐘 Animal management (health, feeding, assignments)
-- 👥 Employee and customer management
-- 🛍️ Gift shop and cafe operations
-- 📈 Revenue reports and analytics
-- 🎫 Ticket sales interface
+### Employee Dashboard Features
+- 📊 Real-time dashboard with key metrics and activity feed
+- 🔐 JWT-based authentication with role-based access control (8 roles)
+- 🐘 Complete animal management (CRUD, health tracking, medical notes)
+- 👥 Employee management (CRUD, salary tracking, role assignments)
+- 👤 Customer management with annual pass tracking
+- 🏡 Habitat management with capacity and maintenance tracking
+- 🎪 Attraction and event management
+- 🛍️ Gift shop operations (shops, items, sales, inventory)
+- ☕ Cafe operations (cafes, menus, sales)
+- 🎫 Ticket sales and tracking interface
+- 📈 Advanced analytics and custom query reports
+- 🦁 Keeper-to-animal assignment system
+- 🍽️ Feeding schedule and log tracking
 
 ## 🚀 Technology Stack
 
@@ -147,12 +155,13 @@ Port: 43756
 Database: zoo_database
 ```
 
-### Schema Tables
-- **Core:** animals, habitats, employees, customers
-- **Operations:** tickets, events, feeding_logs
-- **Sales:** gift_shop_sales, cafe_sales
-- **Authentication:** user_accounts
-- **Analytics:** daily_revenue_summary (view)
+### Schema Tables (20 tables)
+- **Core Entities:** animals, habitats, attractions, employees, customers
+- **Operations:** tickets, events, event_registrations, feeding_logs, feeding_schedules
+- **Staff Management:** zookeeper_assignments
+- **Sales:** gift_shops, gift_shop_items, gift_shop_sales_transactions, gift_shop_sale_items, cafes, cafe_items, cafe_sales
+- **Authentication:** user_accounts, passwords
+- **Analytics:** Complex queries for revenue, attendance, and statistics
 
 ### Applying Schema
 ```bash
@@ -207,41 +216,79 @@ The system implements JWT-based authentication with role-based access control:
 ### API Endpoints
 
 **Authentication:**
-- `POST /api/auth/register` - Register user
-- `POST /api/auth/login` - Login
-- `GET /api/auth/profile` - Get profile
+- `POST /api/auth/register` - Register new customer account
+- `POST /api/auth/login` - Login (returns JWT token)
+- `GET /api/auth/profile` - Get authenticated user profile
+- `PUT /api/auth/profile` - Update user profile
+- `POST /api/auth/logout` - Logout
 
-**Coming Soon:**
-- `/api/animals` - Animal management | Abdullah 
-- `/api/employees` - Employee CRUD | Abdullah 
-- `/api/tickets` - Ticket sales | Abdullah 
-- `/api/events` - Event management
-- `/api/dashboard` - Dashboard metrics
-- `/api/reports` - Analytics
+**Core Entities:**
+- `/api/animals` - Complete animal CRUD with health tracking
+- `/api/employees` - Employee management with role assignments
+- `/api/customers` - Customer management with annual pass tracking
+- `/api/habitats` - Habitat operations with capacity management
+- `/api/attractions` - Attraction management
+
+**Operations:**
+- `/api/tickets` - Ticket sales and tracking
+- `/api/events` - Event management with status tracking
+- `/api/event-registrations` - Event registration and attendance
+
+**Sales & Commerce:**
+- `/api/gift-shops` - Gift shop management
+- `/api/gift-shop-items` - Gift shop inventory
+- `/api/gift-shop-sales` - Gift shop sales transactions
+- `/api/cafes` - Cafe management
+- `/api/cafe-items` - Cafe menu management
+- `/api/cafe-sales` - Cafe sales tracking
+
+**Analytics:**
+- `/api/dashboard` - Dashboard statistics
+- `/api/queries` - Advanced analytics endpoints (5 custom queries)
+
+For detailed API documentation, see [BACKEND_API_DOCS.md](BACKEND_API_DOCS.md)
 
 ## 🎯 Project Status
 
-### ✅ Completed
-- [x] Project scaffolding
+### ✅ Completed Features
+- [x] Complete project architecture with TypeScript
 - [x] Backend foundation (config, middleware, utils)
-- [x] Frontend setup with Next.js 14
-- [x] Tailwind configuration with custom palette
-- [x] Database connection to Railway
+- [x] Frontend setup with Next.js 14 App Router
+- [x] Tailwind configuration with custom zoo color palette
+- [x] Database connection to Railway MySQL
+- [x] JWT-based authentication system
+- [x] Complete user registration and login system
+- [x] Role-based access control (8 employee roles + customer role)
+- [x] All backend services (17 services implemented)
+- [x] All backend controllers (17 controllers)
+- [x] Complete CRUD operations for all entities
+- [x] Employee dashboard with real-time statistics
+- [x] Customer portal pages (tickets, events, memberships)
+- [x] Animal management interface
+- [x] Employee management interface
+- [x] Customer management interface
+- [x] Event management with status tracking
+- [x] Ticket purchasing system with multiple ticket types
+- [x] Event registration and attendance tracking
+- [x] Gift shop operations (shops, items, sales, inventory)
+- [x] Cafe operations (cafes, menus, sales)
+- [x] Habitat and attraction management
+- [x] Advanced analytics with 5 custom query reports
+- [x] Form components for all entities
+- [x] Search and filtering on major pages
+- [x] Reusable UI components with shadcn/ui
+- [x] Complete TypeScript type system
+- [x] API client with Axios interceptors
 
-
-### 🚧 In Progress / Next Steps
-- [ ] Backend foundation (config, middleware, utils)
-- [ ] Authentication system (JWT, bcrypt)
-- [ ] Complete backend services (animals, employees, etc.)
-- [ ] Create all frontend pages
-- [ ] Build reusable UI components
-- [ ] Implement employee dashboard
-- [ ] Create customer portal
-- [ ] Add data visualization (charts)
-- [ ] Build report generation
-- [ ] Add form validation
-- [ ] Implement file uploads (animal photos)
-- [ ] Add search and filtering
+### 🚧 Known Limitations / Future Enhancements
+- [ ] File uploads for animal photos (would require schema change)
+- [ ] Email notification system (perhaps just a push notification on the website if they're logged in)
+- [ ] Payment gateway integration
+- [ ] PDF report generation (probably unncessary)
+- [ ] Data visualization charts/graphs (maybe for finiance report)
+- [ ] Advanced filtering options
+- [ ] Mobile app version (probably unncessary)
+- [ ] Audit log tracking
 
 ## 👥 Team Workflow
 
