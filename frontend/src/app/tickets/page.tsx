@@ -52,6 +52,21 @@ export default function TicketsPage() {
       return;
     }
 
+    // Validate date is not in the past or too far in the future
+    const selectedDate = new Date(visitDate);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const oneYearFromNow = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000);
+
+    if (selectedDate < today) {
+      setError('Please select a date in the future');
+      return;
+    }
+    if (selectedDate > oneYearFromNow) {
+      setError('Please select a date within the next year');
+      return;
+    }
+
     setIsProcessing(true);
     setError(null);
 
@@ -60,20 +75,23 @@ export default function TicketsPage() {
       const user = authService.getStoredUser();
       const customerId = user?.role === 'customer' && user.customer_id ? user.customer_id : undefined;
 
+      console.log('Ticket purchase - User:', user);
+      console.log('Ticket purchase - Customer ID:', customerId);
+
       // Create ticket records for each ticket type
       const ticketPromises = [];
 
       // Adult tickets
       for (let i = 0; i < adults; i++) {
-        ticketPromises.push(
-          ticketService.create({
-            customer_id: customerId,
-            visit_date: visitDate,
-            ticket_type: 'adult',
-            price: TICKET_PRICES.adult,
-            payment_method: 'online',
-          })
-        );
+        const ticketData = {
+          customer_id: customerId,
+          visit_date: visitDate,
+          ticket_type: 'adult' as const,
+          price: TICKET_PRICES.adult,
+          payment_method: 'online' as const,
+        };
+        console.log('Creating adult ticket:', ticketData);
+        ticketPromises.push(ticketService.create(ticketData));
       }
 
       // Child tickets
@@ -161,6 +179,7 @@ export default function TicketsPage() {
                   value={visitDate}
                   onChange={(e) => setVisitDate(e.target.value)}
                   min={new Date().toISOString().split('T')[0]}
+                  max={new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]}
                   className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-sea_green-500 focus:border-sea_green-500 transition-all"
                 />
                 <p className="mt-2 text-xs text-gray-600">
