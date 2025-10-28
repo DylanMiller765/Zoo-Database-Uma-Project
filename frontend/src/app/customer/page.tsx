@@ -23,6 +23,16 @@ type ProfileResponse = {
   data: any;
 };
 
+type SummaryResponse = {
+  success: boolean;
+  data: {
+    membership: { annual_pass: 'yes' | 'no' };
+    ticketsUpcoming: any[];
+    eventRegsUpcoming: any[];
+    visitsRecent: any[];
+  };
+};
+
 const StatsCard = ({ title, value, icon: Icon, iconColor }: { title: string; value: string | number; icon: any; iconColor: string }) => (
   <Card>
     <CardContent className="pt-6">
@@ -45,6 +55,10 @@ export default function CustomerDashboard() {
   const [fetching, setFetching] = React.useState(true);
   const [profile, setProfile] = React.useState<any>(null);
   const [active, setActive] = React.useState<string>("dashboard");
+  const [tickets, setTickets] = React.useState<any[]>([]);
+  const [upcomingTickets, setUpcomingTickets] = React.useState<any[]>([]);
+  const [registrations, setRegistrations] = React.useState<any[]>([]);
+  const [visits, setVisits] = React.useState<any[]>([]);
 
   React.useEffect(() => {
     if (!loading) {
@@ -60,8 +74,19 @@ export default function CustomerDashboard() {
   const load = async () => {
     try {
       setFetching(true);
-      const res = await apiClient.get<ProfileResponse>("/auth/profile");
-      setProfile(res.data.data);
+      const [profileRes, summaryRes, ticketsRes, regsRes, visitsRes] = await Promise.all([
+        apiClient.get<ProfileResponse>("/auth/profile"),
+        apiClient.get<SummaryResponse>("/me/summary"),
+        apiClient.get<{ success: boolean; data: any[] }>("/me/tickets"),
+        apiClient.get<{ success: boolean; data: any[] }>("/me/event-registrations"),
+        apiClient.get<{ success: boolean; data: any[] }>("/me/visits"),
+      ]);
+
+      setProfile(profileRes.data.data);
+      setUpcomingTickets(summaryRes.data.data.ticketsUpcoming || []);
+      setRegistrations(regsRes.data.data || []);
+      setVisits(visitsRes.data.data || []);
+      setTickets(ticketsRes.data.data || []);
     } catch (e: any) {
       console.error("Failed to load profile", e);
     } finally {
@@ -201,15 +226,15 @@ export default function CustomerDashboard() {
                   <CardTitle className="flex items-center gap-2"><Ticket className="h-5 w-5 text-sea_green-600" /> Upcoming Tickets</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3">
-                  {[{title:'Adult Ticket', date:'Nov 2, 2025', visitors:2, price:'$45.00'},{title:'Family Pass', date:'Nov 15, 2025', visitors:4, price:'$120.00'}].map((t,i)=> (
+                  {upcomingTickets.map((t:any,i:number)=> (
                     <div key={i} className="rounded-xl border border-gray-200 bg-dark_spring_green-50 p-4 flex items-center justify-between">
                       <div>
-                        <p className="font-medium text-gray-900">{t.title}</p>
-                        <p className="text-sm text-gray-600">{t.date}</p>
+                        <p className="font-medium text-gray-900 capitalize">{t.ticket_type} Ticket</p>
+                        <p className="text-sm text-gray-600">{t.visit_date ? new Date(t.visit_date).toLocaleDateString() : 'Flexible date'}</p>
                       </div>
                       <div className="flex items-center gap-4">
                         <span className="rounded-full bg-green-500/10 text-green-700 text-xs px-3 py-1">Confirmed</span>
-                        <span className="font-semibold text-gray-900">{t.price}</span>
+                        <span className="font-semibold text-gray-900">${Number(t.price).toFixed(2)}</span>
                       </div>
                     </div>
                   ))}
@@ -224,10 +249,10 @@ export default function CustomerDashboard() {
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-3">
-                  {[{title:'Dolphin Performance', date:'Nov 5, 2025 at 2:00 PM', location:'Aquatic Arena'},{title:'Lion Feeding Show', date:'Nov 12, 2025 at 11:30 AM', location:'Savanna Zone'}].map((e,i)=> (
-                    <div key={i} className="rounded-xl border border-gray-200 bg-purple-50 p-4">
-                      <p className="font-medium text-gray-900">{e.title}</p>
-                      <p className="text-sm text-gray-600">{e.date}</p>
+                  {registrations.filter((r:any)=> !r.event_date || new Date(r.event_date) >= new Date()).slice(0,2).map((e:any,i:number)=> (
+                    <div key={e.registration_id ?? i} className="rounded-xl border border-gray-200 bg-purple-50 p-4">
+                      <p className="font-medium text-gray-900">{e.event_name}</p>
+                      <p className="text-sm text-gray-600">{e.event_date ? new Date(e.event_date).toLocaleDateString() : ''}{e.start_time ? ` at ${e.start_time}` : ''}</p>
                       <p className="text-sm text-gray-600">{e.location}</p>
                     </div>
                   ))}
@@ -244,19 +269,19 @@ export default function CustomerDashboard() {
               <CardTitle className="flex items-center gap-2"><Ticket className="h-5 w-5 text-sea_green-600" /> My Tickets</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              {[{title:'Adult Ticket', date:'Nov 2, 2025', visitors:2, price:'$45.00'},{title:'Family Pass', date:'Nov 15, 2025', visitors:4, price:'$120.00'}].map((t,i)=> (
-                <div key={i} className="rounded-xl border-2 border-gray-200 p-4">
+              {tickets.map((t:any)=> (
+                <div key={t.ticket_id} className="rounded-xl border-2 border-gray-200 p-4">
                   <div className="flex items-start justify-between">
                     <div>
-                      <p className="font-semibold text-gray-900">{t.title}</p>
-                      <p className="text-sm text-gray-600">{t.date}</p>
+                      <p className="font-semibold text-gray-900 capitalize">{t.ticket_type} Ticket</p>
+                      <p className="text-sm text-gray-600">{t.visit_date ? new Date(t.visit_date).toLocaleDateString() : 'Flexible date'}</p>
                     </div>
                     <span className="rounded-full bg-green-500/10 text-green-700 text-xs px-3 py-1">Confirmed</span>
                   </div>
                   <div className="mt-3 flex items-center justify-between">
                     <div className="text-sm text-gray-700 space-x-6">
-                      <span><span className="text-gray-500">Number of Visitors</span> <span className="font-semibold">{t.visitors}</span></span>
-                      <span><span className="text-gray-500">Total Price</span> <span className="font-semibold">{t.price}</span></span>
+                      <span><span className="text-gray-500">Purchase Date</span> <span className="font-semibold">{t.purchase_date ? new Date(t.purchase_date).toLocaleDateString() : '—'}</span></span>
+                      <span><span className="text-gray-500">Price</span> <span className="font-semibold">${Number(t.price).toFixed(2)}</span></span>
                     </div>
                     <div className="flex gap-3">
                       <Button size="sm">View Ticket</Button>
@@ -278,11 +303,11 @@ export default function CustomerDashboard() {
               </div>
             </CardHeader>
             <CardContent className="space-y-4">
-              {[{title:'Dolphin Performance', date:'Nov 5, 2025', time:'2:00 PM', location:'Aquatic Arena'},{title:'Lion Feeding Show', date:'Nov 12, 2025', time:'11:30 AM', location:'Savanna Zone'}].map((e,i)=> (
-                <div key={i} className="rounded-xl border-2 border-purple-200 bg-purple-50 p-4">
-                  <p className="font-semibold text-gray-900">{e.title}</p>
-                  <div className="text-sm text-gray-700 mt-1">Date <span className="font-medium">{e.date}</span> · Time <span className="font-medium">{e.time}</span></div>
-                  <div className="text-sm text-gray-700">Location <span className="font-medium">{e.location}</span></div>
+              {registrations.map((e:any)=> (
+                <div key={e.registration_id} className="rounded-xl border-2 border-purple-200 bg-purple-50 p-4">
+                  <p className="font-semibold text-gray-900">{e.event_name}</p>
+                  <div className="text-sm text-gray-700 mt-1">Date <span className="font-medium">{e.event_date ? new Date(e.event_date).toLocaleDateString() : '—'}</span>{e.start_time ? <> · Time <span className="font-medium">{e.start_time}</span></> : null}</div>
+                  <div className="text-sm text-gray-700">Location <span className="font-medium">{e.location || '—'}</span></div>
                   <div className="mt-3">
                     <Button className="bg-purple-600 hover:bg-purple-700">Add to Calendar</Button>
                   </div>
@@ -299,11 +324,10 @@ export default function CustomerDashboard() {
               <CardTitle className="flex items-center gap-2"><MapPin className="h-5 w-5 text-amber-600" /> Visit History</CardTitle>
             </CardHeader>
             <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {[{date:'Oct 20, 2025', hours:'4 hours · 2 visitors', highlights:'Elephant Show, Panda Viewing'},{date:'Sep 15, 2025', hours:'5 hours · 3 visitors', highlights:'Safari Tour, Bird Paradise'},{date:'Aug 10, 2025', hours:'3 hours · 2 visitors', highlights:'Reptile House, Aquarium'}].map((v,i)=> (
+              {visits.map((v:any,i:number)=> (
                 <div key={i} className="rounded-xl border-2 border-amber-200 bg-amber-50 p-4">
-                  <p className="font-semibold text-gray-900">{v.date}</p>
-                  <p className="text-sm text-gray-700">{v.hours}</p>
-                  <p className="text-sm text-gray-700 mt-2"><span className="text-gray-500">Highlights</span> {v.highlights}</p>
+                  <p className="font-semibold text-gray-900">{v.visit_date ? new Date(v.visit_date).toLocaleDateString() : '—'}</p>
+                  <p className="text-sm text-gray-700">Tickets: {v.tickets_count} · Spent: ${Number(v.total_spent).toFixed(2)}</p>
                 </div>
               ))}
             </CardContent>
@@ -366,9 +390,13 @@ export default function CustomerDashboard() {
         {active === 'profile' && (
           <Card>
             <CardHeader>
-              <CardTitle>Account Details</CardTitle>
+              <div className="flex items-center justify-between">
+                <CardTitle>Account Details</CardTitle>
+                <Button variant="outline" size="sm" onClick={() => router.push('/customer/profile')}>Edit Profile</Button>
+              </div>
             </CardHeader>
             <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-3 text-sm">
+              <div><span className="text-gray-500">Name:</span> <span className="font-medium">{`${profile?.customer_first_name || user?.first_name || ''} ${profile?.customer_last_name || user?.last_name || ''}`.trim() || '—'}</span></div>
               <div><span className="text-gray-500">Email:</span> <span className="font-medium">{profile?.customer_email || profile?.email || '—'}</span></div>
               <div><span className="text-gray-500">Phone:</span> <span className="font-medium">{profile?.customer_phone || '—'}</span></div>
               <div><span className="text-gray-500">Address:</span> <span className="font-medium">{profile?.address || '—'}</span></div>
