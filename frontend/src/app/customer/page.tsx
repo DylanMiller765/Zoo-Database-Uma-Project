@@ -257,48 +257,93 @@ export default function CustomerDashboard() {
         {active === 'membership' && (
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2"><CreditCard className="h-5 w-5 text-dark_spring_green-600" /> Current Status: {membership.status}</CardTitle>
+              <CardTitle className="flex items-center gap-2"><CreditCard className="h-5 w-5 text-dark_spring_green-600" /> Membership Status</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              {membership.status === "None" && (
-                <div className="rounded-xl bg-gradient-to-r from-amber-400 to-orange-500 text-white p-5 shadow">
-                  <p className="text-sm">You don't have an active membership</p>
-                </div>
-              )}
               {membership.status === "None" ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="rounded-2xl border-2 border-gray-200 p-5">
-                    <p className="font-semibold text-gray-900">Individual Pass</p>
-                    <p className="text-3xl font-bold text-gray-900 mt-2">$89<span className="text-base font-normal">/year</span></p>
-                    <ul className="mt-3 text-sm text-gray-700 list-disc list-inside space-y-1">
-                      <li>Unlimited visits</li>
-                      <li>10% gift shop discount</li>
-                      <li>Free parking</li>
-                      <li>Member-only events</li>
-                    </ul>
-                    <Button className="mt-4">Get Started</Button>
+                // No membership - show purchase option
+                <div>
+                  <div className="rounded-xl bg-gradient-to-r from-amber-400 to-orange-500 text-white p-5 shadow mb-4">
+                    <p className="text-sm">You don't have an active membership</p>
                   </div>
-                  <div className="rounded-2xl border-2 border-purple-300 p-5">
-                    <div className="text-center text-xs font-semibold text-purple-700 -mt-6 mb-2">MOST POPULAR</div>
-                    <p className="font-semibold text-gray-900">Family Pass</p>
-                    <p className="text-3xl font-bold text-gray-900 mt-2">$199<span className="text-base font-normal">/year</span></p>
-                    <ul className="mt-3 text-sm text-gray-700 list-disc list-inside space-y-1">
-                      <li>Up to 4 family members</li>
-                      <li>Unlimited visits</li>
-                      <li>15% gift shop discount</li>
-                      <li>Priority event access</li>
-                      <li>Free guest passes (2/year)</li>
+                  
+                  <div className="rounded-2xl border-2 border-gray-200 p-6 max-w-md">
+                    <p className="font-semibold text-gray-900 text-lg">Individual Annual Pass</p>
+                    <p className="text-3xl font-bold text-gray-900 mt-2">$149<span className="text-base font-normal">/year</span></p>
+                    <ul className="mt-4 text-sm text-gray-700 space-y-2">
+                      <li className="flex items-start gap-2">
+                        <span className="text-sea_green-600 mt-0.5">✓</span>
+                        <span>Unlimited access for 1 adult for one year</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <span className="text-sea_green-600 mt-0.5">✓</span>
+                        <span>10% discount at gift shop and cafés</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <span className="text-sea_green-600 mt-0.5">✓</span>
+                        <span>Free parking</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <span className="text-sea_green-600 mt-0.5">✓</span>
+                        <span>Early access to special events</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <span className="text-sea_green-600 mt-0.5">✓</span>
+                        <span>Member-only newsletter</span>
+                      </li>
                     </ul>
-                    <Button className="mt-4 bg-purple-600 hover:bg-purple-700">Get Started</Button>
+                    <Button className="mt-6 w-full" onClick={() => router.push('/membership')}>
+                      Purchase Membership
+                    </Button>
                   </div>
                 </div>
               ) : (
-                <div className="flex items-center justify-between rounded-xl border p-4">
-                  <div>
-                    <p className="text-sm text-gray-600">Membership</p>
-                    <p className="text-lg font-semibold">{membership.detail}</p>
+                // Has membership - show benefits
+                <div>
+                  <div className="rounded-xl bg-gradient-to-r from-sea_green-500 to-dark_spring_green-600 text-white p-6 shadow mb-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm opacity-90">Active Membership</p>
+                        <p className="text-2xl font-bold mt-1">Individual Annual Pass</p>
+                      </div>
+                      <Award className="h-12 w-12 opacity-90" />
+                    </div>
                   </div>
-                  <Button variant="outline" onClick={() => router.push('/membership/confirmation')}>Manage Membership</Button>
+
+                  <div className="rounded-xl border-2 border-sea_green-200 bg-sea_green-50 p-6">
+                    <h4 className="font-semibold text-gray-900 mb-3">Your Member Benefits</h4>
+                    <ul className="text-sm text-gray-700 space-y-2">
+                      <li className="flex items-start gap-2">
+                        <span className="text-sea_green-600 mt-0.5">✓</span>
+                        <span>Unlimited access for 1 adult for one year</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <span className="text-sea_green-600 mt-0.5">✓</span>
+                        <span>10% discount at gift shop and cafés</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <span className="text-sea_green-600 mt-0.5">✓</span>
+                        <span>Free parking</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <span className="text-sea_green-600 mt-0.5">✓</span>
+                        <span>Early access to special events</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <span className="text-sea_green-600 mt-0.5">✓</span>
+                        <span>Member-only newsletter</span>
+                      </li>
+                    </ul>
+                  </div>
+
+                  <div className="mt-4 flex gap-3">
+                    <Button variant="outline" onClick={() => router.push('/membership')}>
+                      Renew Membership
+                    </Button>
+                    <Button variant="outline" onClick={() => router.push('/membership/confirmation')}>
+                      View Details
+                    </Button>
+                  </div>
                 </div>
               )}
             </CardContent>
