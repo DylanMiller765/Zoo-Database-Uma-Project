@@ -185,9 +185,17 @@ export default function CustomerDashboard() {
         {active === 'dashboard' && (
           <>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              <StatsCard title="Tickets Purchased" value={3} icon={Ticket} iconColor="text-sea_green-600" />
-              <StatsCard title="Total Visits" value={8} icon={MapPin} iconColor="text-dark_spring_green-600" />
-              <StatsCard title="Membership" value={membership.status} icon={CreditCard} iconColor="text-dark_spring_green-600" />
+              {/* Temporarily hidden per request; keep for later re-enable */}
+              {false && (
+                <StatsCard title="Tickets Purchased" value={3} icon={Ticket} iconColor="text-sea_green-600" />
+              )}
+              {false && (
+                <StatsCard title="Total Visits" value={8} icon={MapPin} iconColor="text-dark_spring_green-600" />
+              )}
+              {/* Stretch the Membership card to fill available columns while others are hidden */}
+              <div className="col-span-1 md:col-span-2 lg:col-span-3">
+                <StatsCard title="Membership" value={membership.status} icon={CreditCard} iconColor="text-dark_spring_green-600" />
+              </div>
             </div>
 
             <div className="grid grid-cols-1 gap-6">
