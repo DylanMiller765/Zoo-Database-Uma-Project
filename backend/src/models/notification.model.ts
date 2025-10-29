@@ -20,7 +20,13 @@ export class NotificationModel {
 
     sql += ' ORDER BY created_at DESC';
 
-    return await query<Notification[]>(sql, params);
+    console.log('[NOTIFICATIONS DB] Executing query:', sql);
+    console.log('[NOTIFICATIONS DB] Parameters:', params);
+
+    const results = await query<Notification[]>(sql, params);
+    console.log('[NOTIFICATIONS DB] Query returned', results.length, 'rows');
+
+    return results;
   }
 
   static async markAsRead(notificationId: number): Promise<void> {
