@@ -4,23 +4,23 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useEffect, useState } from "react";
-import { attractionService } from "@/services/attractions.service";
+import { habitatService } from "@/services/habitat.service";
 import { eventService } from "@/services/event.service";
-import { Attraction, Event } from "@/types";
+import { Habitat, Event } from "@/types";
 
 export default function HomePage() {
-  const [attractions, setAttractions] = useState<Attraction[]>([]);
+  const [habitats, setHabitats] = useState<Habitat[]>([]);
   const [events, setEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [attractionsData, eventsData] = await Promise.all([
-          attractionService.getAll(),
+        const [habitatsData, eventsData] = await Promise.all([
+          habitatService.getAll(),
           eventService.getAll(),
         ]);
-        setAttractions(attractionsData);
+        setHabitats(habitatsData);
         setEvents(eventsData);
       } catch (error) {
         console.error("Error fetching data:", error);
@@ -109,26 +109,27 @@ export default function HomePage() {
           {loading ? (
             <p>Loading exhibits...</p>
           ) : (
-            attractions.slice(0, 3).map((attraction) => (
+            habitats.slice(0, 3).map((habitat) => (
               <Card
-                key={attraction.attraction_id}
+                key={habitat.habitat_id}
                 className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
               >
                 <CardHeader className="px-0 pt-0 pb-3">
                   <div className="w-full overflow-hidden rounded-t-lg">
                     <img
                       src={`/images/pexels-gary-whyte-228069-730537.jpg`}
-                      alt={attraction.name}
+                      alt={habitat.habitat_name}
                       loading="lazy"
                       className="h-44 w-full object-cover"
                     />
                   </div>
                   <div className="px-6 pt-4">
-                    <CardTitle className="text-lg text-dark_spring_green-700">{attraction.name}</CardTitle>
+                    <CardTitle className="text-lg text-dark_spring_green-700">{habitat.habitat_name}</CardTitle>
+                    <p className="text-xs text-sea_green-600 font-medium mt-1">{habitat.environment_type}</p>
                   </div>
                 </CardHeader>
                 <CardContent className="px-6 pb-6 text-sm text-gray-700">
-                  <p className="leading-relaxed">{attraction.location}</p>
+                  <p className="leading-relaxed">Size: {habitat.size} • Capacity: {habitat.animal_capacity} animals</p>
                 </CardContent>
               </Card>
             ))
