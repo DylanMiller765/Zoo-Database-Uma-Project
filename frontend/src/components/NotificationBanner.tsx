@@ -21,12 +21,12 @@ export default function NotificationBanner() {
         return;
       }
 
-      console.log('[NOTIFICATIONS FRONTEND] Fetching unread notifications...');
-      // Fix: Fetch only unread notifications (true instead of false)
-      const unreadNotifications = await notificationService.getNotifications(true);
-      console.log('[NOTIFICATIONS FRONTEND] Received', unreadNotifications.length, 'unread notifications');
-      console.log('[NOTIFICATIONS FRONTEND] Notifications:', unreadNotifications);
-      setNotifications(unreadNotifications);
+      console.log('[NOTIFICATIONS FRONTEND] Fetching ALL notifications (for debugging)...');
+      // Temporarily fetch ALL notifications to debug the issue
+      const allNotifications = await notificationService.getNotifications(false);
+      console.log('[NOTIFICATIONS FRONTEND] Received', allNotifications.length, 'notifications');
+      console.log('[NOTIFICATIONS FRONTEND] Notifications:', allNotifications);
+      setNotifications(allNotifications);
     } catch (error) {
       console.error('[NOTIFICATIONS FRONTEND] Error fetching notifications:', error);
     } finally {
