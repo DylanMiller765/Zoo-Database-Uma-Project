@@ -20,8 +20,21 @@ export class HabitatModel {
   }
 
   static async update(id: number, updates: Partial<Habitat>): Promise<Habitat | null> {
-    const sql = 'UPDATE habitats SET ? WHERE habitat_id = ?';
-    await query(sql, [updates, id]);
+    // Remove read-only fields that shouldn't be updated
+    const { habitat_id, created_date, ...updateFields } = updates as any;
+
+    // Build SET clause dynamically to avoid issues with SET ?
+    const setClause = Object.keys(updateFields)
+      .map(key => `${key} = ?`)
+      .join(', ');
+
+    if (setClause.length === 0) {
+      return await this.findById(id);
+    }
+
+    const values = Object.values(updateFields);
+    const sql = `UPDATE habitats SET ${setClause} WHERE habitat_id = ?`;
+    await query(sql, [...values, id]);
     return await this.findById(id);
   }
 

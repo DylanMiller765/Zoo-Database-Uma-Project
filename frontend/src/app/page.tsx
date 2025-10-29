@@ -3,9 +3,35 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-// Header is rendered in Root layout
+import { useEffect, useState } from "react";
+import { attractionService } from "@/services/attractions.service";
+import { eventService } from "@/services/event.service";
+import { Attraction, Event } from "@/types";
 
 export default function HomePage() {
+  const [attractions, setAttractions] = useState<Attraction[]>([]);
+  const [events, setEvents] = useState<Event[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [attractionsData, eventsData] = await Promise.all([
+          attractionService.getAll(),
+          eventService.getAll(),
+        ]);
+        setAttractions(attractionsData);
+        setEvents(eventsData);
+      } catch (error) {
+        console.error("Error fetching data:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
+
   return (
     <>
         <div className="space-y-16 pb-16">
@@ -80,49 +106,33 @@ export default function HomePage() {
         <p className="text-sm text-gray-600">Discover our most popular exhibits and crowd favorites!</p>
 
         <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
-          {[
-            {
-              title: "African Savanna",
-              desc: "Lions, zebras, giraffes roaming open grasslands.",
-              img: "/images/pexels-gary-whyte-228069-730537.jpg",
-            },
-            {
-              title: "Tropical Rainforest",
-              desc: "Tropical birds, amphibians, and dense canopy.",
-              img: "/images/pexels-mikhail-nilov-7709803.jpg",
-            },
-            {
-              title: "Elephant Valley",
-              desc: "Multi-generational herd and keeper talks.",
-              img: "/images/pexels-hsapir-1054666.jpg",
-              href: "/exhibits/elephant-valley",
-            },
-          ].map((e) => (
-            <Card
-              key={e.title}
-              className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
-            >
-              <CardHeader className="px-0 pt-0 pb-3">
-                <div className="w-full overflow-hidden rounded-t-lg">
-                  <img
-                    src={e.img}
-                    alt={e.title}
-                    loading="lazy"
-                    className="h-44 w-full object-cover"
-                    onError={(ev) => {
-                      (ev.currentTarget as HTMLImageElement).src = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='600' height='300'><rect fill='%23e5e7eb' width='100%25' height='100%25'/><text x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' fill='%239ca3af' font-size='18'>Image unavailable</text></svg>";
-                    }}
-                  />
-                </div>
-                <div className="px-6 pt-4">
-                  <CardTitle className="text-lg text-dark_spring_green-700">{e.title}</CardTitle>
-                </div>
-              </CardHeader>
-              <CardContent className="px-6 pb-6 text-sm text-gray-700">
-                <p className="leading-relaxed">{e.desc}</p>
-              </CardContent>
-            </Card>
-          ))}
+          {loading ? (
+            <p>Loading exhibits...</p>
+          ) : (
+            attractions.slice(0, 3).map((attraction) => (
+              <Card
+                key={attraction.attraction_id}
+                className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
+              >
+                <CardHeader className="px-0 pt-0 pb-3">
+                  <div className="w-full overflow-hidden rounded-t-lg">
+                    <img
+                      src={`/images/pexels-gary-whyte-228069-730537.jpg`}
+                      alt={attraction.name}
+                      loading="lazy"
+                      className="h-44 w-full object-cover"
+                    />
+                  </div>
+                  <div className="px-6 pt-4">
+                    <CardTitle className="text-lg text-dark_spring_green-700">{attraction.name}</CardTitle>
+                  </div>
+                </CardHeader>
+                <CardContent className="px-6 pb-6 text-sm text-gray-700">
+                  <p className="leading-relaxed">{attraction.location}</p>
+                </CardContent>
+              </Card>
+            ))
+          )}
         </div>
       </section>
 
@@ -179,8 +189,8 @@ export default function HomePage() {
         </section>
       )}
 
-  {/* EVENTS */}
-  <section id="events" className="space-y-2 rounded-2xl bg-gray-50 p-4 sm:p-6">
+      {/* EVENTS */}
+      <section id="events" className="space-y-2 rounded-2xl bg-gray-50 p-4 sm:p-6">
         <div className="flex items-center gap-3">
           <h2 className="text-2xl font-bold">Upcoming Events</h2>
           <a
@@ -193,38 +203,34 @@ export default function HomePage() {
         <p className="text-sm text-gray-600">Join us for special events and educational programs!</p>
 
         <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
-          {[
-            { title: "Giraffe Feeding", desc: "Watch our giraffes enjoy their breakfast and learn about their unique eating habits.", img: "/images/events/giraffe-feeding.jpg", time: "10:00 AM", location: "Giraffe Overlook" },
-            { title: "Penguin Feeding", desc: "See our playful penguins dive for fish while keepers share fun facts about their care.", img: "/images/events/penguin-feeding.jpg", time: "11:30 AM", location: "Penguin Cove" },
-            { title: "Otter Snack Time", desc: "Enjoy the otters' playful antics as they crack shells and splash around during feeding.", img: "/images/events/otter-snack.jpg", time: "1:00 PM", location: "Otter Stream" },
-            { title: "Big Cat Chat", desc: "Meet our lion keepers and learn how we care for these powerful predators up close.", img: "/images/events/big-cat-chat.jpg", time: "2:30 PM", location: "Wild Plains" },
-          ].map((event) => (
-            <Card
-              key={event.title}
-              className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
-            >
-              <CardHeader className="px-0 pt-0 pb-3">
-                <div className="w-full overflow-hidden rounded-t-lg">
-                  <img
-                    src={event.img}
-                    alt={event.title}
-                    loading="lazy"
-                    className="h-44 w-full object-cover"
-                    onError={(ev) => {
-                      (ev.currentTarget as HTMLImageElement).src = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='600' height='300'><rect fill='%23e5e7eb' width='100%25' height='100%25'/><text x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' fill='%239ca3af' font-size='18'>Image coming soon</text></svg>";
-                    }}
-                  />
-                </div>
-                <div className="px-6 pt-4">
-                  <CardTitle className="text-lg text-dark_spring_green-700">{event.title}</CardTitle>
-                  <p className="text-xs text-sea_green-600 font-medium mt-1">{event.time} • {event.location}</p>
-                </div>
-              </CardHeader>
-              <CardContent className="px-6 pb-6 text-sm text-gray-700">
-                <p className="leading-relaxed">{event.desc}</p>
-              </CardContent>
-            </Card>
-          ))}
+          {loading ? (
+            <p>Loading events...</p>
+          ) : (
+            events.slice(0, 4).map((event) => (
+              <Card
+                key={event.event_id}
+                className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
+              >
+                <CardHeader className="px-0 pt-0 pb-3">
+                  <div className="w-full overflow-hidden rounded-t-lg">
+                    <img
+                      src={`/images/events/giraffe-feeding.jpg`}
+                      alt={event.event_name}
+                      loading="lazy"
+                      className="h-44 w-full object-cover"
+                    />
+                  </div>
+                  <div className="px-6 pt-4">
+                    <CardTitle className="text-lg text-dark_spring_green-700">{event.event_name}</CardTitle>
+                    <p className="text-xs text-sea_green-600 font-medium mt-1">{event.start_time} • {event.location}</p>
+                  </div>
+                </CardHeader>
+                <CardContent className="px-6 pb-6 text-sm text-gray-700">
+                  <p className="leading-relaxed">{event.description}</p>
+                </CardContent>
+              </Card>
+            ))
+          )}
         </div>
       </section>
 
@@ -369,4 +375,3 @@ function StarIcon() {
     </svg>
   );
 }
-

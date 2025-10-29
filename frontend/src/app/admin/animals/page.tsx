@@ -8,6 +8,7 @@ import { Animal } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import { Select } from '@/components/ui/select';
 import {
   Table,
   TableBody,
@@ -26,6 +27,8 @@ export default function AnimalsPage() {
   const [animals, setAnimals] = useState<Animal[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [healthFilter, setHealthFilter] = useState('all');
+  const [sortBy, setSortBy] = useState('name');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedAnimal, setSelectedAnimal] = useState<Animal | null>(null);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -85,10 +88,26 @@ export default function AnimalsPage() {
     await loadAnimals();
   };
 
-  const filteredAnimals = animals.filter(animal =>
-    animal.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    animal.species.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredAnimals = animals
+    .filter(animal => {
+      // Search filter
+      const matchesSearch = animal.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        animal.species.toLowerCase().includes(searchTerm.toLowerCase());
+
+      // Health status filter
+      const matchesHealth = healthFilter === 'all' || animal.health_status === healthFilter;
+
+      return matchesSearch && matchesHealth;
+    })
+    .sort((a, b) => {
+      // Sorting
+      if (sortBy === 'name') {
+        return a.name.localeCompare(b.name);
+      } else if (sortBy === 'species') {
+        return a.species.localeCompare(b.species);
+      }
+      return 0;
+    });
 
   const getHealthStatusBadge = (status?: string) => {
     const variants: Record<string, "success" | "secondary" | "warning" | "danger" | "default"> = {
@@ -128,9 +147,9 @@ export default function AnimalsPage() {
         </Button>
       </div>
 
-      {/* Search */}
-      <div className="flex items-center gap-4">
-        <div className="relative flex-1 max-w-md">
+      {/* Search and Filters */}
+      <div className="flex flex-wrap items-center gap-4">
+        <div className="relative flex-1 min-w-[300px]">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
           <Input
             type="text"
@@ -140,6 +159,25 @@ export default function AnimalsPage() {
             className="pl-10"
           />
         </div>
+
+        <div className="w-auto">
+          <Select value={healthFilter} onChange={(e) => setHealthFilter(e.target.value)}>
+            <option value="all">All Health Status</option>
+            <option value="excellent">Excellent</option>
+            <option value="good">Good</option>
+            <option value="fair">Fair</option>
+            <option value="poor">Poor</option>
+            <option value="critical">Critical</option>
+          </Select>
+        </div>
+
+        <div className="w-auto">
+          <Select value={sortBy} onChange={(e) => setSortBy(e.target.value)}>
+            <option value="name">Sort by Name</option>
+            <option value="species">Sort by Species</option>
+          </Select>
+        </div>
+
         <Badge variant="outline" className="text-sm">
           {filteredAnimals.length} animal{filteredAnimals.length !== 1 ? 's' : ''}
         </Badge>

@@ -45,22 +45,23 @@ To authenticate a request, include the token in the `Authorization` header with 
 
 These endpoints are public and do not require authentication.
 
-- `GET /api/attractions`: Get all attractions.
-- `GET /api/attractions/:id`: Get a single attraction by ID.
-- `GET /api/habitats`: Get all habitats.
-- `GET /api/habitats/:id`: Get a single habitat by ID.
-- `GET /api/events`: Get all upcoming events.
-- `GET /api/events/:id`: Get a single event by ID.
+- `GET /api/attractions` - Get all attractions
+- `GET /api/attractions/:id` - Get a single attraction by ID
+- `GET /api/habitats` - Get all habitats
+- `GET /api/habitats/:id` - Get a single habitat by ID
+- `GET /api/events` - Get all upcoming events (supports search and filter)
+- `GET /api/events/:id` - Get a single event by ID
 
 ### Protected Endpoints
 
 These endpoints require authentication. The required roles are listed for each.
 
 #### Auth (`/api/auth`)
-- `POST /login`: Login a user.
-- `POST /register`: Register a new customer.
-- `GET /profile`: Get the profile of the logged-in user.
-- `POST /logout`: Logout a user.
+- `POST /login` - Login a user (returns JWT token)
+- `POST /register` - Register a new customer account
+- `GET /profile` - Get the profile of the logged-in user (protected)
+- `PUT /profile` - Update user profile (protected)
+- `POST /logout` - Logout a user (client-side token removal)
 
 #### Animals (`/api/animals`)
 - `GET /`: Get all animals (Roles: `manager`, `veterinarian`, `keeper`)
@@ -133,9 +134,41 @@ These endpoints require authentication. The required roles are listed for each.
 - `GET /:transactionId`: Get transaction details (Roles: `manager`, `cashier`)
 
 #### Event Registrations (`/api/event-registrations`)
-- `GET /`: Get all registrations (Role: `coordinator`)
-- `GET /event/:eventId`: Get attendees for an event (Role: `coordinator`)
-- `PUT /:id`: Update a registration (Role: `coordinator`)
-- `DELETE /id`: Cancel a registration (Role: `coordinator`)
-- `POST /`: Register for an event (Roles: `coordinator`, `cashier`)
-- `GET /:id`: Get registration details (Roles: `coordinator`, `cashier`)
+- `GET /` - Get all registrations (Role: `coordinator`)
+- `GET /event/:eventId` - Get attendees for an event (Role: `coordinator`)
+- `PUT /:id` - Update a registration (Role: `coordinator`)
+- `DELETE /:id` - Cancel a registration (Role: `coordinator`)
+- `POST /` - Register for an event (Roles: `coordinator`, `cashier`)
+- `GET /:id` - Get registration details (Roles: `coordinator`, `cashier`)
+
+#### Gift Shops (`/api/gift-shops`)
+- `GET /` - Get all gift shops (Roles: `manager`, `cashier`)
+- `POST /` - Create a new gift shop (Role: `manager`)
+- `GET /:id` - Get gift shop details (Roles: `manager`, `cashier`)
+- `PUT /:id` - Update a gift shop (Role: `manager`)
+- `DELETE /:id` - Delete a gift shop (Role: `manager`)
+
+#### Cafes (`/api/cafes`)
+- `GET /` - Get all cafes (Roles: `manager`, `cashier`)
+- `POST /` - Create a new cafe (Role: `manager`)
+- `GET /:id` - Get cafe details (Roles: `manager`, `cashier`)
+- `PUT /:id` - Update a cafe (Role: `manager`)
+- `DELETE /:id` - Delete a cafe (Role: `manager`)
+
+#### Dashboard (`/api/dashboard`)
+- `GET /stats` - Get dashboard statistics including:
+  - Total animals count
+  - Total employees count
+  - Upcoming events count
+  - Active habitats count
+  - Today's visitors count
+  - Monthly revenue total
+  (Requires authentication)
+
+#### Analytics Queries (`/api/queries`)
+- `GET /animals-by-habitat` - Get animals grouped by their habitat
+- `GET /employee-assignments` - Get keeper-to-animal assignments
+- `GET /revenue-analysis` - Get revenue breakdown by month and source
+- `GET /event-attendance` - Get event attendance statistics
+- `GET /visitor-statistics` - Get visitor metrics and trends
+(All query endpoints require authentication)

@@ -27,6 +27,7 @@ const transformToDb = (frontendEvent: any): any => {
     end_time: frontendEvent.end_time,
     location: frontendEvent.location,
     max_participants: frontendEvent.max_capacity || frontendEvent.max_participants,
+    ticket_price: frontendEvent.ticket_price !== undefined ? frontendEvent.ticket_price : null,
     coordinator_id: frontendEvent.created_by || frontendEvent.coordinator_id,
   };
 

@@ -11,6 +11,8 @@ interface LoginResponse {
     first_name: string;
     last_name: string;
     job_role?: string;
+    customer_id?: number;
+    employee_id?: number;
   };
 }
 
@@ -52,7 +54,7 @@ class AuthService {
     // Step 3: Generate JWT
     const token = signToken({ id: user.account_id, role: user.role });
 
-    return {
+    const response: LoginResponse = {
       token,
       user: {
         account_id: user.account_id,
@@ -61,16 +63,20 @@ class AuthService {
         role: user.role,
         first_name: user.role === 'employee' ? user.employee_first_name : user.customer_first_name,
         last_name: user.role === 'employee' ? user.employee_last_name : user.customer_last_name,
-        job_role: user.job_role
+        job_role: user.job_role,
+        customer_id: user.customer_id,
+        employee_id: user.employee_id
       }
     };
+
+    return response;
   }
 
   async getProfile(userId: number) {
     const [user] = await query<any[]>(
       `SELECT u.*,
               e.first_name as employee_first_name, e.last_name as employee_last_name,
-              e.email as employee_email, e.phone as employee_phone, e.job_role, e.department,
+              e.email as employee_email, e.phone as employee_phone, e.job_role,
               c.first_name as customer_first_name, c.last_name as customer_last_name,
               c.email as customer_email, c.phone as customer_phone, c.annual_pass,
               c.registration_date as registration_date
@@ -111,7 +117,18 @@ class AuthService {
     // Step 4: Generate JWT
     const token = signToken({ id: accountId, role: 'customer' });
 
-    return { token, user: { account_id: accountId, email, role: 'customer', first_name, last_name } };
+    return {
+      token,
+      user: {
+        account_id: accountId,
+        email,
+        role: 'customer',
+        first_name,
+        last_name,
+        customer_id: customerId,
+        username: email
+      }
+    };
   }
 
   async updateProfile(userId: number, role: 'employee' | 'customer', data: any) {

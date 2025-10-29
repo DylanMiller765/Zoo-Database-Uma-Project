@@ -13,10 +13,15 @@ export class TicketController {
 
   static async createTicket(req: Request, res: Response): Promise<void> {
     try {
+      console.log('Creating ticket with data:', req.body);
       const newTicket = await TicketService.createTicket(req.body);
       res.status(201).json(newTicket);
-    } catch (error) {
-      res.status(500).json({ message: 'Error creating ticket', error });
+    } catch (error: any) {
+      console.error('Error creating ticket:', error);
+      res.status(500).json({
+        message: 'Error creating ticket',
+        error: error.message || error
+      });
     }
   }
 

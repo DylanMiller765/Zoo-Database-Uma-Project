@@ -1,19 +1,16 @@
 import { Router } from 'express';
 import { TicketController } from '../controllers/ticket.controller';
-import { protect, restrictTo } from '../middleware/auth.middleware';
+import { protect, restrictTo, optionalAuth } from '../middleware/auth.middleware';
 
 const router = Router();
 
-// Protect all routes
-router.use(protect);
+// Public/Customer routes - allow ticket purchases for everyone (guest checkout + logged in customers)
+router.post('/', optionalAuth, TicketController.createTicket);
 
-// Routes for managers
-router.get('/', restrictTo('manager'), TicketController.getAllTickets);
-router.get('/date/:date', restrictTo('manager'), TicketController.getTicketsByDate);
-router.delete('/:id', restrictTo('manager'), TicketController.deleteTicket);
-
-// Routes for sales associates (cashiers) and managers
-router.post('/', restrictTo('manager', 'cashier'), TicketController.createTicket);
-router.get('/:id', restrictTo('manager', 'cashier'), TicketController.getTicketById);
+// Protected routes - require authentication
+router.get('/', protect, restrictTo('manager'), TicketController.getAllTickets);
+router.get('/date/:date', protect, restrictTo('manager'), TicketController.getTicketsByDate);
+router.delete('/:id', protect, restrictTo('manager'), TicketController.deleteTicket);
+router.get('/:id', protect, restrictTo('manager', 'cashier'), TicketController.getTicketById);
 
 export default router;

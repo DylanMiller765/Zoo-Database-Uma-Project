@@ -5,6 +5,9 @@ import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
+import { ticketService } from '@/services/ticket.service';
+import { authService } from '@/services/auth.service';
+import { Loader2 } from 'lucide-react';
 
 const TICKET_PRICES = {
   adult: 29.95,
@@ -23,6 +26,8 @@ export default function TicketsPage() {
   const [includeDonation, setIncludeDonation] = useState(false);
   const [donationAmount, setDonationAmount] = useState(25);
   const [customDonation, setCustomDonation] = useState('');
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const ticketsTotal = 
     adults * TICKET_PRICES.adult + 
@@ -37,7 +42,7 @@ export default function TicketsPage() {
 
   const grandTotal = ticketsTotal + (includeDonation ? finalDonation : 0);
 
-  const handleCheckout = () => {
+  const handleCheckout = async () => {
     if (totalTickets === 0) {
       alert('Please select at least one ticket');
       return;
@@ -46,9 +51,88 @@ export default function TicketsPage() {
       alert('Please select a visit date');
       return;
     }
-    // In a real app, this would process payment and create a booking
-    // Redirect to confirmation page with ticket count
-    router.push(`/tickets/confirmation?tickets=${totalTickets}`);
+
+    // Validate date is not in the past or too far in the future
+    const selectedDate = new Date(visitDate);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const oneYearFromNow = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000);
+
+    if (selectedDate < today) {
+      setError('Please select a date in the future');
+      return;
+    }
+    if (selectedDate > oneYearFromNow) {
+      setError('Please select a date within the next year');
+      return;
+    }
+
+    setIsProcessing(true);
+    setError(null);
+
+    try {
+      // Get current user if logged in (customer_id will be null for guest checkout)
+      const user = authService.getStoredUser();
+      const customerId = user?.role === 'customer' && user.customer_id ? user.customer_id : undefined;
+
+      console.log('Ticket purchase - User:', user);
+      console.log('Ticket purchase - Customer ID:', customerId);
+
+      // Create ticket records for each ticket type
+      const ticketPromises = [];
+
+      // Adult tickets
+      for (let i = 0; i < adults; i++) {
+        const ticketData = {
+          customer_id: customerId,
+          visit_date: visitDate,
+          ticket_type: 'adult' as const,
+          price: TICKET_PRICES.adult,
+          payment_method: 'online' as const,
+        };
+        console.log('Creating adult ticket:', ticketData);
+        ticketPromises.push(ticketService.create(ticketData));
+      }
+
+      // Child tickets
+      for (let i = 0; i < children; i++) {
+        ticketPromises.push(
+          ticketService.create({
+            customer_id: customerId,
+            visit_date: visitDate,
+            ticket_type: 'child',
+            price: TICKET_PRICES.child,
+            payment_method: 'online',
+          })
+        );
+      }
+
+      // Senior tickets
+      for (let i = 0; i < seniors; i++) {
+        ticketPromises.push(
+          ticketService.create({
+            customer_id: customerId,
+            visit_date: visitDate,
+            ticket_type: 'senior',
+            price: TICKET_PRICES.senior,
+            payment_method: 'online',
+          })
+        );
+      }
+
+      // Process all tickets
+      await Promise.all(ticketPromises);
+
+      // Redirect to confirmation page with ticket count and total
+      router.push(
+        `/tickets/confirmation?tickets=${totalTickets}&total=${grandTotal.toFixed(2)}&date=${visitDate}`
+      );
+    } catch (err: any) {
+      console.error('Error processing tickets:', err);
+      setError(err.response?.data?.message || 'Failed to process ticket purchase. Please try again.');
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
   return (
@@ -95,6 +179,7 @@ export default function TicketsPage() {
                   value={visitDate}
                   onChange={(e) => setVisitDate(e.target.value)}
                   min={new Date().toISOString().split('T')[0]}
+                  max={new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]}
                   className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-sea_green-500 focus:border-sea_green-500 transition-all"
                 />
                 <p className="mt-2 text-xs text-gray-600">
@@ -337,13 +422,29 @@ export default function TicketsPage() {
                   </div>
                 )}
 
+                {/* Error Message */}
+                {error && (
+                  <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+                    <p className="text-sm text-red-700">{error}</p>
+                  </div>
+                )}
+
                 {/* Checkout Button */}
                 <Button
                   onClick={handleCheckout}
-                  disabled={totalTickets === 0 || !visitDate}
-                  className="w-full mt-6 py-6 rounded-xl bg-sea_green-600 text-white font-semibold hover:bg-sea_green-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                  disabled={totalTickets === 0 || !visitDate || isProcessing}
+                  className="w-full mt-6 py-6 rounded-xl bg-sea_green-600 text-white font-semibold hover:bg-sea_green-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                 >
-                  {totalTickets === 0 ? 'Select Tickets' : !visitDate ? 'Select Date' : 'Proceed to Checkout'}
+                  {isProcessing ? (
+                    <>
+                      <Loader2 className="h-5 w-5 animate-spin" />
+                      <span>Processing...</span>
+                    </>
+                  ) : (
+                    <span>
+                      {totalTickets === 0 ? 'Select Tickets' : !visitDate ? 'Select Date' : 'Proceed to Checkout'}
+                    </span>
+                  )}
                 </Button>
               </CardContent>
             </Card>
