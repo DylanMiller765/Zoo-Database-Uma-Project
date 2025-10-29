@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/table";
 import { Calendar, Users, FileDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
 
 type EventAttendanceRow = {
   event_id: number;
@@ -24,11 +25,18 @@ type EventAttendanceRow = {
   end_time: string;
   location: string | null;
   total_registered: number | null;
-  registration_count: number | null;
+  registration_count: number | null; // unique bookings / orders
   max_participants: number | null;
   total_revenue: string | number | null;
   capacity_percentage: string | number | null; // 0-100
 };
+
+const REPORT_TYPES = [
+  { value: "attendance", label: "Attendance / Capacity (default)" },
+  { value: "revenue", label: "Revenue Summary" },
+  { value: "capacity", label: "Capacity Stress" },
+  { value: "utilization", label: "Utilization Ranking" },
+];
 
 export default function EventAttendancePage() {
   const { isAuthenticated, loading: authLoading } = useAuth();
@@ -36,6 +44,9 @@ export default function EventAttendancePage() {
 
   const [data, setData] = useState<EventAttendanceRow[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // user-selected report type
+  const [reportType, setReportType] = useState<string>("attendance");
 
   // fetch data
   const loadData = useCallback(async () => {
@@ -55,12 +66,23 @@ export default function EventAttendancePage() {
   }, [isAuthenticated, loadData]);
 
   // ===== helpers =====
+  const parseNumber = (value: unknown): number => {
+    if (value === null || value === undefined) return 0;
+    const n = parseFloat(String(value));
+    return isNaN(n) ? 0 : n;
+  };
+
   const getCapacityBadge = (percentage: number | null) => {
     if (percentage === null) return "default";
     if (percentage >= 90) return "danger";
     if (percentage >= 70) return "warning";
     if (percentage >= 50) return "secondary";
     return "success";
+  };
+
+  const formatMoney = (value: string | number | null | undefined) => {
+    const num = parseNumber(value);
+    return num.toLocaleString("en-US", { minimumFractionDigits: 2 });
   };
 
   const formatDate = (dateString: string) => {
@@ -74,18 +96,7 @@ export default function EventAttendancePage() {
   const formatTime = (timeString: string) =>
     timeString ? timeString.substring(0, 5) : "";
 
-  const parseNumber = (value: unknown): number => {
-    if (value === null || value === undefined) return 0;
-    const n = parseFloat(String(value));
-    return isNaN(n) ? 0 : n;
-  };
-
-  const formatMoney = (value: string | number | null | undefined) => {
-    const num = parseNumber(value);
-    return num.toLocaleString("en-US", { minimumFractionDigits: 2 });
-  };
-
-  // ===== summary metrics (shown in CSV header) =====
+  // ===== summary metrics (for high-level stats in CSV header) =====
   const summary = useMemo(() => {
     const totalEvents = data.length;
 
@@ -99,7 +110,7 @@ export default function EventAttendancePage() {
       0
     );
 
-    // average utilization from capacity_percentage across events that HAVE a percentage
+    // avg utilization per event, and overall fill % across all capacity
     const utilizationValues: number[] = [];
     data.forEach((ev) => {
       if (
@@ -107,9 +118,7 @@ export default function EventAttendancePage() {
         ev.capacity_percentage !== undefined
       ) {
         const pct = parseNumber(ev.capacity_percentage);
-        if (!isNaN(pct)) {
-          utilizationValues.push(pct);
-        }
+        if (!isNaN(pct)) utilizationValues.push(pct);
       }
     });
     const avgUtilization =
@@ -118,21 +127,17 @@ export default function EventAttendancePage() {
           utilizationValues.length
         : 0;
 
-    // total capacity vs total registered, to get overall fill
-    // (sum(registered) / sum(max_participants)) * 100
+    // "overall fill %":
+    // (sum of registered) / (sum of capacity) * 100
     let totalCapacity = 0;
     let totalAssignedToCap = 0;
     data.forEach((ev) => {
-      if (
-        ev.max_participants !== null &&
-        ev.max_participants !== undefined &&
-        ev.max_participants > 0
-      ) {
-        totalCapacity += parseNumber(ev.max_participants);
+      const cap = ev.max_participants;
+      if (cap !== null && cap !== undefined && cap > 0) {
+        totalCapacity += parseNumber(cap);
         totalAssignedToCap += parseNumber(ev.total_registered);
       }
     });
-
     const overallFillPct =
       totalCapacity > 0
         ? (totalAssignedToCap / totalCapacity) * 100
@@ -142,20 +147,211 @@ export default function EventAttendancePage() {
       totalEvents,
       totalRegistrations,
       totalRevenueRaw,
-      avgUtilization, // number 0-100
-      overallFillPct, // number 0-100
+      avgUtilization, // avg of per-event %
+      overallFillPct, // global fill
     };
   }, [data]);
 
-  // ===== CSV generation =====
-  // CSV layout:
-  // 1) Summary section
-  // 2) Blank row
-  // 3) Per-event detail rows (same as before)
-  const generateCsv = useCallback(() => {
-    // --- summary section rows ---
+  // ===== CSV building logic per report type =====
+  // Each report type returns { headers, rows }.
+  const buildRowsForReport = useCallback(
+    (type: string): { headers: string[]; rows: string[][] } => {
+      if (type === "revenue") {
+        const headers = [
+          "event_id",
+          "event_name",
+          "event_date",
+          "total_registered",
+          "total_revenue_usd",
+          "revenue_per_attendee_usd",
+        ];
+
+        const rows = data.map((ev) => {
+          const totalReg = parseNumber(ev.total_registered);
+          const totalRev = parseNumber(ev.total_revenue);
+          const perHead =
+            totalReg > 0 ? totalRev / totalReg : 0;
+
+          return [
+            String(ev.event_id ?? ""),
+            ev.event_name ?? "",
+            ev.event_date ? formatDate(ev.event_date) : "",
+            String(totalReg),
+            `$${formatMoney(ev.total_revenue)}`,
+            `$${perHead.toLocaleString("en-US", {
+              minimumFractionDigits: 2,
+            })}`,
+          ];
+        });
+
+        return { headers, rows };
+      }
+
+      if (type === "capacity") {
+        // Focus: which events are at/near capacity
+        const headers = [
+          "event_id",
+          "event_name",
+          "event_date",
+          "max_participants",
+          "total_registered",
+          "capacity_percentage",
+          "status",
+        ];
+
+        const rows = data.map((ev) => {
+          const pctNum = ev.capacity_percentage
+            ? parseNumber(ev.capacity_percentage)
+            : null;
+
+          let statusLabel = "OK";
+          if (pctNum !== null) {
+            if (pctNum >= 100) statusLabel = "Overbooked";
+            else if (pctNum >= 90) statusLabel = "Near Full";
+            else if (pctNum >= 70) statusLabel = "Filling";
+          }
+
+          return [
+            String(ev.event_id ?? ""),
+            ev.event_name ?? "",
+            ev.event_date ? formatDate(ev.event_date) : "",
+            ev.max_participants !== null &&
+            ev.max_participants !== undefined
+              ? String(ev.max_participants)
+              : "Unlimited",
+            String(ev.total_registered ?? 0),
+            pctNum !== null
+              ? `${pctNum.toFixed(1)}%`
+              : "N/A",
+            statusLabel,
+          ];
+        });
+
+        return { headers, rows };
+      }
+
+      if (type === "utilization") {
+        // Rank events by capacity % (highest first)
+        const sorted = [...data].sort((a, b) => {
+          const pa =
+            a.capacity_percentage !== null &&
+            a.capacity_percentage !== undefined
+              ? parseNumber(a.capacity_percentage)
+              : -1;
+          const pb =
+            b.capacity_percentage !== null &&
+            b.capacity_percentage !== undefined
+              ? parseNumber(b.capacity_percentage)
+              : -1;
+          return pb - pa;
+        });
+
+        const headers = [
+          "event_id",
+          "event_name",
+          "event_date",
+          "max_participants",
+          "total_registered",
+          "capacity_percentage",
+        ];
+
+        const rows = sorted.map((ev) => [
+          String(ev.event_id ?? ""),
+          ev.event_name ?? "",
+          ev.event_date ? formatDate(ev.event_date) : "",
+          ev.max_participants !== null &&
+          ev.max_participants !== undefined
+            ? String(ev.max_participants)
+            : "Unlimited",
+          String(ev.total_registered ?? 0),
+          ev.capacity_percentage !== null &&
+          ev.capacity_percentage !== undefined
+            ? `${parseNumber(ev.capacity_percentage).toFixed(1)}%`
+            : "N/A",
+        ]);
+
+        return { headers, rows };
+      }
+
+      // default: "attendance"
+      // basically your existing per-event detail
+      const headers = [
+        "event_id",
+        "event_name",
+        "event_date",
+        "start_time",
+        "end_time",
+        "location",
+        "total_registered",
+        "registration_count",
+        "max_participants",
+        "total_revenue_usd",
+        "capacity_percentage",
+      ];
+
+      const rows = data.map((ev) => [
+        String(ev.event_id ?? ""),
+        ev.event_name ?? "",
+        ev.event_date ? formatDate(ev.event_date) : "",
+        ev.start_time ? formatTime(ev.start_time) : "",
+        ev.end_time ? formatTime(ev.end_time) : "",
+        ev.location ?? "",
+        String(ev.total_registered ?? ""),
+        String(ev.registration_count ?? ""),
+        ev.max_participants !== null &&
+        ev.max_participants !== undefined
+          ? String(ev.max_participants)
+          : "Unlimited",
+        `$${formatMoney(ev.total_revenue)}`,
+        ev.capacity_percentage !== null &&
+        ev.capacity_percentage !== undefined
+          ? `${parseNumber(ev.capacity_percentage).toFixed(1)}%`
+          : "N/A",
+      ]);
+
+      return { headers, rows };
+    },
+    [data]
+  );
+
+  // ===== CSV export helper =====
+  const escapeCell = (val: string) => {
+    if (val.includes(",") || val.includes('"') || val.includes("\n")) {
+      return `"${val.replace(/"/g, '""')}"`;
+    }
+    return val;
+  };
+
+  const toCsvText = (rows: string[][]) =>
+    rows.map((row) => row.map(escapeCell).join(",")).join("\n");
+
+  const downloadCsv = (filenameBase: string, csvText: string) => {
+    const blob = new Blob([csvText], {
+      type: "text/csv;charset=utf-8;",
+    });
+    const url = URL.createObjectURL(blob);
+
+    const link = document.createElement("a");
+    link.href = url;
+    link.setAttribute(
+      "download",
+      `${filenameBase}_${new Date()
+        .toISOString()
+        .slice(0, 10)}.csv`
+    );
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
+  // ===== Final CSV generator =====
+  const handleGenerateCsv = useCallback(() => {
+    const { headers, rows } = buildRowsForReport(reportType);
+
+    // summary block depends on reportType but we’ll keep it simple:
     const summaryRows: string[][] = [
-      ["Summary Metric", "Value"],
+      ["Report Type", reportType],
       ["Total Events", String(summary.totalEvents)],
       ["Total Registrations", String(summary.totalRegistrations)],
       [
@@ -172,101 +368,23 @@ export default function EventAttendancePage() {
         "Overall Capacity Fill %",
         `${summary.overallFillPct.toFixed(1)}%`,
       ],
+      [""], // blank line
     ];
 
-    // --- blank row as separator ---
-    const separatorRow: string[] = [""];
-    // --- headers for detailed rows ---
-    const detailHeaders = [
-      "event_id",
-      "event_name",
-      "event_date",
-      "start_time",
-      "end_time",
-      "location",
-      "total_registered",
-      "registration_count",
-      "max_participants",
-      "total_revenue_usd",
-      "capacity_percentage",
-    ];
-
-    // --- detail rows, one per event ---
-    const detailRows: string[][] = data.map((event) => [
-      String(event.event_id ?? ""),
-      event.event_name ?? "",
-      event.event_date ? formatDate(event.event_date) : "",
-      event.start_time ? formatTime(event.start_time) : "",
-      event.end_time ? formatTime(event.end_time) : "",
-      event.location ?? "",
-      String(event.total_registered ?? ""),
-      String(event.registration_count ?? ""),
-      event.max_participants !== null && event.max_participants !== undefined
-        ? String(event.max_participants)
-        : "Unlimited",
-      `$${formatMoney(event.total_revenue)}`,
-      event.capacity_percentage !== null &&
-      event.capacity_percentage !== undefined
-        ? `${parseNumber(event.capacity_percentage).toFixed(1)}%`
-        : "N/A",
+    const csvText = toCsvText([
+      ...summaryRows,
+      headers,
+      ...rows,
     ]);
 
-    // helper to escape cells for CSV safety
-    const escapeCell = (val: string) => {
-      if (
-        val.includes(",") ||
-        val.includes('"') ||
-        val.includes("\n")
-      ) {
-        return `"${val.replace(/"/g, '""')}"`;
-      }
-      return val;
-    };
-
-    // build all CSV lines
-    const csvLines: string[] = [];
-
-    // summary block
-    summaryRows.forEach((row) => {
-      csvLines.push(row.map(escapeCell).join(","));
-    });
-
-    // separator
-    csvLines.push(separatorRow.map(escapeCell).join(","));
-
-    // detail header
-    csvLines.push(detailHeaders.map(escapeCell).join(","));
-
-    // detail data
-    detailRows.forEach((row) => {
-      csvLines.push(row.map(escapeCell).join(","));
-    });
-
-    const csvContent = csvLines.join("\n");
-
-    // trigger download
-    const blob = new Blob([csvContent], {
-      type: "text/csv;charset=utf-8;",
-    });
-    const url = URL.createObjectURL(blob);
-
-    const link = document.createElement("a");
-    link.href = url;
-    link.setAttribute(
-      "download",
-      `event_attendance_${new Date().toISOString().slice(0, 10)}.csv`
-    );
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
-  }, [data, summary]);
+    downloadCsv(`event_report_${reportType}`, csvText);
+  }, [reportType, summary, buildRowsForReport]);
 
   // ===== loading / auth states =====
   if (authLoading || loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-dark_spring_green-600"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-dark_spring_green-600" />
       </div>
     );
   }
@@ -274,9 +392,14 @@ export default function EventAttendancePage() {
   if (!isAuthenticated) return null;
 
   // ===== render =====
+
+  // NOTE: we could conditionally hide/show columns in the table using `reportType`.
+  // For now we keep your original table layout visible all the time in the UI,
+  // because it's the most useful live view. The dropdown only affects the CSV.
+
   return (
     <div className="space-y-6">
-      {/* HEADER ROW WITH TITLE + CSV BUTTON */}
+      {/* HEADER ROW WITH TITLE + CONTROLS */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-2">
@@ -284,19 +407,42 @@ export default function EventAttendancePage() {
             Event Attendance
           </h1>
           <p className="text-gray-600 mt-1">
-            View event registrations and capacity utilization
+            View event registrations and capacity utilization, or export a
+            specific style of report.
           </p>
         </div>
 
-        <Button
-          onClick={generateCsv}
-          className="flex items-center gap-2 bg-sea_green-600 hover:bg-sea_green-700 text-white"
-        >
-          <FileDown className="h-4 w-4" />
-          <span>Generate CSV</span>
-        </Button>
+        <div className="flex flex-col gap-3 sm:items-end">
+          {/* Report Type Select */}
+          <div className="flex flex-col text-sm">
+            <Label className="text-xs text-gray-600 mb-1">
+              Report Type
+            </Label>
+            <select
+              className="rounded-md border px-2 py-1 text-sm"
+              value={reportType}
+              onChange={(e) => setReportType(e.target.value)}
+            >
+              {REPORT_TYPES.map((opt) => (
+                <option key={opt.value} value={opt.value}>
+                  {opt.label}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* CSV Export */}
+          <Button
+            onClick={handleGenerateCsv}
+            className="flex items-center gap-2 bg-sea_green-600 hover:bg-sea_green-700 text-white self-start sm:self-auto"
+          >
+            <FileDown className="h-4 w-4" />
+            <span>Export CSV</span>
+          </Button>
+        </div>
       </div>
 
+      {/* TABLE CARD */}
       <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
         <Table>
           <TableHeader>
@@ -313,10 +459,12 @@ export default function EventAttendancePage() {
           <TableBody>
             {data.map((event) => (
               <TableRow key={event.event_id}>
+                {/* Event Name */}
                 <TableCell className="font-medium">
                   {event.event_name}
                 </TableCell>
 
+                {/* Date & Time */}
                 <TableCell>
                   <div className="text-sm">
                     <div>{formatDate(event.event_date)}</div>
@@ -327,10 +475,12 @@ export default function EventAttendancePage() {
                   </div>
                 </TableCell>
 
+                {/* Location */}
                 <TableCell className="text-sm text-gray-600">
                   {event.location || "N/A"}
                 </TableCell>
 
+                {/* Registrations */}
                 <TableCell>
                   <div className="flex items-center gap-2">
                     <Users className="h-4 w-4 text-dark_spring_green-600" />
@@ -343,16 +493,19 @@ export default function EventAttendancePage() {
                   </div>
                 </TableCell>
 
+                {/* Capacity */}
                 <TableCell>
                   <Badge variant="outline">
                     {event.max_participants || "Unlimited"}
                   </Badge>
                 </TableCell>
 
+                {/* Revenue */}
                 <TableCell className="font-semibold text-persian_orange-600">
                   ${formatMoney(event.total_revenue)}
                 </TableCell>
 
+                {/* Utilization */}
                 <TableCell>
                   {event.capacity_percentage !== null &&
                   event.capacity_percentage !== undefined ? (
