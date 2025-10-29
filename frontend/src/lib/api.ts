@@ -21,6 +21,14 @@ class ApiClient {
           if (token) {
             config.headers.Authorization = `Bearer ${token}`;
           }
+          console.log('[API CLIENT] Request:', {
+            method: config.method?.toUpperCase(),
+            url: config.url,
+            baseURL: config.baseURL,
+            fullURL: `${config.baseURL}${config.url}`,
+            hasToken: !!token,
+            params: config.params
+          });
         }
         return config;
       },
@@ -31,8 +39,21 @@ class ApiClient {
 
     // Response interceptor for error handling
     this.client.interceptors.response.use(
-      (response) => response,
+      (response) => {
+        console.log('[API CLIENT] Response:', {
+          status: response.status,
+          url: response.config.url,
+          dataLength: Array.isArray(response.data) ? response.data.length : 'N/A'
+        });
+        return response;
+      },
       (error) => {
+        console.error('[API CLIENT] Error:', {
+          status: error.response?.status,
+          url: error.config?.url,
+          message: error.message,
+          data: error.response?.data
+        });
         if (error.response?.status === 401) {
           // Unauthorized - clear user and redirect to login
           if (typeof window !== 'undefined') {
