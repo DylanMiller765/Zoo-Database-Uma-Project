@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback, useMemo } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
 import { queryService } from "@/services/query.service";
+
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -17,6 +18,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+
 import {
   UserCircle,
   DollarSign,
@@ -43,7 +45,7 @@ type VisitorSummary = {
   unique_customers: number | string | null;
 };
 
-// columns the user can include/exclude in the CSV
+// columns available to include in CSV export
 const AVAILABLE_COLUMNS = [
   {
     key: "visit_date",
@@ -99,9 +101,10 @@ export default function VisitorStatisticsPage() {
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
 
-  // -------- report builder state (user control) --------
-  // which columns to include
-  const [selectedColumns, setSelectedColumns] = useState<Record<string, boolean>>({
+  // -------- report builder state --------
+  const [selectedColumns, setSelectedColumns] = useState<
+    Record<string, boolean>
+  >({
     visit_date: true,
     ticket_type: true,
     payment_method: true,
@@ -110,15 +113,14 @@ export default function VisitorStatisticsPage() {
     avg_price: true,
   });
 
-  // how to group
   const [groupMode, setGroupMode] = useState<
     "raw" | "by_ticket_type" | "by_payment_method"
   >("raw");
 
-  // include summary/kpis block at top of CSV?
-  const [includeSummaryBlock, setIncludeSummaryBlock] = useState<boolean>(true);
+  const [includeSummaryBlock, setIncludeSummaryBlock] =
+    useState<boolean>(true);
 
-  // -------- util helpers --------
+  // -------- helpers --------
   const parseNum = (value: unknown): number => {
     if (value === null || value === undefined) return 0;
     const n = parseFloat(String(value));
@@ -126,7 +128,9 @@ export default function VisitorStatisticsPage() {
   };
 
   const formatMoney = (value: unknown) =>
-    parseNum(value).toLocaleString("en-US", { minimumFractionDigits: 2 });
+    parseNum(value).toLocaleString("en-US", {
+      minimumFractionDigits: 2,
+    });
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -150,7 +154,10 @@ export default function VisitorStatisticsPage() {
   const loadData = useCallback(async () => {
     try {
       setLoading(true);
-      const result = await queryService.getVisitorStatistics(startDate, endDate);
+      const result = await queryService.getVisitorStatistics(
+        startDate,
+        endDate
+      );
       setData(result.data || []);
       setSummary(result.summary || {});
     } catch (err) {
@@ -172,7 +179,7 @@ export default function VisitorStatisticsPage() {
     setTimeout(() => loadData(), 0);
   };
 
-  // -------- derived stats (for fallback + summarization) --------
+  // -------- derived stats --------
   const derivedStats = useMemo(() => {
     const totalTicketsFromRows = data.reduce(
       (sum, row) => sum + parseNum(row.ticket_count),
@@ -186,94 +193,122 @@ export default function VisitorStatisticsPage() {
     return { totalTicketsFromRows, totalRevenueFromRows };
   }, [data]);
 
-  // -------- dynamic grouping logic for export --------
+  // -------- grouping logic for export --------
   //
-  // groupMode === "raw":
-  //   just use each row from `data`.
-  //
-  // groupMode === "by_ticket_type":
-  //   combine rows with the same ticket_type:
-  //     ticket_count -> sum
-  //     total_revenue -> sum
-  //     avg_price -> weighted avg = total_revenue_sum / ticket_count_sum
-  //
-  // groupMode === "by_payment_method":
-  //   same idea but group by payment_method instead
+  //  - "raw": return data as-is
+  //  - "by_ticket_type": group by row.ticket_type
+  //  - "by_payment_method": group by row.payment_method
   //
   const groupedRowsForExport: VisitorRow[] = useMemo(() => {
-    if (groupMode === "raw") {
-      return data;
-    }
-
-    const map = new Map<string, { ticket_count: number; total_revenue: number; anyRow: VisitorRow }>();
-
-    const makeKey = (row: VisitorRow) =>
-      groupMode === "by_ticket_type"
-        ? row.ticket_type || "Unknown Ticket Type"
-        : row.payment_method || "Unknown Payment Method";
-
-    data.forEach((row) => {
-      const key = makeKey(row);
-      if (!map.has(key)) {
-        map.set(key, {
-          ticket_count: 0,
-          total_revenue: 0,
-          anyRow: row,
-        });
+    switch (groupMode) {
+      case "raw": {
+        // no grouping
+        return data;
       }
-      const bucket = map.get(key)!;
-      bucket.ticket_count += parseNum(row.ticket_count);
-      bucket.total_revenue += parseNum(row.total_revenue);
-    });
 
-    // turn that back into VisitorRow-ish objects
-    const result: VisitorRow[] = [];
-    map.forEach((bucket, key) => {
-      const avgPriceCalc =
-        bucket.ticket_count > 0
-          ? bucket.total_revenue / bucket.ticket_count
-          : 0;
+      case "by_ticket_type": {
+        const buckets = new Map<
+          string,
+          { ticket_count: number; total_revenue: number; anyRow: VisitorRow }
+        >();
 
-      // we "collapse" each bucket into a single pseudo-row
-      // we keep the relevant dimension in either ticket_type or payment_method,
-      // blank out fields that don't make sense for grouped mode.
-      const baseRow = bucket.anyRow;
+        data.forEach((row) => {
+          const key = row.ticket_type || "Unknown Ticket Type";
+          if (!buckets.has(key)) {
+            buckets.set(key, {
+              ticket_count: 0,
+              total_revenue: 0,
+              anyRow: row,
+            });
+          }
+          const bucket = buckets.get(key)!;
+          bucket.ticket_count += parseNum(row.ticket_count);
+          bucket.total_revenue += parseNum(row.total_revenue);
+        });
 
-      const rowOut: VisitorRow = {
-        visit_date: groupMode === "raw" ? baseRow.visit_date : "", // hide date because it's multiple days potentially
-        ticket_type:
-          groupMode === "by_ticket_type" ? key : baseRow.ticket_type ?? "",
-        payment_method:
-          groupMode === "by_payment_method" ? key : baseRow.payment_method ?? "",
-        ticket_count: bucket.ticket_count,
-        total_revenue: bucket.total_revenue,
-        avg_price: avgPriceCalc,
-      };
+        const result: VisitorRow[] = [];
+        buckets.forEach((bucket, key) => {
+          const avgPrice =
+            bucket.ticket_count > 0
+              ? bucket.total_revenue / bucket.ticket_count
+              : 0;
 
-      result.push(rowOut);
-    });
+          result.push({
+            visit_date: "", // multiple dates rolled up
+            ticket_type: key,
+            payment_method: "", // not meaningful in this grouping
+            ticket_count: bucket.ticket_count,
+            total_revenue: bucket.total_revenue,
+            avg_price: avgPrice,
+          });
+        });
 
-    return result;
-  }, [data, groupMode, parseNum]);
+        return result;
+      }
+
+      case "by_payment_method": {
+        const buckets = new Map<
+          string,
+          { ticket_count: number; total_revenue: number; anyRow: VisitorRow }
+        >();
+
+        data.forEach((row) => {
+          const key = row.payment_method || "Unknown Payment Method";
+          if (!buckets.has(key)) {
+            buckets.set(key, {
+              ticket_count: 0,
+              total_revenue: 0,
+              anyRow: row,
+            });
+          }
+          const bucket = buckets.get(key)!;
+          bucket.ticket_count += parseNum(row.ticket_count);
+          bucket.total_revenue += parseNum(row.total_revenue);
+        });
+
+        const result: VisitorRow[] = [];
+        buckets.forEach((bucket, key) => {
+          const avgPrice =
+            bucket.ticket_count > 0
+              ? bucket.total_revenue / bucket.ticket_count
+              : 0;
+
+          result.push({
+            visit_date: "", // rolled up
+            ticket_type: "", // not meaningful in this grouping
+            payment_method: key,
+            ticket_count: bucket.ticket_count,
+            total_revenue: bucket.total_revenue,
+            avg_price: avgPrice,
+          });
+        });
+
+        return result;
+      }
+
+      default:
+        // should never hit, but TS wants a value
+        return data;
+    }
+  }, [data, groupMode]);
 
   // -------- CSV generation --------
   const generateCsv = useCallback(() => {
-    // 1. Build ordered list of columns the user actually wants
+    // 1. which columns are active
     const activeColumns = AVAILABLE_COLUMNS.filter(
       (col) => selectedColumns[col.key]
     );
 
-    // 2. Build the header row from active columns
+    // 2. header row
     const headerRow = activeColumns.map((col) => col.label);
 
-    // 3. Build data rows (from groupedRowsForExport)
-    const helpers = { formatMoney, formatDate }; // passed to column getters
+    // 3. detail rows
+    const helpers = { formatMoney, formatDate };
     const detailRows: string[][] = groupedRowsForExport.map((r) =>
       activeColumns.map((col) => col.getValue(r, helpers))
     );
 
-    // 4. Optional summary block for the top of the CSV
-    //    (lets finance/leadership see KPIs right away)
+    // 4. summary block (optional)
     const ticketsValue =
       summary.total_tickets ?? derivedStats.totalTicketsFromRows ?? 0;
     const revenueValue =
@@ -293,20 +328,19 @@ export default function VisitorStatisticsPage() {
             "Unique Customers",
             String(summary.unique_customers ?? 0),
           ],
-          [""], // blank separator row
+          [""], // blank row
         ]
       : [];
 
-    // 5. Escape CSV cells
+    // 5. CSV escaping + build
     const escapeCell = (v: string) =>
       v.includes(",") || v.includes('"') || v.includes("\n")
-        ? `"${v.replace(/"/g, '""')}"`
+        ? `"${v.replace(/"/g, '""')}"` // wrap + escape quotes
         : v;
 
-    // 6. Build final CSV lines
     const csvLines: string[] = [];
 
-    // summary block (if enabled)
+    // summary rows
     summaryBlock.forEach((row) => {
       csvLines.push(row.map(escapeCell).join(","));
     });
@@ -314,12 +348,12 @@ export default function VisitorStatisticsPage() {
     // headers
     csvLines.push(headerRow.map(escapeCell).join(","));
 
-    // data
+    // data rows
     detailRows.forEach((row) => {
       csvLines.push(row.map(escapeCell).join(","));
     });
 
-    // 7. Download
+    // 6. download file
     const blob = new Blob([csvLines.join("\n")], {
       type: "text/csv;charset=utf-8;",
     });
@@ -365,7 +399,7 @@ export default function VisitorStatisticsPage() {
 
   return (
     <div className="space-y-6">
-      {/* HEADER */}
+      {/* HEADER / EXPORT */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-2">
@@ -478,7 +512,7 @@ export default function VisitorStatisticsPage() {
               </label>
             </div>
             <p className="text-xs text-gray-500">
-              Groups rows and sums ticket counts & revenue. Avg price becomes
+              Groups rows and sums ticket counts &amp; revenue. Avg price becomes
               weighted.
             </p>
           </div>
@@ -511,7 +545,7 @@ export default function VisitorStatisticsPage() {
             </p>
           </div>
 
-          {/* Summary block toggle */}
+          {/* Summary toggle */}
           <div className="space-y-2">
             <Label className="text-sm font-medium text-gray-700">
               Summary block at top of CSV
@@ -527,8 +561,8 @@ export default function VisitorStatisticsPage() {
                 }
               />
               <span>
-                Include totals (revenue, tickets, avg ticket price,
-                unique customers)
+                Include totals (revenue, tickets, avg ticket price, unique
+                customers)
               </span>
             </label>
           </div>
@@ -581,11 +615,12 @@ export default function VisitorStatisticsPage() {
           <CardContent>
             <p className="text-2xl font-bold text-dark_spring_green-600">
               $
-              {parseNum(
-                summary.avg_ticket_price
-              ).toLocaleString("en-US", {
-                minimumFractionDigits: 2,
-              })}
+              {parseNum(summary.avg_ticket_price).toLocaleString(
+                "en-US",
+                {
+                  minimumFractionDigits: 2,
+                }
+              )}
             </p>
           </CardContent>
         </Card>
@@ -605,7 +640,7 @@ export default function VisitorStatisticsPage() {
         </Card>
       </div>
 
-      {/* DATA TABLE (visual preview of raw rows) */}
+      {/* DATA TABLE (the live preview of raw rows) */}
       <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
         <Table>
           <TableHeader>
