@@ -30,6 +30,14 @@ export const protect = async (req: Request, res: Response, next: NextFunction) =
       return res.status(401).json({ success: false, message: 'User not found' });
     }
 
+    console.log('[AUTH MIDDLEWARE] Authenticated user:', {
+      account_id: user.account_id,
+      username: user.username,
+      role: user.role,
+      customer_id: user.customer_id,
+      employee_id: user.employee_id
+    });
+
     (req as any).user = user;
     next();
   } catch (error) {
