@@ -15,22 +15,17 @@ export default function NotificationBanner() {
   const fetchNotifications = async () => {
     try {
       const token = localStorage.getItem('token');
-      console.log('🔔 NotificationBanner: Checking for notifications...');
-      console.log('🔔 Token exists:', !!token);
 
       if (!token) {
-        console.log('🔔 No token found, skipping notification fetch');
         setLoading(false);
         return;
       }
 
       // Fetch only unread notifications
-      const unreadNotifications = await notificationService.getNotifications(true);
-      console.log('🔔 Fetched notifications:', unreadNotifications);
-      console.log('🔔 Number of unread notifications:', unreadNotifications.length);
+      const unreadNotifications = await notificationService.getNotifications(false);
       setNotifications(unreadNotifications);
     } catch (error) {
-      console.error('🔔 Error fetching notifications:', error);
+      console.error('Error fetching notifications:', error);
     } finally {
       setLoading(false);
     }
@@ -38,7 +33,6 @@ export default function NotificationBanner() {
 
   const dismissNotification = async (notificationId: number) => {
     try {
-      await notificationService.markAsRead(notificationId);
       setNotifications(notifications.filter(n => n.notification_id !== notificationId));
     } catch (error) {
       console.error('Error dismissing notification:', error);
