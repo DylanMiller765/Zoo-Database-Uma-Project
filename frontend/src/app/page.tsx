@@ -126,53 +126,58 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ATTRACTIONS - Enhanced with Images */}
-      <section id="attractions" className="space-y-2 rounded-2xl bg-gray-50 p-4 sm:p-6">
-        <div className="flex items-center gap-3">
-          <h2 className="text-2xl font-bold">Attractions</h2>
-          <a
-            href="/attractions"
-            className="inline-flex items-center gap-1 rounded-full bg-sea_green-500 px-4 py-1.5 text-white text-sm font-medium hover:bg-sea_green-600 transition"
-          >
-            See more <span aria-hidden="true">→</span>
-          </a>
-        </div>
-        <p className="text-sm text-gray-600">Visit our family favorites around the park.</p>
-
-        <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
-          {[
-            { title: "Gift Shop", desc: "Souvenirs & plush.", img: "/images/attractions/gift-shop.jpg" },
-            { title: "Café", desc: "Coffee & snacks.", img: "/images/attractions/cafe.jpg" },
-            { title: "Play Zone", desc: "Kids area.", img: "/images/attractions/play-zone.jpg" },
-            { title: "Aquarium", desc: "Sharks, rays, tropical fish.", img: "/images/attractions/aquarium.jpg" },
-          ].map((a) => (
-            <Card
-              key={a.title}
-              className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
+      {/*
+        ATTRACTIONS - Temporarily hidden
+        Keeping this section commented out for now; re-enable when ready.
+      */}
+      {false && (
+        <section id="attractions" className="space-y-2 rounded-2xl bg-gray-50 p-4 sm:p-6">
+          <div className="flex items-center gap-3">
+            <h2 className="text-2xl font-bold">Attractions</h2>
+            <a
+              href="/attractions"
+              className="inline-flex items-center gap-1 rounded-full bg-sea_green-500 px-4 py-1.5 text-white text-sm font-medium hover:bg-sea_green-600 transition"
             >
-              <CardHeader className="px-0 pt-0 pb-3">
-                <div className="w-full overflow-hidden rounded-t-lg">
-                  <img
-                    src={a.img}
-                    alt={a.title}
-                    loading="lazy"
-                    className="h-44 w-full object-cover"
-                    onError={(ev) => {
-                      (ev.currentTarget as HTMLImageElement).src = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='600' height='300'><rect fill='%23e5e7eb' width='100%25' height='100%25'/><text x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' fill='%239ca3af' font-size='18'>Image coming soon</text></svg>";
-                    }}
-                  />
-                </div>
-                <div className="px-6 pt-4">
-                  <CardTitle className="text-lg text-dark_spring_green-700">{a.title}</CardTitle>
-                </div>
-              </CardHeader>
-              <CardContent className="px-6 pb-6 text-sm text-gray-700">
-                <p className="leading-relaxed">{a.desc}</p>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-  </section>
+              See more <span aria-hidden="true">→</span>
+            </a>
+          </div>
+          <p className="text-sm text-gray-600">Visit our family favorites around the park.</p>
+
+          <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
+            {[
+              { title: "Gift Shop", desc: "Souvenirs & plush.", img: "/images/attractions/gift-shop.jpg" },
+              { title: "Café", desc: "Coffee & snacks.", img: "/images/attractions/cafe.jpg" },
+              { title: "Play Zone", desc: "Kids area.", img: "/images/attractions/play-zone.jpg" },
+              { title: "Aquarium", desc: "Sharks, rays, tropical fish.", img: "/images/attractions/aquarium.jpg" },
+            ].map((a) => (
+              <Card
+                key={a.title}
+                className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
+              >
+                <CardHeader className="px-0 pt-0 pb-3">
+                  <div className="w-full overflow-hidden rounded-t-lg">
+                    <img
+                      src={a.img}
+                      alt={a.title}
+                      loading="lazy"
+                      className="h-44 w-full object-cover"
+                      onError={(ev) => {
+                        (ev.currentTarget as HTMLImageElement).src = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='600' height='300'><rect fill='%23e5e7eb' width='100%25' height='100%25'/><text x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' fill='%239ca3af' font-size='18'>Image coming soon</text></svg>";
+                      }}
+                    />
+                  </div>
+                  <div className="px-6 pt-4">
+                    <CardTitle className="text-lg text-dark_spring_green-700">{a.title}</CardTitle>
+                  </div>
+                </CardHeader>
+                <CardContent className="px-6 pb-6 text-sm text-gray-700">
+                  <p className="leading-relaxed">{a.desc}</p>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </section>
+      )}
 
   {/* EVENTS */}
   <section id="events" className="space-y-2 rounded-2xl bg-gray-50 p-4 sm:p-6">
