@@ -45,7 +45,10 @@ export default function Header() {
         <nav className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
           <ul className="flex items-center gap-5 md:gap-6 xl:gap-8 text-sm lg:text-[15px]">
             <li><Link href={to('exhibits')} className="hover:underline">Exhibits</Link></li>
-            <li><Link href={to('attractions')} className="hover:underline">Attractions</Link></li>
+            {/* Temporary: hide Attractions from navbar for now; leave code for later re-enable */}
+            {false && (
+              <li><Link href={to('attractions')} className="hover:underline">Attractions</Link></li>
+            )}
             <li><Link href={to('events')} className="hover:underline">Events</Link></li>
             <li><Link href={to('plan')} className="hover:underline">Visit</Link></li>
             <li><Link href={to('donate')} className="hover:underline">Donate</Link></li>
