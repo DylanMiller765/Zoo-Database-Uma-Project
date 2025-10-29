@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback, useMemo } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
 import { queryService } from "@/services/query.service";
+import * as XLSX from 'xlsx';
 import { Badge } from "@/components/ui/badge";
 import {
   Table,
@@ -314,70 +315,135 @@ export default function EventAttendancePage() {
     [data]
   );
 
-  // ===== CSV export helper =====
-  const escapeCell = (val: string) => {
-    if (val.includes(",") || val.includes('"') || val.includes("\n")) {
-      return `"${val.replace(/"/g, '""')}"`;
-    }
-    return val;
-  };
-
-  const toCsvText = (rows: string[][]) =>
-    rows.map((row) => row.map(escapeCell).join(",")).join("\n");
-
-  const downloadCsv = (filenameBase: string, csvText: string) => {
-    const blob = new Blob([csvText], {
-      type: "text/csv;charset=utf-8;",
-    });
-    const url = URL.createObjectURL(blob);
-
-    const link = document.createElement("a");
-    link.href = url;
-    link.setAttribute(
-      "download",
-      `${filenameBase}_${new Date()
-        .toISOString()
-        .slice(0, 10)}.csv`
-    );
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
-  };
-
-  // ===== Final CSV generator =====
-  const handleGenerateCsv = useCallback(() => {
+  // ===== Excel export with formatting =====
+  const handleGenerateExcel = useCallback(() => {
+    const wb = XLSX.utils.book_new();
     const { headers, rows } = buildRowsForReport(reportType);
 
-    // summary block depends on reportType but we’ll keep it simple:
-    const summaryRows: string[][] = [
-      ["Report Type", reportType],
-      ["Total Events", String(summary.totalEvents)],
-      ["Total Registrations", String(summary.totalRegistrations)],
-      [
-        "Total Revenue (USD)",
-        `$${summary.totalRevenueRaw.toLocaleString("en-US", {
-          minimumFractionDigits: 2,
-        })}`,
-      ],
-      [
-        "Average Utilization % (per event)",
-        `${summary.avgUtilization.toFixed(1)}%`,
-      ],
-      [
-        "Overall Capacity Fill %",
-        `${summary.overallFillPct.toFixed(1)}%`,
-      ],
-      [""], // blank line
-    ];
+    // Build worksheet data
+    const wsData: any[][] = [];
 
-    const csvText = toCsvText([
-      ...summaryRows,
-      headers,
-      ...rows,
-    ]);
+    // Title
+    wsData.push(['Event Attendance Report']);
+    wsData.push(['Generated: ' + new Date().toLocaleDateString()]);
+    wsData.push([]); // blank
 
-    downloadCsv(`event_report_${reportType}`, csvText);
+    // Summary
+    wsData.push(['SUMMARY']);
+    wsData.push(['Report Type:', reportType]);
+    wsData.push(['Total Events:', summary.totalEvents]);
+    wsData.push(['Total Registrations:', summary.totalRegistrations]);
+    wsData.push(['Total Revenue:', summary.totalRevenueRaw]);
+    wsData.push(['Average Utilization %:', summary.avgUtilization]);
+    wsData.push(['Overall Capacity Fill %:', summary.overallFillPct]);
+    wsData.push([]); // blank
+
+    // Headers
+    wsData.push(headers);
+
+    // Data rows - convert string values to proper types
+    rows.forEach((row) => {
+      const dataRow = row.map((cell, idx) => {
+        // Remove $ and , for revenue columns
+        if (cell.startsWith('$')) {
+          return parseFloat(cell.replace(/[$,]/g, ''));
+        }
+        // Remove % for percentage columns
+        if (cell.endsWith('%')) {
+          return parseFloat(cell.replace(/%/g, ''));
+        }
+        // Convert numbers
+        if (!isNaN(Number(cell)) && cell !== '') {
+          return Number(cell);
+        }
+        return cell;
+      });
+      wsData.push(dataRow);
+    });
+
+    // Create worksheet
+    const ws = XLSX.utils.aoa_to_sheet(wsData);
+
+    // Set column widths
+    ws['!cols'] = headers.map(() => ({ wch: 18 }));
+
+    // Style title
+    if (ws['A1']) {
+      ws['A1'].s = {
+        font: { bold: true, sz: 16, color: { rgb: "F59E0B" } },
+        alignment: { horizontal: 'left' }
+      };
+    }
+
+    // Style summary section
+    for (let r = 4; r <= 10; r++) {
+      const cellA = ws[XLSX.utils.encode_cell({ r, c: 0 })];
+      if (cellA) {
+        cellA.s = {
+          font: { bold: true },
+          fill: { fgColor: { rgb: "FEF3C7" } }
+        };
+      }
+    }
+
+    // Style header row
+    const headerRowIndex = 12;
+    headers.forEach((_, colIdx) => {
+      const cell = ws[XLSX.utils.encode_cell({ r: headerRowIndex, c: colIdx })];
+      if (cell) {
+        cell.s = {
+          font: { bold: true, color: { rgb: "FFFFFF" } },
+          fill: { fgColor: { rgb: "F59E0B" } },
+          alignment: { horizontal: 'center', vertical: 'center' },
+          border: {
+            top: { style: 'thin', color: { rgb: "000000" } },
+            bottom: { style: 'thin', color: { rgb: "000000" } },
+            left: { style: 'thin', color: { rgb: "000000" } },
+            right: { style: 'thin', color: { rgb: "000000" } }
+          }
+        };
+      }
+    });
+
+    // Style data rows
+    const dataStartRow = headerRowIndex + 1;
+    const dataEndRow = dataStartRow + rows.length - 1;
+
+    for (let r = dataStartRow; r <= dataEndRow; r++) {
+      headers.forEach((header, colIdx) => {
+        const cell = ws[XLSX.utils.encode_cell({ r, c: colIdx })];
+        if (cell) {
+          // Borders
+          cell.s = cell.s || {};
+          cell.s.border = {
+            top: { style: 'thin', color: { rgb: "CCCCCC" } },
+            bottom: { style: 'thin', color: { rgb: "CCCCCC" } },
+            left: { style: 'thin', color: { rgb: "CCCCCC" } },
+            right: { style: 'thin', color: { rgb: "CCCCCC" } }
+          };
+
+          // Format currency columns
+          if (header.toLowerCase().includes('revenue') || header.toLowerCase().includes('usd')) {
+            cell.z = '$#,##0.00';
+            cell.s.fill = { fgColor: { rgb: "FEF3C7" } };
+          }
+          // Format percentage columns
+          if (header.toLowerCase().includes('percentage') || header.toLowerCase().includes('%')) {
+            cell.z = '0.0%';
+            cell.s.fill = { fgColor: { rgb: "DBEAFE" } };
+          }
+          // Zebra striping
+          if (r % 2 === 0) {
+            cell.s.fill = cell.s.fill || { fgColor: { rgb: "F9FAFB" } };
+          }
+        }
+      });
+    }
+
+    XLSX.utils.book_append_sheet(wb, ws, 'Event Attendance');
+
+    const fileName = `event_report_${reportType}_${new Date().toISOString().slice(0, 10)}.xlsx`;
+    XLSX.writeFile(wb, fileName);
   }, [reportType, summary, buildRowsForReport]);
 
   // ===== loading / auth states =====
@@ -431,13 +497,13 @@ export default function EventAttendancePage() {
             </select>
           </div>
 
-          {/* CSV Export */}
+          {/* Excel Export */}
           <Button
-            onClick={handleGenerateCsv}
+            onClick={handleGenerateExcel}
             className="flex items-center gap-2 bg-sea_green-600 hover:bg-sea_green-700 text-white self-start sm:self-auto"
           >
             <FileDown className="h-4 w-4" />
-            <span>Export CSV</span>
+            <span>Export Excel</span>
           </Button>
         </div>
       </div>

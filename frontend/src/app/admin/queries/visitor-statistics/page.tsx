@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback, useMemo } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
 import { queryService } from "@/services/query.service";
+import * as XLSX from 'xlsx';
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -292,83 +293,153 @@ export default function VisitorStatisticsPage() {
     }
   }, [data, groupMode]);
 
-  // -------- CSV generation --------
-  const generateCsv = useCallback(() => {
-    // 1. which columns are active
+  // -------- Excel generation with formatting --------
+  const generateExcel = useCallback(() => {
+    // Create new workbook
+    const wb = XLSX.utils.book_new();
+
+    // 1. Which columns are active
     const activeColumns = AVAILABLE_COLUMNS.filter(
       (col) => selectedColumns[col.key]
     );
 
-    // 2. header row
-    const headerRow = activeColumns.map((col) => col.label);
-
-    // 3. detail rows
+    // 2. Prepare data
     const helpers = { formatMoney, formatDate };
-    const detailRows: string[][] = groupedRowsForExport.map((r) =>
-      activeColumns.map((col) => col.getValue(r, helpers))
-    );
+    const ticketsValue = summary.total_tickets ?? derivedStats.totalTicketsFromRows ?? 0;
+    const revenueValue = summary.total_revenue ?? derivedStats.totalRevenueFromRows ?? 0;
 
-    // 4. summary block (optional)
-    const ticketsValue =
-      summary.total_tickets ?? derivedStats.totalTicketsFromRows ?? 0;
-    const revenueValue =
-      summary.total_revenue ?? derivedStats.totalRevenueFromRows ?? 0;
+    // Build worksheet data array
+    const wsData: any[][] = [];
 
-    const summaryBlock: string[][] = includeSummaryBlock
-      ? [
-          ["Report Summary", ""],
-          ["Grouping Mode", groupMode],
-          ["Total Tickets Sold", String(ticketsValue)],
-          ["Total Revenue (USD)", `$${formatMoney(revenueValue)}`],
-          [
-            "Avg Ticket Price (USD)",
-            `$${formatMoney(summary.avg_ticket_price)}`,
-          ],
-          [
-            "Unique Customers",
-            String(summary.unique_customers ?? 0),
-          ],
-          [""], // blank row
-        ]
-      : [];
+    // Add title
+    wsData.push(['Visitor Statistics Report']);
+    wsData.push(['Generated: ' + new Date().toLocaleDateString()]);
+    wsData.push([]); // blank row
 
-    // 5. CSV escaping + build
-    const escapeCell = (v: string) =>
-      v.includes(",") || v.includes('"') || v.includes("\n")
-        ? `"${v.replace(/"/g, '""')}"` // wrap + escape quotes
-        : v;
+    // Add summary if enabled
+    if (includeSummaryBlock) {
+      wsData.push(['SUMMARY']);
+      wsData.push(['Grouping Mode:', groupMode.replace(/_/g, ' ')]);
+      wsData.push(['Total Tickets Sold:', ticketsValue]);
+      wsData.push(['Total Revenue:', parseNum(revenueValue)]);
+      wsData.push(['Avg Ticket Price:', parseNum(summary.avg_ticket_price)]);
+      wsData.push(['Unique Customers:', summary.unique_customers ?? 0]);
+      wsData.push([]); // blank row
+    }
 
-    const csvLines: string[] = [];
+    // Add headers
+    const headerRow = activeColumns.map((col) => col.label);
+    wsData.push(headerRow);
 
-    // summary rows
-    summaryBlock.forEach((row) => {
-      csvLines.push(row.map(escapeCell).join(","));
+    // Add data rows
+    groupedRowsForExport.forEach((row) => {
+      const dataRow: any[] = [];
+      activeColumns.forEach((col) => {
+        if (col.key === 'visit_date') {
+          dataRow.push(row.visit_date ? formatDate(row.visit_date) : '');
+        } else if (col.key === 'total_revenue' || col.key === 'avg_price') {
+          dataRow.push(parseNum(row[col.key]));
+        } else if (col.key === 'ticket_count') {
+          dataRow.push(row.ticket_count);
+        } else {
+          dataRow.push(row[col.key as keyof VisitorRow] ?? '');
+        }
+      });
+      wsData.push(dataRow);
     });
 
-    // headers
-    csvLines.push(headerRow.map(escapeCell).join(","));
+    // Create worksheet
+    const ws = XLSX.utils.aoa_to_sheet(wsData);
 
-    // data rows
-    detailRows.forEach((row) => {
-      csvLines.push(row.map(escapeCell).join(","));
+    // Set column widths
+    const colWidths = activeColumns.map((col) => {
+      if (col.key === 'visit_date') return { wch: 12 };
+      if (col.key === 'ticket_type') return { wch: 15 };
+      if (col.key === 'payment_method') return { wch: 15 };
+      if (col.key === 'ticket_count') return { wch: 12 };
+      if (col.key === 'total_revenue' || col.key === 'avg_price') return { wch: 18 };
+      return { wch: 15 };
+    });
+    ws['!cols'] = colWidths;
+
+    // Apply styles to title
+    if (ws['A1']) {
+      ws['A1'].s = {
+        font: { bold: true, sz: 16, color: { rgb: "0F766E" } },
+        alignment: { horizontal: 'left' }
+      };
+    }
+
+    // Apply styles to summary section
+    const summaryStartRow = 4;
+    if (includeSummaryBlock) {
+      const summaryEndRow = summaryStartRow + 5;
+      for (let r = summaryStartRow; r <= summaryEndRow; r++) {
+        const cellA = ws[XLSX.utils.encode_cell({ r, c: 0 })];
+        if (cellA) {
+          cellA.s = {
+            font: { bold: true },
+            fill: { fgColor: { rgb: "F0FDF4" } }
+          };
+        }
+      }
+    }
+
+    // Apply styles to header row
+    const headerRowIndex = includeSummaryBlock ? 9 : 3;
+    activeColumns.forEach((_, colIdx) => {
+      const cell = ws[XLSX.utils.encode_cell({ r: headerRowIndex, c: colIdx })];
+      if (cell) {
+        cell.s = {
+          font: { bold: true, color: { rgb: "FFFFFF" } },
+          fill: { fgColor: { rgb: "14532D" } },
+          alignment: { horizontal: 'center', vertical: 'center' },
+          border: {
+            top: { style: 'thin', color: { rgb: "000000" } },
+            bottom: { style: 'thin', color: { rgb: "000000" } },
+            left: { style: 'thin', color: { rgb: "000000" } },
+            right: { style: 'thin', color: { rgb: "000000" } }
+          }
+        };
+      }
     });
 
-    // 6. download file
-    const blob = new Blob([csvLines.join("\n")], {
-      type: "text/csv;charset=utf-8;",
-    });
-    const url = URL.createObjectURL(blob);
+    // Apply number formatting for currency columns
+    const dataStartRow = headerRowIndex + 1;
+    const dataEndRow = dataStartRow + groupedRowsForExport.length - 1;
 
-    const link = document.createElement("a");
-    link.href = url;
-    link.setAttribute(
-      "download",
-      `visitor_statistics_${new Date().toISOString().slice(0, 10)}.csv`
-    );
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
+    for (let r = dataStartRow; r <= dataEndRow; r++) {
+      activeColumns.forEach((col, colIdx) => {
+        const cell = ws[XLSX.utils.encode_cell({ r, c: colIdx })];
+        if (cell) {
+          // Add borders to all data cells
+          cell.s = cell.s || {};
+          cell.s.border = {
+            top: { style: 'thin', color: { rgb: "CCCCCC" } },
+            bottom: { style: 'thin', color: { rgb: "CCCCCC" } },
+            left: { style: 'thin', color: { rgb: "CCCCCC" } },
+            right: { style: 'thin', color: { rgb: "CCCCCC" } }
+          };
+
+          // Format currency columns
+          if (col.key === 'total_revenue' || col.key === 'avg_price') {
+            cell.z = '$#,##0.00';
+            cell.s.fill = { fgColor: { rgb: "FEF3C7" } };
+          }
+          // Zebra striping
+          if (r % 2 === 0) {
+            cell.s.fill = cell.s.fill || { fgColor: { rgb: "F9FAFB" } };
+          }
+        }
+      });
+    }
+
+    // Add worksheet to workbook
+    XLSX.utils.book_append_sheet(wb, ws, 'Visitor Statistics');
+
+    // Generate and download
+    const fileName = `visitor_statistics_${new Date().toISOString().slice(0, 10)}.xlsx`;
+    XLSX.writeFile(wb, fileName);
   }, [
     selectedColumns,
     groupedRowsForExport,
@@ -412,11 +483,11 @@ export default function VisitorStatisticsPage() {
         </div>
 
         <Button
-          onClick={generateCsv}
+          onClick={generateExcel}
           className="flex items-center gap-2 bg-sea_green-600 hover:bg-sea_green-700 text-white"
         >
           <FileDown className="h-4 w-4" />
-          Export CSV
+          Export Excel
         </Button>
       </div>
 

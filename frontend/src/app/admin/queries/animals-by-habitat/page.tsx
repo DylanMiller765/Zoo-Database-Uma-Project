@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback, useMemo } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
 import { queryService } from "@/services/query.service";
+import * as XLSX from 'xlsx';
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { MapPin, Leaf, FileDown } from "lucide-react";
@@ -132,17 +133,7 @@ export default function AnimalsByHabitatPage() {
     return status.replace(/_/g, " ");
   };
 
-  // ========== CSV helpers ==========
-  const escapeCell = (val: string) => {
-    if (val.includes(",") || val.includes('"') || val.includes("\n")) {
-      return `"${val.replace(/"/g, '""')}"`;
-    }
-    return val;
-  };
-
-  const toCsvText = (rows: string[][]) => {
-    return rows.map((row) => row.map(escapeCell).join(",")).join("\n");
-  };
+  // ========== Excel helpers ==========
 
   // Build rows per report type
   const buildRowsForReport = useCallback(
@@ -302,40 +293,131 @@ export default function AnimalsByHabitatPage() {
     [habitats]
   );
 
-  // Trigger CSV download
-  const downloadCsv = (filenameBase: string, csvText: string) => {
-    const blob = new Blob([csvText], {
-      type: "text/csv;charset=utf-8;",
-    });
-    const url = URL.createObjectURL(blob);
-
-    const link = document.createElement("a");
-    link.href = url;
-    link.setAttribute(
-      "download",
-      `${filenameBase}_${new Date()
-        .toISOString()
-        .slice(0, 10)}.csv`
-    );
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
-  };
-
-  // Build CSV summary block and export
-  const handleGenerateCsv = useCallback(() => {
+  // Excel export with formatting
+  const handleGenerateExcel = useCallback(() => {
+    const wb = XLSX.utils.book_new();
     const { headers, rows } = buildRowsForReport(reportType);
 
-    const summaryBlock: string[][] = [
-      ["Report Type", reportType],
-      [""],
-    ];
+    // Build worksheet data
+    const wsData: any[][] = [];
 
-    const csvText = toCsvText([...summaryBlock, headers, ...rows]);
+    // Title
+    wsData.push(['Animals by Habitat Report']);
+    wsData.push(['Generated: ' + new Date().toLocaleDateString()]);
+    wsData.push([]); // blank
 
-    downloadCsv(`animals_report_${reportType}`, csvText);
-  }, [reportType, buildRowsForReport]);
+    // Summary
+    wsData.push(['Report Type:', reportType]);
+    wsData.push(['Total Habitats:', String(habitats.length)]);
+    wsData.push(['Total Animals:', String(habitats.reduce((sum, h) => sum + h.animals.length, 0))]);
+    wsData.push([]); // blank
+
+    // Headers
+    wsData.push(headers);
+
+    // Data rows - convert to proper types
+    rows.forEach((row) => {
+      const dataRow = row.map((cell) => {
+        if (!isNaN(Number(cell)) && cell !== '') {
+          return Number(cell);
+        }
+        return cell;
+      });
+      wsData.push(dataRow);
+    });
+
+    // Create worksheet
+    const ws = XLSX.utils.aoa_to_sheet(wsData);
+
+    // Set column widths
+    ws['!cols'] = headers.map(() => ({ wch: 20 }));
+
+    // Style title
+    if (ws['A1']) {
+      ws['A1'].s = {
+        font: { bold: true, sz: 16, color: { rgb: "0F766E" } },
+        alignment: { horizontal: 'left' }
+      };
+    }
+
+    // Style summary section
+    for (let r = 4; r <= 6; r++) {
+      const cellA = ws[XLSX.utils.encode_cell({ r, c: 0 })];
+      if (cellA) {
+        cellA.s = {
+          font: { bold: true },
+          fill: { fgColor: { rgb: "D1FAE5" } }
+        };
+      }
+    }
+
+    // Style header row
+    const headerRowIndex = 8;
+    headers.forEach((_, colIdx) => {
+      const cell = ws[XLSX.utils.encode_cell({ r: headerRowIndex, c: colIdx })];
+      if (cell) {
+        cell.s = {
+          font: { bold: true, color: { rgb: "FFFFFF" } },
+          fill: { fgColor: { rgb: "0F766E" } },
+          alignment: { horizontal: 'center', vertical: 'center' },
+          border: {
+            top: { style: 'thin', color: { rgb: "000000" } },
+            bottom: { style: 'thin', color: { rgb: "000000" } },
+            left: { style: 'thin', color: { rgb: "000000" } },
+            right: { style: 'thin', color: { rgb: "000000" } }
+          }
+        };
+      }
+    });
+
+    // Style data rows
+    const dataStartRow = headerRowIndex + 1;
+    const dataEndRow = dataStartRow + rows.length - 1;
+
+    for (let r = dataStartRow; r <= dataEndRow; r++) {
+      headers.forEach((header, colIdx) => {
+        const cell = ws[XLSX.utils.encode_cell({ r, c: colIdx })];
+        if (cell) {
+          // Borders
+          cell.s = cell.s || {};
+          cell.s.border = {
+            top: { style: 'thin', color: { rgb: "CCCCCC" } },
+            bottom: { style: 'thin', color: { rgb: "CCCCCC" } },
+            left: { style: 'thin', color: { rgb: "CCCCCC" } },
+            right: { style: 'thin', color: { rgb: "CCCCCC" } }
+          };
+
+          // Highlight endangered animals
+          if (header.toLowerCase().includes('endangerment') && cell.v) {
+            const value = String(cell.v).toLowerCase();
+            if (value.includes('endangered') || value.includes('critically')) {
+              cell.s.fill = { fgColor: { rgb: "FEE2E2" } };
+              cell.s.font = { bold: true, color: { rgb: "991B1B" } };
+            }
+          }
+
+          // Highlight health issues
+          if (header.toLowerCase().includes('health') && cell.v) {
+            const value = String(cell.v).toLowerCase();
+            if (value === 'poor' || value === 'critical') {
+              cell.s.fill = { fgColor: { rgb: "FEF3C7" } };
+              cell.s.font = { color: { rgb: "92400E" } };
+            }
+          }
+
+          // Zebra striping
+          if (r % 2 === 0) {
+            cell.s.fill = cell.s.fill || { fgColor: { rgb: "F9FAFB" } };
+          }
+        }
+      });
+    }
+
+    XLSX.utils.book_append_sheet(wb, ws, 'Animals by Habitat');
+
+    const fileName = `animals_report_${reportType}_${new Date().toISOString().slice(0, 10)}.xlsx`;
+    XLSX.writeFile(wb, fileName);
+  }, [reportType, buildRowsForReport, habitats]);
 
   // ---------- loading / auth UI ----------
   if (authLoading || loading) {
@@ -384,11 +466,11 @@ export default function AnimalsByHabitatPage() {
           </div>
 
           <Button
-            onClick={handleGenerateCsv}
+            onClick={handleGenerateExcel}
             className="flex items-center gap-2 bg-sea_green-600 hover:bg-sea_green-700 text-white self-start sm:self-auto"
           >
             <FileDown className="h-4 w-4" />
-            <span>Export CSV</span>
+            <span>Export Excel</span>
           </Button>
         </div>
       </div>
