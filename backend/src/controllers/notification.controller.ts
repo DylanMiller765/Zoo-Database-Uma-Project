@@ -11,15 +11,24 @@ export class NotificationController {
   static async getNotifications(req: AuthRequest, res: Response): Promise<void> {
     try {
       const customerId = req.user?.customer_id;
+      console.log('[NOTIFICATIONS] getNotifications called for customer:', customerId);
+
       if (!customerId) {
+        console.log('[NOTIFICATIONS] No customer_id found in request');
         res.status(403).json({ message: 'Customer authentication required' });
         return;
       }
 
       const unreadOnly = req.query.unread === 'true';
+      console.log('[NOTIFICATIONS] Fetching notifications - unreadOnly:', unreadOnly);
+
       const notifications = await NotificationService.getNotifications(customerId, unreadOnly);
+      console.log('[NOTIFICATIONS] Found', notifications.length, 'notifications for customer', customerId);
+      console.log('[NOTIFICATIONS] Notifications:', JSON.stringify(notifications, null, 2));
+
       res.status(200).json(notifications);
     } catch (error) {
+      console.error('[NOTIFICATIONS] Error fetching notifications:', error);
       res.status(500).json({ message: 'Error fetching notifications', error });
     }
   }
@@ -28,14 +37,20 @@ export class NotificationController {
   static async getUnreadCount(req: AuthRequest, res: Response): Promise<void> {
     try {
       const customerId = req.user?.customer_id;
+      console.log('[NOTIFICATIONS] getUnreadCount called for customer:', customerId);
+
       if (!customerId) {
+        console.log('[NOTIFICATIONS] No customer_id found in request');
         res.status(403).json({ message: 'Customer authentication required' });
         return;
       }
 
       const count = await NotificationService.getUnreadCount(customerId);
+      console.log('[NOTIFICATIONS] Unread count for customer', customerId, ':', count);
+
       res.status(200).json({ count });
     } catch (error) {
+      console.error('[NOTIFICATIONS] Error fetching unread count:', error);
       res.status(500).json({ message: 'Error fetching unread count', error });
     }
   }

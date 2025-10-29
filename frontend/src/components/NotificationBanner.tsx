@@ -1,35 +1,58 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { notificationService, Notification } from '@/services/notification.service';
 import { X } from 'lucide-react';
+import { usePathname } from 'next/navigation';
 
 export default function NotificationBanner() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
+  const pathname = usePathname();
 
-  useEffect(() => {
-    fetchNotifications();
-  }, []);
-
-  const fetchNotifications = async () => {
+  const fetchNotifications = useCallback(async () => {
     try {
       const token = localStorage.getItem('token');
+      console.log('[NOTIFICATIONS FRONTEND] Token exists:', !!token);
 
       if (!token) {
+        console.log('[NOTIFICATIONS FRONTEND] No token found, skipping notification fetch');
         setLoading(false);
         return;
       }
 
-      // Fetch only unread notifications
-      const unreadNotifications = await notificationService.getNotifications(false);
+      console.log('[NOTIFICATIONS FRONTEND] Fetching unread notifications...');
+      // Fix: Fetch only unread notifications (true instead of false)
+      const unreadNotifications = await notificationService.getNotifications(true);
+      console.log('[NOTIFICATIONS FRONTEND] Received', unreadNotifications.length, 'unread notifications');
+      console.log('[NOTIFICATIONS FRONTEND] Notifications:', unreadNotifications);
       setNotifications(unreadNotifications);
     } catch (error) {
-      console.error('Error fetching notifications:', error);
+      console.error('[NOTIFICATIONS FRONTEND] Error fetching notifications:', error);
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  // Fetch on mount and when pathname changes
+  useEffect(() => {
+    console.log('[NOTIFICATIONS FRONTEND] Component mounted or pathname changed:', pathname);
+    fetchNotifications();
+  }, [pathname, fetchNotifications]);
+
+  // Poll every 30 seconds
+  useEffect(() => {
+    console.log('[NOTIFICATIONS FRONTEND] Setting up 30-second polling interval');
+    const intervalId = setInterval(() => {
+      console.log('[NOTIFICATIONS FRONTEND] 30-second poll triggered');
+      fetchNotifications();
+    }, 30000);
+
+    return () => {
+      console.log('[NOTIFICATIONS FRONTEND] Cleaning up polling interval');
+      clearInterval(intervalId);
+    };
+  }, [fetchNotifications]);
 
   const dismissNotification = async (notificationId: number) => {
     try {
