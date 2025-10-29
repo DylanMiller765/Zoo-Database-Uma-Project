@@ -14,8 +14,13 @@ export class HabitatModel {
   }
 
   static async create(habitat: Omit<Habitat, 'habitat_id'>): Promise<Habitat> {
-    const sql = 'INSERT INTO habitats SET ?';
-    const result = await query<any>(sql, [habitat]);
+    // Build column names and values dynamically
+    const columns = Object.keys(habitat).join(', ');
+    const placeholders = Object.keys(habitat).map(() => '?').join(', ');
+    const values = Object.values(habitat);
+
+    const sql = `INSERT INTO habitats (${columns}) VALUES (${placeholders})`;
+    const result = await query<any>(sql, values);
     return { habitat_id: result.insertId, ...habitat };
   }
 
