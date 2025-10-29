@@ -73,6 +73,9 @@ export function HabitatForm({ habitat, onSuccess, onCancel }: HabitatFormProps) 
     setError('');
     setLoading(true);
 
+    console.log('Submitting habitat data:', formData);
+    console.log('Attraction ID type:', typeof formData.attraction_id, formData.attraction_id);
+
     try {
       if (habitat?.habitat_id) {
         await habitatService.update(habitat.habitat_id, formData);
@@ -81,7 +84,9 @@ export function HabitatForm({ habitat, onSuccess, onCancel }: HabitatFormProps) 
       }
       onSuccess();
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to save habitat');
+      console.error('Habitat creation error:', err);
+      console.error('Error response:', err.response?.data);
+      setError(err.response?.data?.message || err.response?.data?.error || 'Failed to save habitat');
     } finally {
       setLoading(false);
     }
@@ -132,11 +137,15 @@ export function HabitatForm({ habitat, onSuccess, onCancel }: HabitatFormProps) 
             onChange={handleChange}
             required
           >
-            {attractions.map((attraction) => (
-              <option key={attraction.attraction_id} value={attraction.attraction_id}>
-                {attraction.name}
-              </option>
-            ))}
+            {attractions.length === 0 ? (
+              <option value="">Loading attractions...</option>
+            ) : (
+              attractions.map((attraction) => (
+                <option key={attraction.attraction_id} value={attraction.attraction_id}>
+                  {attraction.name}
+                </option>
+              ))
+            )}
           </Select>
         </div>
 

@@ -15,8 +15,21 @@ export class HabitatController {
     try {
       const newHabitat = await HabitatService.createHabitat(req.body);
       res.status(201).json(newHabitat);
-    } catch (error) {
-      res.status(500).json({ message: 'Error creating habitat', error });
+    } catch (error: any) {
+      console.error('❌ Error creating habitat:', error);
+
+      // Check for foreign key constraint error
+      if (error.code === 'ER_NO_REFERENCED_ROW_2') {
+        res.status(400).json({
+          message: 'Invalid attraction ID. The selected attraction does not exist.',
+          error: error.sqlMessage
+        });
+      } else {
+        res.status(500).json({
+          message: 'Error creating habitat',
+          error: error.sqlMessage || error.message
+        });
+      }
     }
   }
 
