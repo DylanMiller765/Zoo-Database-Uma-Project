@@ -10,24 +10,14 @@ export class NotificationController {
   // Get notifications for the authenticated customer
   static async getNotifications(req: AuthRequest, res: Response): Promise<void> {
     try {
-      console.log('🔔 Backend: Getting notifications');
-      console.log('🔔 Backend: User object:', req.user);
-      console.log('🔔 Backend: Customer ID:', req.user?.customer_id);
-
       const customerId = req.user?.customer_id;
       if (!customerId) {
-        console.log('🔔 Backend: No customer_id found, returning 403');
         res.status(403).json({ message: 'Customer authentication required' });
         return;
       }
 
       const unreadOnly = req.query.unread === 'true';
-      console.log('🔔 Backend: Fetching notifications for customer:', customerId, 'unreadOnly:', unreadOnly);
-
       const notifications = await NotificationService.getNotifications(customerId, unreadOnly);
-      console.log('🔔 Backend: Found notifications:', notifications.length);
-      console.log('🔔 Backend: Notifications:', notifications);
-
       res.status(200).json(notifications);
     } catch (error) {
       res.status(500).json({ message: 'Error fetching notifications', error });
