@@ -4,16 +4,13 @@ import { protect, restrictTo } from '../middleware/auth.middleware';
 
 const router = Router();
 
-// Protect all routes in this file
-router.use(protect);
+// Public read access - no authentication required
+router.get('/', AnimalController.getAllAnimals);
+router.get('/:id', AnimalController.getAnimalById);
 
-// Read access for managers, vets, and keepers
-router.get('/', restrictTo('manager', 'veterinarian', 'keeper'), AnimalController.getAllAnimals);
-router.get('/:id', restrictTo('manager', 'veterinarian', 'keeper'), AnimalController.getAnimalById);
-
-// Write access for managers and vets only
-router.post('/', restrictTo('manager', 'veterinarian'), AnimalController.createAnimal);
-router.put('/:id', restrictTo('manager', 'veterinarian'), AnimalController.updateAnimal);
-router.delete('/:id', restrictTo('manager', 'veterinarian'), AnimalController.deleteAnimal);
+// Protected write access - managers and vets only
+router.post('/', protect, restrictTo('manager', 'veterinarian'), AnimalController.createAnimal);
+router.put('/:id', protect, restrictTo('manager', 'veterinarian'), AnimalController.updateAnimal);
+router.delete('/:id', protect, restrictTo('manager', 'veterinarian'), AnimalController.deleteAnimal);
 
 export default router;
