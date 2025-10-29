@@ -42,6 +42,8 @@ CREATE TABLE `customers` (
     `state` VARCHAR(50),
     `zip_code` VARCHAR(10),
     `annual_pass` ENUM('yes', 'no') DEFAULT 'no',
+    `membership_start_date` DATE DEFAULT NULL,
+    `membership_end_date` DATE DEFAULT NULL,
     `registration_date` DATE,
     INDEX `idx_customer_email` (`email`)
 );
@@ -274,3 +276,58 @@ CREATE TABLE `cafe_sales` (
     FOREIGN KEY (`employee_id`) REFERENCES `employees`(`employee_id`) ON DELETE SET NULL,
     FOREIGN KEY (`item_id`) REFERENCES `cafe_items`(`item_id`)
 );
+
+-- Notifications table for user alerts (e.g., membership expiration warnings)
+CREATE TABLE `notifications` (
+    `notification_id` INT PRIMARY KEY AUTO_INCREMENT,
+    `customer_id` INT NOT NULL,
+    `message` VARCHAR(500) NOT NULL,
+    `notification_type` ENUM('info', 'warning', 'alert') DEFAULT 'info',
+    `is_read` BOOLEAN DEFAULT FALSE,
+    `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (`customer_id`) REFERENCES `customers`(`customer_id`) ON DELETE CASCADE,
+    INDEX `idx_customer_unread` (`customer_id`, `is_read`),
+    INDEX `idx_created_at` (`created_at`)
+);
+
+-- Stored procedure to check for expiring memberships and create notifications
+DELIMITER //
+CREATE PROCEDURE check_expiring_memberships()
+BEGIN
+    DECLARE days_threshold INT DEFAULT 7;
+
+    -- Insert notifications for memberships expiring in 30 days or less
+    INSERT INTO notifications (customer_id, message, notification_type, created_at)
+    SELECT
+        c.customer_id,
+        CONCAT('Your membership expires on ', DATE_FORMAT(c.membership_end_date, '%M %d, %Y'),
+               '. Renew now to continue enjoying member benefits!') as message,
+        'warning' as notification_type,
+        NOW() as created_at
+    FROM customers c
+    WHERE c.annual_pass = 'yes'
+    AND c.membership_end_date IS NOT NULL
+    AND DATEDIFF(c.membership_end_date, CURDATE()) BETWEEN 1 AND 30
+    AND NOT EXISTS (
+        -- Avoid duplicate notifications for the same expiration date
+        SELECT 1 FROM notifications n
+        WHERE n.customer_id = c.customer_id
+        AND n.message LIKE CONCAT('%', DATE_FORMAT(c.membership_end_date, '%M %d, %Y'), '%')
+        AND DATE(n.created_at) >= DATE_ADD(CURDATE(), INTERVAL -7 DAY)
+    );
+
+    -- Mark memberships as expired if the end date has passed
+    UPDATE customers
+    SET annual_pass = 'no'
+    WHERE annual_pass = 'yes'
+    AND membership_end_date IS NOT NULL
+    AND membership_end_date < CURDATE();
+END//
+DELIMITER ;
+
+-- Event to run the membership check daily at midnight
+-- Note: Requires event_scheduler to be ON (SET GLOBAL event_scheduler = ON;)
+CREATE EVENT IF NOT EXISTS daily_membership_check
+ON SCHEDULE EVERY 1 DAY
+STARTS (CURRENT_DATE + INTERVAL 1 DAY)
+DO CALL check_expiring_memberships();

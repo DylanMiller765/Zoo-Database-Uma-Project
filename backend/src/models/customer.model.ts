@@ -11,6 +11,8 @@ export interface Customer {
   state?: string;
   zip_code?: string;
   annual_pass?: 'yes' | 'no';
+  membership_start_date?: string;
+  membership_end_date?: string;
   registration_date?: string;
 }
 

@@ -21,6 +21,7 @@ import eventRegistrationRoutes from './routes/eventRegistration.routes';
 import dashboardRoutes from './routes/dashboard.routes';
 import queryRoutes from './routes/query.routes';
 import meRoutes from './routes/me.routes';
+import notificationRoutes from './routes/notification.routes';
 
 dotenv.config();
 
@@ -63,6 +64,7 @@ app.use('/api/cafe-items', cafeItemRoutes);
 app.use('/api/cafe-sales', cafeSaleRoutes);
 app.use('/api/event-registrations', eventRegistrationRoutes);
 app.use('/api/me', meRoutes);
+app.use('/api/notifications', notificationRoutes);
 
 // Error handling
 app.use(notFound);
