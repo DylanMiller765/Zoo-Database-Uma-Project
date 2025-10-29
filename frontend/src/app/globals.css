@@ -50,3 +50,18 @@ html {
     @apply w-full bg-sea_green-500 text-white py-4 px-6 rounded-xl text-base font-semibold hover:bg-sea_green-600 focus:outline-none focus:ring-2 focus:ring-sea_green-500 focus:ring-offset-2 transition-all duration-200;
   }
 }
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-slide-down {
+  animation: slideDown 0.3s ease-out;
+}

@@ -47,10 +47,18 @@ INSERT INTO employees (employee_id, first_name, last_name, email, phone, ssn, jo
 -- =======================================
 -- CUSTOMERS (Source: seed_test_users.sql, including john.smith@email.com)
 -- =======================================
-INSERT INTO customers (customer_id, first_name, last_name, email, phone, address, city, state, zip_code, annual_pass, registration_date) VALUES
-(1, 'John', 'Smith', 'john.smith@email.com', '555-1001', '123 Main St', 'Springfield', 'IL', '62701', 'no', '2024-01-10'),
-(2, 'Maria', 'Garcia', 'maria.garcia@email.com', '555-1002', '456 Oak Ave', 'Springfield', 'IL', '62702', 'yes', '2023-11-15'),
-(3, 'Robert', 'Davis', 'robert.davis@email.com', '555-1003', '789 Pine Rd', 'Springfield', 'IL', '62703', 'no', '2024-02-20');
+-- Note: Maria Garcia has a membership expiring in 20 days (for notification testing)
+INSERT INTO customers (customer_id, first_name, last_name, email, phone, address, city, state, zip_code, annual_pass, membership_start_date, membership_end_date, registration_date) VALUES
+(1, 'John', 'Smith', 'john.smith@email.com', '555-1001', '123 Main St', 'Springfield', 'IL', '62701', 'no', NULL, NULL, '2024-01-10'),
+(2, 'Maria', 'Garcia', 'maria.garcia@email.com', '555-1002', '456 Oak Ave', 'Springfield', 'IL', '62702', 'yes', '2024-01-01', '2025-01-01', '2023-11-15'),
+(3, 'Robert', 'Davis', 'robert.davis@email.com', '555-1003', '789 Pine Rd', 'Springfield', 'IL', '62703', 'no', NULL, NULL, '2024-02-20');
+
+-- Update Maria Garcia's membership to expire in 20 days (dynamic date calculation)
+UPDATE customers
+SET
+    membership_start_date = DATE_ADD(CURDATE(), INTERVAL -345 DAY),
+    membership_end_date = DATE_ADD(CURDATE(), INTERVAL 20 DAY)
+WHERE customer_id = 2;
 
 -- =======================================
 -- USER ACCOUNTS
