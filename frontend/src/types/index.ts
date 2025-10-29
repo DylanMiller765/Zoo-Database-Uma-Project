@@ -6,6 +6,8 @@ export interface User {
   first_name: string;
   last_name: string;
   job_role?: string;
+  customer_id?: number;
+  employee_id?: number;
 }
 
 export type UserRole =
@@ -88,13 +90,15 @@ export interface Event {
   end_time: string;
   location?: string;
   max_capacity?: number;
-  current_registrations?: number;
-  status: 'scheduled' | 'ongoing' | 'completed' | 'cancelled';
+  ticket_price?: number;
+  status?: 'scheduled' | 'ongoing' | 'completed' | 'cancelled';
   created_by?: number;
-  created_at?: string;
+  current_registrations?: number;
 }
 
-export interface CreateEventData extends Omit<Event, 'event_id' | 'current_registrations' | 'created_at'> {}
+export interface CreateEventData extends Omit<Event, 'event_id' | 'current_registrations' | 'created_at'> {
+  status?: 'scheduled' | 'ongoing' | 'completed' | 'cancelled';
+}
 
 // Customer Types
 export interface Customer {
@@ -194,3 +198,19 @@ export interface Attraction {
 
 // Optional: Define a type for creating/updating attractions (without the ID)
 export interface AttractionData extends Omit<Attraction, 'attraction_id'> {}
+
+// Habitat Types
+export interface Habitat {
+  habitat_id: number;
+  habitat_name: string;
+  attraction_id: number;
+  size: string;
+  environment_type: string;
+  animal_capacity: number;
+  cleaning_schedule: string;
+  last_maintenance: string;
+  status: 'active' | 'maintenance' | 'renovation' | 'closed';
+  created_date: string;
+}
+
+export interface CreateHabitatData extends Omit<Habitat, 'habitat_id' | 'created_date'> {}

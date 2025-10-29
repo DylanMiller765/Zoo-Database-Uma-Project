@@ -16,7 +16,14 @@ export const getUpcomingEvents = async (req: Request, res: Response) => {
 export const createEvent = async (req: Request, res: Response) => {
   try {
     console.log('📅 Creating event with data:', JSON.stringify(req.body, null, 2));
-    const newEvent = await eventService.createEvent(req.body);
+
+    // Add the authenticated user's account_id as the coordinator_id
+    const eventData = {
+      ...req.body,
+      created_by: (req as any).user?.account_id
+    };
+
+    const newEvent = await eventService.createEvent(eventData);
     console.log('✅ Event created successfully:', newEvent);
     res.status(201).json(newEvent);
   } catch (error) {

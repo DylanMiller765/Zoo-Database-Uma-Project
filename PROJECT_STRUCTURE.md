@@ -87,31 +87,72 @@ The application uses a custom Tailwind color palette:
 ## API Endpoints Structure
 
 ### Authentication (`/api/auth`)
-- `POST /register` - Register new user
-- `POST /login` - User login
+- `POST /register` - Register new customer account
+- `POST /login` - User login with JWT
 - `GET /profile` - Get current user profile
+- `PUT /profile` - Update user profile
 - `POST /logout` - User logout
 
-### Future Endpoints (To be implemented)
-- `/api/animals` - Animal management
-- `/api/employees` - Employee management
-- `/api/customers` - Customer management
-- `/api/tickets` - Ticket sales
-- `/api/events` - Event management
-- `/api/habitats` - Habitat management
-- `/api/gift-shops` - Gift shop operations
-- `/api/cafes` - Cafe operations
-- `/api/feeding-logs` - Animal feeding tracking
-- `/api/dashboard` - Dashboard metrics
-- `/api/reports` - Revenue and analytics reports
+### Core Entity Management
+- `/api/animals` - Animal CRUD with health tracking (17 routes)
+- `/api/employees` - Employee management with roles (17 routes)
+- `/api/customers` - Customer management (17 routes)
+- `/api/habitats` - Habitat operations (17 routes)
+- `/api/attractions` - Attraction management (17 routes)
 
-## Route Groups (Next.js)
+### Operations & Events
+- `/api/tickets` - Ticket sales and tracking (17 routes)
+- `/api/events` - Event management (17 routes)
+- `/api/event-registrations` - Event registration (17 routes)
 
-### Customer Portal `(customer)`
-Public and customer account pages with customer navigation.
+### Sales & Commerce
+- `/api/gift-shops` - Gift shop management (17 routes)
+- `/api/gift-shop-items` - Inventory management (17 routes)
+- `/api/gift-shop-sales` - Sales transactions (17 routes)
+- `/api/cafes` - Cafe operations (17 routes)
+- `/api/cafe-items` - Menu management (17 routes)
+- `/api/cafe-sales` - Cafe sales tracking (17 routes)
 
-### Employee Dashboard `(employee)`
-Protected employee-only pages with sidebar navigation and role-based access control.
+### Analytics & Reporting
+- `/api/dashboard` - Dashboard statistics
+- `/api/queries` - 5 custom analytics queries:
+  - Animals by habitat
+  - Employee assignments
+  - Revenue analysis
+  - Event attendance
+  - Visitor statistics
+
+## Frontend Pages Structure
+
+### Customer-Facing Pages
+- `/` - Home page with hero, featured exhibits, attractions, visit info
+- `/login` - Unified login page for customers and employees
+- `/register` - Customer registration
+- `/tickets` - Ticket booking with adult/child/senior options and donations
+- `/tickets/confirmation` - Purchase confirmation page
+- `/events` - Browse and search events with filtering
+- `/exhibits` - Animal exhibits and habitats
+- `/attractions` - Featured zoo attractions
+- `/visit` - Planning information (hours, admission, location)
+- `/membership` - Annual pass offerings
+- `/membership/confirmation` - Membership confirmation
+- `/donate` - Conservation donations
+- `/customer` - Customer dashboard (profile, bookings)
+
+### Employee/Admin Pages (Protected, `/admin/*`)
+- `/admin` - Main dashboard with stats, activity feed, quick actions
+- `/admin/animals` - Animal management with search and CRUD
+- `/admin/employees` - Employee management with role filtering
+- `/admin/events` - Event management with status tracking
+- `/admin/customers` - Customer management interface
+- `/admin/gift-shops` - Gift shop operations
+- `/admin/cafes` - Cafe operations management
+- `/admin/tickets` - Ticket sales management
+- `/admin/queries/animals-by-habitat` - Analytics: Animals by habitat
+- `/admin/queries/employee-assignments` - Analytics: Employee assignments
+- `/admin/queries/revenue-analysis` - Analytics: Revenue breakdown
+- `/admin/queries/event-attendance` - Analytics: Event attendance
+- `/admin/queries/visitor-statistics` - Analytics: Visitor metrics
 
 ## Database Connection
 
@@ -122,17 +163,63 @@ The backend connects to a Railway-hosted MySQL database:
 
 Connection configuration is in `backend/src/config/database.ts`.
 
-## Role-Based Access Control
+## Frontend Components
 
-The system implements role-based permissions:
-- **Manager:** Full access
-- **Keeper:** Animal care, feeding logs
-- **Veterinarian:** Animal health, medical records
-- **Coordinator:** Event management
-- **Cashier:** Sales operations
-- **Customer:** Ticket purchase, account management
+### Admin Components (19 total)
+- `EmployeeForm.tsx` - Employee creation/editing form
+- `AnimalForm.tsx` - Animal data entry form
+- `EventForm.tsx` - Event creation/editing form
+- `CustomerForm.tsx` - Customer management form
+- `CafeForm.tsx` - Cafe management form
+- `GiftShopForm.tsx` - Gift shop form
+- `StatsCard.tsx` - Dashboard stat card with trend indicators
+- `Sidebar.tsx` - Admin navigation sidebar
+- `TopBar.tsx` - Admin top navigation bar
 
-Permissions are defined in `backend/src/types/role.types.ts` and enforced via middleware.
+### UI Components (shadcn/ui)
+- `button.tsx`, `card.tsx`, `input.tsx`, `label.tsx`
+- `table.tsx`, `select.tsx`, `badge.tsx`, `modal.tsx`, `textarea.tsx`
+
+### Common Components
+- `Header.tsx` - Page header/navigation
+- `ConditionalLayout.tsx` - Layout switcher based on user role
+
+## Frontend Services (11 total)
+
+Located in `frontend/src/services/`:
+1. `auth.service.ts` - Login, logout, profile operations
+2. `animal.service.ts` - Animal data operations
+3. `employee.service.ts` - Employee management API calls
+4. `customer.service.ts` - Customer management
+5. `event.service.ts` - Event CRUD operations
+6. `attractions.service.ts` - Attraction data fetching
+7. `ticket.service.ts` - Ticket purchase operations
+8. `cafe.service.ts` - Cafe operations
+9. `giftShop.service.ts` - Gift shop data
+10. `dashboard.service.ts` - Dashboard stats endpoint
+11. `query.service.ts` - Complex query results
+
+## Authentication & Authorization
+
+### Role-Based Access Control (8 Employee Roles + 1 Customer Role)
+
+**Employee Roles:**
+- **Manager:** Full system access, can manage all entities
+- **Keeper:** Animal care, feeding logs, can be assigned to animals
+- **Veterinarian:** Animal health, medical records, can create/update animals
+- **Coordinator:** Event management and attendee tracking
+- **Cashier:** Ticket and sales operations (gift shop, cafe, tickets)
+- **Guide:** Read-only access to animals and attractions
+- **Maintenance:** Habitat and facility maintenance
+- **Security:** Incident reporting
+
+**Customer Role:**
+- Ticket purchasing, event registration, profile management
+
+### Implementation
+- **Backend:** JWT-based authentication with `protect` and `restrictTo(role1, role2, ...)` middleware
+- **Frontend:** AuthContext provides `hasRole()` for conditional rendering and protected routes
+- **Note:** Password hashing is not currently implemented (passwords stored in plain text - **SECURITY ISSUE**)
 
 ## Development Workflow
 
@@ -140,16 +227,21 @@ Permissions are defined in `backend/src/types/role.types.ts` and enforced via mi
 2. **Frontend:** Next.js dev server with hot reload
 3. **Database:** Direct connection to Railway MySQL instance
 
-## Next Steps
+## Implementation Status
 
-To complete the project, implement:
+### ✅ Fully Implemented
+1. **Backend Services:** All 17 services implemented for complete CRUD operations
+2. **Backend Controllers:** All 17 controllers implemented with validation
+3. **Backend Routes:** All routes wired up with role-based access control
+4. **Frontend Pages:** All 20+ customer and admin pages created
+5. **Frontend Components:** 19+ components built (forms, UI, common)
+6. **Frontend Services:** All 11 API service modules implemented
+7. **Authentication:** Complete JWT auth system with protected routes and AuthContext
+8. **Database Schema:** 20 tables with proper relationships and constraints
+9. **Analytics:** 5 custom query reports for advanced analytics
 
-1. **Backend Services:** Create service files for all entities (animals, employees, etc.)
-2. **Backend Controllers:** Add controllers for all endpoints
-3. **Backend Routes:** Wire up routes for all resources
-4. **Frontend Pages:** Create all customer and employee pages
-5. **Frontend Components:** Build reusable UI components
-6. **Frontend Hooks:** Add custom hooks for data fetching
-7. **Authentication:** Implement protected routes and auth context
-8. **Testing:** Add unit and integration tests
-9. **Documentation:** API documentation and user guides
+### 🚧 Known Issues & Future Enhancements
+1. **File Uploads:** Animal photo uploads not implemented
+2. **Notifications:** Email notification system
+3. **Reports:** PDF export functionality
+4. **Charts:** Data visualization/graphs for analytics

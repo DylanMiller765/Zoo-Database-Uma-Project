@@ -3,7 +3,7 @@ import { Event } from '../types/event.types';
 
 export class EventModel {
   static async findAll(): Promise<Event[]> {
-    const sql = 'SELECT * FROM events WHERE event_date >= CURDATE() ORDER BY event_date ASC';
+    const sql = 'SELECT * FROM events ORDER BY event_date DESC';
     return await query<Event[]>(sql);
   }
 
