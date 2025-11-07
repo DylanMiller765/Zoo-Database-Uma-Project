@@ -22,6 +22,7 @@ export function CustomerForm({ customer, onSuccess, onCancel }: CustomerFormProp
     first_name: '',
     last_name: '',
     email: '',
+    password: '',
     phone: '',
     address: '',
     city: '',
@@ -113,6 +114,21 @@ export function CustomerForm({ customer, onSuccess, onCancel }: CustomerFormProp
             onChange={handleChange}
           />
         </div>
+
+        {!customer && (
+          <div className="space-y-2">
+            <Label htmlFor="password">Password *</Label>
+            <Input
+              type="password"
+              id="password"
+              name="password"
+              value={formData.password}
+              onChange={handleChange}
+              required
+              minLength={6}
+            />
+          </div>
+        )}
 
         <div className="space-y-2">
           <Label htmlFor="phone">Phone</Label>

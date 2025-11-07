@@ -115,7 +115,9 @@ export interface Customer {
   registration_date?: string;
 }
 
-export interface CreateCustomerData extends Omit<Customer, 'customer_id'> {}
+export interface CreateCustomerData extends Omit<Customer, 'customer_id'> {
+  password: string;
+}
 
 // API Response Types
 export interface ApiResponse<T> {

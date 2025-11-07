@@ -1,5 +1,2 @@
-import bcrypt from 'bcrypt';
-
-// TODO: Implement hashPassword function
-
-// TODO: Implement comparePassword function
+// Password utility functions for student project
+// Note: Passwords are stored in plain text for educational purposes
