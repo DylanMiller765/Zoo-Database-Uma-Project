@@ -14,6 +14,7 @@ import {
   MapPin,
   LogOut,
   Award,
+  X,
 } from "lucide-react";
 
 type ProfileResponse = {
@@ -55,6 +56,8 @@ export default function CustomerDashboard() {
   const [tickets, setTickets] = React.useState<any[]>([]);
   const [upcomingTickets, setUpcomingTickets] = React.useState<any[]>([]);
   const [visits, setVisits] = React.useState<any[]>([]);
+  const [selectedTicket, setSelectedTicket] = React.useState<any | null>(null);
+  const [showTicketModal, setShowTicketModal] = React.useState(false);
 
   React.useEffect(() => {
     if (!loading) {
@@ -97,19 +100,36 @@ export default function CustomerDashboard() {
 
   const membership = React.useMemo(() => {
     const annualPass = profile?.annual_pass as "yes" | "no" | undefined;
-    const status = annualPass === "yes" ? "Active" : "None";
-    const detail = annualPass === "yes" ? "Annual Pass" : "No membership";
-    return { status, detail };
+    // Compute expiration using actual membership_end_date from database
+    let expired = false;
+    if (annualPass === "yes") {
+      const endDate = profile?.membership_end_date;
+      if (endDate) {
+        const expiry = new Date(endDate);
+        if (!Number.isNaN(expiry.getTime())) {
+          const now = new Date();
+          if (now > expiry) expired = true;
+        }
+      }
+    }
+    const status = annualPass === "yes" && !expired ? "Active" : (annualPass === "yes" && expired ? "Expired" : "None");
+    const detail = annualPass === "yes" && !expired ? "Annual Pass" : (annualPass === "yes" && expired ? "Expired" : "No membership");
+    return { status, detail, expired };
   }, [profile]);
 
   const membershipDates = React.useMemo(() => {
-    if (membership.status !== 'Active') return { start: null as Date | null, expiry: null as Date | null };
-    const raw = (profile?.membership_purchase_date || profile?.registration_date) as string | Date | undefined;
-    if (!raw) return { start: null as Date | null, expiry: null as Date | null };
-    const startDate = new Date(raw);
-    if (Number.isNaN(startDate.getTime())) return { start: null as Date | null, expiry: null as Date | null };
-    const expiry = new Date(startDate);
-    expiry.setFullYear(expiry.getFullYear() + 1);
+    if (membership.status === 'None') return { start: null as Date | null, expiry: null as Date | null };
+    // Use actual database fields
+    const startRaw = profile?.membership_start_date;
+    const endRaw = profile?.membership_end_date;
+    
+    const startDate = startRaw ? new Date(startRaw) : null;
+    const expiry = endRaw ? new Date(endRaw) : null;
+    
+    // Validate dates
+    if (startDate && Number.isNaN(startDate.getTime())) return { start: null, expiry: null };
+    if (expiry && Number.isNaN(expiry.getTime())) return { start: null, expiry: null };
+    
     return { start: startDate, expiry };
   }, [membership.status, profile]);
 
@@ -150,9 +170,7 @@ export default function CustomerDashboard() {
               <button onClick={() => setActive("dashboard")} className={`w-full flex items-center gap-2 rounded-lg px-3 py-2 text-left ${active === "dashboard" ? "bg-dark_spring_green-100 text-dark_spring_green-800" : "hover:bg-gray-50"}`}>
                 <Home className="h-4 w-4" /> Dashboard
               </button>
-              <button onClick={() => setActive("tickets")} className={`w-full flex items-center gap-2 rounded-lg px-3 py-2 text-left ${active === "tickets" ? "bg-dark_spring_green-100 text-dark_spring_green-800" : "hover:bg-gray-50"}`}>
-                <Ticket className="h-4 w-4" /> My Tickets
-              </button>
+              {/* Removed My Tickets tab */}
               <button onClick={() => setActive("visits")} className={`w-full flex items-center gap-2 rounded-lg px-3 py-2 text-left ${active === "visits" ? "bg-dark_spring_green-100 text-dark_spring_green-800" : "hover:bg-gray-50"}`}>
                 <MapPin className="h-4 w-4" /> Visit History
               </button>
@@ -181,7 +199,7 @@ export default function CustomerDashboard() {
           <Button variant="outline" onClick={() => router.push("/customer/profile")}>{firstName}'s Account</Button>
         </div>
 
-        {/* Dashboard Overview */}
+        {/* Dashboard Overview - now shows all tickets */}
         {active === 'dashboard' && (
           <>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -194,80 +212,105 @@ export default function CustomerDashboard() {
               )}
               {/* Stretch the Membership card to fill available columns while others are hidden */}
               <div className="col-span-1 md:col-span-2 lg:col-span-3">
-                <StatsCard title="Membership" value={membership.status} icon={CreditCard} iconColor="text-dark_spring_green-600" />
+                <Card>
+                  <CardContent className="pt-6">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium text-gray-600">Membership</p>
+                        <p className="text-2xl font-bold text-gray-900 mt-2">{membership.status}</p>
+                        {(membership.status === 'Active' || membership.status === 'Expired') && membershipDates.start && membershipDates.expiry && (
+                          <p className="text-xs text-gray-500 mt-1">
+                            {formatDate(membershipDates.start)} - {formatDate(membershipDates.expiry)}
+                          </p>
+                        )}
+                      </div>
+                      <div className={`p-3 rounded-lg bg-gray-50`}>
+                        <CreditCard className={`h-6 w-6 text-dark_spring_green-600`} />
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
               </div>
             </div>
 
             <div className="grid grid-cols-1 gap-6">
               <Card>
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2"><Ticket className="h-5 w-5 text-sea_green-600" /> Upcoming Tickets</CardTitle>
+                  <CardTitle className="flex items-center gap-2"><Ticket className="h-5 w-5 text-sea_green-600" /> Tickets</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3">
-                  {upcomingTickets.map((t:any,i:number)=> (
-                    <div key={i} className="rounded-xl border border-gray-200 bg-dark_spring_green-50 p-4 flex items-center justify-between">
-                      <div>
-                        <p className="font-medium text-gray-900 capitalize">{t.ticket_type} Ticket</p>
-                        <p className="text-sm text-gray-600">{t.visit_date ? new Date(t.visit_date).toLocaleDateString() : 'Flexible date'}</p>
+                  {tickets.length === 0 ? (
+                    <p className="text-gray-600">No tickets found.</p>
+                  ) : (
+                    tickets.filter((t:any) => {
+                      // Upcoming = visit date today or in future
+                      if (!t.visit_date) return true;
+                      const visit = new Date(t.visit_date);
+                      const now = new Date();
+                      return visit >= new Date(now.getFullYear(), now.getMonth(), now.getDate());
+                    }).map((t:any,i:number)=> (
+                      <div key={i} className="rounded-xl border border-gray-200 bg-dark_spring_green-50 p-4 flex items-center justify-between">
+                        <div>
+                          <p className="font-medium text-gray-900 capitalize">{t.ticket_type} Ticket</p>
+                          <p className="text-sm text-gray-600">{t.visit_date ? new Date(t.visit_date).toLocaleDateString() : 'Flexible date'}</p>
+                        </div>
+                        <div className="flex items-center gap-4">
+                          <span className="font-semibold text-gray-900">${Number(t.price).toFixed(2)}</span>
+                          <Button size="sm" onClick={() => {
+                            setSelectedTicket(t);
+                            setShowTicketModal(true);
+                          }}>View Ticket</Button>
+                        </div>
                       </div>
-                      <div className="flex items-center gap-4">
-                        <span className="rounded-full bg-green-500/10 text-green-700 text-xs px-3 py-1">Confirmed</span>
-                        <span className="font-semibold text-gray-900">${Number(t.price).toFixed(2)}</span>
-                      </div>
-                    </div>
-                  ))}
+                    ))
+                  )}
                 </CardContent>
               </Card>
             </div>
           </>
         )}
 
-        {/* Tickets */}
-        {active === 'tickets' && (
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2"><Ticket className="h-5 w-5 text-sea_green-600" /> My Tickets</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {tickets.map((t:any)=> (
-                <div key={t.ticket_id} className="rounded-xl border-2 border-gray-200 p-4">
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <p className="font-semibold text-gray-900 capitalize">{t.ticket_type} Ticket</p>
-                      <p className="text-sm text-gray-600">{t.visit_date ? new Date(t.visit_date).toLocaleDateString() : 'Flexible date'}</p>
-                    </div>
-                    <span className="rounded-full bg-green-500/10 text-green-700 text-xs px-3 py-1">Confirmed</span>
-                  </div>
-                  <div className="mt-3 flex items-center justify-between">
-                    <div className="text-sm text-gray-700 space-x-6">
-                      <span><span className="text-gray-500">Purchase Date</span> <span className="font-semibold">{t.purchase_date ? new Date(t.purchase_date).toLocaleDateString() : '—'}</span></span>
-                      <span><span className="text-gray-500">Price</span> <span className="font-semibold">${Number(t.price).toFixed(2)}</span></span>
-                    </div>
-                    <div className="flex gap-3">
-                      <Button size="sm">View Ticket</Button>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </CardContent>
-          </Card>
-        )}
+        {/* Removed My Tickets tab content */}
 
         {/* Events section removed as requested */}
 
-        {/* Visits */}
+        {/* Visits - now shows past tickets */}
         {active === 'visits' && (
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2"><MapPin className="h-5 w-5 text-amber-600" /> Visit History</CardTitle>
             </CardHeader>
-            <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {visits.map((v:any,i:number)=> (
-                <div key={i} className="rounded-xl border-2 border-amber-200 bg-amber-50 p-4">
-                  <p className="font-semibold text-gray-900">{v.visit_date ? new Date(v.visit_date).toLocaleDateString() : '—'}</p>
-                  <p className="text-sm text-gray-700">Tickets: {v.tickets_count} · Spent: ${Number(v.total_spent).toFixed(2)}</p>
-                </div>
-              ))}
+            <CardContent className="space-y-4">
+              {tickets.filter((t:any) => {
+                // Past = visit date before today
+                if (!t.visit_date) return false;
+                const visit = new Date(t.visit_date);
+                const now = new Date();
+                return visit < new Date(now.getFullYear(), now.getMonth(), now.getDate());
+              }).length === 0 ? (
+                <p className="text-gray-600">No past tickets found.</p>
+              ) : (
+                tickets.filter((t:any) => {
+                  if (!t.visit_date) return false;
+                  const visit = new Date(t.visit_date);
+                  const now = new Date();
+                  return visit < new Date(now.getFullYear(), now.getMonth(), now.getDate());
+                }).map((t:any,i:number)=> (
+                  <div key={i} className="rounded-xl border-2 border-amber-200 bg-amber-50 p-4 flex items-center justify-between">
+                    <div>
+                      <p className="font-semibold text-gray-900 capitalize">{t.ticket_type} Ticket</p>
+                      <p className="text-sm text-gray-600">{t.visit_date ? new Date(t.visit_date).toLocaleDateString() : '—'}</p>
+                    </div>
+                    <div className="flex items-center gap-4">
+                      <span className="font-semibold text-gray-900">${Number(t.price).toFixed(2)}</span>
+                      <Button size="sm" onClick={() => {
+                        setSelectedTicket(t);
+                        setShowTicketModal(true);
+                      }}>View Ticket</Button>
+                    </div>
+                  </div>
+                ))
+              )}
             </CardContent>
           </Card>
         )}
@@ -279,13 +322,14 @@ export default function CustomerDashboard() {
               <CardTitle className="flex items-center gap-2"><CreditCard className="h-5 w-5 text-dark_spring_green-600" /> Membership Status</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              {membership.status === "None" ? (
-                // No membership - show purchase option
+              {membership.status === "None" || membership.status === "Expired" ? (
+                // No membership or expired membership - show purchase/renew option
                 <div>
-                  <div className="rounded-xl bg-gradient-to-r from-amber-400 to-orange-500 text-white p-5 shadow mb-4">
-                    <p className="text-sm">You don't have an active membership</p>
+                  <div className={`rounded-xl p-5 shadow mb-4 ${membership.status === "Expired" ? "bg-gradient-to-r from-gray-400 to-gray-600 text-white" : "bg-gradient-to-r from-amber-400 to-orange-500 text-white"}`}>
+                    <p className="text-sm">
+                      {membership.status === "Expired" ? "Your annual pass has expired" : "You don't have an active membership"}
+                    </p>
                   </div>
-                  
                   <div className="rounded-2xl border-2 border-gray-200 p-6 max-w-md">
                     <p className="font-semibold text-gray-900 text-lg">Individual Annual Pass</p>
                     <p className="text-3xl font-bold text-gray-900 mt-2">$149<span className="text-base font-normal">/year</span></p>
@@ -312,7 +356,7 @@ export default function CustomerDashboard() {
                       </li>
                     </ul>
                     <Button className="mt-6 w-full" onClick={() => router.push('/membership')}>
-                      Purchase Membership
+                      {membership.status === "Expired" ? "Renew Membership" : "Purchase Membership"}
                     </Button>
                   </div>
                 </div>
@@ -395,7 +439,7 @@ export default function CustomerDashboard() {
               <div><span className="text-gray-500">City:</span> <span className="font-medium">{profile?.city || '—'}</span></div>
               <div><span className="text-gray-500">State:</span> <span className="font-medium">{profile?.state || '—'}</span></div>
               <div><span className="text-gray-500">ZIP Code:</span> <span className="font-medium">{profile?.zip_code || '—'}</span></div>
-              <div><span className="text-gray-500">Annual Pass:</span> <span className="font-medium">{profile?.annual_pass || 'no'}</span></div>
+              <div><span className="text-gray-500">Annual Pass:</span> <span className="font-medium">{membership.status === "Expired" ? "no (expired)" : (profile?.annual_pass || 'no')}</span></div>
               <div><span className="text-gray-500">Registered:</span> <span className="font-medium">{formatDate(profile?.registration_date)}</span></div>
               {membership.status === 'Active' && (
                 <div><span className="text-gray-500">Membership Expires:</span> <span className="font-medium">{membershipDates.expiry ? formatDate(membershipDates.expiry) : '—'}</span></div>
@@ -404,6 +448,76 @@ export default function CustomerDashboard() {
           </Card>
         )}
       </div>
+
+      {/* Ticket Details Modal */}
+      {showTicketModal && selectedTicket && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={() => setShowTicketModal(false)}>
+          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
+                <Ticket className="h-6 w-6 text-sea_green-600" />
+                Ticket Details
+              </h2>
+              <button 
+                onClick={() => setShowTicketModal(false)}
+                className="p-2 hover:bg-gray-100 rounded-lg transition"
+              >
+                <X className="h-5 w-5 text-gray-500" />
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              <div className="flex items-center justify-between p-4 rounded-lg bg-dark_spring_green-50 border border-dark_spring_green-200">
+                <span className="text-sm font-medium text-gray-600">Ticket ID</span>
+                <span className="font-bold text-dark_spring_green-700">#{selectedTicket.ticket_id}</span>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <p className="text-xs text-gray-500 uppercase tracking-wide">Ticket Type</p>
+                  <p className="font-semibold text-gray-900 capitalize">{selectedTicket.ticket_type}</p>
+                </div>
+                {/* Removed status display */}
+              </div>
+
+              <div className="border-t pt-4 space-y-3">
+                <div className="flex justify-between">
+                  <span className="text-sm text-gray-600">Visit Date</span>
+                  <span className="font-medium text-gray-900">
+                    {selectedTicket.visit_date ? new Date(selectedTicket.visit_date).toLocaleDateString('en-US', { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' }) : 'Flexible'}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-sm text-gray-600">Purchase Date</span>
+                  <span className="font-medium text-gray-900">
+                    {selectedTicket.purchase_date ? new Date(selectedTicket.purchase_date).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) : '—'}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-sm text-gray-600">Payment Method</span>
+                  <span className="font-medium text-gray-900 capitalize">{selectedTicket.payment_method || 'N/A'}</span>
+                </div>
+              </div>
+
+              <div className="border-t pt-4">
+                <div className="flex justify-between items-center">
+                  <span className="text-lg font-semibold text-gray-900">Total Price</span>
+                  <span className="text-2xl font-bold text-sea_green-600">${Number(selectedTicket.price).toFixed(2)}</span>
+                </div>
+              </div>
+
+              <div className="pt-4">
+                <Button 
+                  className="w-full bg-dark_spring_green-600 hover:bg-dark_spring_green-700"
+                  onClick={() => setShowTicketModal(false)}
+                >
+                  Close
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
