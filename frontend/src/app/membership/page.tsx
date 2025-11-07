@@ -1,10 +1,11 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
+import apiClient from '@/lib/api';
 
 const MEMBERSHIP_PLANS = {
   individual: {
@@ -45,6 +46,36 @@ export default function MembershipPage() {
   const [includeDonation, setIncludeDonation] = useState(false);
   const [donationAmount, setDonationAmount] = useState(25);
   const [customDonation, setCustomDonation] = useState('');
+  const [loadingProfile, setLoadingProfile] = useState(false);
+
+  // Auto-populate form with user's profile data if logged in
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+        if (!token) return; // Not logged in, skip auto-populate
+
+        setLoadingProfile(true);
+        const response = await apiClient.get('/auth/profile');
+        const profile = response.data.data;
+
+        // Auto-populate fields from profile
+        if (profile) {
+          setFirstName(profile.customer_first_name || profile.employee_first_name || '');
+          setLastName(profile.customer_last_name || profile.employee_last_name || '');
+          setEmail(profile.customer_email || profile.email || '');
+          setPhone(profile.customer_phone || profile.employee_phone || '');
+        }
+      } catch (error) {
+        // Silently fail - user just fills form manually
+        console.log('Could not auto-populate profile data');
+      } finally {
+        setLoadingProfile(false);
+      }
+    };
+
+    fetchProfile();
+  }, []);
 
   // Disable family plan for now; ensure pricing/routes use the individual plan even if family is somehow selected
   const effectivePlan: 'individual' = selectedPlan === 'family' ? 'individual' : selectedPlan;
