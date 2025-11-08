@@ -123,14 +123,80 @@ export default function AdminDashboard() {
     return null;
   }
 
-  const quickActions = [
-    { href: '/admin/animals', icon: Leaf, label: 'Add New Animal', description: 'Register a new animal to the zoo' },
-    { href: '/admin/events', icon: Calendar, label: 'Schedule Event', description: 'Create a new zoo event' },
-    { href: '/admin/employees', icon: Users, label: 'Add Employee', description: 'Onboard a new team member' },
-    // Updated to direct to admin management pages where items are now managed inline
-    { href: '/admin/gift-shops', icon: DollarSign, label: 'Gift Shops & Items', description: 'Manage shops and their items' },
-    { href: '/admin/cafes', icon: DollarSign, label: 'Cafés & Menu Items', description: 'Manage cafés and their menus' },
-  ];
+  // Role-specific quick actions
+  const getQuickActions = () => {
+    const role = user?.job_role;
+
+    // Cashier quick actions
+    if (role === 'cashier') {
+      return [
+        { href: '/admin/tickets', icon: DollarSign, label: 'Sell Tickets', description: 'Process ticket sales' },
+        { href: '/admin/customers', icon: UserCircle, label: 'Manage Customers', description: 'View and manage customer accounts' },
+        { href: '/admin/gift-shops', icon: DollarSign, label: 'Gift Shop Sales', description: 'Process gift shop transactions' },
+        { href: '/admin/cafes', icon: DollarSign, label: 'Café Sales', description: 'Process café transactions' },
+      ];
+    }
+
+    // Guide quick actions
+    if (role === 'guide') {
+      return [
+        { href: '/admin/events', icon: Calendar, label: 'View Events', description: 'Check upcoming zoo events' },
+      ];
+    }
+
+    // Maintenance quick actions
+    if (role === 'maintenance') {
+      return [
+        { href: '/admin/habitats', icon: MapPin, label: 'Habitat Maintenance', description: 'View habitat maintenance schedules' },
+      ];
+    }
+
+    // Manager quick actions (full access)
+    if (role === 'manager') {
+      return [
+        { href: '/admin/animals', icon: Leaf, label: 'Add New Animal', description: 'Register a new animal to the zoo' },
+        { href: '/admin/events', icon: Calendar, label: 'Schedule Event', description: 'Create a new zoo event' },
+        { href: '/admin/employees', icon: Users, label: 'Add Employee', description: 'Onboard a new team member' },
+        { href: '/admin/gift-shops', icon: DollarSign, label: 'Gift Shops & Items', description: 'Manage shops and their items' },
+        { href: '/admin/cafes', icon: DollarSign, label: 'Cafés & Menu Items', description: 'Manage cafés and their menus' },
+      ];
+    }
+
+    // Keeper quick actions
+    if (role === 'keeper') {
+      return [
+        { href: '/admin/animals', icon: Leaf, label: 'View Animals', description: 'Check animal information' },
+        { href: '/admin/habitats', icon: MapPin, label: 'View Habitats', description: 'Check habitat information' },
+      ];
+    }
+
+    // Veterinarian quick actions
+    if (role === 'veterinarian') {
+      return [
+        { href: '/admin/animals', icon: Leaf, label: 'Animal Health', description: 'Manage animal health records' },
+        { href: '/admin/habitats', icon: MapPin, label: 'View Habitats', description: 'Check habitat conditions' },
+      ];
+    }
+
+    // Coordinator quick actions
+    if (role === 'coordinator') {
+      return [
+        { href: '/admin/events', icon: Calendar, label: 'Manage Events', description: 'Create and manage zoo events' },
+      ];
+    }
+
+    // Security quick actions
+    if (role === 'security') {
+      return [
+        { href: '/admin/events', icon: Calendar, label: 'View Events', description: 'Monitor scheduled events' },
+      ];
+    }
+
+    // Default quick actions for other roles (including 'other')
+    return [];
+  };
+
+  const quickActions = getQuickActions();
 
   return (
     <div className="space-y-6">
@@ -142,42 +208,55 @@ export default function AdminDashboard() {
 
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        <StatsCard
-          title="Total Animals"
-          value={stats.totalAnimals}
-          icon={Leaf}
-          iconColor="text-sea_green-600"
-        />
-        <StatsCard
-          title="Total Employees"
-          value={stats.totalEmployees}
-          icon={Users}
-          iconColor="text-dark_spring_green-600"
-        />
-        <StatsCard
-          title="Upcoming Events"
-          value={stats.upcomingEvents}
-          icon={Calendar}
-          iconColor="text-persian_orange-600"
-        />
-        <StatsCard
-          title="Active Habitats"
-          value={stats.activeHabitats}
-          icon={MapPin}
-          iconColor="text-sea_green-600"
-        />
-        <StatsCard
-          title="Today's Visitors"
-          value={stats.todaysVisitors}
-          icon={UserCircle}
-          iconColor="text-dark_spring_green-600"
-        />
-        <StatsCard
-          title="Monthly Revenue"
-          value={`$${stats.monthlyRevenue.toLocaleString()}`}
-          icon={DollarSign}
-          iconColor="text-persian_orange-600"
-        />
+        {/* Show relevant stats based on role */}
+        {(user?.job_role === 'manager' || user?.job_role === 'keeper' || user?.job_role === 'veterinarian') && (
+          <StatsCard
+            title="Total Animals"
+            value={stats.totalAnimals}
+            icon={Leaf}
+            iconColor="text-sea_green-600"
+          />
+        )}
+        {user?.job_role === 'manager' && (
+          <StatsCard
+            title="Total Employees"
+            value={stats.totalEmployees}
+            icon={Users}
+            iconColor="text-dark_spring_green-600"
+          />
+        )}
+        {(user?.job_role === 'manager' || user?.job_role === 'coordinator' || user?.job_role === 'guide' || user?.job_role === 'security') && (
+          <StatsCard
+            title="Upcoming Events"
+            value={stats.upcomingEvents}
+            icon={Calendar}
+            iconColor="text-persian_orange-600"
+          />
+        )}
+        {(user?.job_role === 'manager' || user?.job_role === 'keeper' || user?.job_role === 'veterinarian' || user?.job_role === 'maintenance') && (
+          <StatsCard
+            title="Active Habitats"
+            value={stats.activeHabitats}
+            icon={MapPin}
+            iconColor="text-sea_green-600"
+          />
+        )}
+        {(user?.job_role === 'manager' || user?.job_role === 'cashier') && (
+          <StatsCard
+            title="Today's Visitors"
+            value={stats.todaysVisitors}
+            icon={UserCircle}
+            iconColor="text-dark_spring_green-600"
+          />
+        )}
+        {(user?.job_role === 'manager' || user?.job_role === 'cashier') && (
+          <StatsCard
+            title="Monthly Revenue"
+            value={`$${stats.monthlyRevenue.toLocaleString()}`}
+            icon={DollarSign}
+            iconColor="text-persian_orange-600"
+          />
+        )}
       </div>
 
       {/* Main Content Grid */}
