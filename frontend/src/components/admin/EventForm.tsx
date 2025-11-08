@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
+import { formatDateForInput } from '@/lib/utils';
 
 interface EventFormProps {
   event?: Event | null;
@@ -36,7 +37,7 @@ export function EventForm({ event, onSuccess, onCancel }: EventFormProps) {
       setFormData({
         event_name: event.event_name,
         description: event.description || '',
-        event_date: event.event_date,
+        event_date: formatDateForInput(event.event_date),
         start_time: event.start_time,
         end_time: event.end_time,
         location: event.location || '',
