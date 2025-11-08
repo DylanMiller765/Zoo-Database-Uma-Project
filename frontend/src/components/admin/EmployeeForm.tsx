@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select } from '@/components/ui/select';
+import { formatDateForInput } from '@/lib/utils';
 
 interface EmployeeFormProps {
   employee?: Employee | null;
@@ -49,13 +50,13 @@ export function EmployeeForm({ employee, onSuccess, onCancel }: EmployeeFormProp
         employment_type: employee.employment_type,
         salary: employee.salary,
         status: employee.status || 'active',
-        hire_date: employee.hire_date || '',
+        hire_date: formatDateForInput(employee.hire_date),
         address: employee.address || '',
         city: employee.city || '',
         state: employee.state || '',
         zip_code: employee.zip_code || '',
         gender: employee.gender,
-        birthday: employee.birthday || '',
+        birthday: formatDateForInput(employee.birthday),
       });
     }
   }, [employee]);

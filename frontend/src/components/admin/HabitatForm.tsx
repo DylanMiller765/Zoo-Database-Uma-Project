@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select } from '@/components/ui/select';
 import { Attraction } from '@/types';
+import { formatDateForInput } from '@/lib/utils';
 
 interface HabitatFormProps {
   habitat?: Habitat | null;
@@ -45,7 +46,7 @@ export function HabitatForm({ habitat, onSuccess, onCancel }: HabitatFormProps) 
         environment_type: habitat.environment_type,
         animal_capacity: habitat.animal_capacity,
         cleaning_schedule: habitat.cleaning_schedule,
-        last_maintenance: habitat.last_maintenance ? habitat.last_maintenance.split('T')[0] : new Date().toISOString().split('T')[0],
+        last_maintenance: formatDateForInput(habitat.last_maintenance) || new Date().toISOString().split('T')[0],
         status: habitat.status,
       });
     }

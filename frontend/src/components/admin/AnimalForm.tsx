@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
+import { formatDateForInput } from '@/lib/utils';
 
 interface AnimalFormProps {
   animal?: Animal | null;
@@ -41,8 +42,8 @@ export function AnimalForm({ animal, onSuccess, onCancel }: AnimalFormProps) {
         name: animal.name,
         species: animal.species,
         scientific_name: animal.scientific_name || '',
-        date_of_birth: animal.date_of_birth || '',
-        arrival_date: animal.arrival_date,
+        date_of_birth: formatDateForInput(animal.date_of_birth),
+        arrival_date: formatDateForInput(animal.arrival_date),
         gender: animal.gender || 'unknown',
         place_of_origin: animal.place_of_origin || '',
         habitat_id: animal.habitat_id,
