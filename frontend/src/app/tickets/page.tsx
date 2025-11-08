@@ -43,28 +43,33 @@ export default function TicketsPage() {
   const grandTotal = ticketsTotal + (includeDonation ? finalDonation : 0);
 
   const handleCheckout = async () => {
-    if (totalTickets === 0) {
-      alert('Please select at least one ticket');
+    // Allow donation-only purchases (no tickets required)
+    if (totalTickets === 0 && (!includeDonation || finalDonation === 0)) {
+      alert('Please select at least one ticket or add a donation');
       return;
     }
-    if (!visitDate) {
+    
+    // Only require visit date if purchasing tickets
+    if (totalTickets > 0 && !visitDate) {
       alert('Please select a visit date');
       return;
     }
 
-    // Validate date is not in the past or too far in the future
-    const selectedDate = new Date(visitDate);
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const oneYearFromNow = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000);
+    // Validate date is not in the past or too far in the future (only if tickets selected)
+    if (totalTickets > 0) {
+      const selectedDate = new Date(visitDate);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const oneYearFromNow = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000);
 
-    if (selectedDate < today) {
-      setError('Please select a date in the future');
-      return;
-    }
-    if (selectedDate > oneYearFromNow) {
-      setError('Please select a date within the next year');
-      return;
+      if (selectedDate < today) {
+        setError('Please select a date in the future');
+        return;
+      }
+      if (selectedDate > oneYearFromNow) {
+        setError('Please select a date within the next year');
+        return;
+      }
     }
 
     setIsProcessing(true);
@@ -78,50 +83,54 @@ export default function TicketsPage() {
       console.log('Ticket purchase - User:', user);
       console.log('Ticket purchase - Customer ID:', customerId);
 
-      // Create ticket records for each ticket type
+      // Create ticket records for each ticket type (only if tickets selected)
       const ticketPromises = [];
 
-      // Adult tickets
-      for (let i = 0; i < adults; i++) {
-        const ticketData = {
-          customer_id: customerId,
-          visit_date: visitDate,
-          ticket_type: 'adult' as const,
-          price: TICKET_PRICES.adult,
-          payment_method: 'online' as const,
-        };
-        console.log('Creating adult ticket:', ticketData);
-        ticketPromises.push(ticketService.create(ticketData));
-      }
-
-      // Child tickets
-      for (let i = 0; i < children; i++) {
-        ticketPromises.push(
-          ticketService.create({
+      if (totalTickets > 0) {
+        // Adult tickets
+        for (let i = 0; i < adults; i++) {
+          const ticketData = {
             customer_id: customerId,
             visit_date: visitDate,
-            ticket_type: 'child',
-            price: TICKET_PRICES.child,
-            payment_method: 'online',
-          })
-        );
+            ticket_type: 'adult' as const,
+            price: TICKET_PRICES.adult,
+            payment_method: 'online' as const,
+          };
+          console.log('Creating adult ticket:', ticketData);
+          ticketPromises.push(ticketService.create(ticketData));
+        }
+
+        // Child tickets
+        for (let i = 0; i < children; i++) {
+          ticketPromises.push(
+            ticketService.create({
+              customer_id: customerId,
+              visit_date: visitDate,
+              ticket_type: 'child',
+              price: TICKET_PRICES.child,
+              payment_method: 'online',
+            })
+          );
+        }
+
+        // Senior tickets
+        for (let i = 0; i < seniors; i++) {
+          ticketPromises.push(
+            ticketService.create({
+              customer_id: customerId,
+              visit_date: visitDate,
+              ticket_type: 'senior',
+              price: TICKET_PRICES.senior,
+              payment_method: 'online',
+            })
+          );
+        }
       }
 
-      // Senior tickets
-      for (let i = 0; i < seniors; i++) {
-        ticketPromises.push(
-          ticketService.create({
-            customer_id: customerId,
-            visit_date: visitDate,
-            ticket_type: 'senior',
-            price: TICKET_PRICES.senior,
-            payment_method: 'online',
-          })
-        );
+      // Process all tickets (if any)
+      if (ticketPromises.length > 0) {
+        await Promise.all(ticketPromises);
       }
-
-      // Process all tickets
-      await Promise.all(ticketPromises);
 
       // Redirect to confirmation page with ticket count and total
       router.push(
@@ -432,7 +441,7 @@ export default function TicketsPage() {
                 {/* Checkout Button */}
                 <Button
                   onClick={handleCheckout}
-                  disabled={totalTickets === 0 || !visitDate || isProcessing}
+                  disabled={(totalTickets === 0 && (!includeDonation || finalDonation === 0)) || (totalTickets > 0 && !visitDate) || isProcessing}
                   className="w-full mt-6 py-6 rounded-xl bg-sea_green-600 text-white font-semibold hover:bg-sea_green-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                 >
                   {isProcessing ? (
@@ -442,7 +451,13 @@ export default function TicketsPage() {
                     </>
                   ) : (
                     <span>
-                      {totalTickets === 0 ? 'Select Tickets' : !visitDate ? 'Select Date' : 'Proceed to Checkout'}
+                      {totalTickets === 0 && includeDonation && finalDonation > 0
+                        ? 'Donate'
+                        : totalTickets === 0
+                        ? 'Select Tickets or Add Donation'
+                        : !visitDate
+                        ? 'Select Date'
+                        : 'Proceed to Checkout'}
                     </span>
                   )}
                 </Button>

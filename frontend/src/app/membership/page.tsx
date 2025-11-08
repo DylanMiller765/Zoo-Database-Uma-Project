@@ -15,20 +15,9 @@ const MEMBERSHIP_PLANS = {
       'Unlimited access for 1 adult for one year',
       '10% discount at gift shop and cafés',
       'Free parking',
-      'Early access to special events',
-      'Member-only newsletter',
-    ],
-  },
-  family: {
-    name: 'Family',
-    price: 299,
-    benefits: [
-      'Unlimited access for 2 adults + up to 4 children for one year',
-      '15% discount at gift shop and cafés',
-      'Free parking',
-      'Early access to special events',
-      'Member-only newsletter',
-      'Guest passes (4 per year)',
+      'One free guest pass',
+      'Transferable within household',
+      'Pick up your physical card at the zoo',
     ],
   },
 };
@@ -37,7 +26,7 @@ const DONATION_AMOUNTS = [10, 25, 50, 100];
 
 export default function MembershipPage() {
   const router = useRouter();
-  const [selectedPlan, setSelectedPlan] = useState<'individual' | 'family'>('individual');
+  const [selectedPlan, setSelectedPlan] = useState<'individual'>('individual');
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
@@ -77,9 +66,9 @@ export default function MembershipPage() {
     fetchProfile();
   }, []);
 
-  // Disable family plan for now; ensure pricing/routes use the individual plan even if family is somehow selected
-  const effectivePlan: 'individual' = selectedPlan === 'family' ? 'individual' : selectedPlan;
-  const membershipPrice = MEMBERSHIP_PLANS[effectivePlan].price;
+  // Only Individual membership is offered
+  const effectivePlan: 'individual' = selectedPlan;
+  const membershipPrice = MEMBERSHIP_PLANS.individual.price;
   const finalDonation = customDonation 
     ? parseFloat(customDonation) || 0 
     : donationAmount;
@@ -127,76 +116,48 @@ export default function MembershipPage() {
         <div className="lg:col-span-2 space-y-6">
           {/* Membership Plans */}
           <section className="rounded-2xl bg-gray-50 p-6">
-            <h2 className="text-xl font-bold mb-4">Choose Your Plan</h2>
-            <div className="grid gap-4 sm:grid-cols-2">
-              {/* Individual Plan */}
-              <Card
-                className={`rounded-xl border-2 cursor-pointer transition-all ${
-                  selectedPlan === 'individual'
-                    ? 'border-sea_green-500 bg-sea_green-50 shadow-lg'
-                    : 'border-gray-200 bg-white hover:border-sea_green-300'
-                }`}
-                onClick={() => setSelectedPlan('individual')}
-              >
-                <CardHeader className="px-6 pt-6 pb-3">
-                  <div className="flex items-center justify-between">
-                    <CardTitle className="text-lg text-dark_spring_green-700">Individual</CardTitle>
-                    {selectedPlan === 'individual' && (
-                      <span className="text-sea_green-600">✓</span>
-                    )}
-                  </div>
-                </CardHeader>
-                <CardContent className="px-6 pb-6">
-                  <div className="text-3xl font-bold text-sea_green-600 mb-4">
-                    $149<span className="text-base font-normal text-gray-600">/year</span>
-                  </div>
-                  <ul className="space-y-2 text-sm text-gray-700">
-                    {MEMBERSHIP_PLANS.individual.benefits.map((benefit, i) => (
-                      <li key={i} className="flex items-start gap-2">
-                        <span className="text-sea_green-500 mt-0.5">✓</span>
-                        <span>{benefit}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </CardContent>
-              </Card>
-
-              {/* Family Plan (disabled) */}
-              <Card
-                className={`rounded-xl border-2 transition-all opacity-50 pointer-events-none select-none ${
-                  selectedPlan === 'family'
-                    ? 'border-sea_green-500 bg-sea_green-50 shadow-lg'
-                    : 'border-gray-200 bg-white'
-                }`}
-              >
-                <CardHeader className="px-6 pt-6 pb-3">
-                  <div className="flex items-center justify-between">
-                    <CardTitle className="text-lg text-dark_spring_green-700">Family</CardTitle>
-                    <span className="text-gray-500 text-xs">Unavailable</span>
-                  </div>
-                  <div className="mt-1 inline-block rounded-full bg-gray-100 px-2 py-0.5 text-xs font-semibold text-gray-600">
-                    Currently unavailable
-                  </div>
-                </CardHeader>
-                <CardContent className="px-6 pb-6">
-                  <div className="text-3xl font-bold text-sea_green-600 mb-4">
-                    $299<span className="text-base font-normal text-gray-600">/year</span>
-                  </div>
-                  <ul className="space-y-2 text-sm text-gray-700">
-                    {MEMBERSHIP_PLANS.family.benefits.map((benefit, i) => (
-                      <li key={i} className="flex items-start gap-2">
-                        <span className="text-sea_green-500 mt-0.5">✓</span>
-                        <span>{benefit}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </CardContent>
-              </Card>
-            </div>
+            <h2 className="text-xl font-bold mb-4">Your Membership</h2>
+            <Card className="relative overflow-hidden rounded-2xl border-2 border-sea_green-200 bg-gradient-to-br from-sea_green-50 to-white shadow-md">
+              <div className="pointer-events-none absolute -right-16 -top-16 h-40 w-40 rounded-full bg-sea_green-200/30 blur-2xl" />
+              <div className="pointer-events-none absolute right-0 bottom-0 h-24 w-24 rounded-full bg-dark_spring_green-100/40 blur-xl" />
+              <CardHeader className="px-8 pt-8 pb-4">
+                <CardTitle className="text-2xl text-dark_spring_green-700">Individual Membership</CardTitle>
+              </CardHeader>
+              <CardContent className="px-8 pb-8">
+                <div className="text-3xl md:text-4xl font-extrabold text-sea_green-600 mb-3 tracking-tight">$149<span className="text-base font-semibold text-gray-600">/year</span></div>
+                <p className="text-sm text-gray-700 mb-6">Unlimited access for one adult for 12 months, plus exclusive perks.</p>
+                <ul className="grid sm:grid-cols-2 gap-x-10 gap-y-3 text-sm text-gray-700">
+                  <li className="flex items-start gap-2">
+                    <span className="text-sea_green-500 mt-0.5">✓</span>
+                    <span>Unlimited access for 1 adult for one year</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-sea_green-500 mt-0.5">✓</span>
+                    <span>10% discount at gift shop and cafés</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-sea_green-500 mt-0.5">✓</span>
+                    <span>Free parking</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-sea_green-500 mt-0.5">✓</span>
+                    <span>One free guest pass</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-sea_green-500 mt-0.5">✓</span>
+                    <span>Transferable within household</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-sea_green-500 mt-0.5">✓</span>
+                    <span>Pick up your physical card at the zoo</span>
+                  </li>
+                </ul>
+              </CardContent>
+            </Card>
           </section>
 
           {/* Member Information Form */}
-          <section className="rounded-2xl bg-gray-50 p-6">
+          <section id="member-info" className="rounded-2xl bg-gray-50 p-6">
             <h2 className="text-xl font-bold mb-4">Member Information</h2>
             <Card className="rounded-xl border border-gray-200 bg-white shadow-sm">
               <CardContent className="p-6 space-y-4">
@@ -415,18 +376,7 @@ export default function MembershipPage() {
               </CardContent>
             </Card>
 
-            {/* Info Card */}
-            <Card className="mt-6 rounded-2xl border border-gray-200 bg-sea_green-50 shadow-sm">
-              <CardContent className="p-5">
-                <h3 className="text-sm font-semibold text-gray-900 mb-2">✨ Membership Perks</h3>
-                <ul className="text-xs text-gray-700 space-y-1">
-                  <li>• Physical membership card mailed within 7 days</li>
-                  <li>• Digital card available immediately</li>
-                  <li>• Automatic renewal reminders</li>
-                  <li>• Transferable within household</li>
-                </ul>
-              </CardContent>
-            </Card>
+            {/* Removed bottom Membership Perks card per request */}
 
             {/* Just Visiting? */}
             <Card className="mt-6 rounded-2xl border border-gray-200 bg-gray-50 shadow-sm">
