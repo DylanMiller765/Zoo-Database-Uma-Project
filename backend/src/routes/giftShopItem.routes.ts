@@ -4,7 +4,10 @@ import { protect, restrictTo } from '../middleware/auth.middleware';
 
 const router = Router();
 
-// Protect all routes
+// Public read-only listing (no auth needed)
+router.get('/public', GiftShopItemController.getAllItems);
+
+// Protect all subsequent routes
 router.use(protect);
 
 // Routes for managers

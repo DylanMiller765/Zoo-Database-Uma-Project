@@ -1,0 +1,85 @@
+'use client';
+
+import { useEffect, useState } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import apiClient from '@/lib/api';
+
+type CafeItem = {
+  item_id: number;
+  name: string;
+  price: number | string; // DECIMAL may arrive as string
+  description?: string;
+};
+
+export default function CafePage() {
+  const [items, setItems] = useState<CafeItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const res = await apiClient.get('/cafe-items/public');
+        setItems(res.data);
+      } catch (e: any) {
+        setError(e.response?.data?.message || 'Failed to load cafe items');
+      } finally {
+        setLoading(false);
+      }
+    };
+    load();
+  }, []);
+  return (
+    <div className="min-h-[calc(100vh-6rem)] py-10">
+      {/* Banner */}
+      <section className="relative overflow-hidden rounded-2xl border">
+        <div className="absolute inset-0 -z-10 bg-gradient-to-br from-dark_spring_green-500 via-sea_green-400 to-dark_spring_green-600" />
+        <div className="pointer-events-none absolute -top-6 right-10 h-24 w-24 rounded-full bg-light_yellow-300/30 blur-2xl" />
+        <div className="pointer-events-none absolute top-20 right-24 h-16 w-16 rounded-full bg-melon-300/30 blur-xl" />
+        <div className="pointer-events-none absolute -bottom-10 left-10 h-36 w-36 rounded-full bg-white/10 blur-3xl" />
+        <div
+          className="absolute inset-0 opacity-5"
+          style={{
+            backgroundImage:
+              `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M30 0c-8.284 0-15 6.716-15 15 0 8.284 6.716 15 15 15 8.284 0 15-6.716 15-15 0-8.284-6.716-15-15-15zm0 25c-5.523 0-10-4.477-10-10s4.477-10 10-10 10 4.477 10 10-4.477 10-10 10z' fill='%23ffffff'/%3E%3C/svg%3E")`,
+            backgroundSize: '30px 30px',
+          }}
+        />
+        <div className="relative z-10 px-6 py-10 text-white sm:px-10">
+          <div className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 mb-3">
+            <span className="text-sm">☕ Café</span>
+          </div>
+          <h1 className="text-3xl font-bold sm:text-4xl">Fuel Your Adventure</h1>
+          <p className="mt-2 max-w-2xl text-white/90">
+            Quick bites, tasty treats, and refreshing drinks before your next exhibit.
+          </p>
+        </div>
+      </section>
+
+      <section className="mt-8 rounded-2xl bg-gray-50 p-6">
+        <h2 className="text-2xl font-bold mb-4">Menu Highlights</h2>
+        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+          {loading && <p className="text-sm text-gray-600">Loading menu…</p>}
+          {error && <p className="text-sm text-red-600">{error}</p>}
+          {!loading && !error && items.length === 0 && (
+            <p className="text-sm text-gray-600">No items available.</p>
+          )}
+          {items.map((item) => (
+            <Card key={item.item_id} className="rounded-xl border border-gray-200 bg-white shadow-sm hover:shadow-md transition">
+              <CardHeader className="px-5 pt-5 pb-2">
+                <CardTitle className="text-sm font-semibold text-dark_spring_green-700 truncate">{item.name}</CardTitle>
+              </CardHeader>
+              <CardContent className="px-5 pb-5 text-sm text-gray-700">
+                <div className="font-bold text-sea_green-600 mb-1">${typeof item.price === 'number' ? item.price.toFixed(2) : Number(item.price).toFixed(2)}</div>
+                {item.description && (
+                  <p className="text-xs text-gray-600">{item.description}</p>
+                )}
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+        <p className="mt-6 text-xs text-gray-600 text-center">Menu subject to change. Ask about seasonal specials and allergen info.</p>
+      </section>
+    </div>
+  );
+}

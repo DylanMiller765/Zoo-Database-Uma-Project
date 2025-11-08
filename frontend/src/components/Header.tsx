@@ -52,6 +52,8 @@ export default function Header() {
             <li><Link href={to('events')} className="hover:underline">Events</Link></li>
             <li><Link href={to('plan')} className="hover:underline">Visit</Link></li>
             <li><Link href={to('donate')} className="hover:underline">Donate</Link></li>
+            <li><Link href="/gift-shop" className="hover:underline">Gift Shop</Link></li>
+            <li><Link href="/cafe" className="hover:underline">Café</Link></li>
           </ul>
         </nav>
 
