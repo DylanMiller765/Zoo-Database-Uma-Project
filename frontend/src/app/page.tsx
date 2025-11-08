@@ -267,7 +267,7 @@ export default function HomePage() {
           <PlanCard 
             icon={<StarIcon />}
             title="Memberships"
-            content={<>Annual $149<br />Family $299</>}
+            content={<>Annual $149</>}
           />
         </div>
       </section>

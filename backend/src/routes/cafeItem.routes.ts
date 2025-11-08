@@ -4,7 +4,10 @@ import { protect, restrictTo } from '../middleware/auth.middleware';
 
 const router = Router();
 
-// Protect all routes
+// Public menu listing (no auth required)
+router.get('/public', CafeItemController.getAllItems);
+
+// Protect all subsequent routes
 router.use(protect);
 
 // Routes for managers

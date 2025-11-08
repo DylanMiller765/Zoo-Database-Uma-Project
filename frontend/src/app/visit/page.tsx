@@ -128,17 +128,20 @@ export default function VisitPage() {
           {/* Membership Benefits */}
           <section className="mt-8 rounded-2xl bg-gray-50 p-6">
             <h2 className="text-2xl font-bold mb-4">Membership Benefits</h2>
-            <div className="grid gap-6 sm:grid-cols-2">
-              <Card className="rounded-xl border border-gray-200 bg-white shadow-sm">
+            <div className="grid gap-6">
+              <Card className="relative overflow-hidden rounded-2xl border-2 border-sea_green-200 bg-gradient-to-br from-sea_green-50 to-white shadow-md">
+                <div className="pointer-events-none absolute -right-16 -top-16 h-40 w-40 rounded-full bg-sea_green-200/30 blur-2xl" />
+                <div className="pointer-events-none absolute right-0 bottom-0 h-24 w-24 rounded-full bg-dark_spring_green-100/40 blur-xl" />
                 <CardHeader className="px-6 pt-6 pb-3">
                   <CardTitle className="text-lg text-dark_spring_green-700">Individual Membership</CardTitle>
                 </CardHeader>
                 <CardContent className="px-6 pb-6">
-                  <div className="text-2xl font-bold text-sea_green-600 mb-4">$149 / year</div>
-                  <ul className="space-y-2 text-sm text-gray-700">
+                  <div className="text-3xl md:text-4xl font-extrabold text-sea_green-600 mb-2 tracking-tight">$149<span className="text-base font-semibold text-gray-600">/year</span></div>
+                  <p className="text-sm text-gray-700 mb-4">Unlimited access for one adult for 12 months, plus exclusive perks.</p>
+                  <ul className="grid sm:grid-cols-2 gap-x-8 gap-y-2 text-sm text-gray-700">
                     <li className="flex items-start gap-2">
                       <span className="text-sea_green-500 mt-0.5">✓</span>
-                      <span>Unlimited access for one year</span>
+                      <span>Unlimited access for 1 adult for one year</span>
                     </li>
                     <li className="flex items-start gap-2">
                       <span className="text-sea_green-500 mt-0.5">✓</span>
@@ -150,42 +153,21 @@ export default function VisitPage() {
                     </li>
                     <li className="flex items-start gap-2">
                       <span className="text-sea_green-500 mt-0.5">✓</span>
-                      <span>Early access to special events</span>
+                      <span>One free guest pass</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="text-sea_green-500 mt-0.5">✓</span>
+                      <span>Transferable within household</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="text-sea_green-500 mt-0.5">✓</span>
+                      <span>Pick up your physical card at the zoo</span>
                     </li>
                   </ul>
                 </CardContent>
               </Card>
 
-              <Card className="rounded-xl border border-gray-200 bg-white shadow-sm">
-                <CardHeader className="px-6 pt-6 pb-3">
-                  <CardTitle className="text-lg text-dark_spring_green-700">Family Membership</CardTitle>
-                </CardHeader>
-                <CardContent className="px-6 pb-6">
-                  <div className="text-2xl font-bold text-sea_green-600 mb-4">$299 / year</div>
-                  <ul className="space-y-2 text-sm text-gray-700">
-                    <li className="flex items-start gap-2">
-                      <span className="text-sea_green-500 mt-0.5">✓</span>
-                      <span>Unlimited access for up to 4 family members</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <span className="text-sea_green-500 mt-0.5">✓</span>
-                      <span>10% discount at gift shop and cafés</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <span className="text-sea_green-500 mt-0.5">✓</span>
-                      <span>Free parking</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <span className="text-sea_green-500 mt-0.5">✓</span>
-                      <span>Early access to special events</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <span className="text-sea_green-500 mt-0.5">✓</span>
-                      <span>2 guest passes per year</span>
-                    </li>
-                  </ul>
-                </CardContent>
-              </Card>
+              {/* Family membership removed */}
             </div>
 
             <div className="mt-6 text-center">

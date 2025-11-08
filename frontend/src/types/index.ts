@@ -214,3 +214,32 @@ export interface Habitat {
 }
 
 export interface CreateHabitatData extends Omit<Habitat, 'habitat_id' | 'created_date'> {}
+
+// Gift Shop Item Types
+export interface GiftShopItem {
+  item_id: number;
+  gift_shop_id: number;
+  name: string;
+  description: string;
+  category: string;
+  // MySQL DECIMAL may come back as string; accept both
+  price: number | string;
+  cost: number | string;
+  quantity_in_stock: number;
+  supplier: string;
+}
+
+export interface CreateGiftShopItemData extends Omit<GiftShopItem, 'item_id'> {}
+
+// Cafe Item Types
+export interface CafeItem {
+  item_id: number;
+  cafe_id: number;
+  name: string;
+  description: string;
+  category: string;
+  price: number | string;
+  is_available: boolean;
+}
+
+export interface CreateCafeItemData extends Omit<CafeItem, 'item_id'> {}
