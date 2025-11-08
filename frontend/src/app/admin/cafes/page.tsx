@@ -2,34 +2,38 @@
 
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
-import { useRouter } from 'next/navigation';
 import { cafeService } from '@/services/cafe.service';
-import { Cafe } from '@/types';
+import { Cafe, CafeItem, CreateCafeItemData } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
-import { Plus, Search, Edit, Trash2, Coffee } from 'lucide-react';
-import { Modal } from '@/components/ui/modal';
-import { CafeForm } from '@/components/admin/CafeForm';
+import { Coffee, Search, X, Plus, Trash2 } from 'lucide-react';
+import { Card, CardHeader, CardContent } from '@/components/ui/card';
+import { cafeItemService } from '@/services/cafeItem.service';
 
 export default function CafesPage() {
   const { isAuthenticated, loading: authLoading } = useAuth();
-  const router = useRouter();
   const [cafes, setCafes] = useState<Cafe[]>([]);
   const [loading, setLoading] = useState(true);
+  // Item management state
+  const [menuItems, setMenuItems] = useState<CafeItem[]>([]);
+  const [itemsLoading, setItemsLoading] = useState(true);
+  const [selectedCafeId, setSelectedCafeId] = useState<number>(0);
+  const [itemForm, setItemForm] = useState<CreateCafeItemData>({
+    cafe_id: 0,
+    name: '',
+    description: '',
+    category: '',
+    price: 0,
+    is_available: true,
+  });
+  const [itemError, setItemError] = useState<string | null>(null);
+  const [creatingItem, setCreatingItem] = useState(false);
+  const [isAddOpen, setIsAddOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedCafe, setSelectedCafe] = useState<Cafe | null>(null);
-  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  const [cafeToDelete, setCafeToDelete] = useState<Cafe | null>(null);
+  const [categoryFilter, setCategoryFilter] = useState('all');
+  const [availabilityFilter, setAvailabilityFilter] = useState('all');
+  // Edit removed per request
 
 
 
@@ -51,44 +55,102 @@ export default function CafesPage() {
     }
   };
 
-  const handleAdd = () => {
-    setSelectedCafe(null);
-    setIsModalOpen(true);
-  };
+  useEffect(() => {
+    if (cafes.length > 0 && selectedCafeId === 0) {
+      setSelectedCafeId(cafes[0].cafe_id);
+      setItemForm((f) => ({ ...f, cafe_id: cafes[0].cafe_id }));
+    }
+  }, [cafes, selectedCafeId]);
 
-  const handleEdit = (cafe: Cafe) => {
-    setSelectedCafe(cafe);
-    setIsModalOpen(true);
-  };
+  useEffect(() => {
+    const loadItems = async () => {
+      try {
+        setItemsLoading(true);
+        const all = await cafeItemService.getAll();
+        setMenuItems(all);
+      } catch (e) {
+        console.error('Failed to load cafe items:', e);
+      } finally {
+        setItemsLoading(false);
+      }
+    };
+    if (isAuthenticated) loadItems();
+  }, [isAuthenticated]);
 
-  const handleDeleteClick = (cafe: Cafe) => {
-    setCafeToDelete(cafe);
-    setIsDeleteModalOpen(true);
-  };
+  const itemsForCafe = menuItems.filter((it) => it.cafe_id === selectedCafeId);
+  const categories = Array.from(new Set(itemsForCafe.map(i => i.category))).sort();
+  const filteredItems = itemsForCafe.filter((it) => {
+    const q = searchTerm.trim().toLowerCase();
+    if (!q) return true;
+    return (
+      it.name.toLowerCase().includes(q) ||
+      it.category.toLowerCase().includes(q)
+    );
+  });
+  const fullyFiltered = filteredItems.filter(it => {
+    const catOk = categoryFilter === 'all' || it.category === categoryFilter;
+    const availOk = availabilityFilter === 'all' || (availabilityFilter === 'available' ? it.is_available : !it.is_available);
+    return catOk && availOk;
+  });
 
-  const handleDelete = async () => {
-    if (!cafeToDelete?.cafe_id) return;
-
+  const refreshItems = async () => {
     try {
-      await cafeService.delete(cafeToDelete.cafe_id);
-      await loadCafes();
-      setIsDeleteModalOpen(false);
-      setCafeToDelete(null);
-    } catch (error) {
-      console.error('Failed to delete cafe:', error);
+      const all = await cafeItemService.getAll();
+      setMenuItems(all);
+    } catch (e) {
+      console.error('Failed to refresh items:', e);
     }
   };
 
-  const handleFormSuccess = async () => {
-    setIsModalOpen(false);
-    setSelectedCafe(null);
-    await loadCafes();
+  // No cafe create/edit/delete in this simplified view
+
+  // Cafe item handlers
+  const handleItemField = (field: keyof CreateCafeItemData, value: any) => {
+    setItemForm((f) => ({ ...f, [field]: value }));
   };
 
-  const filteredCafes = cafes.filter(cafe =>
-    cafe.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    cafe.location?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const handleCreateItem = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!itemForm.cafe_id) {
+      setItemError('Please select a café');
+      return;
+    }
+    try {
+      setCreatingItem(true);
+      setItemError(null);
+      const payload = {
+        ...itemForm,
+        price: typeof itemForm.price === 'string' ? parseFloat(itemForm.price) : itemForm.price,
+      };
+      await cafeItemService.create(payload);
+      setItemForm({
+        cafe_id: selectedCafeId,
+        name: '',
+        description: '',
+        category: '',
+        price: 0,
+        is_available: true,
+      });
+      await refreshItems();
+      setIsAddOpen(false);
+    } catch (e: any) {
+      setItemError(e.response?.data?.message || 'Failed to create item');
+    } finally {
+      setCreatingItem(false);
+    }
+  };
+
+  const handleDeleteItem = async (id: number) => {
+    if (!confirm('Delete this item?')) return;
+    try {
+      await cafeItemService.delete(id);
+      await refreshItems();
+    } catch (e: any) {
+      setItemError(e.response?.data?.message || 'Failed to delete item');
+    }
+  };
+
+  // Edit removed per request
 
   if (authLoading || loading) {
     return (
@@ -106,114 +168,182 @@ export default function CafesPage() {
         <div>
           <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-2">
             <Coffee className="h-8 w-8 text-amber-600" />
-            Cafes Management
+            Café Menu Items
           </h1>
-          <p className="text-gray-600 mt-1">Manage zoo cafes and food service locations</p>
-        </div>
-        <Button onClick={handleAdd} className="flex items-center gap-2">
-          <Plus className="h-4 w-4" />
-          Add Cafe
-        </Button>
-      </div>
-
-      <div className="flex items-center gap-4">
-        <div className="relative flex-1 max-w-md">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-          <Input
-            type="text"
-            placeholder="Search by name or location..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10"
-          />
-        </div>
-        <Badge variant="outline" className="text-sm">
-          {filteredCafes.length} cafe{filteredCafes.length !== 1 ? 's' : ''}
-        </Badge>
-      </div>
-
-      <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Name</TableHead>
-              <TableHead>Location</TableHead>
-              <TableHead>Hours</TableHead>
-              <TableHead>Manager ID</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {filteredCafes.map((cafe) => (
-              <TableRow key={cafe.cafe_id}>
-                <TableCell className="font-medium">{cafe.name}</TableCell>
-                <TableCell>{cafe.location || 'N/A'}</TableCell>
-                <TableCell className="text-sm text-gray-600">
-                  {cafe.opening_time} - {cafe.closing_time}
-                </TableCell>
-                <TableCell>{cafe.manager_id || 'N/A'}</TableCell>
-                <TableCell className="text-right">
-                  <div className="flex items-center justify-end gap-2">
-                    <Button variant="ghost" size="sm" onClick={() => handleEdit(cafe)}>
-                      <Edit className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleDeleteClick(cafe)}
-                      className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-
-        {filteredCafes.length === 0 && (
-          <div className="text-center py-12">
-            <Coffee className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-            <p className="text-gray-600">No cafes found</p>
-          </div>
-        )}
-      </div>
-
-      <Modal
-        open={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        title={selectedCafe ? 'Edit Cafe' : 'Add New Cafe'}
-        description={selectedCafe ? `Update information for ${selectedCafe.name}` : 'Add a new cafe to the zoo'}
-        size="xl"
-      >
-        <CafeForm cafe={selectedCafe} onSuccess={handleFormSuccess} onCancel={() => setIsModalOpen(false)} />
-      </Modal>
-
-      <Modal
-        open={isDeleteModalOpen}
-        onClose={() => setIsDeleteModalOpen(false)}
-        title="Delete Cafe"
-        description="Are you sure you want to delete this cafe? This action cannot be undone."
-      >
-        <div className="space-y-4">
-          {cafeToDelete && (
-            <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
-              <p className="text-sm text-gray-900">
-                <span className="font-semibold">{cafeToDelete.name}</span> at {cafeToDelete.location || 'Unknown location'}
-              </p>
-            </div>
+          {selectedCafeId ? (
+            <p className="text-gray-600 mt-1">Managing menu for {cafes.find(c => c.cafe_id === selectedCafeId)?.name}</p>
+          ) : (
+            <p className="text-red-600 mt-1">No café found. Seed at least one café.</p>
           )}
-          <div className="flex items-center gap-3 justify-end">
-            <Button variant="outline" onClick={() => setIsDeleteModalOpen(false)}>
-              Cancel
-            </Button>
-            <Button variant="destructive" onClick={handleDelete}>
-              Delete
+        </div>
+      </div>
+
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4 flex-1">
+              <div className="relative flex-1 max-w-md">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <Input
+                  type="text"
+                  placeholder="Search items by name or category..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+              <select
+                className="h-9 rounded-md border px-3 text-sm text-gray-700 bg-white"
+                value={categoryFilter}
+                onChange={(e) => setCategoryFilter(e.target.value)}
+              >
+                <option value="all">All Categories</option>
+                {categories.map(c => <option key={c} value={c}>{c}</option>)}
+              </select>
+              <select
+                className="h-9 rounded-md border px-3 text-sm text-gray-700 bg-white"
+                value={availabilityFilter}
+                onChange={(e) => setAvailabilityFilter(e.target.value)}
+              >
+                <option value="all">All Availability</option>
+                <option value="available">Available</option>
+                <option value="unavailable">Unavailable</option>
+              </select>
+              <Badge variant="outline" className="text-sm whitespace-nowrap">
+                {fullyFiltered.length} item{fullyFiltered.length !== 1 ? 's' : ''}
+              </Badge>
+            </div>
+            <Button onClick={() => setIsAddOpen(true)} className="bg-amber-600 hover:bg-amber-700">
+              <Plus className="h-4 w-4 mr-1" /> Add Item
             </Button>
           </div>
+        </CardHeader>
+        <CardContent>
+          <div className="overflow-x-auto">
+            {itemsLoading ? (
+              <p className="text-sm text-gray-600">Loading items...</p>
+            ) : fullyFiltered.length === 0 ? (
+              <p className="text-sm text-gray-600">No items for this café.</p>
+            ) : (
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="bg-gray-50 text-left">
+                    <th className="px-4 py-3 text-gray-600 font-medium">ID</th>
+                    <th className="px-4 py-3 text-gray-600 font-medium">Name</th>
+                    <th className="px-4 py-3 text-gray-600 font-medium">Category</th>
+                    <th className="px-4 py-3 text-gray-600 font-medium">Price</th>
+                    <th className="px-4 py-3 text-gray-600 font-medium">Available</th>
+                    <th className="px-4 py-3 text-gray-600 font-medium">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-200">
+                  {fullyFiltered.map((it) => {
+                    const priceNum = typeof it.price === 'string' ? parseFloat(it.price) : it.price;
+                    return (
+                      <tr key={it.item_id} className="hover:bg-gray-50">
+                        <td className="px-4 py-3">{it.item_id}</td>
+                        <td className="px-4 py-3">{it.name}</td>
+                        <td className="px-4 py-3">{it.category}</td>
+                        <td className="px-4 py-3">${priceNum.toFixed(2)}</td>
+                        <td className="px-4 py-3">
+                          {it.is_available ? (
+                            <span className="inline-flex items-center rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-700">Available</span>
+                          ) : (
+                            <span className="inline-flex items-center rounded-full bg-gray-200 px-2.5 py-0.5 text-xs font-medium text-gray-700">Unavailable</span>
+                          )}
+                        </td>
+                        <td className="px-4 py-3">
+                          <button
+                            onClick={() => handleDeleteItem(it.item_id)}
+                            className="p-2 rounded hover:bg-red-50 text-red-600"
+                            aria-label="Delete item"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+
+      {isAddOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/50" onClick={() => setIsAddOpen(false)} />
+          <div className="relative bg-white rounded-lg shadow-xl w-full max-w-2xl p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-semibold">Add Café Item</h2>
+              <button aria-label="Close" className="p-2 text-gray-500 hover:text-gray-700" onClick={() => setIsAddOpen(false)}>
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            <form onSubmit={handleCreateItem}>
+              <div className="grid gap-4 md:grid-cols-2">
+                <div>
+                  <label className="block text-sm font-medium mb-1">Name</label>
+                  <input
+                    className="w-full rounded border px-3 py-2"
+                    value={itemForm.name}
+                    onChange={(e) => handleItemField('name', e.target.value)}
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text sm font-medium mb-1">Category</label>
+                  <input
+                    className="w-full rounded border px-3 py-2"
+                    value={itemForm.category}
+                    onChange={(e) => handleItemField('category', e.target.value)}
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1">Price ($)</label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    className="w-full rounded border px-3 py-2"
+                    value={itemForm.price}
+                    onChange={(e) => handleItemField('price', e.target.value)}
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1">Available</label>
+                  <select
+                    className="w-full rounded border px-3 py-2"
+                    value={itemForm.is_available ? 'true' : 'false'}
+                    onChange={(e) => handleItemField('is_available', e.target.value === 'true')}
+                  >
+                    <option value="true">Yes</option>
+                    <option value="false">No</option>
+                  </select>
+                </div>
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-medium mb-1">Description</label>
+                  <textarea
+                    className="w-full rounded border px-3 py-2"
+                    rows={3}
+                    value={itemForm.description}
+                    onChange={(e) => handleItemField('description', e.target.value)}
+                    required
+                  />
+                </div>
+                {itemError && <p className="text-sm text-red-600 md:col-span-2">{itemError}</p>}
+              </div>
+              <div className="mt-6 flex justify-end gap-2">
+                <Button type="button" variant="secondary" onClick={() => setIsAddOpen(false)}>Cancel</Button>
+                <Button type="submit" disabled={creatingItem}>{creatingItem ? 'Creating...' : 'Add Item'}</Button>
+              </div>
+            </form>
+          </div>
         </div>
-      </Modal>
+      )}
+      {/* Edit removed per request */}
     </div>
   );
 }

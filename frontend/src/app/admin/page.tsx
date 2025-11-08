@@ -127,6 +127,9 @@ export default function AdminDashboard() {
     { href: '/admin/animals', icon: Leaf, label: 'Add New Animal', description: 'Register a new animal to the zoo' },
     { href: '/admin/events', icon: Calendar, label: 'Schedule Event', description: 'Create a new zoo event' },
     { href: '/admin/employees', icon: Users, label: 'Add Employee', description: 'Onboard a new team member' },
+    // Updated to direct to admin management pages where items are now managed inline
+    { href: '/admin/gift-shops', icon: DollarSign, label: 'Gift Shops & Items', description: 'Manage shops and their items' },
+    { href: '/admin/cafes', icon: DollarSign, label: 'Cafés & Menu Items', description: 'Manage cafés and their menus' },
   ];
 
   return (
