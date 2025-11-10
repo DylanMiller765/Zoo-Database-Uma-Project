@@ -6,4 +6,5 @@ export interface Ticket {
   ticket_type: 'adult' | 'child' | 'senior' | 'student';
   price: number;
   payment_method?: 'cash' | 'credit' | 'debit' | 'online';
+  deleted_at?: string | null;
 }

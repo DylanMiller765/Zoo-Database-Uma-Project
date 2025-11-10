@@ -7,6 +7,7 @@ export interface Cafe {
   opening_time?: string;
   closing_time?: string;
   manager_id?: number;
+  deleted_at?: string | null;
 }
 
 export class CafeModel {
