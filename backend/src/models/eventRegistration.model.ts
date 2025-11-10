@@ -3,12 +3,12 @@ import { EventRegistration } from '../types/eventRegistration.types';
 
 export class EventRegistrationModel {
   static async findAll(): Promise<EventRegistration[]> {
-    const sql = 'SELECT * FROM event_registrations';
+    const sql = 'SELECT * FROM event_registrations WHERE deleted_at IS NULL';
     return await query<EventRegistration[]>(sql);
   }
 
   static async findById(id: number): Promise<EventRegistration | null> {
-    const sql = 'SELECT * FROM event_registrations WHERE registration_id = ?';
+    const sql = 'SELECT * FROM event_registrations WHERE registration_id = ? AND deleted_at IS NULL';
     const results = await query<EventRegistration[]>(sql, [id]);
     return results.length > 0 ? results[0] : null;
   }
@@ -26,12 +26,12 @@ export class EventRegistrationModel {
   }
 
   static async remove(id: number): Promise<void> {
-    const sql = 'DELETE FROM event_registrations WHERE registration_id = ?';
+    const sql = 'UPDATE event_registrations SET deleted_at = NOW() WHERE registration_id = ?';
     await query(sql, [id]);
   }
 
   static async findByEvent(eventId: number): Promise<EventRegistration[]> {
-    const sql = 'SELECT * FROM event_registrations WHERE event_id = ?';
+    const sql = 'SELECT * FROM event_registrations WHERE event_id = ? AND deleted_at IS NULL';
     return await query<EventRegistration[]>(sql, [eventId]);
   }
 }

@@ -3,12 +3,12 @@ import { Attraction } from '../types/attraction.types';
 
 export class AttractionModel {
   static async findAll(): Promise<Attraction[]> {
-    const sql = 'SELECT * FROM attractions';
+    const sql = 'SELECT * FROM attractions WHERE deleted_at IS NULL';
     return await query<Attraction[]>(sql);
   }
 
   static async findById(id: number): Promise<Attraction | null> {
-    const sql = 'SELECT * FROM attractions WHERE attraction_id = ?';
+    const sql = 'SELECT * FROM attractions WHERE attraction_id = ? AND deleted_at IS NULL';
     const results = await query<Attraction[]>(sql, [id]);
     return results.length > 0 ? results[0] : null;
   }
@@ -26,7 +26,7 @@ export class AttractionModel {
   }
 
   static async remove(id: number): Promise<void> {
-    const sql = 'DELETE FROM attractions WHERE attraction_id = ?';
+    const sql = 'UPDATE attractions SET deleted_at = NOW() WHERE attraction_id = ?';
     await query(sql, [id]);
   }
 }

@@ -3,12 +3,12 @@ import { Habitat } from '../types/habitat.types';
 
 export class HabitatModel {
   static async findAll(): Promise<Habitat[]> {
-    const sql = 'SELECT * FROM habitats';
+    const sql = 'SELECT * FROM habitats WHERE deleted_at IS NULL';
     return await query<Habitat[]>(sql);
   }
 
   static async findById(id: number): Promise<Habitat | null> {
-    const sql = 'SELECT * FROM habitats WHERE habitat_id = ?';
+    const sql = 'SELECT * FROM habitats WHERE habitat_id = ? AND deleted_at IS NULL';
     const results = await query<Habitat[]>(sql, [id]);
     return results.length > 0 ? results[0] : null;
   }
@@ -44,7 +44,7 @@ export class HabitatModel {
   }
 
   static async remove(id: number): Promise<void> {
-    const sql = 'DELETE FROM habitats WHERE habitat_id = ?';
+    const sql = 'UPDATE habitats SET deleted_at = NOW() WHERE habitat_id = ?';
     await query(sql, [id]);
   }
 }
