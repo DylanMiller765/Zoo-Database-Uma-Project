@@ -17,6 +17,7 @@ export interface Animal {
   weight?: number;
   created_date?: string;
   updated_date?: string;
+  deleted_at?: string | null;
 }
 
 export class AnimalModel {
