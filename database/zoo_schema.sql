@@ -55,6 +55,7 @@ CREATE TABLE `attractions` (
     `human_capacity` INT,
     `opening_time` TIME,
     `closing_time` TIME,
+    deleted_at DATETIME NULL DEFAULT NULL,
     `status` ENUM('open', 'closed', 'maintenance') DEFAULT 'open'
 );
 
@@ -65,6 +66,7 @@ CREATE TABLE `gift_shops` (
     `opening_time` TIME,
     `closing_time` TIME,
     `manager_id` INT,
+    deleted_at DATETIME NULL DEFAULT NULL,
     FOREIGN KEY (`manager_id`) REFERENCES `employees`(`employee_id`) ON DELETE SET NULL
 );
 
@@ -75,6 +77,7 @@ CREATE TABLE `cafes` (
     `opening_time` TIME,
     `closing_time` TIME,
     `manager_id` INT,
+    deleted_at DATETIME NULL DEFAULT NULL,
     FOREIGN KEY (`manager_id`) REFERENCES `employees`(`employee_id`) ON DELETE SET NULL
 );
 
@@ -89,6 +92,7 @@ CREATE TABLE `events` (
     `max_participants` INT,
     `ticket_price` DECIMAL(8, 2),
     `coordinator_id` INT,
+    deleted_at DATETIME NULL DEFAULT NULL,
     FOREIGN KEY (`coordinator_id`) REFERENCES `employees`(`employee_id`) ON DELETE SET NULL
 );
 
@@ -129,6 +133,7 @@ CREATE TABLE `habitats` (
     `last_maintenance` DATE,
     `status` ENUM('active', 'maintenance', 'renovation', 'closed') DEFAULT 'active',
     `created_date` DATETIME DEFAULT CURRENT_TIMESTAMP,
+    deleted_at DATETIME NULL DEFAULT NULL,
     FOREIGN KEY (`attraction_id`) REFERENCES `attractions`(`attraction_id`) ON DELETE SET NULL
 );
 
@@ -149,6 +154,7 @@ CREATE TABLE `animals` (
     `weight` DECIMAL(8, 2),
     `created_date` DATETIME DEFAULT CURRENT_TIMESTAMP,
     `updated_date` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    deleted_at DATETIME NULL DEFAULT NULL,
     FOREIGN KEY (`habitat_id`) REFERENCES `habitats`(`habitat_id`) ON DELETE SET NULL,
     INDEX `idx_animal_species` (`species`)
 );
@@ -161,6 +167,7 @@ CREATE TABLE `tickets` (
     `ticket_type` ENUM('adult', 'child', 'senior', 'student') NOT NULL,
     `price` DECIMAL(8, 2) NOT NULL,
     `payment_method` ENUM('cash', 'credit', 'debit', 'online'),
+    deleted_at DATETIME NULL DEFAULT NULL,
     FOREIGN KEY (`customer_id`) REFERENCES `customers`(`customer_id`) ON DELETE SET NULL,
     INDEX `idx_ticket_date` (`visit_date`)
 );
@@ -175,6 +182,7 @@ CREATE TABLE `gift_shop_items` (
     `cost` DECIMAL(8, 2),
     `quantity_in_stock` INT DEFAULT 0,
     `supplier` VARCHAR(100),
+    deleted_at DATETIME NULL DEFAULT NULL,
     FOREIGN KEY (`gift_shop_id`) REFERENCES `gift_shops`(`gift_shop_id`) ON DELETE CASCADE
 );
 
@@ -186,6 +194,7 @@ CREATE TABLE `cafe_items` (
     `category` VARCHAR(50),
     `price` DECIMAL(8, 2) NOT NULL,
     `is_available` BOOLEAN DEFAULT TRUE,
+    deleted_at DATETIME NULL DEFAULT NULL,
     FOREIGN KEY (`cafe_id`) REFERENCES `cafes`(`cafe_id`) ON DELETE CASCADE
 );
 
@@ -197,6 +206,7 @@ CREATE TABLE `event_registrations` (
     `number_of_participants` INT DEFAULT 1,
     `total_amount` DECIMAL(10, 2),
     `payment_status` ENUM('pending', 'paid', 'cancelled') DEFAULT 'pending',
+    deleted_at DATETIME NULL DEFAULT NULL,
     FOREIGN KEY (`event_id`) REFERENCES `events`(`event_id`) ON DELETE CASCADE,
     FOREIGN KEY (`customer_id`) REFERENCES `customers`(`customer_id`) ON DELETE SET NULL
 );
