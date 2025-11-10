@@ -6,4 +6,5 @@ export interface Attraction {
   opening_time: string;
   closing_time: string;
   status: 'open' | 'closed' | 'maintenance';
+  deleted_at?: string | null;
 }
