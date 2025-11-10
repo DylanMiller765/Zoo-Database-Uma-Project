@@ -105,13 +105,14 @@ export function CustomerForm({ customer, onSuccess, onCancel }: CustomerFormProp
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="email">Email</Label>
+          <Label htmlFor="email">Email *</Label>
           <Input
             type="email"
             id="email"
             name="email"
             value={formData.email}
             onChange={handleChange}
+            required
           />
         </div>
 

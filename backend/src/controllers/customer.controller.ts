@@ -15,7 +15,12 @@ export class CustomerController {
     try {
       console.log('👤 Creating customer with data:', JSON.stringify(req.body, null, 2));
 
-      // Validate that password is provided
+      // Validate that email and password are provided
+      if (!req.body.email) {
+        res.status(400).json({ message: 'Email is required' });
+        return;
+      }
+
       if (!req.body.password) {
         res.status(400).json({ message: 'Password is required' });
         return;

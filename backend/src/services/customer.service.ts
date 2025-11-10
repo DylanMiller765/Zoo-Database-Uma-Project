@@ -20,21 +20,19 @@ export class CustomerService {
       throw new Error('Failed to create customer');
     }
 
-    // Step 2: Create user account if email is provided
-    if (newCustomer.email) {
-      const userAccountResult = await query<any>(
-        'INSERT INTO user_accounts (email, role, customer_id) VALUES (?, ?, ?)',
-        [newCustomer.email, 'customer', newCustomer.customer_id]
-      );
+    // Step 2: Create user account (email is now required)
+    const userAccountResult = await query<any>(
+      'INSERT INTO user_accounts (email, role, customer_id) VALUES (?, ?, ?)',
+      [newCustomer.email, 'customer', newCustomer.customer_id]
+    );
 
-      const accountId = userAccountResult.insertId;
+    const accountId = userAccountResult.insertId;
 
-      // Step 3: Create password record (plain text for student project)
-      await query(
-        'INSERT INTO passwords (account_id, password_hash) VALUES (?, ?)',
-        [accountId, password]
-      );
-    }
+    // Step 3: Create password record (plain text for student project)
+    await query(
+      'INSERT INTO passwords (account_id, password_hash) VALUES (?, ?)',
+      [accountId, password]
+    );
 
     return newCustomer;
   }
