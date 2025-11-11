@@ -44,7 +44,7 @@ class AuthService {
 
     console.log('Password Record:', passwordRecord);
 
-    // Plain text password comparison (no hashing)
+    // Plain text password comparison
     const isPasswordValid = passwordRecord && password === passwordRecord.password_hash;
 
     if (!isPasswordValid) {
@@ -112,7 +112,7 @@ class AuthService {
     );
     const accountId = userAccountResult.insertId;
 
-    // Step 3: Save the password (plain text - no hashing)
+    // Step 3: Save the password (plain text)
     await query('INSERT INTO passwords (account_id, password_hash) VALUES (?, ?)', [accountId, password]);
 
     // Step 4: Generate JWT

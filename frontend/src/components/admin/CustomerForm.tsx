@@ -29,6 +29,7 @@ export function CustomerForm({ customer, onSuccess, onCancel }: CustomerFormProp
     zip_code: '',
     annual_pass: 'no',
     registration_date: new Date().toISOString().split('T')[0],
+    password: '',
   });
 
   useEffect(() => {
@@ -44,6 +45,7 @@ export function CustomerForm({ customer, onSuccess, onCancel }: CustomerFormProp
         zip_code: customer.zip_code || '',
         annual_pass: customer.annual_pass || 'no',
         registration_date: customer.registration_date || new Date().toISOString().split('T')[0],
+        password: '', // Don't populate password when editing
       });
     }
   }, [customer]);
@@ -104,13 +106,28 @@ export function CustomerForm({ customer, onSuccess, onCancel }: CustomerFormProp
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="email">Email</Label>
+          <Label htmlFor="email">Email *</Label>
           <Input
             type="email"
             id="email"
             name="email"
             value={formData.email}
             onChange={handleChange}
+            required
+          />
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="password">Password *</Label>
+          <Input
+            type="password"
+            id="password"
+            name="password"
+            value={formData.password}
+            onChange={handleChange}
+            required={!customer}
+            minLength={6}
+            placeholder={customer ? "Leave blank to keep current password" : "Minimum 6 characters"}
           />
         </div>
 

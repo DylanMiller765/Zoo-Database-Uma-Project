@@ -56,7 +56,9 @@ export interface Employee {
   birthday?: string;
 }
 
-export interface CreateEmployeeData extends Omit<Employee, 'employee_id'> {}
+export interface CreateEmployeeData extends Omit<Employee, 'employee_id'> {
+  password: string;
+}
 
 // Animal Types
 export interface Animal {
@@ -115,7 +117,9 @@ export interface Customer {
   registration_date?: string;
 }
 
-export interface CreateCustomerData extends Omit<Customer, 'customer_id'> {}
+export interface CreateCustomerData extends Omit<Customer, 'customer_id'> {
+  password: string;
+}
 
 // API Response Types
 export interface ApiResponse<T> {
