@@ -3,12 +3,12 @@ import { CafeItem } from '../types/cafeItem.types';
 
 export class CafeItemModel {
   static async findAll(): Promise<CafeItem[]> {
-    const sql = 'SELECT * FROM cafe_items';
+    const sql = 'SELECT * FROM cafe_items WHERE deleted_at IS NULL';
     return await query<CafeItem[]>(sql);
   }
 
   static async findById(id: number): Promise<CafeItem | null> {
-    const sql = 'SELECT * FROM cafe_items WHERE item_id = ?';
+    const sql = 'SELECT * FROM cafe_items WHERE item_id = ? AND deleted_at IS NULL';
     const results = await query<CafeItem[]>(sql, [id]);
     return results.length > 0 ? results[0] : null;
   }
@@ -26,12 +26,12 @@ export class CafeItemModel {
   }
 
   static async remove(id: number): Promise<void> {
-    const sql = 'DELETE FROM cafe_items WHERE item_id = ?';
+    const sql = 'UPDATE cafe_items SET deleted_at = NOW() WHERE item_id = ?';
     await query(sql, [id]);
   }
 
   static async findByCafe(cafeId: number): Promise<CafeItem[]> {
-    const sql = 'SELECT * FROM cafe_items WHERE cafe_id = ?';
+    const sql = 'SELECT * FROM cafe_items WHERE cafe_id = ? AND deleted_at IS NULL';
     return await query<CafeItem[]>(sql, [cafeId]);
   }
 }

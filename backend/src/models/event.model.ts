@@ -3,7 +3,7 @@ import { Event } from '../types/event.types';
 
 export class EventModel {
   static async findAll(): Promise<Event[]> {
-    const sql = 'SELECT * FROM events ORDER BY event_date DESC';
+    const sql = 'SELECT * FROM events WHERE deleted_at IS NULL ORDER BY event_date DESC';
     return await query<Event[]>(sql);
   }
 
@@ -16,7 +16,7 @@ export class EventModel {
   }
 
   static async findById(eventId: number): Promise<Event | null> {
-    const sql = 'SELECT * FROM events WHERE event_id = ?';
+    const sql = 'SELECT * FROM events WHERE event_id = ? AND deleted_at IS NULL'; // Edited line
     const results = await query<Event[]>(sql, [eventId]);
     return results.length > 0 ? results[0] : null;
   }
@@ -31,7 +31,7 @@ export class EventModel {
   }
 
   static async remove(eventId: number): Promise<boolean> {
-    const sql = 'DELETE FROM events WHERE event_id = ?';
+    const sql = 'UPDATE events SET deleted_at = NOW() WHERE event_id = ?';
     const result = await query<any>(sql, [eventId]);
     return result.affectedRows > 0;
   }

@@ -6,4 +6,5 @@ export interface EventRegistration {
   number_of_participants: number;
   total_amount: number;
   payment_status: 'pending' | 'paid' | 'cancelled';
+  deleted_at?: string | null;
 }
