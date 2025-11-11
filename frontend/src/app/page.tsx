@@ -312,7 +312,7 @@ export default function HomePage() {
 
           <div className="mt-6">
             <Button asChild className="rounded-full bg-sea_green-500 hover:bg-sea_green-600">
-              <Link href="/tickets">Donate Now</Link>
+              <Link href="/tickets?mode=donate">Donate Now</Link>
             </Button>
           </div>
         </div>

@@ -1,13 +1,13 @@
 'use client';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { ticketService } from '@/services/ticket.service';
 import { authService } from '@/services/auth.service';
-import { Loader2 } from 'lucide-react';
+import { Loader2, ChevronDown, ChevronUp } from 'lucide-react';
 
 const TICKET_PRICES = {
   adult: 29.95,
@@ -19,15 +19,19 @@ const DONATION_AMOUNTS = [10, 25, 50, 100];
 
 export default function TicketsPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const isDonationMode = searchParams.get('mode') === 'donate';
+
   const [visitDate, setVisitDate] = useState('');
   const [adults, setAdults] = useState(0);
   const [children, setChildren] = useState(0);
   const [seniors, setSeniors] = useState(0);
-  const [includeDonation, setIncludeDonation] = useState(false);
+  const [includeDonation, setIncludeDonation] = useState(isDonationMode);
   const [donationAmount, setDonationAmount] = useState(25);
   const [customDonation, setCustomDonation] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [ticketSectionsCollapsed, setTicketSectionsCollapsed] = useState(isDonationMode);
 
   const ticketsTotal = 
     adults * TICKET_PRICES.adult + 
@@ -162,11 +166,15 @@ export default function TicketsPage() {
         />
         <div className="relative z-10 px-6 py-10 text-white sm:px-10">
           <div className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 mb-3">
-            <span className="text-sm">🎫 Get Tickets</span>
+            <span className="text-sm">{isDonationMode ? '💚 Support Conservation' : '🎫 Get Tickets'}</span>
           </div>
-          <h1 className="text-3xl font-bold sm:text-4xl">Purchase Your Tickets</h1>
+          <h1 className="text-3xl font-bold sm:text-4xl">
+            {isDonationMode ? 'Support Our Mission' : 'Purchase Your Tickets'}
+          </h1>
           <p className="mt-2 max-w-2xl text-white/90">
-            Select your visit date, ticket quantities, and optionally support conservation with a donation.
+            {isDonationMode
+              ? 'Make a difference today. Your donation helps care for animals, maintain habitats, and support conservation education programs.'
+              : 'Select your visit date, ticket quantities, and optionally support conservation with a donation.'}
           </p>
         </div>
       </section>
@@ -174,9 +182,30 @@ export default function TicketsPage() {
       <div className="mt-8 grid gap-6 lg:grid-cols-3">
         {/* Left Column - Ticket Selection */}
         <div className="lg:col-span-2 space-y-6">
+          {/* Collapsible Ticket Sections (in donation mode) */}
+          {isDonationMode && (
+            <section className="rounded-2xl bg-blue-50 border-2 border-blue-200 p-4">
+              <button
+                onClick={() => setTicketSectionsCollapsed(!ticketSectionsCollapsed)}
+                className="w-full flex items-center justify-between text-left"
+              >
+                <div>
+                  <h2 className="text-lg font-semibold text-blue-900">Also purchasing tickets?</h2>
+                  <p className="text-sm text-blue-700">Click to {ticketSectionsCollapsed ? 'show' : 'hide'} ticket options</p>
+                </div>
+                {ticketSectionsCollapsed ? (
+                  <ChevronDown className="h-5 w-5 text-blue-600" />
+                ) : (
+                  <ChevronUp className="h-5 w-5 text-blue-600" />
+                )}
+              </button>
+            </section>
+          )}
+
           {/* Visit Date */}
-          <section className="rounded-2xl bg-gray-50 p-6">
-            <h2 className="text-xl font-bold mb-4">Select Visit Date</h2>
+          {(!isDonationMode || !ticketSectionsCollapsed) && (
+            <section className="rounded-2xl bg-gray-50 p-6">
+              <h2 className="text-xl font-bold mb-4">Select Visit Date</h2>
             <Card className="rounded-xl border border-gray-200 bg-white shadow-sm">
               <CardContent className="p-6">
                 <label htmlFor="visit-date" className="block text-sm font-semibold text-gray-700 mb-2">
@@ -197,8 +226,10 @@ export default function TicketsPage() {
               </CardContent>
             </Card>
           </section>
+          )}
 
           {/* Ticket Quantities */}
+          {(!isDonationMode || !ticketSectionsCollapsed) && (
           <section className="rounded-2xl bg-gray-50 p-6">
             <h2 className="text-xl font-bold mb-4">Select Tickets</h2>
             <div className="space-y-4">
@@ -287,23 +318,26 @@ export default function TicketsPage() {
               </Card>
             </div>
           </section>
+          )}
 
           {/* Donation Section */}
           <section className="rounded-2xl bg-gray-50 p-6">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-xl font-bold">Support Conservation</h2>
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={includeDonation}
-                  onChange={(e) => setIncludeDonation(e.target.checked)}
-                  className="h-5 w-5 rounded border-gray-300 text-sea_green-600 focus:ring-sea_green-500"
-                />
-                <span className="text-sm font-medium text-gray-700">Add donation</span>
-              </label>
+              {!isDonationMode && (
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={includeDonation}
+                    onChange={(e) => setIncludeDonation(e.target.checked)}
+                    className="h-5 w-5 rounded border-gray-300 text-sea_green-600 focus:ring-sea_green-500"
+                  />
+                  <span className="text-sm font-medium text-gray-700">Add donation</span>
+                </label>
+              )}
             </div>
 
-            {includeDonation && (
+            {(includeDonation || isDonationMode) && (
               <Card className="rounded-xl border border-gray-200 bg-white shadow-sm">
                 <CardContent className="p-6">
                   <p className="text-sm text-gray-600 mb-4">
