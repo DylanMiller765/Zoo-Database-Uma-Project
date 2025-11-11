@@ -27,7 +27,18 @@ export interface VeterinarianAnimal {
   updated_date: string;
 }
 
+export interface PublicStats {
+  totalSpecies: number;
+  totalHabitats: number;
+  annualVisitors: number;
+}
+
 export const dashboardService = {
+  async getPublicStats(): Promise<PublicStats> {
+    const response = await apiClient.get<PublicStats>('/dashboard/public-stats');
+    return response.data;
+  },
+
   async getStats(): Promise<DashboardStats> {
     const response = await apiClient.get<DashboardStats>('/dashboard/stats');
     return response.data;
