@@ -17,11 +17,12 @@ export interface Animal {
   weight?: number;
   created_date?: string;
   updated_date?: string;
+  deleted_at?: string | null;
 }
 
 export class AnimalModel {
   static async findAll(): Promise<Animal[]> {
-    const sql = 'SELECT * FROM animals';
+    const sql = 'SELECT * FROM animals WHERE deleted_at IS NULL';
     return await query<Animal[]>(sql);
   }
 
@@ -36,7 +37,7 @@ export class AnimalModel {
   }
 
   static async findById(id: number): Promise<Animal | null> {
-    const sql = 'SELECT * FROM animals WHERE animal_id = ?';
+    const sql = 'SELECT * FROM animals WHERE animal_id = ? AND deleted_at IS NULL';
     const results = await query<Animal[]>(sql, [id]);
     return results.length > 0 ? results[0] : null;
   }
@@ -51,7 +52,7 @@ export class AnimalModel {
   }
 
   static async remove(id: number): Promise<void> {
-    const sql = 'DELETE FROM animals WHERE animal_id = ?';
+    const sql = 'UPDATE animals SET deleted_at = NOW() WHERE animal_id = ?';
     await query(sql, [id]);
   }
 }

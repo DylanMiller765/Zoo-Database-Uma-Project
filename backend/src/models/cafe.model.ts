@@ -7,11 +7,12 @@ export interface Cafe {
   opening_time?: string;
   closing_time?: string;
   manager_id?: number;
+  deleted_at?: string | null;
 }
 
 export class CafeModel {
   static async findAll(): Promise<Cafe[]> {
-    const sql = 'SELECT * FROM cafes';
+    const sql = 'SELECT * FROM cafes WHERE deleted_at IS NULL';
     return await query<Cafe[]>(sql);
   }
 
@@ -26,7 +27,7 @@ export class CafeModel {
   }
 
   static async findById(id: number): Promise<Cafe | null> {
-    const sql = 'SELECT * FROM cafes WHERE cafe_id = ?';
+    const sql = 'SELECT * FROM cafes WHERE cafe_id = ? AND deleted_at IS NULL';
     const results = await query<Cafe[]>(sql, [id]);
     return results.length > 0 ? results[0] : null;
   }
@@ -41,7 +42,7 @@ export class CafeModel {
   }
 
   static async remove(id: number): Promise<void> {
-    const sql = 'DELETE FROM cafes WHERE cafe_id = ?';
+    const sql = 'UPDATE cafes SET deleted_at = NOW() WHERE cafe_id = ?';
     await query(sql, [id]);
   }
 }
