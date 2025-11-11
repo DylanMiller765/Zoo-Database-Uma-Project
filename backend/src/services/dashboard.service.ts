@@ -1,6 +1,33 @@
 import { query } from '../config/database';
 
 export class DashboardService {
+  // Public stats for landing page (no authentication required)
+  static async getPublicStats() {
+    // Get total species count (distinct species)
+    const [speciesResult] = await query<any[]>(
+      'SELECT COUNT(DISTINCT species) as count FROM animals WHERE active_status = "active" AND deleted_at IS NULL'
+    );
+    const totalSpecies = speciesResult.count;
+
+    // Get total habitats
+    const [habitatsResult] = await query<any[]>(
+      'SELECT COUNT(*) as count FROM habitats WHERE status = "active" AND deleted_at IS NULL'
+    );
+    const totalHabitats = habitatsResult.count;
+
+    // Get annual visitors (sum of all tickets from current year)
+    const [visitorsResult] = await query<any[]>(
+      'SELECT COUNT(*) as count FROM tickets WHERE YEAR(visit_date) = YEAR(CURDATE())'
+    );
+    const annualVisitors = visitorsResult.count;
+
+    return {
+      totalSpecies,
+      totalHabitats,
+      annualVisitors,
+    };
+  }
+
   static async getStats() {
     // Get total animals
     const [animalsResult] = await query<any[]>(
