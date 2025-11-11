@@ -8,6 +8,25 @@ export interface RecentActivity {
   timestamp: string;
 }
 
+export interface KeeperAssignment {
+  animal_id: number;
+  name: string;
+  species: string;
+  health_status: string;
+  habitat_name: string;
+  shift: string;
+}
+
+export interface VeterinarianAnimal {
+  animal_id: number;
+  name: string;
+  species: string;
+  health_status: string;
+  medical_notes: string;
+  habitat_name: string;
+  updated_date: string;
+}
+
 export const dashboardService = {
   async getStats(): Promise<DashboardStats> {
     const response = await apiClient.get<DashboardStats>('/dashboard/stats');
@@ -16,6 +35,16 @@ export const dashboardService = {
 
   async getRecentActivity(): Promise<RecentActivity[]> {
     const response = await apiClient.get<RecentActivity[]>('/dashboard/recent-activity');
+    return response.data;
+  },
+
+  async getKeeperAssignments(): Promise<KeeperAssignment[]> {
+    const response = await apiClient.get<KeeperAssignment[]>('/dashboard/keeper-assignments');
+    return response.data;
+  },
+
+  async getVeterinarianAnimals(): Promise<VeterinarianAnimal[]> {
+    const response = await apiClient.get<VeterinarianAnimal[]>('/dashboard/veterinarian-animals');
     return response.data;
   },
 };
