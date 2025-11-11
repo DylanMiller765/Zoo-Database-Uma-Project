@@ -1,5 +1,11 @@
-import bcrypt from 'bcrypt';
+// Plain text password utilities for student project
 
-// TODO: Implement hashPassword function
+export function validatePassword(password: string): boolean {
+  // Basic validation: password must be at least 6 characters
+  return password && password.length >= 6;
+}
 
-// TODO: Implement comparePassword function
+export function comparePassword(plainPassword: string, storedPassword: string): boolean {
+  // Plain text comparison
+  return plainPassword === storedPassword;
+}
