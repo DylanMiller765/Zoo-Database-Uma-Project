@@ -4,7 +4,10 @@ import { protect, restrictTo } from '../middleware/auth.middleware';
 
 const router = Router();
 
-// All dashboard routes require authentication
+// Public endpoint (no authentication required)
+router.get('/public-stats', DashboardController.getPublicStats);
+
+// All other dashboard routes require authentication
 router.use(protect);
 
 router.get('/stats', DashboardController.getStats);
