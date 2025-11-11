@@ -16,9 +16,26 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { Plus, Search, Edit, Trash2, Leaf } from 'lucide-react';
+import { Plus, Search, Edit, Trash2, Leaf, Eye } from 'lucide-react';
 import { Modal } from '@/components/ui/modal';
 import { AnimalForm } from '@/components/admin/AnimalForm';
+
+function fmt(val?: string | number, fallback = 'N/A') {
+  if (val === null || val === undefined || val === '') return fallback;
+  return String(val);
+}
+
+function titleCaseUnderscore(s?: string) {
+  if (!s) return 'N/A';
+  return s.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
+function formatDate(d?: string) {
+  if (!d) return 'N/A';
+  const dt = new Date(d);
+  if (Number.isNaN(dt.getTime())) return d; // show raw if unparseable
+  return dt.toLocaleDateString();
+}
 
 export default function AnimalsPage() {
   const { isAuthenticated, loading: authLoading } = useAuth();
@@ -31,7 +48,10 @@ export default function AnimalsPage() {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [animalToDelete, setAnimalToDelete] = useState<Animal | null>(null);
 
-
+  // NEW: read-only details modal
+  const [isDetailsOpen, setIsDetailsOpen] = useState(false);
+  const [detailsLoading, setDetailsLoading] = useState(false);
+  const [detailsAnimal, setDetailsAnimal] = useState<Animal | null>(null);
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -83,6 +103,20 @@ export default function AnimalsPage() {
     setIsModalOpen(false);
     setSelectedAnimal(null);
     await loadAnimals();
+  };
+
+  // NEW: open details by fetching fresh data
+  const handleView = async (animalId: number) => {
+    try {
+      setDetailsLoading(true);
+      setIsDetailsOpen(true);
+      const full = await animalService.getById(animalId);
+      setDetailsAnimal(full);
+    } catch (err) {
+      console.error('Failed to load animal details:', err);
+    } finally {
+      setDetailsLoading(false);
+    }
   };
 
   const filteredAnimals = animals.filter(animal =>
@@ -162,7 +196,15 @@ export default function AnimalsPage() {
           <TableBody>
             {filteredAnimals.map((animal) => (
               <TableRow key={animal.animal_id}>
-                <TableCell className="font-medium">{animal.name}</TableCell>
+                <TableCell className="font-medium">
+                  <button
+                    onClick={() => animal.animal_id && handleView(animal.animal_id)}
+                    className="text-dark_spring_green-700 hover:underline"
+                    title="View details"
+                  >
+                    {animal.name}
+                  </button>
+                </TableCell>
                 <TableCell>
                   <div>
                     <div className="font-medium">{animal.species}</div>
@@ -193,7 +235,16 @@ export default function AnimalsPage() {
                     <Button
                       variant="ghost"
                       size="sm"
+                      onClick={() => animal.animal_id && handleView(animal.animal_id)}
+                      title="View details"
+                    >
+                      <Eye className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
                       onClick={() => handleEdit(animal)}
+                      title="Edit"
                     >
                       <Edit className="h-4 w-4" />
                     </Button>
@@ -202,6 +253,7 @@ export default function AnimalsPage() {
                       size="sm"
                       onClick={() => handleDeleteClick(animal)}
                       className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                      title="Delete"
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>
@@ -255,6 +307,84 @@ export default function AnimalsPage() {
             </Button>
           </div>
         </div>
+      </Modal>
+
+      {/* NEW: Details Modal */}
+      <Modal
+        open={isDetailsOpen}
+        onClose={() => { setIsDetailsOpen(false); setDetailsAnimal(null); }}
+        title={detailsAnimal ? `${detailsAnimal.name} — Details` : 'Animal Details'}
+        description="Read-only profile"
+        size="lg"
+      >
+        {detailsLoading ? (
+          <div className="flex items-center justify-center h-40">
+            <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-dark_spring_green-600"></div>
+          </div>
+        ) : detailsAnimal ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-1">
+              <p className="text-sm text-gray-500">Species</p>
+              <p className="font-medium">{fmt(detailsAnimal.species)}</p>
+              {detailsAnimal.scientific_name && (
+                <p className="text-xs italic text-gray-500">{detailsAnimal.scientific_name}</p>
+              )}
+            </div>
+
+            <div className="space-y-1">
+              <p className="text-sm text-gray-500">Gender</p>
+              <p className="font-medium capitalize">{fmt(detailsAnimal.gender, 'Unknown')}</p>
+            </div>
+
+            <div className="space-y-1">
+              <p className="text-sm text-gray-500">DOB</p>
+              <p className="font-medium">{formatDate(detailsAnimal.date_of_birth)}</p>
+            </div>
+
+            <div className="space-y-1">
+              <p className="text-sm text-gray-500">Arrival Date</p>
+              <p className="font-medium">{formatDate(detailsAnimal.arrival_date)}</p>
+            </div>
+
+            <div className="space-y-1">
+              <p className="text-sm text-gray-500">Place of Origin</p>
+              <p className="font-medium">{fmt(detailsAnimal.place_of_origin)}</p>
+            </div>
+
+            <div className="space-y-1">
+              <p className="text-sm text-gray-500">Weight</p>
+              <p className="font-medium">{fmt(detailsAnimal.weight)}</p>
+            </div>
+
+            <div className="space-y-1">
+              <p className="text-sm text-gray-500">Health Status</p>
+              <div>
+                <Badge variant={getHealthStatusBadge(detailsAnimal.health_status)} className="capitalize">
+                  {fmt(detailsAnimal.health_status, 'good')}
+                </Badge>
+              </div>
+            </div>
+
+            <div className="space-y-1">
+              <p className="text-sm text-gray-500">Activity</p>
+              <Badge variant={detailsAnimal.active_status === 'active' ? 'success' : 'outline'} className="capitalize">
+                {fmt(detailsAnimal.active_status, 'active')}
+              </Badge>
+            </div>
+
+            <div className="space-y-1">
+              <p className="text-sm text-gray-500">Endangerment</p>
+              <p className="font-medium">{titleCaseUnderscore(detailsAnimal.endangerment_status)}</p>
+            </div>
+
+            <div className="md:col-span-2 space-y-1">
+              <p className="text-sm text-gray-500">Medical Notes</p>
+              <p className="font-medium whitespace-pre-wrap">{fmt(detailsAnimal.medical_notes)}</p>
+            </div>
+          </div>
+        ) : (
+          <p className="text-gray-600">No details found.</p>
+        )}
       </Modal>
     </div>
   );
