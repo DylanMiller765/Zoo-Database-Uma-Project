@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -17,7 +17,7 @@ const TICKET_PRICES = {
 
 const DONATION_AMOUNTS = [10, 25, 50, 100];
 
-export default function TicketsPage() {
+function TicketsPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const isDonationMode = searchParams.get('mode') === 'donate';
@@ -517,5 +517,17 @@ export default function TicketsPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function TicketsPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-[calc(100vh-6rem)] py-10 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-sea_green-600"></div>
+      </div>
+    }>
+      <TicketsPageContent />
+    </Suspense>
   );
 }
