@@ -6,22 +6,26 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useEffect, useState } from "react";
 import { habitatService } from "@/services/habitat.service";
 import { eventService } from "@/services/event.service";
+import { dashboardService, PublicStats } from "@/services/dashboard.service";
 import { Habitat, Event } from "@/types";
 
 export default function HomePage() {
   const [habitats, setHabitats] = useState<Habitat[]>([]);
   const [events, setEvents] = useState<Event[]>([]);
+  const [stats, setStats] = useState<PublicStats | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [habitatsData, eventsData] = await Promise.all([
+        const [habitatsData, eventsData, statsData] = await Promise.all([
           habitatService.getAll(),
           eventService.getAll(),
+          dashboardService.getPublicStats(),
         ]);
         setHabitats(habitatsData);
         setEvents(eventsData);
+        setStats(statsData);
       } catch (error) {
         console.error("Error fetching data:", error);
       } finally {
@@ -85,9 +89,19 @@ export default function HomePage() {
           </div>
 
           <div className="mt-10 grid grid-cols-3 gap-4 sm:gap-6">
-            <Stat value="100+" label="Species" />
-            <Stat value="8" label="Habitats" />
-            <Stat value="50,000+" label="Visitors / yr" />
+            {loading || !stats ? (
+              <>
+                <Stat value="..." label="Species" />
+                <Stat value="..." label="Habitats" />
+                <Stat value="..." label="Visitors / yr" />
+              </>
+            ) : (
+              <>
+                <Stat value={stats.totalSpecies.toString()} label="Species" />
+                <Stat value={stats.totalHabitats.toString()} label="Habitats" />
+                <Stat value={`${stats.annualVisitors.toLocaleString()}+`} label="Visitors / yr" />
+              </>
+            )}
           </div>
         </div>
       </section>
