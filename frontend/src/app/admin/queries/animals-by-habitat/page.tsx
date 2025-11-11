@@ -1,122 +1,255 @@
 "use client";
 
-import { useEffect, useState, useCallback, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
 import { queryService } from "@/services/query.service";
-import * as XLSX from 'xlsx';
+import apiClient from "@/lib/api";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { MapPin, Leaf, FileDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { MapPin, Leaf, Download, Eye } from "lucide-react";
+import { Modal } from "@/components/ui/modal";
 
-type RawRow = {
+/** ------------ Types ------------- */
+type AnimalsByHabitatRow = {
   habitat_id: number;
   habitat_name: string;
-  environment_type: string | null;
-  animal_capacity: number;
-  habitat_status: string;
-  animal_id: number | null;
-  animal_name: string | null;
-  species: string | null;
-  health_status: string | null;
-  active_status: string | null;
-  endangerment_status: string | null;
+  environment_type?: string;
+  animal_capacity?: number;
+  habitat_status?: string;
+  animal_id?: number | null;
+  animal_name?: string | null;
+  species?: string | null;
+  health_status?: string | null;
+  active_status?: string | null;
+  endangerment_status?: string | null;
 };
 
-type Animal = {
-  animal_id: number | null;
-  animal_name: string | null;
-  species: string | null;
-  health_status: string | null;
-  active_status: string | null;
-  endangerment_status: string | null;
-};
-
-type HabitatGroup = {
+type HabitatEntity = {
   habitat_id: number;
-  habitat_name: string;
-  environment_type: string | null;
-  animal_capacity: number;
-  habitat_status: string;
-  animals: Animal[];
+  attraction_id?: number | null;
+  name?: string;
+  environment_type?: string | null;
+  animal_capacity?: number | null;
+  status?: string | null;
 };
 
-// CSV report modes
-const REPORT_TYPES = [
-  { value: "full", label: "Full Habitat + Animals" },
-  { value: "capacity", label: "Habitat Capacity Summary" },
-  { value: "endangered", label: "Endangered Animals Only" },
-  { value: "health", label: "Animals Needing Attention (Health)" },
-];
+type AttractionEntity = {
+  attraction_id: number;
+  name: string;
+  status?: string | null;
+};
+
+const titleCase = (s?: string | null) =>
+  s ? s.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()) : "N/A";
 
 export default function AnimalsByHabitatPage() {
   const { isAuthenticated, loading: authLoading } = useAuth();
   const router = useRouter();
 
-  const [data, setData] = useState<RawRow[]>([]);
+  /** -------- Source data -------- */
+  const [animalsByHabitat, setAnimalsByHabitat] = useState<AnimalsByHabitatRow[]>([]);
+  const [habitatsList, setHabitatsList] = useState<HabitatEntity[]>([]);
+  const [attractionsList, setAttractionsList] = useState<AttractionEntity[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // user parameter: report type
-  const [reportType, setReportType] = useState<string>("full");
+  /** -------- Report controls (no date range) -------- */
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
 
-  // fetch data
-  const loadData = useCallback(async () => {
+  // All checked by default
+  const [cols, setCols] = useState<Record<string, boolean>>({
+    // attraction
+    Attraction: true,
+    AttractionStatus: true,
+    // habitat
+    Habitat: true,
+    Environment: true,
+    Capacity: true,
+    HabitatStatus: true,
+    // animal
+    Animal: true,
+    Species: true,
+    Health: true,
+    AnimalStatus: true,
+    Endangerment: true,
+  });
+
+  const selectAllCols = () =>
+    setCols((prev) => Object.fromEntries(Object.keys(prev).map((k) => [k, true])) as Record<
+      string,
+      boolean
+    >);
+
+  const unselectAllCols = () =>
+    setCols((prev) => Object.fromEntries(Object.keys(prev).map((k) => [k, false])) as Record<
+      string,
+      boolean
+    >);
+
+  useEffect(() => {
+    if (isAuthenticated) void loadData();
+  }, [isAuthenticated]);
+
+  const safeArr = (payload: any): any[] =>
+    Array.isArray(payload) ? payload : Array.isArray(payload?.data) ? payload.data : [];
+
+  const loadData = async () => {
     try {
       setLoading(true);
-      const result = await queryService.getAnimalsByHabitat();
-      setData(result);
-    } catch (error) {
-      console.error("Failed to load animals by habitat:", error);
+
+      // animals by habitat
+      let abH: AnimalsByHabitatRow[] = [];
+      try {
+        const r = await (queryService as any).getAnimalsByHabitat?.();
+        if (Array.isArray(r)) abH = r;
+      } catch {}
+
+      // habitats + attractions
+      const [hList, aList] = await Promise.all([
+        apiClient.get<HabitatEntity[]>("/habitats"),
+        apiClient.get<AttractionEntity[]>("/attractions"),
+      ]);
+
+      setAnimalsByHabitat(abH as AnimalsByHabitatRow[]);
+      setHabitatsList(safeArr(hList.data));
+      setAttractionsList(safeArr(aList.data));
     } finally {
       setLoading(false);
     }
-  }, []);
+  };
 
-  useEffect(() => {
-    if (isAuthenticated) {
-      loadData();
+  /** -------- Existing habitat cards (unchanged visuals) -------- */
+  const habitatGroups = useMemo(() => {
+    const groups: Record<
+      number,
+      {
+        habitat_id: number;
+        habitat_name: string;
+        environment_type?: string;
+        animal_capacity?: number;
+        habitat_status?: string;
+        animals: any[];
+      }
+    > = {};
+    for (const item of animalsByHabitat) {
+      const habitatId = item.habitat_id;
+      if (!groups[habitatId]) {
+        groups[habitatId] = {
+          habitat_id: item.habitat_id,
+          habitat_name: item.habitat_name,
+          environment_type: item.environment_type,
+          animal_capacity: item.animal_capacity,
+          habitat_status: item.habitat_status,
+          animals: [],
+        };
+      }
+      if (item.animal_id) {
+        groups[habitatId].animals.push({
+          animal_id: item.animal_id,
+          animal_name: item.animal_name,
+          species: item.species,
+          health_status: item.health_status,
+          active_status: item.active_status,
+          endangerment_status: item.endangerment_status,
+        });
+      }
     }
-  }, [isAuthenticated, loadData]);
+    return groups;
+  }, [animalsByHabitat]);
 
-  // ---------- grouping logic ----------
-  const habitats: HabitatGroup[] = useMemo(() => {
-    const habitatGroups = data.reduce<Record<number, HabitatGroup>>(
-      (groups, item) => {
-        const habitatId = item.habitat_id;
-        if (!groups[habitatId]) {
-          groups[habitatId] = {
-            habitat_id: item.habitat_id,
-            habitat_name: item.habitat_name,
-            environment_type: item.environment_type,
-            animal_capacity: item.animal_capacity,
-            habitat_status: item.habitat_status,
-            animals: [],
-          };
-        }
+  const habitats = useMemo(() => Object.values(habitatGroups), [habitatGroups]);
 
-        if (item.animal_id) {
-          groups[habitatId].animals.push({
-            animal_id: item.animal_id,
-            animal_name: item.animal_name,
-            species: item.species,
-            health_status: item.health_status,
-            active_status: item.active_status,
-            endangerment_status: item.endangerment_status,
-          });
-        }
+  /** -------- Build merged report (Attractions ⇄ Habitats ⇄ Animals) -------- */
+  const attractionsById = useMemo(() => {
+    const map = new Map<number, AttractionEntity>();
+    for (const a of attractionsList) if (a && a.attraction_id != null) map.set(a.attraction_id, a);
+    return map;
+  }, [attractionsList]);
 
-        return groups;
-      },
-      {}
-    );
+  const attractionIdByHabitatId = useMemo(() => {
+    const map = new Map<number, number | undefined>();
+    for (const h of habitatsList) map.set(h.habitat_id, h.attraction_id ?? undefined);
+    return map;
+  }, [habitatsList]);
 
-    return Object.values(habitatGroups);
-  }, [data]);
+  const reportRows = useMemo(() => {
+    const rows: Array<Record<string, any>> = [];
+    for (const h of animalsByHabitat) {
+      const attrId = attractionIdByHabitatId.get(h.habitat_id);
+      const attr = attrId != null ? attractionsById.get(attrId) : undefined;
 
-  // ---------- helpers ----------
-  const getHealthBadge = (status: string | null) => {
+      const base = {
+        Attraction: attr?.name || "",
+        AttractionStatus: titleCase(attr?.status),
+        Habitat: h.habitat_name,
+        Environment: h.environment_type || "",
+        Capacity: h.animal_capacity ?? "",
+        HabitatStatus: h.habitat_status || "",
+      };
+
+      if (h.animal_id) {
+        rows.push({
+          ...base,
+          Animal: h.animal_name || "",
+          Species: h.species || "",
+          Health: h.health_status || "",
+          AnimalStatus: h.active_status || "",
+          Endangerment: titleCase(h.endangerment_status),
+        });
+      } else {
+        rows.push({
+          ...base,
+          Animal: "",
+          Species: "",
+          Health: "",
+          AnimalStatus: "",
+          Endangerment: "",
+        });
+      }
+    }
+    return rows;
+  }, [animalsByHabitat, attractionIdByHabitatId, attractionsById]);
+
+  /** -------- Selected column order -------- */
+  const selectedHeaders = useMemo(
+    () => Object.keys(cols).filter((k) => cols[k]),
+    [cols]
+  );
+
+  /** -------- CSV -------- */
+  const downloadCSV = () => {
+    if (selectedHeaders.length === 0 || reportRows.length === 0) return;
+    const escape = (val: any) => {
+      const s = String(val ?? "");
+      return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+    };
+    const lines = [
+      selectedHeaders.join(","),
+      ...reportRows.map((row) => selectedHeaders.map((h) => escape(row[h])).join(",")),
+    ];
+    const csv = lines.join("\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "animals_habitats_attractions_report.csv";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  };
+
+  /** -------- Badge helpers (unchanged) -------- */
+  const getHealthBadge = (status: string) => {
     const variants: Record<string, any> = {
       excellent: "success",
       good: "secondary",
@@ -124,302 +257,10 @@ export default function AnimalsByHabitatPage() {
       poor: "danger",
       critical: "danger",
     };
-    if (!status) return "default";
     return variants[status] || "default";
   };
 
-  const formatEndangerment = (status: string | null) => {
-    if (!status) return "N/A";
-    return status.replace(/_/g, " ");
-  };
-
-  // ========== Excel helpers ==========
-
-  // Build rows per report type
-  const buildRowsForReport = useCallback(
-    (type: string): { headers: string[]; rows: string[][] } => {
-      if (type === "capacity") {
-        // One row per habitat (capacity view)
-        const headers = [
-          "habitat_id",
-          "habitat_name",
-          "environment_type",
-          "habitat_status",
-          "animal_capacity",
-          "current_animals",
-          "available_space",
-        ];
-
-        const rows = habitats.map((h) => {
-          const currentCount = h.animals.length;
-          const capacity = h.animal_capacity ?? 0;
-          const free = capacity - currentCount;
-
-          return [
-            String(h.habitat_id ?? ""),
-            h.habitat_name ?? "",
-            h.environment_type ?? "",
-            h.habitat_status ?? "",
-            String(capacity),
-            String(currentCount),
-            String(free),
-          ];
-        });
-
-        return { headers, rows };
-      }
-
-      if (type === "endangered") {
-        // One row per animal that has an endangerment_status
-        const headers = [
-          "animal_id",
-          "animal_name",
-          "species",
-          "endangerment_status",
-          "health_status",
-          "habitat_id",
-          "habitat_name",
-        ];
-
-        const rows: string[][] = [];
-        habitats.forEach((h) => {
-          h.animals.forEach((a) => {
-            if (!a.endangerment_status) return;
-
-            rows.push([
-              String(a.animal_id ?? ""),
-              a.animal_name ?? "",
-              a.species ?? "",
-              a.endangerment_status ?? "",
-              a.health_status ?? "",
-              String(h.habitat_id ?? ""),
-              h.habitat_name ?? "",
-            ]);
-          });
-        });
-
-        return { headers, rows };
-      }
-
-      if (type === "health") {
-        // Animals with non-ideal health (not excellent/good)
-        const headers = [
-          "animal_id",
-          "animal_name",
-          "species",
-          "health_status",
-          "active_status",
-          "habitat_id",
-          "habitat_name",
-        ];
-
-        const rows: string[][] = [];
-        habitats.forEach((h) => {
-          h.animals.forEach((a) => {
-            const hs = (a.health_status || "").toLowerCase();
-            const needsAttention = hs && hs !== "excellent" && hs !== "good";
-            if (!needsAttention) return;
-
-            rows.push([
-              String(a.animal_id ?? ""),
-              a.animal_name ?? "",
-              a.species ?? "",
-              a.health_status ?? "",
-              a.active_status ?? "",
-              String(h.habitat_id ?? ""),
-              h.habitat_name ?? "",
-            ]);
-          });
-        });
-
-        return { headers, rows };
-      }
-
-      // default: "full"
-      // One row per animal, or 1 row for empty habitat
-      const headers = [
-        "habitat_id",
-        "habitat_name",
-        "environment_type",
-        "animal_capacity",
-        "habitat_status",
-        "animal_id",
-        "animal_name",
-        "species",
-        "health_status",
-        "active_status",
-        "endangerment_status",
-      ];
-
-      const rows: string[][] = [];
-
-      habitats.forEach((h) => {
-        if (h.animals.length === 0) {
-          rows.push([
-            String(h.habitat_id ?? ""),
-            h.habitat_name ?? "",
-            h.environment_type ?? "",
-            String(h.animal_capacity ?? ""),
-            h.habitat_status ?? "",
-            "", // animal_id
-            "", // animal_name
-            "", // species
-            "", // health_status
-            "", // active_status
-            "", // endangerment_status
-          ]);
-          return;
-        }
-
-        h.animals.forEach((a) => {
-          rows.push([
-            String(h.habitat_id ?? ""),
-            h.habitat_name ?? "",
-            h.environment_type ?? "",
-            String(h.animal_capacity ?? ""),
-            h.habitat_status ?? "",
-            String(a.animal_id ?? ""),
-            a.animal_name ?? "",
-            a.species ?? "",
-            a.health_status ?? "",
-            a.active_status ?? "",
-            a.endangerment_status ?? "",
-          ]);
-        });
-      });
-
-      return { headers, rows };
-    },
-    [habitats]
-  );
-
-  // Excel export with formatting
-  const handleGenerateExcel = useCallback(() => {
-    const wb = XLSX.utils.book_new();
-    const { headers, rows } = buildRowsForReport(reportType);
-
-    // Build worksheet data
-    const wsData: any[][] = [];
-
-    // Title
-    wsData.push(['Animals by Habitat Report']);
-    wsData.push(['Generated: ' + new Date().toLocaleDateString()]);
-    wsData.push([]); // blank
-
-    // Summary
-    wsData.push(['Report Type:', reportType]);
-    wsData.push(['Total Habitats:', String(habitats.length)]);
-    wsData.push(['Total Animals:', String(habitats.reduce((sum, h) => sum + h.animals.length, 0))]);
-    wsData.push([]); // blank
-
-    // Headers
-    wsData.push(headers);
-
-    // Data rows - convert to proper types
-    rows.forEach((row) => {
-      const dataRow = row.map((cell) => {
-        if (!isNaN(Number(cell)) && cell !== '') {
-          return Number(cell);
-        }
-        return cell;
-      });
-      wsData.push(dataRow);
-    });
-
-    // Create worksheet
-    const ws = XLSX.utils.aoa_to_sheet(wsData);
-
-    // Set column widths
-    ws['!cols'] = headers.map(() => ({ wch: 20 }));
-
-    // Style title
-    if (ws['A1']) {
-      ws['A1'].s = {
-        font: { bold: true, sz: 16, color: { rgb: "0F766E" } },
-        alignment: { horizontal: 'left' }
-      };
-    }
-
-    // Style summary section
-    for (let r = 4; r <= 6; r++) {
-      const cellA = ws[XLSX.utils.encode_cell({ r, c: 0 })];
-      if (cellA) {
-        cellA.s = {
-          font: { bold: true },
-          fill: { fgColor: { rgb: "D1FAE5" } }
-        };
-      }
-    }
-
-    // Style header row
-    const headerRowIndex = 8;
-    headers.forEach((_, colIdx) => {
-      const cell = ws[XLSX.utils.encode_cell({ r: headerRowIndex, c: colIdx })];
-      if (cell) {
-        cell.s = {
-          font: { bold: true, color: { rgb: "FFFFFF" } },
-          fill: { fgColor: { rgb: "0F766E" } },
-          alignment: { horizontal: 'center', vertical: 'center' },
-          border: {
-            top: { style: 'thin', color: { rgb: "000000" } },
-            bottom: { style: 'thin', color: { rgb: "000000" } },
-            left: { style: 'thin', color: { rgb: "000000" } },
-            right: { style: 'thin', color: { rgb: "000000" } }
-          }
-        };
-      }
-    });
-
-    // Style data rows
-    const dataStartRow = headerRowIndex + 1;
-    const dataEndRow = dataStartRow + rows.length - 1;
-
-    for (let r = dataStartRow; r <= dataEndRow; r++) {
-      headers.forEach((header, colIdx) => {
-        const cell = ws[XLSX.utils.encode_cell({ r, c: colIdx })];
-        if (cell) {
-          // Borders
-          cell.s = cell.s || {};
-          cell.s.border = {
-            top: { style: 'thin', color: { rgb: "CCCCCC" } },
-            bottom: { style: 'thin', color: { rgb: "CCCCCC" } },
-            left: { style: 'thin', color: { rgb: "CCCCCC" } },
-            right: { style: 'thin', color: { rgb: "CCCCCC" } }
-          };
-
-          // Highlight endangered animals
-          if (header.toLowerCase().includes('endangerment') && cell.v) {
-            const value = String(cell.v).toLowerCase();
-            if (value.includes('endangered') || value.includes('critically')) {
-              cell.s.fill = { fgColor: { rgb: "FEE2E2" } };
-              cell.s.font = { bold: true, color: { rgb: "991B1B" } };
-            }
-          }
-
-          // Highlight health issues
-          if (header.toLowerCase().includes('health') && cell.v) {
-            const value = String(cell.v).toLowerCase();
-            if (value === 'poor' || value === 'critical') {
-              cell.s.fill = { fgColor: { rgb: "FEF3C7" } };
-              cell.s.font = { color: { rgb: "92400E" } };
-            }
-          }
-
-          // Zebra striping
-          if (r % 2 === 0) {
-            cell.s.fill = cell.s.fill || { fgColor: { rgb: "F9FAFB" } };
-          }
-        }
-      });
-    }
-
-    XLSX.utils.book_append_sheet(wb, ws, 'Animals by Habitat');
-
-    const fileName = `animals_report_${reportType}_${new Date().toISOString().slice(0, 10)}.xlsx`;
-    XLSX.writeFile(wb, fileName);
-  }, [reportType, buildRowsForReport, habitats]);
-
-  // ---------- loading / auth UI ----------
+  /** -------- Render -------- */
   if (authLoading || loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -427,143 +268,192 @@ export default function AnimalsByHabitatPage() {
       </div>
     );
   }
+  if (!isAuthenticated) return null;
 
-  if (!isAuthenticated) {
-    return null;
-  }
-
-  // ---------- render ----------
   return (
     <div className="space-y-6">
-      {/* HEADER + CONTROLS */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+      {/* Header + actions */}
+      <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-2">
             <MapPin className="h-8 w-8 text-sea_green-600" />
             Animals by Habitat
           </h1>
-          <p className="text-gray-600 mt-1">
-            View all animals grouped by their habitats, or export a custom
-            report.
-          </p>
+          <p className="text-gray-600 mt-1">View all animals grouped by their habitats</p>
         </div>
 
-        <div className="flex flex-col gap-3 sm:items-end">
-          {/* Report Type Selector (only control now) */}
-          <div className="flex flex-col text-sm">
-            <Label className="text-xs text-gray-600 mb-1">Report Type</Label>
-            <select
-              className="rounded-md border px-2 py-1 text-sm"
-              value={reportType}
-              onChange={(e) => setReportType(e.target.value)}
-            >
-              {REPORT_TYPES.map((opt) => (
-                <option key={opt.value} value={opt.value}>
-                  {opt.label}
-                </option>
-              ))}
-            </select>
-          </div>
-
+        <div className="flex gap-2">
           <Button
-            onClick={handleGenerateExcel}
-            className="flex items-center gap-2 bg-sea_green-600 hover:bg-sea_green-700 text-white self-start sm:self-auto"
+            variant="outline"
+            onClick={() => setIsPreviewOpen(true)}
+            className="flex items-center gap-2"
           >
-            <FileDown className="h-4 w-4" />
-            <span>Export Excel</span>
+            <Eye className="h-4 w-4" />
+            Preview Report
+          </Button>
+          <Button onClick={downloadCSV} className="flex items-center gap-2">
+            <Download className="h-4 w-4" />
+            Download CSV
           </Button>
         </div>
       </div>
 
-      {/* HABITAT CARDS */}
+      {/* Report Options (Select/Unselect All) */}
+      <Card>
+        <CardHeader className="flex items-center justify-between">
+          <CardTitle className="text-lg">Report Options</CardTitle>
+          <div className="flex gap-2">
+            <Button variant="outline" size="sm" onClick={unselectAllCols}>
+              Unselect All
+            </Button>
+            <Button variant="outline" size="sm" onClick={selectAllCols}>
+              Select All
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <div className="flex flex-wrap gap-6">
+            {/* Attraction */}
+            <div>
+              <p className="text-sm font-medium mb-1">Attraction</p>
+              {["Attraction", "AttractionStatus"].map((key) => (
+                <label key={key} className="flex items-center gap-2 text-sm">
+                  <input
+                    type="checkbox"
+                    checked={!!cols[key]}
+                    onChange={() => setCols((c) => ({ ...c, [key]: !c[key] }))}
+                  />
+                  {key.replace(/([A-Z])/g, " $1")}
+                </label>
+              ))}
+            </div>
+
+            {/* Habitat */}
+            <div>
+              <p className="text-sm font-medium mb-1">Habitat</p>
+              {["Habitat", "Environment", "Capacity", "HabitatStatus"].map((key) => (
+                <label key={key} className="flex items-center gap-2 text-sm">
+                  <input
+                    type="checkbox"
+                    checked={!!cols[key]}
+                    onChange={() => setCols((c) => ({ ...c, [key]: !c[key] }))}
+                  />
+                  {key.replace(/([A-Z])/g, " $1")}
+                </label>
+              ))}
+            </div>
+
+            {/* Animal */}
+            <div>
+              <p className="text-sm font-medium mb-1">Animal</p>
+              {["Animal", "Species", "Health", "AnimalStatus", "Endangerment"].map((key) => (
+                <label key={key} className="flex items-center gap-2 text-sm">
+                  <input
+                    type="checkbox"
+                    checked={!!cols[key]}
+                    onChange={() => setCols((c) => ({ ...c, [key]: !c[key] }))}
+                  />
+                  {key.replace(/([A-Z])/g, " $1")}
+                </label>
+              ))}
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Existing habitat cards (unchanged visuals) */}
       <div className="grid grid-cols-1 gap-6">
-        {habitats.map((habitat) => (
+        {(habitats as any[]).map((habitat: any) => (
           <Card key={habitat.habitat_id}>
             <CardHeader>
               <CardTitle className="flex items-center justify-between">
-                <div className="flex flex-col gap-1">
-                  <div className="flex items-center gap-2">
-                    <MapPin className="h-5 w-5 text-sea_green-600" />
-                    <span>{habitat.habitat_name}</span>
-                  </div>
-
-                  <div className="flex flex-wrap items-center gap-2 text-sm text-gray-600">
-                    <span>
-                      Environment: {habitat.environment_type || "N/A"}
-                    </span>
-                    <Badge variant="outline" className="capitalize">
-                      {habitat.habitat_status}
-                    </Badge>
-                  </div>
+                <div className="flex items-center gap-2">
+                  <MapPin className="h-5 w-5 text-sea_green-600" />
+                  <span>{habitat.habitat_name}</span>
                 </div>
-
                 <Badge variant="outline">
                   {habitat.animals.length} / {habitat.animal_capacity} animals
                 </Badge>
               </CardTitle>
+              <p className="text-sm text-gray-600">
+                Environment: {habitat.environment_type || "N/A"}
+              </p>
             </CardHeader>
-
             <CardContent>
               {habitat.animals.length > 0 ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {habitat.animals.map((animal) => (
+                  {habitat.animals.map((animal: any) => (
                     <div
-                      key={animal.animal_id ?? `${habitat.habitat_id}-empty`}
+                      key={animal.animal_id}
                       className="p-4 border rounded-lg hover:border-sea_green-400 transition-colors"
                     >
                       <div className="flex items-start justify-between mb-2">
                         <div className="flex items-center gap-2">
                           <Leaf className="h-4 w-4 text-sea_green-600" />
-                          <h3 className="font-semibold">
-                            {animal.animal_name || "Unnamed"}
-                          </h3>
+                          <h3 className="font-semibold">{animal.animal_name}</h3>
                         </div>
-
-                        <Badge
-                          variant={getHealthBadge(animal.health_status)}
-                          className="text-xs capitalize"
-                        >
-                          {animal.health_status || "unknown"}
+                        <Badge variant={getHealthBadge(animal.health_status)} className="text-xs">
+                          {animal.health_status}
                         </Badge>
                       </div>
-
-                      <p className="text-sm text-gray-600 mb-2">
-                        {animal.species || "No species recorded"}
-                      </p>
-
-                      <div className="flex flex-wrap gap-2">
-                        <Badge
-                          variant="outline"
-                          className="text-xs capitalize"
-                        >
-                          {animal.active_status || "inactive/unknown"}
+                      <p className="text-sm text-gray-600 mb-2">{animal.species}</p>
+                      <div className="flex gap-2">
+                        <Badge variant="outline" className="text-xs capitalize">
+                          {animal.active_status}
                         </Badge>
-                        <Badge
-                          variant="secondary"
-                          className="text-xs capitalize"
-                        >
-                          {formatEndangerment(animal.endangerment_status)}
+                        <Badge variant="secondary" className="text-xs">
+                          {animal.endangerment_status?.replace("_", " ")}
                         </Badge>
                       </div>
                     </div>
                   ))}
                 </div>
               ) : (
-                <p className="text-gray-500 text-center py-4">
-                  No animals in this habitat
-                </p>
+                <p className="text-gray-500 text-center py-4">No animals in this habitat</p>
               )}
             </CardContent>
           </Card>
         ))}
       </div>
 
-      {habitats.length === 0 && (
-        <div className="text-center py-12">
-          <MapPin className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-          <p className="text-gray-600">No habitats found</p>
-        </div>
-      )}
+      {/* Modal preview (auto-updates when boxes change) */}
+      <Modal
+        open={isPreviewOpen}
+        onClose={() => setIsPreviewOpen(false)}
+        title="Report Preview"
+        description="Merged report (Attractions + Habitats + Animals)"
+        size="xl"
+      >
+        {selectedHeaders.length === 0 ? (
+          <p className="text-gray-600">
+            Select at least one column in Report Options to see the preview.
+          </p>
+        ) : (
+          <div className="bg-white rounded-lg border border-gray-200 overflow-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  {selectedHeaders.map((h) => (
+                    <TableHead key={h}>{h.replace(/([A-Z])/g, " $1")}</TableHead>
+                  ))}
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {reportRows.map((row, idx) => (
+                  <TableRow key={idx}>
+                    {selectedHeaders.map((h) => (
+                      <TableCell key={h}>{String(row[h] ?? "")}</TableCell>
+                    ))}
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+            {reportRows.length === 0 && (
+              <div className="text-center py-8 text-gray-600">No rows available.</div>
+            )}
+          </div>
+        )}
+      </Modal>
     </div>
   );
 }
