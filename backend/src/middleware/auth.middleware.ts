@@ -35,10 +35,11 @@ export const protect = async (req: Request, res: Response, next: NextFunction) =
       username: user.username,
       role: user.role,
       customer_id: user.customer_id,
-      employee_id: user.employee_id
+      employee_id: user.employee_id,
+      employee_job_role: user.job_role
     });
 
-    (req as any).user = user;
+    (req as any).user = user; 
     next();
   } catch (error) {
     return res.status(401).json({ success: false, message: 'Not authorized to access this route' });
