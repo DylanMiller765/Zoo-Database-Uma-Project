@@ -290,44 +290,47 @@ CREATE TABLE `notifications` (
     INDEX `idx_created_at` (`created_at`)
 );
 
--- Stored procedure to check for expiring memberships and create notifications
+-- Trigger to create expiring membership notifications
+-- Business Rule: Customers with memberships expiring within 30 days should receive a warning notification
+-- This enforces the semantic constraint that customers must be notified before their membership expires
 DELIMITER //
-CREATE PROCEDURE check_expiring_memberships()
+CREATE TRIGGER trg_membership_expiration_notification
+AFTER UPDATE ON customers
+FOR EACH ROW
 BEGIN
-    DECLARE days_threshold INT DEFAULT 7;
+    -- Only proceed if this is a membership-related update
+    IF NEW.annual_pass = 'yes' AND NEW.membership_end_date IS NOT NULL THEN
+        -- Check if membership is expiring within 30 days
+        IF DATEDIFF(NEW.membership_end_date, CURDATE()) BETWEEN 1 AND 30 THEN
+            -- Only create notification if one doesn't already exist for this expiration date
+            IF NOT EXISTS (
+                SELECT 1 FROM notifications n
+                WHERE n.customer_id = NEW.customer_id
+                AND n.message LIKE CONCAT('%', DATE_FORMAT(NEW.membership_end_date, '%M %d, %Y'), '%')
+                AND DATE(n.created_at) >= DATE_ADD(CURDATE(), INTERVAL -7 DAY)
+            ) THEN
+                INSERT INTO notifications (customer_id, message, notification_type, created_at)
+                VALUES (
+                    NEW.customer_id,
+                    CONCAT('Your membership expires on ', DATE_FORMAT(NEW.membership_end_date, '%M %d, %Y'),
+                           '. Renew now to continue enjoying member benefits!'),
+                    'warning',
+                    NOW()
+                );
+            END IF;
+        END IF;
+    END IF;
 
-    -- Insert notifications for memberships expiring in 30 days or less
-    INSERT INTO notifications (customer_id, message, notification_type, created_at)
-    SELECT
-        c.customer_id,
-        CONCAT('Your membership expires on ', DATE_FORMAT(c.membership_end_date, '%M %d, %Y'),
-               '. Renew now to continue enjoying member benefits!') as message,
-        'warning' as notification_type,
-        NOW() as created_at
-    FROM customers c
-    WHERE c.annual_pass = 'yes'
-    AND c.membership_end_date IS NOT NULL
-    AND DATEDIFF(c.membership_end_date, CURDATE()) BETWEEN 1 AND 30
-    AND NOT EXISTS (
-        -- Avoid duplicate notifications for the same expiration date
-        SELECT 1 FROM notifications n
-        WHERE n.customer_id = c.customer_id
-        AND n.message LIKE CONCAT('%', DATE_FORMAT(c.membership_end_date, '%M %d, %Y'), '%')
-        AND DATE(n.created_at) >= DATE_ADD(CURDATE(), INTERVAL -7 DAY)
-    );
-
-    -- Mark memberships as expired if the end date has passed
-    UPDATE customers
-    SET annual_pass = 'no'
-    WHERE annual_pass = 'yes'
-    AND membership_end_date IS NOT NULL
-    AND membership_end_date < CURDATE();
+    -- Automatically expire memberships that have passed their end date
+    -- Business Rule: Expired memberships should automatically have annual_pass set to 'no'
+    IF NEW.annual_pass = 'yes' AND NEW.membership_end_date IS NOT NULL THEN
+        IF NEW.membership_end_date < CURDATE() THEN
+            -- This will trigger another UPDATE, but the trigger won't recurse
+            -- because the condition NEW.annual_pass = 'yes' will be false on the next iteration
+            UPDATE customers
+            SET annual_pass = 'no'
+            WHERE customer_id = NEW.customer_id;
+        END IF;
+    END IF;
 END//
 DELIMITER ;
-
--- Event to run the membership check daily at midnight
--- Note: Requires event_scheduler to be ON (SET GLOBAL event_scheduler = ON;)
-CREATE EVENT IF NOT EXISTS daily_membership_check
-ON SCHEDULE EVERY 1 DAY
-STARTS (CURRENT_DATE + INTERVAL 1 DAY)
-DO CALL check_expiring_memberships();
