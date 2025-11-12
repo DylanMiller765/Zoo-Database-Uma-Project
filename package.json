@@ -16,7 +16,16 @@
   "devDependencies": {
     "concurrently": "^8.2.2"
   },
-  "keywords": ["zoo", "management", "next.js", "express", "typescript"],
+  "keywords": [
+    "zoo",
+    "management",
+    "next.js",
+    "express",
+    "typescript"
+  ],
   "author": "",
-  "license": "ISC"
+  "license": "ISC",
+  "dependencies": {
+    "xlsx": "^0.18.5"
+  }
 }

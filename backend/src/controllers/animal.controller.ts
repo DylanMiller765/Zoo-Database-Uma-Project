@@ -3,24 +3,21 @@ import { AnimalService } from '../services/animal.service';
 import { Animal } from '../models/animal.model';
 import { Employee } from '../models/employee.model';
 import { EmployeeModel } from '../models/employee.model';
+import { User } from '../types/user.types';
+import { UserRole } from '../types/role.types';
+
 export class AnimalController {
   static async getAllAnimals(req: Request, res: Response): Promise<void> {
     try {
       const requestDeleted = req.query.include_deleted === 'true';
       if (requestDeleted) {
-        console.log(req)
-        console.log('Request to include deleted animals received.');
         let permitted_job_roles = ['manager', 'veterinarian'];
-        const userId = (req as any).user?.account_id;
-        console.log(`Authenticated user ID: ${userId}`);
-        const user: Employee | null = userId ? await EmployeeModel.findById(userId) : null;
-        const userRole = user?.job_role;
-        console.log(`User ID: ${userId}, Role: ${userRole}`);
+        const userJobRole = (req as any).user?.job_role;
 
-        // if (!permitted_job_roles.includes(userRole)) {
-        //   res.status(403).json({ message: 'Forbidden: You do not have access to view deleted animals.' });
-        //   return;
-        // }
+        if (!userJobRole || !permitted_job_roles.includes(userJobRole)) {
+          res.status(403).json({ message: 'Forbidden: You do not have access to view deleted animals.' });
+          return;
+        }
         const animals = await AnimalService.getAllAnimals(true);
       res.status(200).json(animals);
       }
