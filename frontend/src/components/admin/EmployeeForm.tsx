@@ -36,6 +36,7 @@ export function EmployeeForm({ employee, onSuccess, onCancel }: EmployeeFormProp
     zip_code: '',
     gender: undefined,
     birthday: '',
+    password: '',
   });
 
   useEffect(() => {
@@ -57,6 +58,7 @@ export function EmployeeForm({ employee, onSuccess, onCancel }: EmployeeFormProp
         zip_code: employee.zip_code || '',
         gender: employee.gender,
         birthday: formatDateForInput(employee.birthday),
+        password: '', // Don't populate password when editing
       });
     }
   }, [employee]);
@@ -94,6 +96,7 @@ export function EmployeeForm({ employee, onSuccess, onCancel }: EmployeeFormProp
         employment_type: formData.employment_type,
         status: formData.status,
         email: formData.email?.trim() || undefined,
+        password: formData.password, // Include password
         phone: formData.phone?.trim() || undefined,
         address: formData.address?.trim() || undefined,
         city: formData.city?.trim() || undefined,
@@ -174,13 +177,29 @@ export function EmployeeForm({ employee, onSuccess, onCancel }: EmployeeFormProp
 
         {/* Email */}
         <div className="space-y-2">
-          <Label htmlFor="email">Email</Label>
+          <Label htmlFor="email">Email *</Label>
           <Input
             type="email"
             id="email"
             name="email"
             value={formData.email}
             onChange={handleChange}
+            required
+          />
+        </div>
+
+        {/* Password */}
+        <div className="space-y-2">
+          <Label htmlFor="password">Password *</Label>
+          <Input
+            type="password"
+            id="password"
+            name="password"
+            value={formData.password}
+            onChange={handleChange}
+            required={!employee}
+            minLength={6}
+            placeholder={employee ? "Leave blank to keep current password" : "Minimum 6 characters"}
           />
         </div>
 
