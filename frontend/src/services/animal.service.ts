@@ -2,13 +2,21 @@ import apiClient from '@/lib/api';
 import { Animal, CreateAnimalData, ApiResponse } from '@/types';
 
 export const animalService = {
-  async getAll(): Promise<Animal[]> {
-    const response = await apiClient.get<Animal[]>('/animals');
+  async getAll(include_deleted: boolean = false): Promise<Animal[]> {
+    const params = new URLSearchParams();
+    if (include_deleted) {
+      params.append('include_deleted', 'true');
+    }
+    const response = await apiClient.get<Animal[]>('/animals', { params });
     return response.data;
   },
 
-  async getById(id: number): Promise<Animal> {
-    const response = await apiClient.get<Animal>(`/animals/${id}`);
+  async getById(id: number, include_deleted: boolean = false): Promise<Animal> {
+    const params = new URLSearchParams();
+    if (include_deleted) {
+      params.append('include_deleted', 'true');
+    }
+    const response = await apiClient.get<Animal>(`/animals/${id}`, { params });
     return response.data;
   },
 
