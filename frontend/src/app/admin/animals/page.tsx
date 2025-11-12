@@ -124,6 +124,7 @@ export default function AnimalsPage() {
   };
 
   const filteredAnimals = animals
+    .filter(animal => animal) // Add this line to filter out null or undefined animals
     .filter(animal => {
       const matchesSearch = animal.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         animal.species.toLowerCase().includes(searchTerm.toLowerCase());
@@ -398,7 +399,7 @@ export default function AnimalsPage() {
           setSelectedAnimal(detailAnimal);
           setIsModalOpen(true);
         }}
-        canEdit={!isDeleted(detailAnimal!)}
+        canEdit={detailAnimal ? !isDeleted(detailAnimal) : false}
       />
 
       {/* Restore Confirmation Modal */}

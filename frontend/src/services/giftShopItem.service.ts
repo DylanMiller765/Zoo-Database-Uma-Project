@@ -2,13 +2,13 @@ import apiClient from '@/lib/api';
 import { GiftShopItem, CreateGiftShopItemData } from '@/types';
 
 export const giftShopItemService = {
-  async getAll(): Promise<GiftShopItem[]> {
-    const res = await apiClient.get<GiftShopItem[]>('/gift-shop-items');
+  async getAll(includeDeleted: boolean = false): Promise<GiftShopItem[]> {
+    const res = await apiClient.get<GiftShopItem[]>(`/gift-shop-items${includeDeleted ? '?includeDeleted=true' : ''}`);
     return res.data;
   },
 
   async getPublic(): Promise<GiftShopItem[]> {
-    const res = await apiClient.get<GiftShopItem[]>('/gift-shop-items/public');
+    const res = await apiClient.get<GiftShopItem[]>('/gift-shop-items/public'); // Public endpoint should only return non-deleted items
     return res.data;
     },
 

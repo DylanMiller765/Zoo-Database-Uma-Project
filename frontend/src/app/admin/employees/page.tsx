@@ -136,6 +136,7 @@ export default function EmployeesPage() {
   };
 
   const filteredEmployees = employees
+    .filter(emp => emp) // Add this line to filter out null or undefined employees
     .filter(emp => {
       // Search filter
       const matchesSearch = emp.first_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -430,12 +431,12 @@ export default function EmployeesPage() {
             ],
           },
         ]}
-        onEdit={!isDeleted(detailEmployee) ? () => {
+        onEdit={detailEmployee && !isDeleted(detailEmployee) ? () => {
           setIsDetailModalOpen(false);
           setSelectedEmployee(detailEmployee);
           setIsModalOpen(true);
         } : undefined}
-        canEdit={!isDeleted(detailEmployee)}
+        canEdit={detailEmployee ? !isDeleted(detailEmployee) : false}
       />
 
       {/* Restore Confirmation Modal */}

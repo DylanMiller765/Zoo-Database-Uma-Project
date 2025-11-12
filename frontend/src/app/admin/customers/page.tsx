@@ -126,7 +126,9 @@ export default function CustomersPage() {
     await loadCustomers();
   };
 
-  const filteredCustomers = customers.filter(customer =>
+  const filteredCustomers = customers
+    .filter(customer => customer) // Add this line to filter out null or undefined customers
+    .filter(customer =>
     customer.first_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     customer.last_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     customer.email?.toLowerCase().includes(searchTerm.toLowerCase())
@@ -336,12 +338,12 @@ export default function CustomersPage() {
             ],
           },
         ]}
-        onEdit={!isDeleted(detailCustomer) ? () => {
+        onEdit={detailCustomer && !isDeleted(detailCustomer) ? () => {
           setIsDetailModalOpen(false);
           setSelectedCustomer(detailCustomer);
           setIsModalOpen(true);
         } : undefined}
-        canEdit={!isDeleted(detailCustomer)}
+        canEdit={detailCustomer ? !isDeleted(detailCustomer) : false}
       />
 
       {/* Restore Confirmation Modal */}
