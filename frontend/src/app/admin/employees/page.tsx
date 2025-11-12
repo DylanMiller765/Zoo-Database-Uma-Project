@@ -301,7 +301,7 @@ export default function EmployeesPage() {
                 </TableCell>
                 <TableCell>
                   {isDeleted(employee) ? (
-                    <Badge variant="destructive">Deleted</Badge>
+                    <Badge variant="danger">Deleted</Badge>
                   ) : (
                     <Badge variant={employee.status === 'active' ? 'success' : 'outline'} className="capitalize">
                       {employee.status}

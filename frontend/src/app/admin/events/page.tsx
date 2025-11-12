@@ -295,7 +295,7 @@ export default function EventsPage() {
                 </TableCell>
                 <TableCell>
                   {isDeleted(event) ? (
-                    <Badge variant="destructive">Deleted</Badge>
+                    <Badge variant="danger">Deleted</Badge>
                   ) : (
                     <Badge variant={getStatusBadge(event.status || 'scheduled')} className="capitalize">
                       {event.status || 'scheduled'}

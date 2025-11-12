@@ -229,7 +229,7 @@ export default function HabitatsPage() {
                   <TableCell>{habitat.animal_capacity} animals</TableCell>
                   <TableCell>
                     {isDeleted(habitat) ? (
-                      <Badge variant="destructive">Deleted</Badge>
+                      <Badge variant="danger">Deleted</Badge>
                     ) : (
                       getStatusBadge(habitat.status)
                     )}
