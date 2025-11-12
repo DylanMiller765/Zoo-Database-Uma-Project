@@ -17,12 +17,15 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { Plus, Search, Edit, Trash2, Users } from 'lucide-react';
+import { Plus, Search, Edit, Trash2, Users, RotateCcw } from 'lucide-react';
 import { Modal } from '@/components/ui/modal';
 import { EmployeeForm } from '@/components/admin/EmployeeForm';
+import { EntityDetailModal } from '@/components/ui/EntityDetailModal';
+import { ShowDeletedToggle } from '@/components/admin/ShowDeletedToggle';
+import { RestoreConfirmationModal } from '@/components/admin/RestoreConfirmationModal';
 
 export default function EmployeesPage() {
-  const { isAuthenticated, loading: authLoading } = useAuth();
+  const { isAuthenticated, loading: authLoading, hasRole } = useAuth();
   const router = useRouter();
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [loading, setLoading] = useState(true);
@@ -31,10 +34,16 @@ export default function EmployeesPage() {
   const [employmentTypeFilter, setEmploymentTypeFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState('all');
   const [sortBy, setSortBy] = useState('name');
+  const [showDeleted, setShowDeleted] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [employeeToDelete, setEmployeeToDelete] = useState<Employee | null>(null);
+  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
+  const [detailEmployee, setDetailEmployee] = useState<Employee | null>(null);
+  const [isRestoreModalOpen, setIsRestoreModalOpen] = useState(false);
+  const [employeeToRestore, setEmployeeToRestore] = useState<Employee | null>(null);
+  const isManager = hasRole('manager');
 
   useEffect(() => {
 
@@ -49,7 +58,7 @@ export default function EmployeesPage() {
   const loadEmployees = async () => {
     try {
       setLoading(true);
-      const data = await employeeService.getAll();
+      const data = await employeeService.getAll(showDeleted);
       setEmployees(data);
     } catch (error) {
       console.error('Failed to load employees:', error);
@@ -58,20 +67,54 @@ export default function EmployeesPage() {
     }
   };
 
+  useEffect(() => {
+    if (isAuthenticated) {
+      loadEmployees();
+    }
+  }, [showDeleted]);
+
   const handleAdd = () => {
     setSelectedEmployee(null);
     setIsModalOpen(true);
   };
 
-  const handleEdit = (employee: Employee) => {
+  const handleEdit = (employee: Employee, e: React.MouseEvent) => {
+    e.stopPropagation();
     setSelectedEmployee(employee);
     setIsModalOpen(true);
   };
 
-  const handleDeleteClick = (employee: Employee) => {
+  const handleRowClick = (employee: Employee) => {
+    setDetailEmployee(employee);
+    setIsDetailModalOpen(true);
+  };
+
+  const handleRestoreClick = (employee: Employee, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setEmployeeToRestore(employee);
+    setIsRestoreModalOpen(true);
+  };
+
+  const handleRestore = async () => {
+    if (!employeeToRestore?.employee_id) return;
+
+    try {
+      await employeeService.restore(employeeToRestore.employee_id);
+      await loadEmployees();
+      setIsRestoreModalOpen(false);
+      setEmployeeToRestore(null);
+    } catch (error) {
+      console.error('Failed to restore employee:', error);
+    }
+  };
+
+  const handleDeleteClick = (employee: Employee, e: React.MouseEvent) => {
+    e.stopPropagation();
     setEmployeeToDelete(employee);
     setIsDeleteModalOpen(true);
   };
+
+  const isDeleted = (employee: Employee) => employee.deleted_at !== null && employee.deleted_at !== undefined;
 
   const handleDelete = async () => {
     if (!employeeToDelete?.employee_id) return;
@@ -173,6 +216,13 @@ export default function EmployeesPage() {
           />
         </div>
 
+        {isManager && (
+          <ShowDeletedToggle
+            checked={showDeleted}
+            onChange={setShowDeleted}
+          />
+        )}
+
         <div className="w-auto">
           <Select value={roleFilter} onChange={(e) => setRoleFilter(e.target.value)}>
             <option value="all">All Roles</option>
@@ -230,7 +280,11 @@ export default function EmployeesPage() {
           </TableHeader>
           <TableBody>
             {filteredEmployees.map((employee) => (
-              <TableRow key={employee.employee_id}>
+              <TableRow
+                key={employee.employee_id}
+                onClick={() => handleRowClick(employee)}
+                className={`cursor-pointer hover:bg-gray-50 ${isDeleted(employee) ? 'opacity-60 bg-red-50' : ''}`}
+              >
                 <TableCell className="font-medium">
                   {employee.first_name} {employee.last_name}
                 </TableCell>
@@ -245,27 +299,46 @@ export default function EmployeesPage() {
                   {employee.employment_type.replace('_', ' ')}
                 </TableCell>
                 <TableCell>
-                  <Badge variant={employee.status === 'active' ? 'success' : 'outline'} className="capitalize">
-                    {employee.status}
-                  </Badge>
+                  {isDeleted(employee) ? (
+                    <Badge variant="destructive">Deleted</Badge>
+                  ) : (
+                    <Badge variant={employee.status === 'active' ? 'success' : 'outline'} className="capitalize">
+                      {employee.status}
+                    </Badge>
+                  )}
                 </TableCell>
                 <TableCell className="text-right">
                   <div className="flex items-center justify-end gap-2">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleEdit(employee)}
-                    >
-                      <Edit className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleDeleteClick(employee)}
-                      className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
+                    {!isDeleted(employee) ? (
+                      <>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={(e) => handleEdit(employee, e)}
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={(e) => handleDeleteClick(employee, e)}
+                          className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </>
+                    ) : (
+                      isManager && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={(e) => handleRestoreClick(employee, e)}
+                          className="text-green-600 hover:text-green-700 hover:bg-green-50"
+                        >
+                          <RotateCcw className="h-4 w-4" />
+                        </Button>
+                      )
+                    )}
                   </div>
                 </TableCell>
               </TableRow>
@@ -317,6 +390,62 @@ export default function EmployeesPage() {
           </div>
         </div>
       </Modal>
+
+      {/* Detail Modal */}
+      <EntityDetailModal
+        open={isDetailModalOpen}
+        onClose={() => setIsDetailModalOpen(false)}
+        title="Employee Details"
+        entity={detailEmployee}
+        sections={[
+          {
+            title: 'Basic Information',
+            fields: [
+              { label: 'First Name', key: 'first_name' },
+              { label: 'Last Name', key: 'last_name' },
+              { label: 'Email', key: 'email' },
+              { label: 'Phone', key: 'phone' },
+              { label: 'SSN', key: 'ssn' },
+              { label: 'Gender', key: 'gender', type: 'enum' as const },
+              { label: 'Birthday', key: 'birthday', type: 'date' as const },
+            ],
+          },
+          {
+            title: 'Employment Details',
+            fields: [
+              { label: 'Job Role', key: 'job_role', type: 'enum' as const },
+              { label: 'Employment Type', key: 'employment_type', type: 'enum' as const },
+              { label: 'Salary', key: 'salary', type: 'currency' as const },
+              { label: 'Status', key: 'status', type: 'enum' as const },
+              { label: 'Hire Date', key: 'hire_date', type: 'date' as const },
+            ],
+          },
+          {
+            title: 'Address',
+            fields: [
+              { label: 'Street Address', key: 'address' },
+              { label: 'City', key: 'city' },
+              { label: 'State', key: 'state' },
+              { label: 'Zip Code', key: 'zip_code' },
+            ],
+          },
+        ]}
+        onEdit={!isDeleted(detailEmployee) ? () => {
+          setIsDetailModalOpen(false);
+          setSelectedEmployee(detailEmployee);
+          setIsModalOpen(true);
+        } : undefined}
+        canEdit={!isDeleted(detailEmployee)}
+      />
+
+      {/* Restore Confirmation Modal */}
+      <RestoreConfirmationModal
+        open={isRestoreModalOpen}
+        onClose={() => setIsRestoreModalOpen(false)}
+        onConfirm={handleRestore}
+        itemName={employeeToRestore ? `${employeeToRestore.first_name} ${employeeToRestore.last_name}` : ''}
+        itemType="employee"
+      />
     </div>
   );
 }

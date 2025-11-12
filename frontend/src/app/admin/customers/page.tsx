@@ -16,22 +16,29 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { Plus, Search, Edit, Trash2, UserCircle } from 'lucide-react';
+import { Plus, Search, Edit, Trash2, UserCircle, RotateCcw } from 'lucide-react';
 import { Modal } from '@/components/ui/modal';
 import { CustomerForm } from '@/components/admin/CustomerForm';
+import { EntityDetailModal } from '@/components/ui/EntityDetailModal';
+import { ShowDeletedToggle } from '@/components/admin/ShowDeletedToggle';
+import { RestoreConfirmationModal } from '@/components/admin/RestoreConfirmationModal';
 
 export default function CustomersPage() {
-  const { isAuthenticated, loading: authLoading } = useAuth();
+  const { isAuthenticated, loading: authLoading, hasRole } = useAuth();
   const router = useRouter();
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [showDeleted, setShowDeleted] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [customerToDelete, setCustomerToDelete] = useState<Customer | null>(null);
-
-
+  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
+  const [detailCustomer, setDetailCustomer] = useState<Customer | null>(null);
+  const [isRestoreModalOpen, setIsRestoreModalOpen] = useState(false);
+  const [customerToRestore, setCustomerToRestore] = useState<Customer | null>(null);
+  const isManager = hasRole('manager');
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -39,10 +46,16 @@ export default function CustomersPage() {
     }
   }, [isAuthenticated]);
 
+  useEffect(() => {
+    if (isAuthenticated) {
+      loadCustomers();
+    }
+  }, [showDeleted]);
+
   const loadCustomers = async () => {
     try {
       setLoading(true);
-      const data = await customerService.getAll();
+      const data = await customerService.getAll(showDeleted);
       setCustomers(data);
     } catch (error) {
       console.error('Failed to load customers:', error);
@@ -56,15 +69,43 @@ export default function CustomersPage() {
     setIsModalOpen(true);
   };
 
-  const handleEdit = (customer: Customer) => {
+  const handleEdit = (customer: Customer, e: React.MouseEvent) => {
+    e.stopPropagation();
     setSelectedCustomer(customer);
     setIsModalOpen(true);
   };
 
-  const handleDeleteClick = (customer: Customer) => {
+  const handleRowClick = (customer: Customer) => {
+    setDetailCustomer(customer);
+    setIsDetailModalOpen(true);
+  };
+
+  const handleRestoreClick = (customer: Customer, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setCustomerToRestore(customer);
+    setIsRestoreModalOpen(true);
+  };
+
+  const handleRestore = async () => {
+    if (!customerToRestore?.customer_id) return;
+
+    try {
+      await customerService.restore(customerToRestore.customer_id);
+      await loadCustomers();
+      setIsRestoreModalOpen(false);
+      setCustomerToRestore(null);
+    } catch (error) {
+      console.error('Failed to restore customer:', error);
+    }
+  };
+
+  const handleDeleteClick = (customer: Customer, e: React.MouseEvent) => {
+    e.stopPropagation();
     setCustomerToDelete(customer);
     setIsDeleteModalOpen(true);
   };
+
+  const isDeleted = (customer: Customer) => customer.deleted_at !== null && customer.deleted_at !== undefined;
 
   const handleDelete = async () => {
     if (!customerToDelete?.customer_id) return;
@@ -132,6 +173,14 @@ export default function CustomersPage() {
             className="pl-10"
           />
         </div>
+
+        {isManager && (
+          <ShowDeletedToggle
+            checked={showDeleted}
+            onChange={setShowDeleted}
+          />
+        )}
+
         <Badge variant="outline" className="text-sm">
           {filteredCustomers.length} customer{filteredCustomers.length !== 1 ? 's' : ''}
         </Badge>
@@ -151,33 +200,56 @@ export default function CustomersPage() {
           </TableHeader>
           <TableBody>
             {filteredCustomers.map((customer) => (
-              <TableRow key={customer.customer_id}>
+              <TableRow
+                key={customer.customer_id}
+                onClick={() => handleRowClick(customer)}
+                className={`cursor-pointer hover:bg-gray-50 ${isDeleted(customer) ? 'opacity-60 bg-red-50' : ''}`}
+              >
                 <TableCell className="font-medium">
                   {customer.first_name} {customer.last_name}
                 </TableCell>
                 <TableCell>{customer.email || 'N/A'}</TableCell>
                 <TableCell>{customer.phone || 'N/A'}</TableCell>
                 <TableCell>
-                  <Badge variant={getAnnualPassBadge(customer.annual_pass)} className="capitalize">
-                    {customer.annual_pass === 'yes' ? 'Yes' : 'No'}
-                  </Badge>
+                  {isDeleted(customer) ? (
+                    <Badge variant="destructive">Deleted</Badge>
+                  ) : (
+                    <Badge variant={getAnnualPassBadge(customer.annual_pass)} className="capitalize">
+                      {customer.annual_pass === 'yes' ? 'Yes' : 'No'}
+                    </Badge>
+                  )}
                 </TableCell>
                 <TableCell className="text-sm text-gray-600">
                   {customer.registration_date || 'N/A'}
                 </TableCell>
                 <TableCell className="text-right">
                   <div className="flex items-center justify-end gap-2">
-                    <Button variant="ghost" size="sm" onClick={() => handleEdit(customer)}>
-                      <Edit className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleDeleteClick(customer)}
-                      className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
+                    {!isDeleted(customer) ? (
+                      <>
+                        <Button variant="ghost" size="sm" onClick={(e) => handleEdit(customer, e)}>
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={(e) => handleDeleteClick(customer, e)}
+                          className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </>
+                    ) : (
+                      isManager && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={(e) => handleRestoreClick(customer, e)}
+                          className="text-green-600 hover:text-green-700 hover:bg-green-50"
+                        >
+                          <RotateCcw className="h-4 w-4" />
+                        </Button>
+                      )
+                    )}
                   </div>
                 </TableCell>
               </TableRow>
@@ -228,6 +300,58 @@ export default function CustomersPage() {
           </div>
         </div>
       </Modal>
+
+      {/* Detail Modal */}
+      <EntityDetailModal
+        open={isDetailModalOpen}
+        onClose={() => setIsDetailModalOpen(false)}
+        title="Customer Details"
+        entity={detailCustomer}
+        sections={[
+          {
+            title: 'Basic Information',
+            fields: [
+              { label: 'First Name', key: 'first_name' },
+              { label: 'Last Name', key: 'last_name' },
+              { label: 'Email', key: 'email' },
+              { label: 'Phone', key: 'phone' },
+              { label: 'Registration Date', key: 'registration_date', type: 'date' as const },
+            ],
+          },
+          {
+            title: 'Address',
+            fields: [
+              { label: 'Street Address', key: 'address' },
+              { label: 'City', key: 'city' },
+              { label: 'State', key: 'state' },
+              { label: 'Zip Code', key: 'zip_code' },
+            ],
+          },
+          {
+            title: 'Membership',
+            fields: [
+              { label: 'Annual Pass', key: 'annual_pass', type: 'enum' as const },
+              { label: 'Membership Start', key: 'membership_start_date', type: 'date' as const },
+              { label: 'Membership End', key: 'membership_end_date', type: 'date' as const },
+            ],
+          },
+        ]}
+        onEdit={!isDeleted(detailCustomer) ? () => {
+          setIsDetailModalOpen(false);
+          setSelectedCustomer(detailCustomer);
+          setIsModalOpen(true);
+        } : undefined}
+        canEdit={!isDeleted(detailCustomer)}
+      />
+
+      {/* Restore Confirmation Modal */}
+      <RestoreConfirmationModal
+        open={isRestoreModalOpen}
+        onClose={() => setIsRestoreModalOpen(false)}
+        onConfirm={handleRestore}
+        itemName={customerToRestore ? `${customerToRestore.first_name} ${customerToRestore.last_name}` : ''}
+        itemType="customer"
+      />
     </div>
   );
 }

@@ -16,6 +16,11 @@ export class CafeModel {
     return await query<Cafe[]>(sql);
   }
 
+  static async findAllIncludingDeleted(): Promise<Cafe[]> {
+    const sql = 'SELECT * FROM cafes';
+    return await query<Cafe[]>(sql);
+  }
+
   static async create(cafe: Omit<Cafe, 'cafe_id'>): Promise<Cafe> {
     const columns = Object.keys(cafe).join(', ');
     const placeholders = Object.keys(cafe).map(() => '?').join(', ');
@@ -44,5 +49,11 @@ export class CafeModel {
   static async remove(id: number): Promise<void> {
     const sql = 'UPDATE cafes SET deleted_at = NOW() WHERE cafe_id = ?';
     await query(sql, [id]);
+  }
+
+  static async restore(id: number): Promise<Cafe | null> {
+    const sql = 'UPDATE cafes SET deleted_at = NULL WHERE cafe_id = ?';
+    await query(sql, [id]);
+    return await this.findById(id);
   }
 }

@@ -2,8 +2,10 @@ import apiClient from '@/lib/api';
 import { Cafe, CreateCafeData } from '@/types';
 
 export const cafeService = {
-  async getAll(): Promise<Cafe[]> {
-    const response = await apiClient.get<Cafe[]>('/cafes');
+  async getAll(includeDeleted = false): Promise<Cafe[]> {
+    const response = await apiClient.get<Cafe[]>('/cafes', {
+      params: { includeDeleted: includeDeleted ? 'true' : 'false' }
+    });
     return response.data;
   },
 
@@ -24,5 +26,10 @@ export const cafeService = {
 
   async delete(id: number): Promise<void> {
     await apiClient.delete(`/cafes/${id}`);
+  },
+
+  async restore(id: number): Promise<Cafe> {
+    const response = await apiClient.put<Cafe>(`/cafes/${id}/restore`);
+    return response.data;
   },
 };

@@ -6,6 +6,10 @@ export class HabitatService {
     return await HabitatModel.findAll();
   }
 
+  static async getAllHabitatsIncludingDeleted(): Promise<Habitat[]> {
+    return await HabitatModel.findAllIncludingDeleted();
+  }
+
   static async createHabitat(habitat: Omit<Habitat, 'habitat_id'>): Promise<Habitat> {
     return await HabitatModel.create(habitat);
   }
@@ -20,5 +24,9 @@ export class HabitatService {
 
   static async deleteHabitat(id: number): Promise<void> {
     return await HabitatModel.remove(id);
+  }
+
+  static async restoreHabitat(id: number): Promise<Habitat | null> {
+    return await HabitatModel.restore(id);
   }
 }

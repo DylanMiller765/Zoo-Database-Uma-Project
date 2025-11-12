@@ -4,7 +4,10 @@ import { CustomerService } from '../services/customer.service';
 export class CustomerController {
   static async getAllCustomers(req: Request, res: Response): Promise<void> {
     try {
-      const customers = await CustomerService.getAllCustomers();
+      const includeDeleted = req.query.includeDeleted === 'true';
+      const customers = includeDeleted
+        ? await CustomerService.getAllCustomersIncludingDeleted()
+        : await CustomerService.getAllCustomers();
       res.status(200).json(customers);
     } catch (error) {
       res.status(500).json({ message: 'Error fetching customers', error });
@@ -55,6 +58,19 @@ export class CustomerController {
       res.status(204).send();
     } catch (error) {
       res.status(500).json({ message: 'Error deleting customer', error });
+    }
+  }
+
+  static async restoreCustomer(req: Request, res: Response): Promise<void> {
+    try {
+      const restoredCustomer = await CustomerService.restoreCustomer(parseInt(req.params.id));
+      if (restoredCustomer) {
+        res.status(200).json(restoredCustomer);
+      } else {
+        res.status(404).json({ message: 'Customer not found' });
+      }
+    } catch (error) {
+      res.status(500).json({ message: 'Error restoring customer', error });
     }
   }
 }

@@ -6,6 +6,10 @@ export class TicketService {
     return await TicketModel.findAll();
   }
 
+  static async getAllTicketsIncludingDeleted(): Promise<Ticket[]> {
+    return await TicketModel.findAllIncludingDeleted();
+  }
+
   static async createTicket(ticket: Omit<Ticket, 'ticket_id'>): Promise<Ticket> {
     return await TicketModel.create(ticket);
   }
@@ -16,6 +20,10 @@ export class TicketService {
 
   static async deleteTicket(id: number): Promise<void> {
     return await TicketModel.remove(id);
+  }
+
+  static async restoreTicket(id: number): Promise<Ticket | null> {
+    return await TicketModel.restore(id);
   }
 
   static async getTicketsByDate(date: string): Promise<Ticket[]> {

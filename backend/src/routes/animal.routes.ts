@@ -13,4 +13,7 @@ router.post('/', protect, restrictTo('manager', 'veterinarian'), AnimalControlle
 router.put('/:id', protect, restrictTo('manager', 'veterinarian'), AnimalController.updateAnimal);
 router.delete('/:id', protect, restrictTo('manager', 'veterinarian'), AnimalController.deleteAnimal);
 
+// Manager-only restore access
+router.put('/:id/restore', protect, restrictTo('manager'), AnimalController.restoreAnimal);
+
 export default router;

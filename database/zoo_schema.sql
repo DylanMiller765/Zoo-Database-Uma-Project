@@ -28,6 +28,7 @@ CREATE TABLE `employees` (
     `zip_code` VARCHAR(10),
     `gender` ENUM('male', 'female', 'other', 'prefer_not_to_say'),
     `birthday` DATE,
+    `deleted_at` DATETIME DEFAULT NULL,
     CONSTRAINT `chk_salary` CHECK ((`employment_type` = 'full_time' AND `salary` IS NOT NULL) OR (`employment_type` = 'part_time' AND `salary` IS NULL))
 );
 
@@ -45,6 +46,7 @@ CREATE TABLE `customers` (
     `membership_start_date` DATE DEFAULT NULL,
     `membership_end_date` DATE DEFAULT NULL,
     `registration_date` DATE,
+    `deleted_at` DATETIME DEFAULT NULL,
     INDEX `idx_customer_email` (`email`)
 );
 
@@ -65,6 +67,7 @@ CREATE TABLE `gift_shops` (
     `opening_time` TIME,
     `closing_time` TIME,
     `manager_id` INT,
+    `deleted_at` DATETIME DEFAULT NULL,
     FOREIGN KEY (`manager_id`) REFERENCES `employees`(`employee_id`) ON DELETE SET NULL
 );
 
@@ -75,6 +78,7 @@ CREATE TABLE `cafes` (
     `opening_time` TIME,
     `closing_time` TIME,
     `manager_id` INT,
+    `deleted_at` DATETIME DEFAULT NULL,
     FOREIGN KEY (`manager_id`) REFERENCES `employees`(`employee_id`) ON DELETE SET NULL
 );
 
@@ -89,6 +93,7 @@ CREATE TABLE `events` (
     `max_participants` INT,
     `ticket_price` DECIMAL(8, 2),
     `coordinator_id` INT,
+    `deleted_at` DATETIME DEFAULT NULL,
     FOREIGN KEY (`coordinator_id`) REFERENCES `employees`(`employee_id`) ON DELETE SET NULL
 );
 
@@ -129,6 +134,7 @@ CREATE TABLE `habitats` (
     `last_maintenance` DATE,
     `status` ENUM('active', 'maintenance', 'renovation', 'closed') DEFAULT 'active',
     `created_date` DATETIME DEFAULT CURRENT_TIMESTAMP,
+    `deleted_at` DATETIME DEFAULT NULL,
     FOREIGN KEY (`attraction_id`) REFERENCES `attractions`(`attraction_id`) ON DELETE SET NULL
 );
 
@@ -149,6 +155,7 @@ CREATE TABLE `animals` (
     `weight` DECIMAL(8, 2),
     `created_date` DATETIME DEFAULT CURRENT_TIMESTAMP,
     `updated_date` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    `deleted_at` DATETIME DEFAULT NULL,
     FOREIGN KEY (`habitat_id`) REFERENCES `habitats`(`habitat_id`) ON DELETE SET NULL,
     INDEX `idx_animal_species` (`species`)
 );
@@ -161,6 +168,7 @@ CREATE TABLE `tickets` (
     `ticket_type` ENUM('adult', 'child', 'senior', 'student') NOT NULL,
     `price` DECIMAL(8, 2) NOT NULL,
     `payment_method` ENUM('cash', 'credit', 'debit', 'online'),
+    `deleted_at` DATETIME DEFAULT NULL,
     FOREIGN KEY (`customer_id`) REFERENCES `customers`(`customer_id`) ON DELETE SET NULL,
     INDEX `idx_ticket_date` (`visit_date`)
 );
@@ -289,6 +297,16 @@ CREATE TABLE `notifications` (
     INDEX `idx_customer_unread` (`customer_id`, `is_read`),
     INDEX `idx_created_at` (`created_at`)
 );
+
+-- Indexes for soft delete columns (performance optimization)
+CREATE INDEX `idx_employees_deleted` ON `employees`(`deleted_at`);
+CREATE INDEX `idx_customers_deleted` ON `customers`(`deleted_at`);
+CREATE INDEX `idx_animals_deleted` ON `animals`(`deleted_at`);
+CREATE INDEX `idx_habitats_deleted` ON `habitats`(`deleted_at`);
+CREATE INDEX `idx_events_deleted` ON `events`(`deleted_at`);
+CREATE INDEX `idx_gift_shops_deleted` ON `gift_shops`(`deleted_at`);
+CREATE INDEX `idx_cafes_deleted` ON `cafes`(`deleted_at`);
+CREATE INDEX `idx_tickets_deleted` ON `tickets`(`deleted_at`);
 
 -- Trigger to create expiring membership notifications
 -- Business Rule: Customers with memberships expiring within 30 days should receive a warning notification

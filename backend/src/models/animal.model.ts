@@ -26,6 +26,11 @@ export class AnimalModel {
     return await query<Animal[]>(sql);
   }
 
+  static async findAllIncludingDeleted(): Promise<Animal[]> {
+    const sql = 'SELECT * FROM animals';
+    return await query<Animal[]>(sql);
+  }
+
   static async create(animal: Omit<Animal, 'animal_id'>): Promise<Animal> {
     const columns = Object.keys(animal).join(', ');
     const placeholders = Object.keys(animal).map(() => '?').join(', ');
@@ -54,5 +59,11 @@ export class AnimalModel {
   static async remove(id: number): Promise<void> {
     const sql = 'UPDATE animals SET deleted_at = NOW() WHERE animal_id = ?';
     await query(sql, [id]);
+  }
+
+  static async restore(id: number): Promise<Animal | null> {
+    const sql = 'UPDATE animals SET deleted_at = NULL WHERE animal_id = ?';
+    await query(sql, [id]);
+    return await this.findById(id);
   }
 }
