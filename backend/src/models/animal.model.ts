@@ -21,11 +21,8 @@ export interface Animal {
 }
 
 export class AnimalModel {
-  static async findAll(include_deleted: boolean = false): Promise<Animal[]> {
-    let sql = 'SELECT * FROM animals';
-    if (!include_deleted) {
-      sql += ' WHERE deleted_at IS NULL';
-    }
+  static async findAll(): Promise<Animal[]> {
+    const sql = 'SELECT * FROM animals WHERE deleted_at IS NULL';
     return await query<Animal[]>(sql);
   }
 
@@ -39,11 +36,8 @@ export class AnimalModel {
     return { animal_id: result.insertId, ...animal };
   }
 
-  static async findById(id: number, include_deleted: boolean = false): Promise<Animal | null> {
-    let sql = 'SELECT * FROM animals WHERE animal_id = ?';
-    if (!include_deleted) {
-      sql += ' AND deleted_at IS NULL';
-    }
+  static async findById(id: number): Promise<Animal | null> {
+    const sql = 'SELECT * FROM animals WHERE animal_id = ? AND deleted_at IS NULL';
     const results = await query<Animal[]>(sql, [id]);
     return results.length > 0 ? results[0] : null;
   }
