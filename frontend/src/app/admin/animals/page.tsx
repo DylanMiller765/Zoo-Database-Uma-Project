@@ -35,8 +35,9 @@ export default function AnimalsPage() {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [animalToDelete, setAnimalToDelete] = useState<Animal | null>(null);
   const [showDeleted, setShowDeleted] = useState(false);
-  const canViewDeleted = true;
-
+  const { user } = useAuth();
+  const canViewDeleted = user?.job_role === 'manager' || user?.job_role === 'vet';
+  
 
   useEffect(() => {
     if (isAuthenticated) {

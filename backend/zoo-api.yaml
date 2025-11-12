@@ -1,0 +1,2971 @@
+openapi: 3.0.0
+info:
+  title: Zoo Management System API
+  version: 1.0.0
+  description: API for managing zoo operations, animals, staff, customers, sales, and events. Handles authentication and role-based permissions.
+servers:
+  - url: http://localhost:5000/api
+    description: Development server
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT token obtained via `/auth/login`
+  schemas:
+    # --- Auth Schemas ---
+    LoginCredentials:
+      type: object
+      required:
+        - email
+        - password
+      properties:
+        email:
+          type: string
+          format: email
+          description: User's email address.
+        password:
+          type: string
+          description: User's password (plain text).
+    RegisterData:
+      type: object
+      required:
+        - first_name
+        - last_name
+        - email
+        - password
+      properties:
+        first_name:
+          type: string
+        last_name:
+          type: string
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          minLength: 6
+        phone:
+          type: string
+          nullable: true
+        address:
+          type: string
+          nullable: true
+        city:
+          type: string
+          nullable: true
+        state:
+          type: string
+          nullable: true
+        zip_code:
+          type: string
+          nullable: true
+    UserAuthInfo:
+      type: object
+      properties:
+        account_id:
+          type: integer
+        email:
+          type: string
+          format: email
+        role:
+          type: string
+          description: Type of account.
+          enum: [employee, customer]
+        first_name:
+          type: string
+        last_name:
+          type: string
+        job_role:
+          type: string
+          description: Specific job role if the user is an employee.
+          nullable: true
+          enum: [keeper, manager, coordinator, cashier, guide, veterinarian, maintenance, security, other]
+    AuthResponseData:
+      type: object
+      properties:
+        token:
+          type: string
+          description: JWT token for authenticated requests.
+        user:
+          $ref: '#/components/schemas/UserAuthInfo'
+    AuthResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+        data:
+          $ref: '#/components/schemas/AuthResponseData'
+    UserProfile: # Based on auth.service.ts getProfile response
+      type: object
+      properties:
+        account_id:
+          type: integer
+        username:
+          type: string
+        email:
+          type: string
+        role:
+          type: string
+          enum: [employee, customer]
+        employee_id:
+          type: integer
+          nullable: true
+        customer_id:
+          type: integer
+          nullable: true
+        last_login_at:
+          type: string
+          format: date-time
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        employee_first_name:
+          type: string
+          nullable: true
+        employee_last_name:
+          type: string
+          nullable: true
+        employee_email:
+          type: string
+          nullable: true
+        employee_phone:
+          type: string
+          nullable: true
+        job_role:
+          type: string
+          nullable: true
+          enum: [keeper, manager, coordinator, cashier, guide, veterinarian, maintenance, security, other]
+        department:
+          type: string
+          nullable: true
+        customer_first_name:
+          type: string
+          nullable: true
+        customer_last_name:
+          type: string
+          nullable: true
+        customer_email:
+          type: string
+          nullable: true
+        customer_phone:
+          type: string
+          nullable: true
+        annual_pass:
+          type: string
+          enum: [yes, no]
+          nullable: true
+
+    # --- Animal Schemas ---
+    AnimalData: # For POST/PUT requests
+      type: object
+      required:
+        - name
+        - species
+        - arrival_date
+        - date_of_birth # Required by frontend form
+      properties:
+        name:
+          type: string
+        scientific_name:
+          type: string
+          nullable: true
+        species:
+          type: string
+        date_of_birth:
+          type: string
+          format: date
+          nullable: true
+        arrival_date:
+          type: string
+          format: date
+        gender:
+          type: string
+          enum: [male, female, unknown]
+          nullable: true
+        place_of_origin:
+          type: string
+          nullable: true
+        habitat_id:
+          type: integer
+          nullable: true
+        medical_notes:
+          type: string
+          nullable: true
+        health_status:
+          type: string
+          enum: [excellent, good, fair, poor, critical]
+          nullable: true
+        active_status:
+          type: string
+          enum: [active, transferred, deceased]
+          nullable: true
+        endangerment_status:
+          type: string
+          enum: [least_concern, near_threatened, vulnerable, endangered, critically_endangered, extinct_in_the_wild, extinct]
+          nullable: true
+        weight:
+          type: number
+          format: float
+          nullable: true
+    Animal: # For GET responses
+      allOf:
+        - $ref: '#/components/schemas/AnimalData'
+        - type: object
+          properties:
+            animal_id:
+              type: integer
+            created_date:
+              type: string
+              format: date-time
+              nullable: true
+            updated_date:
+              type: string
+              format: date-time
+              nullable: true
+
+    # --- Attraction Schemas ---
+    AttractionData:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+        location:
+          type: string
+        human_capacity:
+          type: integer
+        opening_time:
+          type: string
+          format: time
+        closing_time:
+          type: string
+          format: time
+        status:
+          type: string
+          enum: [open, closed, maintenance]
+    Attraction:
+      allOf:
+        - $ref: '#/components/schemas/AttractionData'
+        - type: object
+          properties:
+            attraction_id:
+              type: integer
+
+    # --- Cafe Schemas ---
+    CafeData:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+        location:
+          type: string
+          nullable: true
+        opening_time:
+          type: string
+          format: time
+          nullable: true
+        closing_time:
+          type: string
+          format: time
+          nullable: true
+        manager_id:
+          type: integer
+          nullable: true
+    Cafe:
+      allOf:
+        - $ref: '#/components/schemas/CafeData'
+        - type: object
+          properties:
+            cafe_id:
+              type: integer
+
+    # --- CafeItem Schemas ---
+    CafeItemData:
+      type: object
+      required:
+        - cafe_id
+        - name
+        - price
+      properties:
+        cafe_id:
+          type: integer
+        name:
+          type: string
+        description:
+          type: string
+          nullable: true
+        category:
+          type: string
+          nullable: true
+        price:
+          type: number
+          format: float
+        is_available:
+          type: boolean
+          default: true
+    CafeItem:
+      allOf:
+        - $ref: '#/components/schemas/CafeItemData'
+        - type: object
+          properties:
+            item_id:
+              type: integer
+
+    # --- CafeSale Schemas ---
+    CafeSaleItemData:
+      type: object
+      required:
+        - item_id
+        - quantity
+        - line_total
+      properties:
+        item_id:
+          type: integer
+        quantity:
+          type: integer
+        line_total:
+          type: number
+          format: float
+    CafeSaleData:
+      type: object
+      required:
+        - cafe_id
+        - employee_id
+        - items
+      properties:
+        cafe_id:
+          type: integer
+        customer_id:
+          type: integer
+          nullable: true
+        employee_id:
+          type: integer
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/CafeSaleItemData'
+    CafeSale:
+      allOf:
+        - $ref: '#/components/schemas/CafeSaleData'
+        - type: object
+          properties:
+            transaction_id:
+              type: string
+              format: uuid
+            sale_timestamp:
+              type: string
+              format: date-time
+
+    # --- Customer Schemas ---
+    CustomerData: # Based on frontend form
+      type: object
+      required:
+        - first_name
+        - last_name
+        - registration_date
+      properties:
+        first_name:
+          type: string
+        last_name:
+          type: string
+        email:
+          type: string
+          format: email
+          nullable: true
+        phone:
+          type: string
+          nullable: true
+        address:
+          type: string
+          nullable: true
+        city:
+          type: string
+          nullable: true
+        state:
+          type: string
+          nullable: true
+        zip_code:
+          type: string
+          nullable: true
+        annual_pass:
+          type: string
+          enum: [yes, no]
+          default: "no"
+          nullable: true
+        registration_date:
+          type: string
+          format: date
+          nullable: true
+    Customer:
+      allOf:
+        - $ref: '#/components/schemas/CustomerData'
+        - type: object
+          properties:
+            customer_id:
+              type: integer
+
+    # --- Dashboard Schemas ---
+    DashboardStats:
+      type: object
+      properties:
+        totalAnimals:
+          type: integer
+        totalEmployees:
+          type: integer
+        upcomingEvents:
+          type: integer
+        activeHabitats:
+          type: integer
+        todaysVisitors:
+          type: integer
+        monthlyRevenue:
+          type: number
+          format: float
+
+    # --- Employee Schemas ---
+    EmployeeData: # Based on frontend form
+      type: object
+      required:
+        - first_name
+        - last_name
+        - ssn
+        - job_role
+        - employment_type
+      properties:
+        first_name:
+          type: string
+        last_name:
+          type: string
+        email:
+          type: string
+          format: email
+          nullable: true
+        phone:
+          type: string
+          nullable: true
+        ssn:
+          type: string
+          pattern: '^\d{3}-?\d{2}-?\d{4}$'
+        job_role:
+          type: string
+          enum: [keeper, manager, coordinator, cashier, guide, veterinarian, maintenance, security, other]
+        employment_type:
+          type: string
+          enum: [full_time, part_time]
+        salary:
+          type: number
+          format: float
+          description: Required if employment_type is 'full_time'. Null if 'part_time'.
+          nullable: true
+        status:
+          type: string
+          enum: [active, inactive]
+          default: active
+          nullable: true
+        hire_date:
+          type: string
+          format: date
+          nullable: true
+        address:
+          type: string
+          nullable: true
+        city:
+          type: string
+          nullable: true
+        state:
+          type: string
+          nullable: true
+        zip_code:
+          type: string
+          nullable: true
+        gender:
+          type: string
+          enum: [male, female, other, prefer_not_to_say]
+          nullable: true
+        birthday:
+          type: string
+          format: date
+          nullable: true
+    Employee:
+      allOf:
+        - $ref: '#/components/schemas/EmployeeData'
+        - type: object
+          properties:
+            employee_id:
+              type: integer
+
+    # --- Event Schemas ---
+    EventData: # For POST/PUT request body, based on frontend form
+      type: object
+      required:
+        - event_name
+        - event_date
+        - start_time
+        - end_time
+      properties:
+        event_name:
+          type: string
+        description:
+          type: string
+          nullable: true
+        event_date:
+          type: string
+          format: date
+        start_time:
+          type: string
+          format: time
+          example: "14:00"
+        end_time:
+          type: string
+          format: time
+          example: "15:00"
+        location:
+          type: string
+          nullable: true
+        max_capacity:
+          type: integer
+          nullable: true
+        created_by: # Mapped to coordinator_id in backend service
+          type: integer
+          nullable: true
+    Event: # For GET response body
+      type: object
+      properties:
+        event_id:
+          type: integer
+        event_name:
+          type: string
+        description:
+          type: string
+          nullable: true
+        event_date:
+          type: string
+          format: date
+        start_time:
+          type: string
+          format: time
+        end_time:
+          type: string
+          format: time
+        location:
+          type: string
+          nullable: true
+        max_capacity:
+          type: integer
+          nullable: true
+        status: # Added by backend service
+          type: string
+          enum: [scheduled, ongoing, completed, cancelled]
+          default: scheduled
+        created_by: # coordinator_id from DB
+          type: integer
+          nullable: true
+
+    # --- EventRegistration Schemas ---
+    EventRegistrationData:
+      type: object
+      required:
+        - event_id
+        - number_of_participants
+      properties:
+        event_id:
+          type: integer
+        customer_id:
+          type: integer
+          nullable: true
+        number_of_participants:
+          type: integer
+          default: 1
+        total_amount:
+          type: number
+          format: float
+          nullable: true
+        payment_status:
+          type: string
+          enum: [pending, paid, cancelled]
+          default: pending
+    EventRegistration:
+      allOf:
+        - $ref: '#/components/schemas/EventRegistrationData'
+        - type: object
+          properties:
+            registration_id:
+              type: integer
+            registration_date:
+              type: string
+              format: date-time
+
+    # --- GiftShop Schemas ---
+    GiftShopData: # Based on frontend form
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+        location:
+          type: string
+          nullable: true
+        opening_time:
+          type: string
+          format: time
+          nullable: true
+        closing_time:
+          type: string
+          format: time
+          nullable: true
+        manager_id:
+          type: integer
+          nullable: true
+    GiftShop:
+      allOf:
+        - $ref: '#/components/schemas/GiftShopData'
+        - type: object
+          properties:
+            gift_shop_id:
+              type: integer
+
+    # --- GiftShopItem Schemas ---
+    GiftShopItemData:
+      type: object
+      required:
+        - gift_shop_id
+        - name
+        - price
+        - quantity_in_stock
+      properties:
+        gift_shop_id:
+          type: integer
+        name:
+          type: string
+        description:
+          type: string
+          nullable: true
+        category:
+          type: string
+          nullable: true
+        price:
+          type: number
+          format: float
+        cost:
+          type: number
+          format: float
+          nullable: true
+        quantity_in_stock:
+          type: integer
+        supplier:
+          type: string
+          nullable: true
+    GiftShopItem:
+      allOf:
+        - $ref: '#/components/schemas/GiftShopItemData'
+        - type: object
+          properties:
+            item_id:
+              type: integer
+
+    # --- GiftShopSale Schemas ---
+    GiftShopSaleItemData:
+      type: object
+      required:
+        - item_id
+        - quantity
+        - unit_price
+      properties:
+        item_id:
+          type: integer
+        quantity:
+          type: integer
+        unit_price:
+          type: number
+          format: float
+    GiftShopSaleData: # For POST requests
+      type: object
+      required:
+        - gift_shop_id
+        - employee_id
+        - payment_method
+        - items
+      properties:
+        gift_shop_id:
+          type: integer
+        customer_id:
+          type: integer
+          nullable: true
+        employee_id:
+          type: integer
+        payment_method:
+          type: string
+          enum: [cash, credit, debit]
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/GiftShopSaleItemData'
+    GiftShopSale: # For GET responses
+      type: object
+      properties:
+        transaction_id:
+          type: integer
+        gift_shop_id:
+          type: integer
+        customer_id:
+          type: integer
+          nullable: true
+        employee_id:
+          type: integer
+        sale_date:
+          type: string
+          format: date-time
+        total_amount:
+          type: number
+          format: float
+        payment_method:
+          type: string
+          enum: [cash, credit, debit]
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/GiftShopSaleItemData'
+
+    # --- Habitat Schemas ---
+    HabitatData:
+      type: object
+      required:
+        - habitat_name
+      properties:
+        habitat_name:
+          type: string
+        attraction_id:
+          type: integer
+          nullable: true
+        size:
+          type: string
+          nullable: true
+        environment_type:
+          type: string
+          nullable: true
+        animal_capacity:
+          type: integer
+          default: 10
+        cleaning_schedule:
+          type: string
+          nullable: true
+        last_maintenance:
+          type: string
+          format: date
+          nullable: true
+        status:
+          type: string
+          enum: [active, maintenance, renovation, closed]
+          default: active
+          nullable: true
+    Habitat:
+      allOf:
+        - $ref: '#/components/schemas/HabitatData'
+        - type: object
+          properties:
+            habitat_id:
+              type: integer
+            created_date:
+              type: string
+              format: date-time
+              nullable: true
+
+    # --- Ticket Schemas ---
+    TicketData: # For POST requests
+      type: object
+      required:
+        - visit_date
+        - ticket_type
+        - price
+      properties:
+        customer_id:
+          type: integer
+          nullable: true
+        visit_date:
+          type: string
+          format: date
+        ticket_type:
+          type: string
+          enum: [adult, child, senior, student]
+        price:
+          type: number
+          format: float
+        payment_method:
+          type: string
+          enum: [cash, credit, debit, online]
+          nullable: true
+    Ticket: # For GET responses
+      allOf:
+        - $ref: '#/components/schemas/TicketData'
+        - type: object
+          properties:
+            ticket_id:
+              type: integer
+            purchase_date:
+              type: string
+              format: date-time
+
+    # --- Error Schema ---
+    ErrorResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        message:
+          type: string
+        errors: # Optional: For validation errors
+          type: array
+          items:
+            type: object
+
+  # --- Reusable Responses ---
+  responses:
+    UnauthorizedError:
+      description: Unauthorized - Invalid or missing JWT token.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    ForbiddenError:
+      description: Forbidden - User does not have the required role/permission.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    NotFoundError:
+      description: Resource not found.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    ValidationError:
+      description: Invalid input data provided in the request body or parameters.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    ServerError:
+      description: Internal server error occurred.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+paths:
+  /health:
+    get:
+      summary: Health Check
+      tags: [Public]
+      description: Checks if the API server is operational.
+      security: [] # No authentication required
+      responses:
+        '200':
+          description: API is running successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                  timestamp:
+                    type: string
+                    format: date-time
+
+  # --- Auth ---
+  /auth/register:
+    post:
+      summary: Register Customer
+      tags: [Auth]
+      description: Creates a new customer account.
+      security: [] # Public
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterData'
+      responses:
+        '201':
+          description: Registration successful, returns JWT and user info.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '400':
+          description: Validation error (e.g., missing fields, invalid email).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Server error during registration.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /auth/login:
+    post:
+      summary: Login User (Employee or Customer)
+      tags: [Auth]
+      description: Authenticates a user and returns a JWT token.
+      security: [] # Public
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginCredentials'
+      responses:
+        '200':
+          description: Login successful, returns JWT and user info.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '400':
+          description: Validation error or missing credentials.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Invalid credentials (wrong email or password).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /auth/profile:
+    get:
+      summary: Get Authenticated User Profile
+      tags: [Auth]
+      description: Retrieves profile information for the currently logged-in user. Requires JWT authentication.
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: User profile data retrieved successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/UserProfile'
+        '401':
+          description: Unauthorized (invalid or missing token).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: User not found based on token.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /auth/logout:
+    post:
+      summary: Logout User
+      tags: [Auth]
+      description: Logs out the user (currently just returns a success message, no server-side session invalidation).
+      security: [] # Note: Ideally requires authentication to logout a specific session, but current implementation is public.
+      responses:
+        '200':
+          description: Logout successful.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+        '500':
+          description: Server error during logout attempt.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  # --- Dashboard ---
+  /dashboard/stats:
+    get:
+      summary: Get Dashboard Statistics
+      tags: [Dashboard]
+      description: Retrieves key statistics for the admin dashboard. Requires JWT authentication.
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Dashboard statistics retrieved successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DashboardStats'
+        '401':
+          description: Unauthorized.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Server error fetching stats.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  # --- Events ---
+  /events:
+    get:
+      summary: Get Upcoming Events
+      tags: [Events]
+      description: Retrieves a list of events scheduled for today or in the future. Public access.
+      security: [] # Public
+      responses:
+        '200':
+          description: A list of upcoming events.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Event'
+        '500':
+          description: Server error fetching events.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    post:
+      summary: Create Event
+      tags: [Events]
+      description: Creates a new event. Requires 'coordinator' or 'manager' role.
+      security:
+        - bearerAuth: [] # Roles: coordinator, manager
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EventData'
+      responses:
+        '201':
+          description: Event created successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Event'
+        '400':
+          description: Validation error in request body.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Forbidden (insufficient role).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Server error creating event.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /events/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+        description: ID of the event to operate on.
+    get:
+      summary: Get Event by ID
+      tags: [Events]
+      description: Retrieves details for a specific event by its ID. Public access.
+      security: [] # Public
+      responses:
+        '200':
+          description: Event details retrieved successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Event'
+        '404':
+          description: Event not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Server error fetching event.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    put:
+      summary: Update Event
+      tags: [Events]
+      description: Updates an existing event. Requires 'coordinator' or 'manager' role.
+      security:
+        - bearerAuth: [] # Roles: coordinator, manager
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EventData'
+      responses:
+        '200':
+          description: Event updated successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Event'
+        '400':
+          description: Validation error in request body.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Forbidden (insufficient role).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Event not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Server error updating event.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    delete:
+      summary: Delete Event
+      tags: [Events]
+      description: Deletes an event by its ID. Requires 'coordinator' or 'manager' role.
+      security:
+        - bearerAuth: [] # Roles: coordinator, manager
+      responses:
+        '204':
+          description: Event deleted successfully.
+        '401':
+          description: Unauthorized.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Forbidden (insufficient role).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Event not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Server error deleting event.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  # --- Animals ---
+  /animals:
+    get:
+      summary: Get All Animals
+      tags: [Animals]
+      description: Retrieves a list of all animals. Requires 'manager', 'veterinarian', or 'keeper' role.
+      security:
+        - bearerAuth: [] # Roles: manager, veterinarian, keeper
+      responses:
+        '200':
+          description: A list of animals.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Animal'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '500':
+          $ref: '#/components/responses/ServerError'
+    post:
+      summary: Create Animal
+      tags: [Animals]
+      description: Creates a new animal record. Requires 'manager' or 'veterinarian' role.
+      security:
+        - bearerAuth: [] # Roles: manager, veterinarian
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AnimalData'
+      responses:
+        '201':
+          description: Animal created successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Animal'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /animals/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+        description: ID of the animal to operate on.
+    get:
+      summary: Get Animal by ID
+      tags: [Animals]
+      description: Retrieves details for a specific animal. Requires 'manager', 'veterinarian', or 'keeper' role.
+      security:
+        - bearerAuth: [] # Roles: manager, veterinarian, keeper
+      responses:
+        '200':
+          description: Animal details retrieved successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Animal'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '500':
+          $ref: '#/components/responses/ServerError'
+    put:
+      summary: Update Animal
+      tags: [Animals]
+      description: Updates an existing animal record. Requires 'manager' or 'veterinarian' role.
+      security:
+        - bearerAuth: [] # Roles: manager, veterinarian
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AnimalData'
+      responses:
+        '200':
+          description: Animal updated successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Animal'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '500':
+          $ref: '#/components/responses/ServerError'
+    delete:
+      summary: Delete Animal
+      tags: [Animals]
+      description: Deletes an animal record. Requires 'manager' or 'veterinarian' role.
+      security:
+        - bearerAuth: [] # Roles: manager, veterinarian
+      responses:
+        '204':
+          description: Animal deleted successfully.
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  # --- Employees ---
+  /employees:
+    get:
+      summary: Get All Employees
+      tags: [Employees]
+      description: Retrieves a list of all employees. Requires 'manager' role.
+      security:
+        - bearerAuth: [] # Role: manager
+      responses:
+        '200':
+          description: A list of employees.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Employee'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '500':
+          $ref: '#/components/responses/ServerError'
+    post:
+      summary: Create Employee
+      tags: [Employees]
+      description: Creates a new employee record. Requires 'manager' role.
+      security:
+        - bearerAuth: [] # Role: manager
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EmployeeData'
+      responses:
+        '201':
+          description: Employee created successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Employee'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /employees/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+        description: ID of the employee to operate on.
+    get:
+      summary: Get Employee by ID
+      tags: [Employees]
+      description: Retrieves details for a specific employee. Requires 'manager' role.
+      security:
+        - bearerAuth: [] # Role: manager
+      responses:
+        '200':
+          description: Employee details retrieved successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Employee'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '500':
+          $ref: '#/components/responses/ServerError'
+    put:
+      summary: Update Employee
+      tags: [Employees]
+      description: Updates an existing employee record. Requires 'manager' role.
+      security:
+        - bearerAuth: [] # Role: manager
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EmployeeData'
+      responses:
+        '200':
+          description: Employee updated successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Employee'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '500':
+          $ref: '#/components/responses/ServerError'
+    delete:
+      summary: Delete Employee
+      tags: [Employees]
+      description: Deletes an employee record. Requires 'manager' role.
+      security:
+        - bearerAuth: [] # Role: manager
+      responses:
+        '204':
+          description: Employee deleted successfully.
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  # --- Customers ---
+  /customers:
+    get:
+      summary: Get All Customers
+      tags: [Customers]
+      description: Retrieves a list of all customers. Requires 'manager' or 'coordinator' role.
+      security:
+        - bearerAuth: [] # Roles: manager, coordinator
+      responses:
+        '200':
+          description: A list of customers.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Customer'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '500':
+          $ref: '#/components/responses/ServerError'
+    post:
+      summary: Create Customer
+      tags: [Customers]
+      description: Creates a new customer record. Requires 'manager' or 'coordinator' role.
+      security:
+        - bearerAuth: [] # Roles: manager, coordinator
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CustomerData'
+      responses:
+        '201':
+          description: Customer created successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Customer'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /customers/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+        description: ID of the customer to operate on.
+    get:
+      summary: Get Customer by ID
+      tags: [Customers]
+      description: Retrieves details for a specific customer. Requires 'manager' or 'coordinator' role.
+      security:
+        - bearerAuth: [] # Roles: manager, coordinator
+      responses:
+        '200':
+          description: Customer details retrieved successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Customer'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '500':
+          $ref: '#/components/responses/ServerError'
+    put:
+      summary: Update Customer
+      tags: [Customers]
+      description: Updates an existing customer record. Requires 'manager' or 'coordinator' role.
+      security:
+        - bearerAuth: [] # Roles: manager, coordinator
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CustomerData'
+      responses:
+        '200':
+          description: Customer updated successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Customer'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '500':
+          $ref: '#/components/responses/ServerError'
+    delete:
+      summary: Delete Customer
+      tags: [Customers]
+      description: Deletes a customer record. Requires 'manager' role.
+      security:
+        - bearerAuth: [] # Role: manager
+      responses:
+        '204':
+          description: Customer deleted successfully.
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  # --- Attractions ---
+  /attractions:
+    get:
+      summary: Get All Attractions
+      tags: [Attractions]
+      description: Retrieves a list of all attractions. Public access.
+      security: [] # Public
+      responses:
+        '200':
+          description: A list of attractions.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Attraction'
+        '500':
+          $ref: '#/components/responses/ServerError'
+    post:
+      summary: Create Attraction
+      tags: [Attractions]
+      description: Creates a new attraction. Requires 'manager' role.
+      security:
+        - bearerAuth: [] # Role: manager
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AttractionData'
+      responses:
+        '201':
+          description: Attraction created successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Attraction'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /attractions/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+        description: ID of the attraction to operate on.
+    get:
+      summary: Get Attraction by ID
+      tags: [Attractions]
+      description: Retrieves details for a specific attraction. Public access.
+      security: [] # Public
+      responses:
+        '200':
+          description: Attraction details retrieved successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Attraction'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '500':
+          $ref: '#/components/responses/ServerError'
+    put:
+      summary: Update Attraction
+      tags: [Attractions]
+      description: Updates an existing attraction. Requires 'manager' role.
+      security:
+        - bearerAuth: [] # Role: manager
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AttractionData'
+      responses:
+        '200':
+          description: Attraction updated successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Attraction'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '500':
+          $ref: '#/components/responses/ServerError'
+    delete:
+      summary: Delete Attraction
+      tags: [Attractions]
+      description: Deletes an attraction. Requires 'manager' role.
+      security:
+        - bearerAuth: [] # Role: manager
+      responses:
+        '204':
+          description: Attraction deleted successfully.
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  # --- Habitats ---
+  /habitats:
+    get:
+      summary: Get All Habitats
+      tags: [Habitats]
+      description: Retrieves a list of all habitats. Public access.
+      security: [] # Public
+      responses:
+        '200':
+          description: A list of habitats.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Habitat'
+        '500':
+          $ref: '#/components/responses/ServerError'
+    post:
+      summary: Create Habitat
+      tags: [Habitats]
+      description: Creates a new habitat. Requires 'manager' or 'veterinarian' role.
+      security:
+        - bearerAuth: [] # Roles: manager, veterinarian
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/HabitatData'
+      responses:
+        '201':
+          description: Habitat created successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Habitat'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /habitats/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+        description: ID of the habitat to operate on.
+    get:
+      summary: Get Habitat by ID
+      tags: [Habitats]
+      description: Retrieves details for a specific habitat. Public access.
+      security: [] # Public
+      responses:
+        '200':
+          description: Habitat details retrieved successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Habitat'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '500':
+          $ref: '#/components/responses/ServerError'
+    put:
+      summary: Update Habitat
+      tags: [Habitats]
+      description: Updates an existing habitat. Requires 'manager', 'veterinarian', or 'keeper' role.
+      security:
+        - bearerAuth: [] # Roles: manager, veterinarian, keeper
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/HabitatData'
+      responses:
+        '200':
+          description: Habitat updated successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Habitat'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '500':
+          $ref: '#/components/responses/ServerError'
+    delete:
+      summary: Delete Habitat
+      tags: [Habitats]
+      description: Deletes a habitat. Requires 'manager' or 'veterinarian' role.
+      security:
+        - bearerAuth: [] # Roles: manager, veterinarian
+      responses:
+        '204':
+          description: Habitat deleted successfully.
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  # --- Tickets ---
+  /tickets:
+    get:
+      summary: Get All Tickets
+      tags: [Tickets]
+      description: Retrieves a list of all tickets sold. Requires 'manager' role.
+      security:
+        - bearerAuth: [] # Role: manager
+      responses:
+        '200':
+          description: A list of tickets.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Ticket'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '500':
+          $ref: '#/components/responses/ServerError'
+    post:
+      summary: Create Ticket (Sale)
+      tags: [Tickets]
+      description: Records a new ticket sale. Requires 'manager' or 'cashier' role.
+      security:
+        - bearerAuth: [] # Roles: manager, cashier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TicketData'
+      responses:
+        '201':
+          description: Ticket sale recorded successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Ticket'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /tickets/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+        description: ID of the ticket to operate on.
+    get:
+      summary: Get Ticket by ID
+      tags: [Tickets]
+      description: Retrieves details for a specific ticket. Requires 'manager' or 'cashier' role.
+      security:
+        - bearerAuth: [] # Roles: manager, cashier
+      responses:
+        '200':
+          description: Ticket details retrieved successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Ticket'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '500':
+          $ref: '#/components/responses/ServerError'
+    delete:
+      summary: Delete Ticket (Refund/Cancel)
+      tags: [Tickets]
+      description: Deletes a ticket record, used for refunds or cancellations. Requires 'manager' role.
+      security:
+        - bearerAuth: [] # Role: manager
+      responses:
+        '204':
+          description: Ticket deleted successfully.
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /tickets/date/{date}:
+    parameters:
+      - name: date
+        in: path
+        required: true
+        schema:
+          type: string
+          format: date
+        description: The visit date to retrieve tickets for (YYYY-MM-DD).
+    get:
+      summary: Get Tickets by Visit Date
+      tags: [Tickets]
+      description: Retrieves all tickets for a specific visit date. Requires 'manager' role.
+      security:
+        - bearerAuth: [] # Role: manager
+      responses:
+        '200':
+          description: A list of tickets for the specified date.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Ticket'
+        '400':
+          description: Invalid date format.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  # --- Gift Shops ---
+  /gift-shops:
+    get:
+      summary: Get All Gift Shops
+      tags: [Gift Shops]
+      description: Retrieves a list of all gift shops. Requires 'manager' or 'cashier' role.
+      security:
+        - bearerAuth: [] # Roles: manager, cashier
+      responses:
+        '200':
+          description: A list of gift shops.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/GiftShop'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '500':
+          $ref: '#/components/responses/ServerError'
+    post:
+      summary: Create Gift Shop
+      tags: [Gift Shops]
+      description: Creates a new gift shop location. Requires 'manager' role.
+      security:
+        - bearerAuth: [] # Role: manager
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GiftShopData'
+      responses:
+        '201':
+          description: Gift shop created successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GiftShop'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /gift-shops/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+        description: ID of the gift shop to operate on.
+    get:
+      summary: Get Gift Shop by ID
+      tags: [Gift Shops]
+      description: Retrieves details for a specific gift shop. Requires 'manager' or 'cashier' role.
+      security:
+        - bearerAuth: [] # Roles: manager, cashier
+      responses:
+        '200':
+          description: Gift shop details retrieved successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GiftShop'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '500':
+          $ref: '#/components/responses/ServerError'
+    put:
+      summary: Update Gift Shop
+      tags: [Gift Shops]
+      description: Updates an existing gift shop location. Requires 'manager' role.
+      security:
+        - bearerAuth: [] # Role: manager
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GiftShopData'
+      responses:
+        '200':
+          description: Gift shop updated successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GiftShop'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '500':
+          $ref: '#/components/responses/ServerError'
+    delete:
+      summary: Delete Gift Shop
+      tags: [Gift Shops]
+      description: Deletes a gift shop location. Requires 'manager' role.
+      security:
+        - bearerAuth: [] # Role: manager
+      responses:
+        '204':
+          description: Gift shop deleted successfully.
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  # --- Gift Shop Items ---
+  /gift-shop-items:
+    get:
+      summary: Get All Gift Shop Items
+      tags: [Gift Shop Items]
+      description: Retrieves a list of all items across all gift shops. Requires 'manager' role.
+      security:
+        - bearerAuth: [] # Role: manager
+      responses:
+        '200':
+          description: A list of items.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/GiftShopItem'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '500':
+          $ref: '#/components/responses/ServerError'
+    post:
+      summary: Create Gift Shop Item
+      tags: [Gift Shop Items]
+      description: Adds a new item to a gift shop's inventory. Requires 'manager' role.
+      security:
+        - bearerAuth: [] # Role: manager
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GiftShopItemData'
+      responses:
+        '201':
+          description: Item created successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GiftShopItem'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /gift-shop-items/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+        description: ID of the item to operate on.
+    get:
+      summary: Get Gift Shop Item by ID
+      tags: [Gift Shop Items]
+      description: Retrieves details for a specific item. Requires 'manager' or 'cashier' role.
+      security:
+        - bearerAuth: [] # Roles: manager, cashier
+      responses:
+        '200':
+          description: Item details retrieved successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GiftShopItem'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '500':
+          $ref: '#/components/responses/ServerError'
+    put:
+      summary: Update Gift Shop Item
+      tags: [Gift Shop Items]
+      description: Updates an existing item's details or stock. Requires 'manager' role.
+      security:
+        - bearerAuth: [] # Role: manager
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GiftShopItemData'
+      responses:
+        '200':
+          description: Item updated successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GiftShopItem'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '500':
+          $ref: '#/components/responses/ServerError'
+    delete:
+      summary: Delete Gift Shop Item
+      tags: [Gift Shop Items]
+      description: Deletes an item from inventory. Requires 'manager' role.
+      security:
+        - bearerAuth: [] # Role: manager
+      responses:
+        '204':
+          description: Item deleted successfully.
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /gift-shop-items/low-stock:
+    get:
+      summary: Get Low Stock Items
+      tags: [Gift Shop Items]
+      description: Retrieves items with quantity below a certain threshold (default 10). Requires 'manager' role.
+      security:
+        - bearerAuth: [] # Role: manager
+      responses:
+        '200':
+          description: A list of low stock items.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/GiftShopItem'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  # --- Gift Shop Sales ---
+  /gift-shop-sales:
+    post:
+      summary: Create Gift Shop Sale
+      tags: [Gift Shop Sales]
+      description: Records a new gift shop sale transaction. Requires 'manager' or 'cashier' role.
+      security:
+        - bearerAuth: [] # Roles: manager, cashier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GiftShopSaleData'
+      responses:
+        '201':
+          description: Sale recorded successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GiftShopSale'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /gift-shop-sales/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+        description: ID of the gift shop sale transaction.
+    get:
+      summary: Get Gift Shop Sale by ID
+      tags: [Gift Shop Sales]
+      description: Retrieves details for a specific sale transaction. Requires 'manager' or 'cashier' role.
+      security:
+        - bearerAuth: [] # Roles: manager, cashier
+      responses:
+        '200':
+          description: Sale details retrieved successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GiftShopSale'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '500':
+          $ref: '#/components/responses/ServerError'
+    delete:
+      summary: Return Gift Shop Sale
+      tags: [Gift Shop Sales]
+      description: Processes a return for a sale transaction (currently deletes the record). Requires 'manager' role.
+      security:
+        - bearerAuth: [] # Role: manager
+      responses:
+        '204':
+          description: Return processed successfully.
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /gift-shop-sales/date/{date}:
+    parameters:
+      - name: date
+        in: path
+        required: true
+        schema:
+          type: string
+          format: date
+        description: The date to retrieve sales for (YYYY-MM-DD).
+    get:
+      summary: Get Gift Shop Sales by Date
+      tags: [Gift Shop Sales]
+      description: Retrieves all sale transactions for a specific date. Requires 'manager' role.
+      security:
+        - bearerAuth: [] # Role: manager
+      responses:
+        '200':
+          description: A list of sales for the specified date.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/GiftShopSale'
+        '400':
+          description: Invalid date format.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  # --- Cafes ---
+  /cafes:
+    get:
+      summary: Get All Cafes
+      tags: [Cafes]
+      description: Retrieves a list of all cafes. Requires 'manager' or 'cashier' role.
+      security:
+        - bearerAuth: [] # Roles: manager, cashier
+      responses:
+        '200':
+          description: A list of cafes.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Cafe'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '500':
+          $ref: '#/components/responses/ServerError'
+    post:
+      summary: Create Cafe
+      tags: [Cafes]
+      description: Creates a new cafe location. Requires 'manager' role.
+      security:
+        - bearerAuth: [] # Role: manager
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CafeData'
+      responses:
+        '201':
+          description: Cafe created successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Cafe'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /cafes/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+        description: ID of the cafe to operate on.
+    get:
+      summary: Get Cafe by ID
+      tags: [Cafes]
+      description: Retrieves details for a specific cafe. Requires 'manager' or 'cashier' role.
+      security:
+        - bearerAuth: [] # Roles: manager, cashier
+      responses:
+        '200':
+          description: Cafe details retrieved successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Cafe'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '500':
+          $ref: '#/components/responses/ServerError'
+    put:
+      summary: Update Cafe
+      tags: [Cafes]
+      description: Updates an existing cafe location. Requires 'manager' role.
+      security:
+        - bearerAuth: [] # Role: manager
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CafeData'
+      responses:
+        '200':
+          description: Cafe updated successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Cafe'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '500':
+          $ref: '#/components/responses/ServerError'
+    delete:
+      summary: Delete Cafe
+      tags: [Cafes]
+      description: Deletes a cafe location. Requires 'manager' role.
+      security:
+        - bearerAuth: [] # Role: manager
+      responses:
+        '204':
+          description: Cafe deleted successfully.
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  # --- Cafe Items ---
+  /cafe-items:
+    get:
+      summary: Get All Cafe Items
+      tags: [Cafe Items]
+      description: Retrieves a list of all items across all cafes. Requires 'manager' role.
+      security:
+        - bearerAuth: [] # Role: manager
+      responses:
+        '200':
+          description: A list of items.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CafeItem'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '500':
+          $ref: '#/components/responses/ServerError'
+    post:
+      summary: Create Cafe Item
+      tags: [Cafe Items]
+      description: Adds a new item to a cafe's menu. Requires 'manager' role.
+      security:
+        - bearerAuth: [] # Role: manager
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CafeItemData'
+      responses:
+        '201':
+          description: Item created successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CafeItem'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /cafe-items/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+        description: ID of the cafe item to operate on.
+    get:
+      summary: Get Cafe Item by ID
+      tags: [Cafe Items]
+      description: Retrieves details for a specific cafe item. Requires 'manager' or 'cashier' role.
+      security:
+        - bearerAuth: [] # Roles: manager, cashier
+      responses:
+        '200':
+          description: Item details retrieved successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CafeItem'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '500':
+          $ref: '#/components/responses/ServerError'
+    put:
+      summary: Update Cafe Item
+      tags: [Cafe Items]
+      description: Updates an existing cafe item's details. Requires 'manager' role.
+      security:
+        - bearerAuth: [] # Role: manager
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CafeItemData'
+      responses:
+        '200':
+          description: Item updated successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CafeItem'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '500':
+          $ref: '#/components/responses/ServerError'
+    delete:
+      summary: Delete Cafe Item
+      tags: [Cafe Items]
+      description: Deletes an item from a cafe menu. Requires 'manager' role.
+      security:
+        - bearerAuth: [] # Role: manager
+      responses:
+        '204':
+          description: Item deleted successfully.
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /cafe-items/cafe/{cafeId}:
+    parameters:
+      - name: cafeId
+        in: path
+        required: true
+        schema:
+          type: integer
+        description: ID of the cafe to retrieve the menu for.
+    get:
+      summary: Get Menu for Cafe
+      tags: [Cafe Items]
+      description: Retrieves all menu items for a specific cafe. Requires 'manager' or 'cashier' role.
+      security:
+        - bearerAuth: [] # Roles: manager, cashier
+      responses:
+        '200':
+          description: A list of menu items for the specified cafe.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CafeItem'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          description: Cafe not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  # --- Cafe Sales ---
+  /cafe-sales:
+    post:
+      summary: Create Cafe Sale
+      tags: [Cafe Sales]
+      description: Records a new cafe sale transaction. Requires 'manager' or 'cashier' role.
+      security:
+        - bearerAuth: [] # Roles: manager, cashier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CafeSaleData'
+      responses:
+        '201':
+          description: Sale recorded successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CafeSale'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /cafe-sales/{transactionId}:
+    parameters:
+      - name: transactionId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: The unique transaction ID (UUID) of the sale.
+    get:
+      summary: Get Cafe Sale by Transaction ID
+      tags: [Cafe Sales]
+      description: Retrieves details for a specific cafe sale transaction. Requires 'manager' or 'cashier' role.
+      security:
+        - bearerAuth: [] # Roles: manager, cashier
+      responses:
+        '200':
+          description: Sale details retrieved successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CafeSale'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '500':
+          $ref: '#/components/responses/ServerError'
+    delete:
+      summary: Return Cafe Sale
+      tags: [Cafe Sales]
+      description: Processes a return for a cafe sale transaction (currently deletes the record). Requires 'manager' role.
+      security:
+        - bearerAuth: [] # Role: manager
+      responses:
+        '204':
+          description: Return processed successfully.
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /cafe-sales/date/{date}/cafe/{cafeId}:
+    parameters:
+      - name: date
+        in: path
+        required: true
+        schema:
+          type: string
+          format: date
+        description: The date to retrieve sales for (YYYY-MM-DD).
+      - name: cafeId
+        in: path
+        required: true
+        schema:
+          type: integer
+        description: ID of the specific cafe.
+    get:
+      summary: Get Cafe Sales by Date and Cafe
+      tags: [Cafe Sales]
+      description: Retrieves all sale transactions for a specific date and cafe. Requires 'manager' role.
+      security:
+        - bearerAuth: [] # Role: manager
+      responses:
+        '200':
+          description: A list of sales matching the criteria.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CafeSale' # Note: Response structure might differ slightly from model
+        '400':
+          description: Invalid date format or cafe ID.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  # --- Event Registrations ---
+  /event-registrations:
+    get:
+      summary: Get All Event Registrations
+      tags: [Event Registrations]
+      description: Retrieves a list of all event registrations. Requires 'coordinator' role.
+      security:
+        - bearerAuth: [] # Role: coordinator
+      responses:
+        '200':
+          description: A list of registrations.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/EventRegistration'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '500':
+          $ref: '#/components/responses/ServerError'
+    post:
+      summary: Create Event Registration
+      tags: [Event Registrations]
+      description: Creates a new event registration. Requires 'coordinator' or 'cashier' role.
+      security:
+        - bearerAuth: [] # Roles: coordinator, cashier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EventRegistrationData'
+      responses:
+        '201':
+          description: Registration created successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EventRegistration'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /event-registrations/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+        description: ID of the event registration to operate on.
+    get:
+      summary: Get Event Registration by ID
+      tags: [Event Registrations]
+      description: Retrieves details for a specific registration. Requires 'coordinator' or 'cashier' role.
+      security:
+        - bearerAuth: [] # Roles: coordinator, cashier
+      responses:
+        '200':
+          description: Registration details retrieved successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EventRegistration'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '500':
+          $ref: '#/components/responses/ServerError'
+    put:
+      summary: Update Event Registration
+      tags: [Event Registrations]
+      description: Updates an existing event registration. Requires 'coordinator' role.
+      security:
+        - bearerAuth: [] # Role: coordinator
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EventRegistrationData'
+      responses:
+        '200':
+          description: Registration updated successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EventRegistration'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '500':
+          $ref: '#/components/responses/ServerError'
+    delete:
+      summary: Cancel Event Registration
+      tags: [Event Registrations]
+      description: Cancels (deletes) an event registration. Requires 'coordinator' role.
+      security:
+        - bearerAuth: [] # Role: coordinator
+      responses:
+        '204':
+          description: Registration cancelled successfully.
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /event-registrations/event/{eventId}:
+    parameters:
+      - name: eventId
+        in: path
+        required: true
+        schema:
+          type: integer
+        description: ID of the event to retrieve attendees for.
+    get:
+      summary: Get Attendees for Event
+      tags: [Event Registrations]
+      description: Retrieves all registrations (attendees) for a specific event. Requires 'coordinator' role.
+      security:
+        - bearerAuth: [] # Role: coordinator
+      responses:
+        '200':
+          description: A list of attendees for the specified event.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/EventRegistration'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          description: Event not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+tags:
+  - name: Public
+    description: Endpoints accessible without authentication.
+  - name: Auth
+    description: Authentication, registration, and user profile management.
+  - name: Dashboard
+    description: Endpoints for admin dashboard statistics.
+  - name: Animals
+    description: Managing zoo animals.
+  - name: Employees
+    description: Managing employee records (Manager access only).
+  - name: Customers
+    description: Managing customer records.
+  - name: Events
+    description: Managing zoo events and schedules.
+  - name: Attractions
+    description: Managing zoo attractions.
+  - name: Habitats
+    description: Managing animal habitats.
+  - name: Tickets
+    description: Managing ticket sales and records.
+  - name: Gift Shops
+    description: Managing gift shop locations.
+  - name: Gift Shop Items
+    description: Managing items sold in gift shops.
+  - name: Gift Shop Sales
+    description: Managing gift shop transactions.
+  - name: Cafes
+    description: Managing cafe locations.
+  - name: Cafe Items
+    description: Managing items sold in cafes.
+  - name: Cafe Sales
+    description: Managing cafe transactions.
+  - name: Event Registrations
+    description: Managing customer registrations for events.
