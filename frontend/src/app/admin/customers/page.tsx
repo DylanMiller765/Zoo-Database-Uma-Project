@@ -214,7 +214,7 @@ export default function CustomersPage() {
                 <TableCell>{customer.phone || 'N/A'}</TableCell>
                 <TableCell>
                   {isDeleted(customer) ? (
-                    <Badge variant="destructive">Deleted</Badge>
+                    <Badge variant="danger">Deleted</Badge>
                   ) : (
                     <Badge variant={getAnnualPassBadge(customer.annual_pass)} className="capitalize">
                       {customer.annual_pass === 'yes' ? 'Yes' : 'No'}
