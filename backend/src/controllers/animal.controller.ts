@@ -1,30 +1,11 @@
 import { Request, Response } from 'express';
 import { AnimalService } from '../services/animal.service';
-import { Animal } from '../models/animal.model';
-import { Employee } from '../models/employee.model';
-import { EmployeeModel } from '../models/employee.model';
-import { User } from '../types/user.types';
-import { UserRole } from '../types/role.types';
 
 export class AnimalController {
   static async getAllAnimals(req: Request, res: Response): Promise<void> {
     try {
-      const requestDeleted = req.query.include_deleted === 'true';
-      if (requestDeleted) {
-        let permitted_job_roles = ['manager', 'veterinarian'];
-        const userJobRole = (req as any).user?.job_role;
-
-        if (!userJobRole || !permitted_job_roles.includes(userJobRole)) {
-          res.status(403).json({ message: 'Forbidden: You do not have access to view deleted animals.' });
-          return;
-        }
-        const animals = await AnimalService.getAllAnimals(true);
+      const animals = await AnimalService.getAllAnimals();
       res.status(200).json(animals);
-      }
-      else {
-        const animals = await AnimalService.getAllAnimals(false);
-        res.status(200).json(animals);
-      }
     } catch (error) {
       res.status(500).json({ message: 'Error fetching animals', error });
     }
@@ -43,28 +24,9 @@ export class AnimalController {
     }
   }
 
-static async getAnimalById(req: Request, res: Response): Promise<void> {
+  static async getAnimalById(req: Request, res: Response): Promise<void> {
     try {
-      let animal: Animal | null; 
-
-      const requestDeleted = req.query.include_deleted === 'true';
-      const animalId = parseInt(req.params.id);
-
-      if (requestDeleted) {
-        const permitted_job_roles = ['manager', 'veterinarian'];
-        const userJobRole = (req as any).user?.job_role;
-        
-        if (!userJobRole || !permitted_job_roles.includes(userJobRole)) {
-          res.status(403).json({ message: 'Forbidden: You do not have access to view deleted animals.' });
-          return;
-        }
-
-        animal = await AnimalService.getAnimalById(animalId, true);
-      }
-      else {
-        animal = await AnimalService.getAnimalById(animalId, false);
-      }
-
+      const animal = await AnimalService.getAnimalById(parseInt(req.params.id));
       if (animal) {
         res.status(200).json(animal);
       } else {
