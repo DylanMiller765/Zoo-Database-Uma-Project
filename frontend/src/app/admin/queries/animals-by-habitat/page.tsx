@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback, useMemo } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
 import { queryService } from "@/services/query.service";
-import * as XLSX from 'xlsx';
+
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { MapPin, Leaf, FileDown } from "lucide-react";
@@ -294,7 +294,8 @@ export default function AnimalsByHabitatPage() {
   );
 
   // Excel export with formatting
-  const handleGenerateExcel = useCallback(() => {
+  const handleGenerateExcel = useCallback(async () => {
+    const XLSX = await import('xlsx');
     const wb = XLSX.utils.book_new();
     const { headers, rows } = buildRowsForReport(reportType);
 
