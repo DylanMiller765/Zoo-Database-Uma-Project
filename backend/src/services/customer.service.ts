@@ -6,6 +6,10 @@ export class CustomerService {
     return await CustomerModel.findAll();
   }
 
+  static async getAllCustomersIncludingDeleted(): Promise<Customer[]> {
+    return await CustomerModel.findAllIncludingDeleted();
+  }
+
   static async createCustomer(customerData: Omit<Customer, 'customer_id'> & { password: string }): Promise<Customer> {
     const { password, ...customer } = customerData;
 
@@ -59,5 +63,9 @@ export class CustomerService {
 
   static async deleteCustomer(id: number): Promise<void> {
     return await CustomerModel.remove(id);
+  }
+
+  static async restoreCustomer(id: number): Promise<Customer | null> {
+    return await CustomerModel.restore(id);
   }
 }

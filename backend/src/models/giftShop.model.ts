@@ -16,6 +16,11 @@ export class GiftShopModel {
     return await query<GiftShop[]>(sql);
   }
 
+  static async findAllIncludingDeleted(): Promise<GiftShop[]> {
+    const sql = 'SELECT * FROM gift_shops';
+    return await query<GiftShop[]>(sql);
+  }
+
   static async create(shop: Omit<GiftShop, 'gift_shop_id'>): Promise<GiftShop> {
     const columns = Object.keys(shop).join(', ');
     const placeholders = Object.keys(shop).map(() => '?').join(', ');
@@ -44,5 +49,11 @@ export class GiftShopModel {
   static async remove(id: number): Promise<void> {
     const sql = 'UPDATE gift_shops SET deleted_at = NOW() WHERE gift_shop_id = ?';
     await query(sql, [id]);
+  }
+
+  static async restore(id: number): Promise<GiftShop | null> {
+    const sql = 'UPDATE gift_shops SET deleted_at = NULL WHERE gift_shop_id = ?';
+    await query(sql, [id]);
+    return await this.findById(id);
   }
 }

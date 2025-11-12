@@ -6,6 +6,10 @@ export class EmployeeService {
     return await EmployeeModel.findAll();
   }
 
+  static async getAllEmployeesIncludingDeleted(): Promise<Employee[]> {
+    return await EmployeeModel.findAllIncludingDeleted();
+  }
+
   static async createEmployee(employeeData: Omit<Employee, 'employee_id'> & { password: string }): Promise<Employee> {
     const { password, ...employee } = employeeData;
 
@@ -65,5 +69,9 @@ export class EmployeeService {
 
   static async deleteEmployee(id: number): Promise<void> {
     return await EmployeeModel.remove(id);
+  }
+
+  static async restoreEmployee(id: number): Promise<Employee | null> {
+    return await EmployeeModel.restore(id);
   }
 }

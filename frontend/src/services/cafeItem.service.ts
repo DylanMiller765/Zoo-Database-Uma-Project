@@ -2,13 +2,13 @@ import apiClient from '@/lib/api';
 import { CafeItem, CreateCafeItemData } from '@/types';
 
 export const cafeItemService = {
-  async getAll(): Promise<CafeItem[]> {
-    const res = await apiClient.get<CafeItem[]>('/cafe-items');
+  async getAll(includeDeleted: boolean = false): Promise<CafeItem[]> {
+    const res = await apiClient.get<CafeItem[]>(`/cafe-items${includeDeleted ? '?includeDeleted=true' : ''}`);
     return res.data;
   },
 
   async getPublic(): Promise<CafeItem[]> {
-    const res = await apiClient.get<CafeItem[]>('/cafe-items/public');
+    const res = await apiClient.get<CafeItem[]>('/cafe-items/public'); // Public endpoint should only return non-deleted items
     return res.data;
   },
 

@@ -5,6 +5,10 @@ export class AnimalService {
     return await AnimalModel.findAll();
   }
 
+  static async getAllAnimalsIncludingDeleted(): Promise<Animal[]> {
+    return await AnimalModel.findAllIncludingDeleted();
+  }
+
   static async createAnimal(animal: Omit<Animal, 'animal_id'>): Promise<Animal> {
     return await AnimalModel.create(animal);
   }
@@ -19,5 +23,9 @@ export class AnimalService {
 
   static async deleteAnimal(id: number): Promise<void> {
     return await AnimalModel.remove(id);
+  }
+
+  static async restoreAnimal(id: number): Promise<Animal | null> {
+    return await AnimalModel.restore(id);
   }
 }

@@ -46,4 +46,11 @@ router.delete(
   eventController.deleteEvent
 );
 
+router.put(
+  '/:id/restore',
+  protect,
+  restrictTo('manager'),
+  eventController.restoreEvent
+);
+
 export default router;

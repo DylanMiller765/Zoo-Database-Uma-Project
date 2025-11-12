@@ -1,10 +1,10 @@
-import { query } from '../config/database';
+import { query, pool } from '../config/database';
 import { CafeSale, CafeSaleItem } from '../types/cafeSale.types';
 import { randomUUID } from 'crypto';
 
 export class CafeSaleModel {
   static async create(sale: Omit<CafeSale, 'sale_id' | 'transaction_id'>): Promise<CafeSale> {
-    const connection = await (query as any).getConnection();
+    const connection = await pool.getConnection();
     await connection.beginTransaction();
 
     try {
@@ -66,7 +66,7 @@ export class CafeSaleModel {
   }
 
   static async remove(transactionId: string): Promise<void> {
-    const sql = 'DELETE FROM cafe_sales WHERE transaction_id = ?';
+    const sql = 'UPDATE cafe_sales SET status = "returned" WHERE transaction_id = ?';
     await query(sql, [transactionId]);
   }
 }

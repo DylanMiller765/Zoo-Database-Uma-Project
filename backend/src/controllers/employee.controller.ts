@@ -4,7 +4,10 @@ import { EmployeeService } from '../services/employee.service';
 export class EmployeeController {
   static async getAllEmployees(req: Request, res: Response): Promise<void> {
     try {
-      const employees = await EmployeeService.getAllEmployees();
+      const includeDeleted = req.query.includeDeleted === 'true';
+      const employees = includeDeleted
+        ? await EmployeeService.getAllEmployeesIncludingDeleted()
+        : await EmployeeService.getAllEmployees();
       res.status(200).json(employees);
     } catch (error: any) {
       console.error('Error fetching employees:', error);
@@ -105,6 +108,23 @@ export class EmployeeController {
       res.status(500).json({
         success: false,
         message: error.message || 'Error deleting employee'
+      });
+    }
+  }
+
+  static async restoreEmployee(req: Request, res: Response): Promise<void> {
+    try {
+      const restoredEmployee = await EmployeeService.restoreEmployee(parseInt(req.params.id));
+      if (restoredEmployee) {
+        res.status(200).json(restoredEmployee);
+      } else {
+        res.status(404).json({ success: false, message: 'Employee not found' });
+      }
+    } catch (error: any) {
+      console.error('Error restoring employee:', error);
+      res.status(500).json({
+        success: false,
+        message: error.message || 'Error restoring employee'
       });
     }
   }

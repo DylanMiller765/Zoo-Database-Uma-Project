@@ -7,6 +7,11 @@ export class EventModel {
     return await query<Event[]>(sql);
   }
 
+  static async findAllIncludingDeleted(): Promise<Event[]> {
+    const sql = 'SELECT * FROM events ORDER BY event_date DESC';
+    return await query<Event[]>(sql);
+  }
+
   static async create(eventData: Omit<Event, 'event_id'>): Promise<Event> {
     const { name, description, event_date, start_time, end_time, location, max_participants, ticket_price, coordinator_id } = eventData;
     const sql = 'INSERT INTO events (name, description, event_date, start_time, end_time, location, max_participants, ticket_price, coordinator_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)';
@@ -34,5 +39,11 @@ export class EventModel {
     const sql = 'UPDATE events SET deleted_at = NOW() WHERE event_id = ?';
     const result = await query<any>(sql, [eventId]);
     return result.affectedRows > 0;
+  }
+
+  static async restore(eventId: number): Promise<Event | null> {
+    const sql = 'UPDATE events SET deleted_at = NULL WHERE event_id = ?';
+    await query(sql, [eventId]);
+    return await this.findById(eventId);
   }
 }

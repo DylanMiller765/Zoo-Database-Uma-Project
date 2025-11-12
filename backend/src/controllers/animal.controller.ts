@@ -4,7 +4,10 @@ import { AnimalService } from '../services/animal.service';
 export class AnimalController {
   static async getAllAnimals(req: Request, res: Response): Promise<void> {
     try {
-      const animals = await AnimalService.getAllAnimals();
+      const includeDeleted = req.query.includeDeleted === 'true';
+      const animals = includeDeleted
+        ? await AnimalService.getAllAnimalsIncludingDeleted()
+        : await AnimalService.getAllAnimals();
       res.status(200).json(animals);
     } catch (error) {
       res.status(500).json({ message: 'Error fetching animals', error });
@@ -56,6 +59,19 @@ export class AnimalController {
       res.status(204).send();
     } catch (error) {
       res.status(500).json({ message: 'Error deleting animal', error });
+    }
+  }
+
+  static async restoreAnimal(req: Request, res: Response): Promise<void> {
+    try {
+      const restoredAnimal = await AnimalService.restoreAnimal(parseInt(req.params.id));
+      if (restoredAnimal) {
+        res.status(200).json(restoredAnimal);
+      } else {
+        res.status(404).json({ message: 'Animal not found' });
+      }
+    } catch (error) {
+      res.status(500).json({ message: 'Error restoring animal', error });
     }
   }
 }

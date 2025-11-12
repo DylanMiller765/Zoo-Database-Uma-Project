@@ -58,7 +58,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const hasRole = (roles: string | string[]): boolean => {
     if (!user) return false;
     const roleArray = Array.isArray(roles) ? roles : [roles];
-    return roleArray.includes(user.role);
+
+    // Check against the primary role first (employee vs customer)
+    if (roleArray.includes(user.role)) {
+      return true;
+    }
+
+    // Then check against the specific job role if the user is an employee
+    if (user.role === 'employee' && user.job_role) {
+      return roleArray.includes(user.job_role);
+    }
+
+    return false;
   };
 
   const value: AuthContextType = {

@@ -20,10 +20,16 @@ export interface Employee {
   gender?: 'male' | 'female' | 'other' | 'prefer_not_to_say';
   birthday?: string;
   employment_type: 'full_time' | 'part_time';
+  deleted_at?: string | null;
 }
 
 export class EmployeeModel {
   static async findAll(): Promise<Employee[]> {
+    const sql = 'SELECT * FROM employees WHERE deleted_at IS NULL';
+    return await query<Employee[]>(sql);
+  }
+
+  static async findAllIncludingDeleted(): Promise<Employee[]> {
     const sql = 'SELECT * FROM employees';
     return await query<Employee[]>(sql);
   }
@@ -45,7 +51,7 @@ export class EmployeeModel {
   }
 
   static async findById(id: number): Promise<Employee | null> {
-    const sql = 'SELECT * FROM employees WHERE employee_id = ?';
+    const sql = 'SELECT * FROM employees WHERE employee_id = ? AND deleted_at IS NULL';
     const results = await query<Employee[]>(sql, [id]);
     return results.length > 0 ? results[0] : null;
   }
@@ -67,7 +73,14 @@ export class EmployeeModel {
   }
 
   static async remove(id: number): Promise<void> {
-    const sql = 'DELETE FROM employees WHERE employee_id = ?';
+    const sql = 'UPDATE employees SET deleted_at = NOW() WHERE employee_id = ?';
     await query(sql, [id]);
+  }
+
+  static async restore(id: number): Promise<Employee | null> {
+    const sql = 'UPDATE employees SET deleted_at = NULL WHERE employee_id = ?';
+    await query(sql, [id]);
+    const results = await query<Employee[]>('SELECT * FROM employees WHERE employee_id = ?', [id]);
+    return results.length > 0 ? results[0] : null;
   }
 }

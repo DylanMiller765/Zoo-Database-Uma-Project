@@ -11,5 +11,6 @@ router.post('/', restrictTo('manager'), GiftShopController.createGiftShop);
 router.get('/:id', restrictTo('manager', 'cashier'), GiftShopController.getGiftShopById);
 router.put('/:id', restrictTo('manager'), GiftShopController.updateGiftShop);
 router.delete('/:id', restrictTo('manager'), GiftShopController.deleteGiftShop);
+router.put('/:id/restore', restrictTo('manager'), GiftShopController.restoreGiftShop);
 
 export default router;

@@ -14,10 +14,16 @@ export interface Customer {
   membership_start_date?: string;
   membership_end_date?: string;
   registration_date?: string;
+  deleted_at?: string | null;
 }
 
 export class CustomerModel {
   static async findAll(): Promise<Customer[]> {
+    const sql = 'SELECT * FROM customers WHERE deleted_at IS NULL';
+    return await query<Customer[]>(sql);
+  }
+
+  static async findAllIncludingDeleted(): Promise<Customer[]> {
     const sql = 'SELECT * FROM customers';
     return await query<Customer[]>(sql);
   }
@@ -33,7 +39,7 @@ export class CustomerModel {
   }
 
   static async findById(id: number): Promise<Customer | null> {
-    const sql = 'SELECT * FROM customers WHERE customer_id = ?';
+    const sql = 'SELECT * FROM customers WHERE customer_id = ? AND deleted_at IS NULL';
     const results = await query<Customer[]>(sql, [id]);
     return results.length > 0 ? results[0] : null;
   }
@@ -48,7 +54,14 @@ export class CustomerModel {
   }
 
   static async remove(id: number): Promise<void> {
-    const sql = 'DELETE FROM customers WHERE customer_id = ?';
+    const sql = 'UPDATE customers SET deleted_at = NOW() WHERE customer_id = ?';
     await query(sql, [id]);
+  }
+
+  static async restore(id: number): Promise<Customer | null> {
+    const sql = 'UPDATE customers SET deleted_at = NULL WHERE customer_id = ?';
+    await query(sql, [id]);
+    const results = await query<Customer[]>('SELECT * FROM customers WHERE customer_id = ?', [id]);
+    return results.length > 0 ? results[0] : null;
   }
 }

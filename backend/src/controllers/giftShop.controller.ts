@@ -4,7 +4,10 @@ import { GiftShopService } from '../services/giftShop.service';
 export class GiftShopController {
   static async getAllGiftShops(req: Request, res: Response): Promise<void> {
     try {
-      const shops = await GiftShopService.getAllGiftShops();
+      const includeDeleted = req.query.includeDeleted === 'true';
+      const shops = includeDeleted
+        ? await GiftShopService.getAllGiftShopsIncludingDeleted()
+        : await GiftShopService.getAllGiftShops();
       res.status(200).json(shops);
     } catch (error) {
       res.status(500).json({ message: 'Error fetching gift shops', error });
@@ -55,6 +58,19 @@ export class GiftShopController {
       res.status(204).send();
     } catch (error) {
       res.status(500).json({ message: 'Error deleting gift shop', error });
+    }
+  }
+
+  static async restoreGiftShop(req: Request, res: Response): Promise<void> {
+    try {
+      const restoredShop = await GiftShopService.restoreGiftShop(parseInt(req.params.id));
+      if (restoredShop) {
+        res.status(200).json(restoredShop);
+      } else {
+        res.status(404).json({ message: 'Gift shop not found' });
+      }
+    } catch (error) {
+      res.status(500).json({ message: 'Error restoring gift shop', error });
     }
   }
 }
