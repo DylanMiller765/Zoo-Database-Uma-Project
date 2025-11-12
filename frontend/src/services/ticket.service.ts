@@ -2,8 +2,10 @@ import apiClient from '@/lib/api';
 import { Ticket, CreateTicketData } from '@/types';
 
 export const ticketService = {
-  async getAll(): Promise<Ticket[]> {
-    const response = await apiClient.get<Ticket[]>('/tickets');
+  async getAll(includeDeleted = false): Promise<Ticket[]> {
+    const response = await apiClient.get<Ticket[]>('/tickets', {
+      params: { includeDeleted: includeDeleted ? 'true' : 'false' }
+    });
     return response.data;
   },
 
@@ -19,5 +21,10 @@ export const ticketService = {
 
   async delete(id: number): Promise<void> {
     await apiClient.delete(`/tickets/${id}`);
+  },
+
+  async restore(id: number): Promise<Ticket> {
+    const response = await apiClient.put<Ticket>(`/tickets/${id}/restore`);
+    return response.data;
   },
 };

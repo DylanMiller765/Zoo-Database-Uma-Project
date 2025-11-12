@@ -11,6 +11,7 @@ router.post('/', optionalAuth, TicketController.createTicket);
 router.get('/', protect, restrictTo('manager'), TicketController.getAllTickets);
 router.get('/date/:date', protect, restrictTo('manager'), TicketController.getTicketsByDate);
 router.delete('/:id', protect, restrictTo('manager'), TicketController.deleteTicket);
+router.put('/:id/restore', protect, restrictTo('manager'), TicketController.restoreTicket);
 router.get('/:id', protect, restrictTo('manager', 'cashier'), TicketController.getTicketById);
 
 export default router;

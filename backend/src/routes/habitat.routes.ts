@@ -12,5 +12,6 @@ router.get('/:id', HabitatController.getHabitatById);
 router.post('/', protect, restrictTo('manager', 'veterinarian'), HabitatController.createHabitat);
 router.put('/:id', protect, restrictTo('manager', 'veterinarian', 'keeper'), HabitatController.updateHabitat);
 router.delete('/:id', protect, restrictTo('manager', 'veterinarian'), HabitatController.deleteHabitat);
+router.put('/:id/restore', protect, restrictTo('manager'), HabitatController.restoreHabitat);
 
 export default router;

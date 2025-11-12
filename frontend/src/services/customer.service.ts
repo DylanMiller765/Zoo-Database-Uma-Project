@@ -2,8 +2,10 @@ import apiClient from '@/lib/api';
 import { Customer, CreateCustomerData } from '@/types';
 
 export const customerService = {
-  async getAll(): Promise<Customer[]> {
-    const response = await apiClient.get<Customer[]>('/customers');
+  async getAll(includeDeleted = false): Promise<Customer[]> {
+    const response = await apiClient.get<Customer[]>('/customers', {
+      params: { includeDeleted: includeDeleted ? 'true' : 'false' }
+    });
     return response.data;
   },
 
@@ -24,5 +26,10 @@ export const customerService = {
 
   async delete(id: number): Promise<void> {
     await apiClient.delete(`/customers/${id}`);
+  },
+
+  async restore(id: number): Promise<Customer> {
+    const response = await apiClient.put<Customer>(`/customers/${id}/restore`);
+    return response.data;
   },
 };

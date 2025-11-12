@@ -2,8 +2,10 @@ import apiClient from '@/lib/api';
 import { GiftShop, CreateGiftShopData } from '@/types';
 
 export const giftShopService = {
-  async getAll(): Promise<GiftShop[]> {
-    const response = await apiClient.get<GiftShop[]>('/gift-shops');
+  async getAll(includeDeleted = false): Promise<GiftShop[]> {
+    const response = await apiClient.get<GiftShop[]>('/gift-shops', {
+      params: { includeDeleted: includeDeleted ? 'true' : 'false' }
+    });
     return response.data;
   },
 
@@ -24,5 +26,10 @@ export const giftShopService = {
 
   async delete(id: number): Promise<void> {
     await apiClient.delete(`/gift-shops/${id}`);
+  },
+
+  async restore(id: number): Promise<GiftShop> {
+    const response = await apiClient.put<GiftShop>(`/gift-shops/${id}/restore`);
+    return response.data;
   },
 };
