@@ -126,7 +126,9 @@ export default function HabitatsPage() {
     await loadHabitats();
   };
 
-  const filteredHabitats = habitats.filter(habitat =>
+  const filteredHabitats = habitats
+    .filter(habitat => habitat) // Add this line to filter out null or undefined habitats
+    .filter(habitat =>
     habitat.habitat_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     habitat.environment_type.toLowerCase().includes(searchTerm.toLowerCase())
   );
@@ -350,12 +352,12 @@ export default function HabitatsPage() {
             ],
           },
         ]}
-        onEdit={!isDeleted(detailHabitat) ? () => {
+        onEdit={detailHabitat && !isDeleted(detailHabitat) ? () => {
           setIsDetailModalOpen(false);
           setSelectedHabitat(detailHabitat);
           setIsModalOpen(true);
         } : undefined}
-        canEdit={!isDeleted(detailHabitat)}
+        canEdit={detailHabitat ? !isDeleted(detailHabitat) : false}
       />
 
       {/* Restore Confirmation Modal */}

@@ -57,7 +57,8 @@ CREATE TABLE `attractions` (
     `human_capacity` INT,
     `opening_time` TIME,
     `closing_time` TIME,
-    `status` ENUM('open', 'closed', 'maintenance') DEFAULT 'open'
+    `status` ENUM('open', 'closed', 'maintenance') DEFAULT 'open',
+    `deleted_at` DATETIME DEFAULT NULL
 );
 
 CREATE TABLE `gift_shops` (
@@ -205,6 +206,7 @@ CREATE TABLE `event_registrations` (
     `number_of_participants` INT DEFAULT 1,
     `total_amount` DECIMAL(10, 2),
     `payment_status` ENUM('pending', 'paid', 'cancelled') DEFAULT 'pending',
+    `deleted_at` DATETIME DEFAULT NULL,
     FOREIGN KEY (`event_id`) REFERENCES `events`(`event_id`) ON DELETE CASCADE,
     FOREIGN KEY (`customer_id`) REFERENCES `customers`(`customer_id`) ON DELETE SET NULL
 );
@@ -253,6 +255,7 @@ CREATE TABLE `gift_shop_sales_transactions` (
     `sale_date` DATETIME DEFAULT CURRENT_TIMESTAMP,
     `total_amount` DECIMAL(10, 2) NOT NULL,
     `payment_method` ENUM('cash', 'credit', 'debit'),
+    `status` ENUM('completed', 'returned') DEFAULT 'completed',
     FOREIGN KEY (`gift_shop_id`) REFERENCES `gift_shops`(`gift_shop_id`),
     FOREIGN KEY (`customer_id`) REFERENCES `customers`(`customer_id`) ON DELETE SET NULL,
     FOREIGN KEY (`employee_id`) REFERENCES `employees`(`employee_id`) ON DELETE SET NULL
@@ -279,6 +282,7 @@ CREATE TABLE `cafe_sales` (
     `quantity` INT NOT NULL,
     `line_total` DECIMAL(10, 2) NOT NULL,
     `sale_timestamp` DATETIME DEFAULT CURRENT_TIMESTAMP,
+    `status` ENUM('completed', 'returned') DEFAULT 'completed',
     FOREIGN KEY (`cafe_id`) REFERENCES `cafes`(`cafe_id`),
     FOREIGN KEY (`customer_id`) REFERENCES `customers`(`customer_id`) ON DELETE SET NULL,
     FOREIGN KEY (`employee_id`) REFERENCES `employees`(`employee_id`) ON DELETE SET NULL,

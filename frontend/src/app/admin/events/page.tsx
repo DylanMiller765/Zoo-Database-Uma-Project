@@ -131,6 +131,7 @@ export default function EventsPage() {
   };
 
   const filteredEvents = events
+    .filter(event => event) // Add this line to filter out null or undefined events
     .filter(event => {
       // Search filter
       const matchesSearch = event.event_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -418,12 +419,12 @@ export default function EventsPage() {
             ],
           },
         ]}
-        onEdit={!isDeleted(detailEvent) ? () => {
+        onEdit={detailEvent && !isDeleted(detailEvent) ? () => {
           setIsDetailModalOpen(false);
           setSelectedEvent(detailEvent);
           setIsModalOpen(true);
         } : undefined}
-        canEdit={!isDeleted(detailEvent)}
+        canEdit={detailEvent ? !isDeleted(detailEvent) : false}
       />
 
       {/* Restore Confirmation Modal */}
