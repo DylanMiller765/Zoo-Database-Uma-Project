@@ -20,6 +20,7 @@ import {
 import { Plus, Search, Edit, Trash2, Leaf } from 'lucide-react';
 import { Modal } from '@/components/ui/modal';
 import { AnimalForm } from '@/components/admin/AnimalForm';
+import { Label } from '@/components/ui/label'; 
 
 export default function AnimalsPage() {
   const { isAuthenticated, loading: authLoading } = useAuth();
@@ -33,19 +34,20 @@ export default function AnimalsPage() {
   const [selectedAnimal, setSelectedAnimal] = useState<Animal | null>(null);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [animalToDelete, setAnimalToDelete] = useState<Animal | null>(null);
-
+  const [showDeleted, setShowDeleted] = useState(false);
+  const canViewDeleted = true;
 
 
   useEffect(() => {
     if (isAuthenticated) {
-      loadAnimals();
+      loadAnimals(showDeleted);
     }
-  }, [isAuthenticated]);
+  }, [isAuthenticated, showDeleted]);
 
-  const loadAnimals = async () => {
+  const loadAnimals = async (includeDeleted: boolean) => {
     try {
       setLoading(true);
-      const data = await animalService.getAll();
+      const data = await animalService.getAll(includeDeleted);
       setAnimals(data);
     } catch (error) {
       console.error('Failed to load animals:', error);
@@ -74,7 +76,7 @@ export default function AnimalsPage() {
 
     try {
       await animalService.delete(animalToDelete.animal_id);
-      await loadAnimals();
+      await loadAnimals(showDeleted);
       setIsDeleteModalOpen(false);
       setAnimalToDelete(null);
     } catch (error) {
@@ -85,7 +87,7 @@ export default function AnimalsPage() {
   const handleFormSuccess = async () => {
     setIsModalOpen(false);
     setSelectedAnimal(null);
-    await loadAnimals();
+    await loadAnimals(showDeleted);
   };
 
   const filteredAnimals = animals
@@ -177,6 +179,22 @@ export default function AnimalsPage() {
             <option value="species">Sort by Species</option>
           </Select>
         </div>
+
+        {/* --- ADDED: "Show Deleted" Checkbox for Managers/Vets --- */}
+        {canViewDeleted && (
+          <div className="flex items-center space-x-2 p-2 rounded-md border border-gray-300 bg-white">
+            <input
+              type="checkbox"
+              id="showDeleted"
+              className="h-4 w-4 rounded border-gray-300 text-dark_spring_green-600 focus:ring-dark_spring_green-500"
+              checked={showDeleted}
+              onChange={(e) => setShowDeleted(e.target.checked)}
+            />
+            <Label htmlFor="showDeleted" className="text-sm font-medium text-gray-700">
+              Show Deleted
+            </Label>
+          </div>
+        )}
 
         <Badge variant="outline" className="text-sm">
           {filteredAnimals.length} animal{filteredAnimals.length !== 1 ? 's' : ''}
