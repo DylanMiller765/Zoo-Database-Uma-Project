@@ -2,8 +2,10 @@ import apiClient from '@/lib/api';
 import { Habitat, CreateHabitatData } from '@/types';
 
 export const habitatService = {
-  async getAll(): Promise<Habitat[]> {
-    const response = await apiClient.get<Habitat[]>('/habitats');
+  async getAll(includeDeleted = false): Promise<Habitat[]> {
+    const response = await apiClient.get<Habitat[]>('/habitats', {
+      params: { includeDeleted: includeDeleted ? 'true' : 'false' }
+    });
     return response.data;
   },
 
@@ -24,5 +26,10 @@ export const habitatService = {
 
   async delete(id: number): Promise<void> {
     await apiClient.delete(`/habitats/${id}`);
+  },
+
+  async restore(id: number): Promise<Habitat> {
+    const response = await apiClient.put<Habitat>(`/habitats/${id}/restore`);
+    return response.data;
   },
 };

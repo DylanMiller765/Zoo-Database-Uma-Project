@@ -11,5 +11,6 @@ router.post('/', restrictTo('manager'), CafeController.createCafe);
 router.get('/:id', restrictTo('manager', 'cashier'), CafeController.getCafeById);
 router.put('/:id', restrictTo('manager'), CafeController.updateCafe);
 router.delete('/:id', restrictTo('manager'), CafeController.deleteCafe);
+router.put('/:id/restore', restrictTo('manager'), CafeController.restoreCafe);
 
 export default router;

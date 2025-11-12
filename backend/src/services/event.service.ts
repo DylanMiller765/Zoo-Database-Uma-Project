@@ -41,6 +41,11 @@ export const getUpcomingEvents = async (): Promise<any[]> => {
   return events.map(transformEvent);
 };
 
+export const getAllEventsIncludingDeleted = async (): Promise<any[]> => {
+  const events = await EventModel.findAllIncludingDeleted();
+  return events.map(transformEvent);
+};
+
 export const createEvent = async (eventData: any): Promise<any> => {
   const dbEvent = transformToDb(eventData);
   const created = await EventModel.create(dbEvent);
@@ -60,4 +65,9 @@ export const updateEvent = async (eventId: number, eventData: any): Promise<any 
 
 export const deleteEvent = async (eventId: number): Promise<boolean> => {
   return await EventModel.remove(eventId);
+};
+
+export const restoreEvent = async (eventId: number): Promise<any | null> => {
+  const restored = await EventModel.restore(eventId);
+  return restored ? transformEvent(restored) : null;
 };

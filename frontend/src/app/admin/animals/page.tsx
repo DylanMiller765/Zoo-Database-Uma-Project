@@ -17,12 +17,15 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { Plus, Search, Edit, Trash2, Leaf } from 'lucide-react';
+import { Plus, Search, Edit, Trash2, Leaf, RotateCcw } from 'lucide-react';
 import { Modal } from '@/components/ui/modal';
 import { AnimalForm } from '@/components/admin/AnimalForm';
+import { EntityDetailModal } from '@/components/ui/EntityDetailModal';
+import { ShowDeletedToggle } from '@/components/admin/ShowDeletedToggle';
+import { RestoreConfirmationModal } from '@/components/admin/RestoreConfirmationModal';
 
 export default function AnimalsPage() {
-  const { isAuthenticated, loading: authLoading } = useAuth();
+  const { isAuthenticated, user, loading: authLoading, hasRole } = useAuth();
   const router = useRouter();
   const [animals, setAnimals] = useState<Animal[]>([]);
   const [loading, setLoading] = useState(true);
@@ -34,18 +37,25 @@ export default function AnimalsPage() {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [animalToDelete, setAnimalToDelete] = useState<Animal | null>(null);
 
+  // New state for soft delete features
+  const [showDeleted, setShowDeleted] = useState(false);
+  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
+  const [detailAnimal, setDetailAnimal] = useState<Animal | null>(null);
+  const [isRestoreModalOpen, setIsRestoreModalOpen] = useState(false);
+  const [animalToRestore, setAnimalToRestore] = useState<Animal | null>(null);
 
+  const isManager = hasRole('manager');
 
   useEffect(() => {
     if (isAuthenticated) {
       loadAnimals();
     }
-  }, [isAuthenticated]);
+  }, [isAuthenticated, showDeleted]);
 
   const loadAnimals = async () => {
     try {
       setLoading(true);
-      const data = await animalService.getAll();
+      const data = await animalService.getAll(showDeleted);
       setAnimals(data);
     } catch (error) {
       console.error('Failed to load animals:', error);
@@ -59,12 +69,19 @@ export default function AnimalsPage() {
     setIsModalOpen(true);
   };
 
-  const handleEdit = (animal: Animal) => {
+  const handleEdit = (animal: Animal, e?: React.MouseEvent) => {
+    e?.stopPropagation();
     setSelectedAnimal(animal);
     setIsModalOpen(true);
   };
 
-  const handleDeleteClick = (animal: Animal) => {
+  const handleRowClick = (animal: Animal) => {
+    setDetailAnimal(animal);
+    setIsDetailModalOpen(true);
+  };
+
+  const handleDeleteClick = (animal: Animal, e: React.MouseEvent) => {
+    e.stopPropagation();
     setAnimalToDelete(animal);
     setIsDeleteModalOpen(true);
   };
@@ -82,6 +99,24 @@ export default function AnimalsPage() {
     }
   };
 
+  const handleRestoreClick = (animal: Animal, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setAnimalToRestore(animal);
+    setIsRestoreModalOpen(true);
+  };
+
+  const handleRestore = async () => {
+    if (!animalToRestore?.animal_id) return;
+
+    try {
+      await animalService.restore(animalToRestore.animal_id);
+      await loadAnimals();
+      setAnimalToRestore(null);
+    } catch (error) {
+      console.error('Failed to restore animal:', error);
+    }
+  };
+
   const handleFormSuccess = async () => {
     setIsModalOpen(false);
     setSelectedAnimal(null);
@@ -90,17 +125,12 @@ export default function AnimalsPage() {
 
   const filteredAnimals = animals
     .filter(animal => {
-      // Search filter
       const matchesSearch = animal.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         animal.species.toLowerCase().includes(searchTerm.toLowerCase());
-
-      // Health status filter
       const matchesHealth = healthFilter === 'all' || animal.health_status === healthFilter;
-
       return matchesSearch && matchesHealth;
     })
     .sort((a, b) => {
-      // Sorting
       if (sortBy === 'name') {
         return a.name.localeCompare(b.name);
       } else if (sortBy === 'species') {
@@ -119,6 +149,40 @@ export default function AnimalsPage() {
     };
     return variants[status || 'good'] || 'default';
   };
+
+  const isDeleted = (animal: Animal) => animal.deleted_at !== null && animal.deleted_at !== undefined;
+
+  // Detail modal field configuration
+  const detailSections = [
+    {
+      title: 'Basic Information',
+      fields: [
+        { label: 'Name', key: 'name' },
+        { label: 'Scientific Name', key: 'scientific_name' },
+        { label: 'Species', key: 'species' },
+        { label: 'Gender', key: 'gender', type: 'enum' as const },
+        { label: 'Date of Birth', key: 'date_of_birth', type: 'date' as const },
+        { label: 'Arrival Date', key: 'arrival_date', type: 'date' as const },
+      ],
+    },
+    {
+      title: 'Health & Status',
+      fields: [
+        { label: 'Health Status', key: 'health_status', type: 'enum' as const },
+        { label: 'Active Status', key: 'active_status', type: 'enum' as const },
+        { label: 'Endangerment Status', key: 'endangerment_status', type: 'enum' as const },
+        { label: 'Weight (kg)', key: 'weight', type: 'number' as const },
+        { label: 'Medical Notes', key: 'medical_notes' },
+      ],
+    },
+    {
+      title: 'Location & Origin',
+      fields: [
+        { label: 'Place of Origin', key: 'place_of_origin' },
+        { label: 'Habitat ID', key: 'habitat_id' },
+      ],
+    },
+  ];
 
   if (authLoading || loading) {
     return (
@@ -178,6 +242,10 @@ export default function AnimalsPage() {
           </Select>
         </div>
 
+        {isManager && (
+          <ShowDeletedToggle checked={showDeleted} onChange={setShowDeleted} />
+        )}
+
         <Badge variant="outline" className="text-sm">
           {filteredAnimals.length} animal{filteredAnimals.length !== 1 ? 's' : ''}
         </Badge>
@@ -199,7 +267,11 @@ export default function AnimalsPage() {
           </TableHeader>
           <TableBody>
             {filteredAnimals.map((animal) => (
-              <TableRow key={animal.animal_id}>
+              <TableRow
+                key={animal.animal_id}
+                onClick={() => handleRowClick(animal)}
+                className={`cursor-pointer hover:bg-gray-50 ${isDeleted(animal) ? 'opacity-60 bg-red-50' : ''}`}
+              >
                 <TableCell className="font-medium">{animal.name}</TableCell>
                 <TableCell>
                   <div>
@@ -216,33 +288,52 @@ export default function AnimalsPage() {
                   </Badge>
                 </TableCell>
                 <TableCell>
-                  <Badge
-                    variant={animal.active_status === 'active' ? 'success' : 'outline'}
-                    className="capitalize"
-                  >
-                    {animal.active_status || 'Active'}
-                  </Badge>
+                  {isDeleted(animal) ? (
+                    <Badge variant="danger">Deleted</Badge>
+                  ) : (
+                    <Badge
+                      variant={animal.active_status === 'active' ? 'success' : 'outline'}
+                      className="capitalize"
+                    >
+                      {animal.active_status || 'Active'}
+                    </Badge>
+                  )}
                 </TableCell>
                 <TableCell className="text-xs capitalize">
                   {animal.endangerment_status?.replace('_', ' ') || 'N/A'}
                 </TableCell>
                 <TableCell className="text-right">
                   <div className="flex items-center justify-end gap-2">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleEdit(animal)}
-                    >
-                      <Edit className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleDeleteClick(animal)}
-                      className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
+                    {!isDeleted(animal) ? (
+                      <>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={(e) => handleEdit(animal, e)}
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={(e) => handleDeleteClick(animal, e)}
+                          className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </>
+                    ) : (
+                      isManager && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={(e) => handleRestoreClick(animal, e)}
+                          className="text-green-600 hover:text-green-700 hover:bg-green-50"
+                        >
+                          <RotateCcw className="h-4 w-4" />
+                        </Button>
+                      )
+                    )}
                   </div>
                 </TableCell>
               </TableRow>
@@ -274,7 +365,7 @@ export default function AnimalsPage() {
         open={isDeleteModalOpen}
         onClose={() => setIsDeleteModalOpen(false)}
         title="Delete Animal"
-        description="Are you sure you want to delete this animal? This action cannot be undone."
+        description="Are you sure you want to delete this animal? This action can be undone by a manager."
       >
         <div className="space-y-4">
           {animalToDelete && (
@@ -294,6 +385,30 @@ export default function AnimalsPage() {
           </div>
         </div>
       </Modal>
+
+      {/* Detail Modal */}
+      <EntityDetailModal
+        open={isDetailModalOpen}
+        onClose={() => setIsDetailModalOpen(false)}
+        title={`Animal: ${detailAnimal?.name || ''}`}
+        entity={detailAnimal}
+        sections={detailSections}
+        onEdit={() => {
+          setIsDetailModalOpen(false);
+          setSelectedAnimal(detailAnimal);
+          setIsModalOpen(true);
+        }}
+        canEdit={!isDeleted(detailAnimal!)}
+      />
+
+      {/* Restore Confirmation Modal */}
+      <RestoreConfirmationModal
+        open={isRestoreModalOpen}
+        onClose={() => setIsRestoreModalOpen(false)}
+        onConfirm={handleRestore}
+        itemName={animalToRestore?.name || ''}
+        itemType="Animal"
+      />
     </div>
   );
 }

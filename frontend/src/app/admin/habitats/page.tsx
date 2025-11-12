@@ -16,20 +16,29 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { Plus, Search, Edit, Trash2, Home } from 'lucide-react';
+import { Plus, Search, Edit, Trash2, Home, RotateCcw } from 'lucide-react';
 import { Modal } from '@/components/ui/modal';
 import { HabitatForm } from '@/components/admin/HabitatForm';
+import { EntityDetailModal } from '@/components/ui/EntityDetailModal';
+import { ShowDeletedToggle } from '@/components/admin/ShowDeletedToggle';
+import { RestoreConfirmationModal } from '@/components/admin/RestoreConfirmationModal';
 
 export default function HabitatsPage() {
-  const { isAuthenticated, loading: authLoading } = useAuth();
+  const { isAuthenticated, loading: authLoading, hasRole } = useAuth();
   const router = useRouter();
   const [habitats, setHabitats] = useState<Habitat[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [showDeleted, setShowDeleted] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedHabitat, setSelectedHabitat] = useState<Habitat | null>(null);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [habitatToDelete, setHabitatToDelete] = useState<Habitat | null>(null);
+  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
+  const [detailHabitat, setDetailHabitat] = useState<Habitat | null>(null);
+  const [isRestoreModalOpen, setIsRestoreModalOpen] = useState(false);
+  const [habitatToRestore, setHabitatToRestore] = useState<Habitat | null>(null);
+  const isManager = hasRole('manager');
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -37,10 +46,16 @@ export default function HabitatsPage() {
     }
   }, [isAuthenticated]);
 
+  useEffect(() => {
+    if (isAuthenticated) {
+      loadHabitats();
+    }
+  }, [showDeleted]);
+
   const loadHabitats = async () => {
     try {
       setLoading(true);
-      const data = await habitatService.getAll();
+      const data = await habitatService.getAll(showDeleted);
       setHabitats(data);
     } catch (error) {
       console.error('Failed to load habitats:', error);
@@ -54,15 +69,43 @@ export default function HabitatsPage() {
     setIsModalOpen(true);
   };
 
-  const handleEdit = (habitat: Habitat) => {
+  const handleEdit = (habitat: Habitat, e: React.MouseEvent) => {
+    e.stopPropagation();
     setSelectedHabitat(habitat);
     setIsModalOpen(true);
   };
 
-  const handleDeleteClick = (habitat: Habitat) => {
+  const handleRowClick = (habitat: Habitat) => {
+    setDetailHabitat(habitat);
+    setIsDetailModalOpen(true);
+  };
+
+  const handleRestoreClick = (habitat: Habitat, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setHabitatToRestore(habitat);
+    setIsRestoreModalOpen(true);
+  };
+
+  const handleRestore = async () => {
+    if (!habitatToRestore?.habitat_id) return;
+
+    try {
+      await habitatService.restore(habitatToRestore.habitat_id);
+      await loadHabitats();
+      setIsRestoreModalOpen(false);
+      setHabitatToRestore(null);
+    } catch (error) {
+      console.error('Failed to restore habitat:', error);
+    }
+  };
+
+  const handleDeleteClick = (habitat: Habitat, e: React.MouseEvent) => {
+    e.stopPropagation();
     setHabitatToDelete(habitat);
     setIsDeleteModalOpen(true);
   };
+
+  const isDeleted = (habitat: Habitat) => habitat.deleted_at !== null && habitat.deleted_at !== undefined;
 
   const handleDelete = async () => {
     if (!habitatToDelete?.habitat_id) return;
@@ -129,16 +172,25 @@ export default function HabitatsPage() {
         </Button>
       </div>
 
-      {/* Search */}
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
-        <Input
-          type="text"
-          placeholder="Search habitats by name or environment type..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          className="pl-10"
-        />
+      {/* Search and Filters */}
+      <div className="flex items-center gap-4">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
+          <Input
+            type="text"
+            placeholder="Search habitats by name or environment type..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="pl-10"
+          />
+        </div>
+
+        {isManager && (
+          <ShowDeletedToggle
+            checked={showDeleted}
+            onChange={setShowDeleted}
+          />
+        )}
       </div>
 
       {/* Table */}
@@ -164,32 +216,57 @@ export default function HabitatsPage() {
               </TableRow>
             ) : (
               filteredHabitats.map((habitat) => (
-                <TableRow key={habitat.habitat_id}>
+                <TableRow
+                  key={habitat.habitat_id}
+                  onClick={() => handleRowClick(habitat)}
+                  className={`cursor-pointer hover:bg-gray-50 ${isDeleted(habitat) ? 'opacity-60 bg-red-50' : ''}`}
+                >
                   <TableCell className="font-medium">{habitat.habitat_name}</TableCell>
                   <TableCell>{habitat.environment_type}</TableCell>
                   <TableCell>{habitat.size}</TableCell>
                   <TableCell>{habitat.animal_capacity} animals</TableCell>
-                  <TableCell>{getStatusBadge(habitat.status)}</TableCell>
+                  <TableCell>
+                    {isDeleted(habitat) ? (
+                      <Badge variant="destructive">Deleted</Badge>
+                    ) : (
+                      getStatusBadge(habitat.status)
+                    )}
+                  </TableCell>
                   <TableCell>
                     {new Date(habitat.last_maintenance).toLocaleDateString()}
                   </TableCell>
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleEdit(habitat)}
-                      >
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleDeleteClick(habitat)}
-                        className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+                      {!isDeleted(habitat) ? (
+                        <>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={(e) => handleEdit(habitat, e)}
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={(e) => handleDeleteClick(habitat, e)}
+                            className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </>
+                      ) : (
+                        isManager && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={(e) => handleRestoreClick(habitat, e)}
+                            className="text-green-600 hover:text-green-700 hover:bg-green-50"
+                          >
+                            <RotateCcw className="h-4 w-4" />
+                          </Button>
+                        )
+                      )}
                     </div>
                   </TableCell>
                 </TableRow>
@@ -240,6 +317,55 @@ export default function HabitatsPage() {
           </div>
         </div>
       </Modal>
+
+      {/* Detail Modal */}
+      <EntityDetailModal
+        open={isDetailModalOpen}
+        onClose={() => setIsDetailModalOpen(false)}
+        title="Habitat Details"
+        entity={detailHabitat}
+        sections={[
+          {
+            title: 'Basic Information',
+            fields: [
+              { label: 'Habitat Name', key: 'habitat_name' },
+              { label: 'Environment Type', key: 'environment_type' },
+              { label: 'Size', key: 'size' },
+              { label: 'Animal Capacity', key: 'animal_capacity', type: 'number' as const },
+              { label: 'Status', key: 'status', type: 'enum' as const },
+            ],
+          },
+          {
+            title: 'Maintenance',
+            fields: [
+              { label: 'Cleaning Schedule', key: 'cleaning_schedule' },
+              { label: 'Last Maintenance', key: 'last_maintenance', type: 'date' as const },
+              { label: 'Created Date', key: 'created_date', type: 'datetime' as const },
+            ],
+          },
+          {
+            title: 'Association',
+            fields: [
+              { label: 'Attraction ID', key: 'attraction_id' },
+            ],
+          },
+        ]}
+        onEdit={!isDeleted(detailHabitat) ? () => {
+          setIsDetailModalOpen(false);
+          setSelectedHabitat(detailHabitat);
+          setIsModalOpen(true);
+        } : undefined}
+        canEdit={!isDeleted(detailHabitat)}
+      />
+
+      {/* Restore Confirmation Modal */}
+      <RestoreConfirmationModal
+        open={isRestoreModalOpen}
+        onClose={() => setIsRestoreModalOpen(false)}
+        onConfirm={handleRestore}
+        itemName={habitatToRestore?.habitat_name || ''}
+        itemType="habitat"
+      />
     </div>
   );
 }

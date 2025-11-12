@@ -6,7 +6,10 @@ import * as eventService from '../services/event.service';
 // Placeholder for get_upcoming_events
 export const getUpcomingEvents = async (req: Request, res: Response) => {
   try {
-    const events = await eventService.getUpcomingEvents();
+    const includeDeleted = req.query.includeDeleted === 'true';
+    const events = includeDeleted
+      ? await eventService.getAllEventsIncludingDeleted()
+      : await eventService.getUpcomingEvents();
     res.json(events);
   } catch (error) {
     res.status(500).json({ message: 'Error fetching upcoming events', error });
@@ -71,5 +74,19 @@ export const deleteEvent = async (req: Request, res: Response) => {
     }
   } catch (error) {
     res.status(500).json({ message: 'Error deleting event', error });
+  }
+};
+
+export const restoreEvent = async (req: Request, res: Response) => {
+  try {
+    const eventId = parseInt(req.params.id, 10);
+    const restoredEvent = await eventService.restoreEvent(eventId);
+    if (restoredEvent) {
+      res.json(restoredEvent);
+    } else {
+      res.status(404).json({ message: 'Event not found' });
+    }
+  } catch (error) {
+    res.status(500).json({ message: 'Error restoring event', error });
   }
 };

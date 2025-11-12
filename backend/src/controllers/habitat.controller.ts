@@ -4,7 +4,10 @@ import { HabitatService } from '../services/habitat.service';
 export class HabitatController {
   static async getAllHabitats(req: Request, res: Response): Promise<void> {
     try {
-      const habitats = await HabitatService.getAllHabitats();
+      const includeDeleted = req.query.includeDeleted === 'true';
+      const habitats = includeDeleted
+        ? await HabitatService.getAllHabitatsIncludingDeleted()
+        : await HabitatService.getAllHabitats();
       res.status(200).json(habitats);
     } catch (error) {
       res.status(500).json({ message: 'Error fetching habitats', error });
@@ -65,6 +68,19 @@ export class HabitatController {
       res.status(204).send();
     } catch (error) {
       res.status(500).json({ message: 'Error deleting habitat', error });
+    }
+  }
+
+  static async restoreHabitat(req: Request, res: Response): Promise<void> {
+    try {
+      const restoredHabitat = await HabitatService.restoreHabitat(parseInt(req.params.id));
+      if (restoredHabitat) {
+        res.status(200).json(restoredHabitat);
+      } else {
+        res.status(404).json({ message: 'Habitat not found' });
+      }
+    } catch (error) {
+      res.status(500).json({ message: 'Error restoring habitat', error });
     }
   }
 }

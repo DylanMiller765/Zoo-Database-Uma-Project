@@ -2,8 +2,10 @@ import apiClient from '@/lib/api';
 import { Animal, CreateAnimalData, ApiResponse } from '@/types';
 
 export const animalService = {
-  async getAll(): Promise<Animal[]> {
-    const response = await apiClient.get<Animal[]>('/animals');
+  async getAll(includeDeleted = false): Promise<Animal[]> {
+    const response = await apiClient.get<Animal[]>('/animals', {
+      params: { includeDeleted: includeDeleted ? 'true' : 'false' }
+    });
     return response.data;
   },
 
@@ -24,5 +26,10 @@ export const animalService = {
 
   async delete(id: number): Promise<void> {
     await apiClient.delete(`/animals/${id}`);
+  },
+
+  async restore(id: number): Promise<Animal> {
+    const response = await apiClient.put<Animal>(`/animals/${id}/restore`);
+    return response.data;
   },
 };
