@@ -12,9 +12,6 @@ export default function Header() {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  // INTENTIONAL ERROR: Type mismatch
-  const testError: number = "this will fail";
-
   // Helper: always navigate to "/#id" so it works from any page
   const to = (hash: string) => `/#${hash}`;
 
