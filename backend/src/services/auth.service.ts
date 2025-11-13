@@ -80,7 +80,7 @@ class AuthService {
               c.first_name as customer_first_name, c.last_name as customer_last_name,
               c.email as customer_email, c.phone as customer_phone, c.annual_pass,
               c.registration_date as registration_date,
-              c.membership_start_date, c.membership_end_date
+              c.membership_start_date, c.membership_end_date, c.membership_auto_renew
        FROM user_accounts u
        LEFT JOIN employees e ON u.employee_id = e.employee_id
        LEFT JOIN customers c ON u.customer_id = c.customer_id
