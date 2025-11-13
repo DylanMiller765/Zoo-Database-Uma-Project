@@ -25,7 +25,12 @@ type ProfileResponse = {
 type SummaryResponse = {
   success: boolean;
   data: {
-    membership: { annual_pass: 'yes' | 'no' };
+    membership: { 
+      annual_pass: 'yes' | 'no';
+      status: 'Active' | 'Expired' | 'None';
+      membership_start_date?: string | null;
+      membership_end_date?: string | null;
+    };
     ticketsUpcoming: any[];
     visitsRecent: any[];
   };
@@ -52,12 +57,15 @@ export default function CustomerDashboard() {
   const { user, isAuthenticated, loading } = useAuth();
   const [fetching, setFetching] = React.useState(true);
   const [profile, setProfile] = React.useState<any>(null);
+  const [membershipData, setMembershipData] = React.useState<SummaryResponse['data']['membership'] | null>(null);
   const [active, setActive] = React.useState<string>("dashboard");
   const [tickets, setTickets] = React.useState<any[]>([]);
   const [upcomingTickets, setUpcomingTickets] = React.useState<any[]>([]);
   const [visits, setVisits] = React.useState<any[]>([]);
   const [selectedTicket, setSelectedTicket] = React.useState<any | null>(null);
   const [showTicketModal, setShowTicketModal] = React.useState(false);
+  const [autoRenew, setAutoRenew] = React.useState<boolean>(false);
+  const [loadingAutoRenew, setLoadingAutoRenew] = React.useState(false);
 
   React.useEffect(() => {
     if (!loading) {
@@ -81,9 +89,15 @@ export default function CustomerDashboard() {
       ]);
 
       setProfile(profileRes.data.data);
+      setMembershipData(summaryRes.data.data.membership);
       setUpcomingTickets(summaryRes.data.data.ticketsUpcoming || []);
       setVisits(visitsRes.data.data || []);
       setTickets(ticketsRes.data.data || []);
+      
+      // Load auto-renew status
+      if (profileRes.data.data?.membership_auto_renew !== undefined) {
+        setAutoRenew(profileRes.data.data.membership_auto_renew);
+      }
     } catch (e: any) {
       console.error("Failed to load profile", e);
     } finally {
@@ -98,30 +112,21 @@ export default function CustomerDashboard() {
     return dt.toLocaleDateString();
   };
 
+  // Use backend-computed membership status instead of computing client-side
   const membership = React.useMemo(() => {
-    const annualPass = profile?.annual_pass as "yes" | "no" | undefined;
-    // Compute expiration using actual membership_end_date from database
-    let expired = false;
-    if (annualPass === "yes") {
-      const endDate = profile?.membership_end_date;
-      if (endDate) {
-        const expiry = new Date(endDate);
-        if (!Number.isNaN(expiry.getTime())) {
-          const now = new Date();
-          if (now > expiry) expired = true;
-        }
-      }
+    if (!membershipData) {
+      return { status: "None" as const, detail: "No membership", expired: false };
     }
-    const status = annualPass === "yes" && !expired ? "Active" : (annualPass === "yes" && expired ? "Expired" : "None");
-    const detail = annualPass === "yes" && !expired ? "Annual Pass" : (annualPass === "yes" && expired ? "Expired" : "No membership");
-    return { status, detail, expired };
-  }, [profile]);
+    const status = membershipData.status || "None";
+    const detail = status === "Active" ? "Annual Pass" : (status === "Expired" ? "Expired" : "No membership");
+    return { status, detail, expired: status === "Expired" };
+  }, [membershipData]);
 
   const membershipDates = React.useMemo(() => {
-    if (membership.status === 'None') return { start: null as Date | null, expiry: null as Date | null };
-    // Use actual database fields
-    const startRaw = profile?.membership_start_date;
-    const endRaw = profile?.membership_end_date;
+    if (membership.status === 'None' || !membershipData) return { start: null as Date | null, expiry: null as Date | null };
+    // Use dates from backend-computed membership data
+    const startRaw = membershipData.membership_start_date;
+    const endRaw = membershipData.membership_end_date;
     
     const startDate = startRaw ? new Date(startRaw) : null;
     const expiry = endRaw ? new Date(endRaw) : null;
@@ -131,7 +136,7 @@ export default function CustomerDashboard() {
     if (expiry && Number.isNaN(expiry.getTime())) return { start: null, expiry: null };
     
     return { start: startDate, expiry };
-  }, [membership.status, profile]);
+  }, [membership.status, membershipData]);
 
   const handleLogout = () => {
     try {
@@ -141,6 +146,28 @@ export default function CustomerDashboard() {
       }
     } finally {
       router.replace("/login");
+    }
+  };
+
+  const handleToggleAutoRenew = async () => {
+    const newValue = !autoRenew;
+    setLoadingAutoRenew(true);
+    
+    try {
+      const response = await apiClient.put('/me/membership/auto-renew', {
+        autoRenew: newValue,
+      });
+      
+      if (response.data.success) {
+        setAutoRenew(newValue);
+      } else {
+        alert(response.data.message || 'Failed to update auto-renewal');
+      }
+    } catch (error: any) {
+      console.error('Failed to toggle auto-renew:', error);
+      alert(error.response?.data?.message || 'Failed to update auto-renewal. Please try again.');
+    } finally {
+      setLoadingAutoRenew(false);
     }
   };
 
@@ -356,7 +383,7 @@ export default function CustomerDashboard() {
                       </li>
                     </ul>
                     <Button className="mt-6 w-full" onClick={() => router.push('/membership')}>
-                      {membership.status === "Expired" ? "Renew Membership" : "Purchase Membership"}
+                      {membership.status === "Expired" ? "Renew Membership" : "Buy Membership"}
                     </Button>
                   </div>
                 </div>
@@ -381,6 +408,33 @@ export default function CustomerDashboard() {
                       </div>
                     </div>
                   )}
+
+                  {/* Auto-Renewal Toggle */}
+                  <div className="rounded-xl border border-gray-200 bg-white p-4 mb-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="font-semibold text-gray-900">Auto-Renewal</p>
+                        <p className="text-sm text-gray-600 mt-1">
+                          {autoRenew 
+                            ? 'Your membership will automatically renew on the expiration date'
+                            : 'Turn on to automatically renew your membership when it expires'}
+                        </p>
+                      </div>
+                      <button
+                        onClick={handleToggleAutoRenew}
+                        disabled={loadingAutoRenew}
+                        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-sea_green-500 focus:ring-offset-2 ${
+                          autoRenew ? 'bg-sea_green-600' : 'bg-gray-200'
+                        } ${loadingAutoRenew ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+                      >
+                        <span
+                          className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                            autoRenew ? 'translate-x-6' : 'translate-x-1'
+                          }`}
+                        />
+                      </button>
+                    </div>
+                  </div>
 
                   <div className="rounded-xl border-2 border-sea_green-200 bg-sea_green-50 p-6">
                     <h4 className="font-semibold text-gray-900 mb-3">Your Member Benefits</h4>
@@ -409,12 +463,28 @@ export default function CustomerDashboard() {
                   </div>
 
                   <div className="mt-4 flex gap-3">
-                    <Button variant="outline" onClick={() => router.push('/membership')}>
-                      Renew Membership
-                    </Button>
                     <Button variant="outline" onClick={() => router.push('/membership/confirmation')}>
                       View Details
                     </Button>
+                    {/* Show Renew button if auto-renewal is OFF and membership expires within 30 days */}
+                    {(() => {
+                      if (!autoRenew && membershipDates.expiry) {
+                        const today = new Date();
+                        today.setHours(0, 0, 0, 0);
+                        const expiryDate = new Date(membershipDates.expiry);
+                        expiryDate.setHours(0, 0, 0, 0);
+                        const daysUntilExpiry = Math.ceil((expiryDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+                        
+                        if (daysUntilExpiry > 0 && daysUntilExpiry <= 30) {
+                          return (
+                            <Button onClick={() => router.push('/membership')}>
+                              Renew Membership
+                            </Button>
+                          );
+                        }
+                      }
+                      return null;
+                    })()}
                   </div>
                 </div>
               )}
