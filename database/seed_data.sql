@@ -44,7 +44,11 @@ INSERT INTO employees (employee_id, first_name, last_name, email, phone, ssn, jo
 (5, 'Lisa', 'Thompson', 'lisa.thompson@zoo.com', '555-0105', '567-89-0123', 'cashier', 'part_time', NULL, 'active', '2023-05-15', 'female'),
 (6, 'James', 'Wilson', 'james.wilson@zoo.com', '555-0106', '678-90-1234', 'guide', 'part_time', NULL, 'active', '2023-07-01', 'male'),
 (7, 'Anna', 'Martinez', 'anna.martinez@zoo.com', '555-0107', '789-01-2345', 'keeper', 'full_time', 46000.00, 'active', '2021-09-12', 'female'),
-(8, 'Tom', 'Brown', 'tom.brown@zoo.com', '555-0108', '890-12-3456', 'maintenance', 'full_time', 42000.00, 'active', '2020-11-05', 'male');
+(8, 'Tom', 'Brown', 'tom.brown@zoo.com', '555-0108', '890-12-3456', 'maintenance', 'full_time', 42000.00, 'active', '2020-11-05', 'male'),
+(9, 'Chris', 'Green', 'chris.green@zoo.com', '555-0109', '987-65-4321', 'keeper', 'full_time', 45000.00, 'active', '2023-08-01', 'male'),
+(10, 'Jessica', 'Blue', 'jessica.blue@zoo.com', '555-0110', '876-54-3210', 'keeper', 'full_time', 45500.00, 'active', '2023-09-01', 'female'),
+(11, 'Mark', 'White', 'mark.white@zoo.com', '555-0111', '765-43-2109', 'veterinarian', 'full_time', 86000.00, 'active', '2023-07-15', 'male'),
+(12, 'Laura', 'Black', 'laura.black@zoo.com', '555-0112', '654-32-1098', 'keeper', 'part_time', NULL, 'active', '2024-01-10', 'female');
 
 -- =======================================
 -- CUSTOMERS (Source: seed_test_users.sql, including john.smith@email.com)
@@ -74,7 +78,11 @@ INSERT INTO user_accounts (account_id, username, email, role, employee_id) VALUE
 (5, 'lisa.thompson', 'lisa.thompson@zoo.com', 'employee', 5),
 (6, 'james.wilson', 'james.wilson@zoo.com', 'employee', 6),
 (7, 'anna.martinez', 'anna.martinez@zoo.com', 'employee', 7),
-(8, 'tom.brown', 'tom.brown@zoo.com', 'employee', 8);
+(8, 'tom.brown', 'tom.brown@zoo.com', 'employee', 8),
+(12, 'chris.green', 'chris.green@zoo.com', 'employee', 9),
+(13, 'jessica.blue', 'jessica.blue@zoo.com', 'employee', 10),
+(14, 'mark.white', 'mark.white@zoo.com', 'employee', 11),
+(15, 'laura.black', 'laura.black@zoo.com', 'employee', 12);
 
 -- Customers
 INSERT INTO user_accounts (account_id, username, email, role, customer_id) VALUES
@@ -96,7 +104,11 @@ INSERT INTO passwords (account_id, password_hash) VALUES
 (8, 'password'),  -- Tom Brown (Maintenance)
 (9, 'password'),  -- John Smith (Customer)
 (10, 'password'), -- Maria Garcia (Customer)
-(11, 'password'); -- Robert Davis (Customer)
+(11, 'password'), -- Robert Davis (Customer)
+(12, 'password'),
+(13, 'password'),
+(14, 'password'),
+(15, 'password');
 
 -- =======================================
 -- ATTRACTIONS (Source: mock_data.sql)
@@ -118,7 +130,8 @@ INSERT INTO habitats (habitat_name, attraction_id, size, environment_type, anima
 ('Penguin Cove', 3, 'Medium', 'Arctic', 25, 'active'),
 ('Polar Bear Den', 3, 'Large', 'Arctic', 4, 'active'),
 ('Dolphin Pool', 4, 'Extra Large', 'Aquatic', 8, 'active'),
-('Snake Sanctuary', 5, 'Medium', 'Desert', 15, 'active');
+('Snake Sanctuary', 5, 'Medium', 'Desert', 15, 'active'),
+('Aviary', 2, 'Large', 'Tropical Forest', 50, 'active');
 
 -- =======================================
 -- ANIMALS (Source: mock_data.sql)
@@ -131,7 +144,37 @@ INSERT INTO animals (name, scientific_name, species, date_of_birth, arrival_date
 ('Skipper', 'Aptenodytes forsteri', 'Emperor Penguin', '2020-07-15', '2021-01-10', 'male', 'Antarctica', 4, 'excellent', 'active', 'near_threatened', 23.5),
 ('Snowball', 'Ursus maritimus', 'Polar Bear', '2016-12-20', '2018-03-15', 'female', 'Arctic Circle', 5, 'good', 'active', 'vulnerable', 250.0),
 ('Flipper', 'Tursiops truncatus', 'Bottlenose Dolphin', '2017-09-08', '2019-04-20', 'male', 'Florida', 6, 'excellent', 'active', 'least_concern', 200.0),
-('Monty', 'Python regius', 'Ball Python', '2021-03-15', '2022-05-10', 'male', 'Ghana', 7, 'good', 'active', 'least_concern', 1.8);
+('Monty', 'Python regius', 'Ball Python', '2021-03-15', '2022-05-10', 'male', 'Ghana', 7, 'good', 'active', 'least_concern', 1.8),
+('Zazu', 'Panthera leo', 'African Lion', '2020-01-01', '2021-01-01', 'male', 'Tanzania', 1, 'excellent', 'active', 'vulnerable', 180.0),
+('Sarabi', 'Panthera leo', 'African Lion', '2019-05-20', '2021-01-01', 'female', 'Tanzania', 1, 'good', 'active', 'vulnerable', 120.5),
+('Tantor', 'Loxodonta africana', 'African Elephant', '2010-02-15', '2012-03-01', 'male', 'Botswana', 2, 'excellent', 'active', 'endangered', 6000.0),
+('Kala', 'Loxodonta africana', 'African Elephant', '2012-07-22', '2014-08-01', 'female', 'Botswana', 2, 'good', 'active', 'endangered', 4500.0),
+('Kerchak', 'Gorilla gorilla', 'Western Gorilla', '2010-09-10', '2012-10-01', 'male', 'Cameroon', 3, 'excellent', 'active', 'critically_endangered', 150.0),
+('Terk', 'Gorilla gorilla', 'Western Gorilla', '2011-11-05', '2013-12-01', 'female', 'Cameroon', 3, 'good', 'active', 'critically_endangered', 90.0),
+('Pingu', 'Aptenodytes forsteri', 'Emperor Penguin', '2021-06-01', '2022-01-10', 'male', 'Antarctica', 4, 'excellent', 'active', 'near_threatened', 24.0),
+('Pingi', 'Aptenodytes forsteri', 'Emperor Penguin', '2021-06-05', '2022-01-10', 'female', 'Antarctica', 4, 'excellent', 'active', 'near_threatened', 22.0),
+('Pinga', 'Aptenodytes forsteri', 'Emperor Penguin', '2022-08-01', '2023-02-10', 'female', 'Antarctica', 4, 'good', 'active', 'near_threatened', 15.0),
+('Kowalski', 'Aptenodytes forsteri', 'Emperor Penguin', '2020-07-15', '2021-01-10', 'male', 'Antarctica', 4, 'excellent', 'active', 'near_threatened', 23.5),
+('Rico', 'Aptenodytes forsteri', 'Emperor Penguin', '2020-07-15', '2021-01-10', 'male', 'Antarctica', 4, 'excellent', 'active', 'near_threatened', 23.5),
+('Lars', 'Ursus maritimus', 'Polar Bear', '2015-11-10', '2017-02-15', 'male', 'Norway', 5, 'good', 'active', 'vulnerable', 450.0),
+('Echo', 'Tursiops truncatus', 'Bottlenose Dolphin', '2018-08-01', '2020-09-01', 'female', 'Mexico', 6, 'excellent', 'active', 'least_concern', 180.0),
+('Coral', 'Tursiops truncatus', 'Bottlenose Dolphin', '2019-05-20', '2021-06-01', 'female', 'Mexico', 6, 'good', 'active', 'least_concern', 170.0),
+('Kaa', 'Python reticulatus', 'Reticulated Python', '2020-01-15', '2021-02-10', 'male', 'Indonesia', 7, 'good', 'active', 'least_concern', 2.5),
+('Nagini', 'Python bivittatus', 'Burmese Python', '2019-03-10', '2020-04-05', 'female', 'Myanmar', 7, 'excellent', 'active', 'vulnerable', 3.0),
+('Salazar', 'Boa constrictor', 'Boa Constrictor', '2021-08-20', '2022-09-15', 'male', 'Colombia', 7, 'good', 'active', 'least_concern', 2.0),
+('Medusa', 'Eunectes murinus', 'Green Anaconda', '2018-06-12', '2019-07-20', 'female', 'Brazil', 7, 'excellent', 'active', 'least_concern', 4.5),
+('Basilisk', 'Varanus komodoensis', 'Komodo Dragon', '2017-09-30', '2018-11-01', 'male', 'Indonesia', 7, 'good', 'active', 'endangered', 70.0),
+('Iago', 'Ara macao', 'Scarlet Macaw', '2022-01-10', '2023-02-01', 'male', 'Brazil', 8, 'excellent', 'active', 'least_concern', 1.0),
+('Blu', 'Ara ararauna', 'Blue-and-yellow Macaw', '2022-02-15', '2023-03-01', 'male', 'Brazil', 8, 'excellent', 'active', 'least_concern', 1.2),
+('Jewel', 'Ara ararauna', 'Blue-and-yellow Macaw', '2022-03-20', '2023-04-01', 'female', 'Brazil', 8, 'good', 'active', 'least_concern', 1.1),
+('Touki', 'Ramphastos toco', 'Toco Toucan', '2021-05-10', '2022-06-01', 'male', 'Brazil', 8, 'excellent', 'active', 'least_concern', 0.6),
+('Hedwig', 'Bubo scandiacus', 'Snowy Owl', '2020-08-01', '2021-09-01', 'female', 'Arctic', 8, 'good', 'active', 'vulnerable', 2.0),
+('Errol', 'Cacatua galerita', 'Sulphur-crested Cockatoo', '2019-04-12', '2020-05-01', 'male', 'Australia', 8, 'excellent', 'active', 'least_concern', 0.9),
+('Kevin', 'Phoenicopterus roseus', 'Greater Flamingo', '2022-06-30', '2023-07-01', 'male', 'Africa', 8, 'good', 'active', 'least_concern', 3.5),
+('Becky', 'Gypaetus barbatus', 'Bearded Vulture', '2018-09-10', '2019-10-01', 'female', 'Himalayas', 8, 'excellent', 'active', 'near_threatened', 6.0),
+('Nigel', 'Pelecanus conspicillatus', 'Australian Pelican', '2021-11-05', '2022-12-01', 'male', 'Australia', 8, 'good', 'active', 'least_concern', 5.0),
+('Scuttle', 'Larus argentatus', 'Herring Gull', '2023-01-01', '2024-02-01', 'male', 'North America', 8, 'excellent', 'active', 'least_concern', 1.5);
+
 
 -- =======================================
 -- EVENTS (Source: mock_data.sql, FKs adjusted)
@@ -164,7 +207,11 @@ INSERT INTO gift_shop_items (gift_shop_id, name, description, category, price, c
 (1, 'Plush Lion', 'Soft and cuddly lion plushie', 'Toys', 19.99, 8.00, 150, 'ToyWorld Inc'),
 (1, 'Zoo T-Shirt', 'Cotton t-shirt with zoo logo', 'Apparel', 24.99, 10.00, 200, 'Apparel Plus'),
 (1, 'Animal Stickers', 'Pack of 20 animal stickers', 'Souvenirs', 4.99, 1.50, 500, 'Sticker Co'),
-(2, 'Tropical Bird Poster', 'Beautiful rainforest bird poster', 'Art', 12.99, 5.00, 75, 'Art Prints Ltd');
+(2, 'Tropical Bird Poster', 'Beautiful rainforest bird poster', 'Art', 12.99, 5.00, 75, 'Art Prints Ltd'),
+(1, 'Plush Penguin', 'Soft and cuddly penguin plushie', 'Toys', 19.99, 8.00, 120, 'ToyWorld Inc'),
+(1, 'Dolphin Keychain', 'Metal keychain with a dolphin charm', 'Souvenirs', 7.99, 2.50, 300, 'Sticker Co'),
+(2, 'Zoo Mug', 'Ceramic mug with zoo animal illustrations', 'Homeware', 14.99, 6.00, 100, 'Apparel Plus'),
+(1, 'Savanna Hat', 'Wide-brimmed hat for sun protection', 'Apparel', 29.99, 12.00, 80, 'Apparel Plus');
 
 -- =======================================
 -- CAFE ITEMS (Source: mock_data.sql)
@@ -175,7 +222,11 @@ INSERT INTO cafe_items (cafe_id, name, description, category, price, is_availabl
 (1, 'French Fries', 'Crispy golden fries', 'Sides', 4.99, TRUE),
 (1, 'Soda', 'Fountain drink', 'Beverages', 2.99, TRUE),
 (2, 'Chicken Nuggets', 'Kids meal chicken nuggets', 'Entrees', 7.99, TRUE),
-(2, 'Ice Cream', 'Soft serve ice cream cone', 'Desserts', 3.99, TRUE);
+(2, 'Ice Cream', 'Soft serve ice cream cone', 'Desserts', 3.99, TRUE),
+(1, 'Pizza Slice', 'Slice of cheese or pepperoni pizza', 'Entrees', 6.99, TRUE),
+(1, 'Salad', 'Fresh garden salad with choice of dressing', 'Sides', 7.49, TRUE),
+(2, 'Coffee', 'Freshly brewed hot coffee', 'Beverages', 3.49, TRUE),
+(2, 'Bottled Water', '500ml bottled water', 'Beverages', 2.49, TRUE);
 
 -- =======================================
 -- TICKETS (Source: mock_data.sql, FKs adjusted)
@@ -211,6 +262,48 @@ INSERT INTO zookeeper_assignments (keeper_id, animal_id, shift) VALUES
 (7, 4, 'Morning'), -- Koko (Gorilla)
 (7, 6, 'Afternoon'), -- Snowball (Polar Bear)
 (7, 8, 'Weekly'); -- Monty (Python)
+
+-- More assignments for new animals and keepers
+INSERT INTO zookeeper_assignments (keeper_id, animal_id, shift) VALUES
+-- Chris Green (keeper_id: 9) assignments
+(9, 9, 'Morning'), -- Zazu (Lion)
+(9, 10, 'Morning'), -- Sarabi (Lion)
+(9, 11, 'Afternoon'), -- Tantor (Elephant)
+(9, 12, 'Afternoon'), -- Kala (Elephant)
+(9, 29, 'Morning'), -- Kevin (Flamingo)
+(9, 30, 'Morning'), -- Becky (Vulture)
+
+-- Jessica Blue (keeper_id: 10) assignments
+(10, 13, 'Morning'), -- Kerchak (Gorilla)
+(10, 14, 'Morning'), -- Terk (Gorilla)
+(10, 15, 'Afternoon'), -- Pingu (Penguin)
+(10, 16, 'Afternoon'), -- Pingi (Penguin)
+(10, 17, 'Afternoon'), -- Pinga (Penguin)
+(10, 18, 'Afternoon'), -- Kowalski (Penguin)
+(10, 19, 'Afternoon'), -- Rico (Penguin)
+
+-- Laura Black (keeper_id: 12) assignments
+(12, 20, 'Morning'), -- Lars (Polar Bear)
+(12, 21, 'Afternoon'), -- Echo (Dolphin)
+(12, 22, 'Afternoon'), -- Coral (Dolphin)
+(12, 23, 'Weekly'), -- Kaa (Python)
+(12, 24, 'Weekly'), -- Nagini (Python)
+(12, 25, 'Weekly'), -- Salazar (Boa)
+(12, 26, 'Weekly'), -- Medusa (Anaconda)
+(12, 27, 'Weekly'), -- Basilisk (Komodo Dragon)
+
+-- Additional assignments for existing keepers
+-- Mike Chen (employee_id: 2)
+(2, 28, 'Morning'), -- Iago (Macaw)
+(2, 31, 'Morning'), -- Nigel (Pelican)
+-- Anna Martinez (employee_id: 7)
+(7, 32, 'Morning'), -- Scuttle (Gull)
+(7, 33, 'Afternoon'), -- Blu (Macaw)
+(7, 34, 'Afternoon'), -- Jewel (Macaw)
+(7, 35, 'Afternoon'), -- Touki (Toucan)
+(7, 36, 'Afternoon'), -- Hedwig (Owl)
+(7, 37, 'Afternoon'); -- Errol (Cockatoo)
+
 
 
 -- =======================================
@@ -250,6 +343,47 @@ INSERT INTO feeding_schedules (animal_id, food_description, frequency, scheduled
 
 -- Monty (Ball Python) - 1 schedule
 (8, 'Frozen-thawed rat (adult)', 'Weekly', '19:00:00', 'Feed on Fridays, monitor for strike and consumption. Skip if recent shed.');
+
+-- Feeding schedules for new animals
+INSERT INTO feeding_schedules (animal_id, food_description, frequency, scheduled_time, notes) VALUES
+-- New Lions (9, 10)
+(9, 'Raw beef 15kg', 'Daily', '09:00:00', 'Vary protein sources.'),
+(10, 'Raw chicken 10kg', 'Daily', '09:30:00', 'Monitor consumption.'),
+-- New Elephants (11, 12)
+(11, 'Hay 60kg and Fruits 40kg', 'Daily', '07:00:00', 'Primary diet of Timothy hay.'),
+(12, 'Hay 55kg and Vegetables 35kg', 'Daily', '07:30:00', 'Ensure access to fresh water.'),
+-- New Gorillas (13, 14)
+(13, 'Fruits and leafy greens 10kg', 'Daily', '08:00:00', 'Include enrichment items.'),
+(14, 'Fruits and leafy greens 9kg', 'Daily', '08:00:00', 'Monitor for food aggression.'),
+-- New Penguins (15-19)
+(15, 'Fresh fish (herring/capelin) 2.5kg', 'Twice daily', '10:00:00', 'With vitamin supplements.'),
+(16, 'Fresh fish (herring/capelin) 2.5kg', 'Twice daily', '10:00:00', 'With vitamin supplements.'),
+(17, 'Fresh fish (herring/capelin) 2kg', 'Twice daily', '10:00:00', 'Younger, smaller portions.'),
+(18, 'Fresh fish (herring/capelin) 2.5kg', 'Twice daily', '10:00:00', 'With vitamin supplements.'),
+(19, 'Fresh fish (herring/capelin) 2.5kg', 'Twice daily', '10:00:00', 'With vitamin supplements.'),
+-- New Polar Bear (20)
+(20, 'Fish 25kg and meat 5kg', 'Daily', '09:00:00', 'Include fatty fish like salmon.'),
+-- New Dolphins (21, 22)
+(21, 'Fresh fish 20kg', 'Three times daily', '09:00:00', 'Used in training sessions.'),
+(22, 'Fresh fish 18kg', 'Three times daily', '09:00:00', 'Monitor weight closely.'),
+-- New Reptiles (23-27)
+(23, 'Frozen-thawed large rat', 'Every 2 weeks', '18:00:00', 'Ensure full consumption.'),
+(24, 'Frozen-thawed rabbit', 'Every 2-3 weeks', '18:00:00', 'Monitor shedding cycle.'),
+(25, 'Frozen-thawed medium rat', 'Weekly', '18:00:00', 'Normal feeding.'),
+(26, 'Frozen-thawed piglet or large rabbit', 'Monthly', '18:00:00', 'Very large meal.'),
+(27, 'Whole goat or large deer', 'Every 1-2 months', '12:00:00', 'Massive feeding, requires multiple keepers.'),
+-- New Birds (28-37)
+(28, 'Fruit and seed mix', 'Daily', '09:00:00', 'Include nuts for enrichment.'),
+(29, 'Fruit and seed mix', 'Daily', '09:00:00', 'Ensure variety.'),
+(30, 'Fruit and seed mix', 'Daily', '09:00:00', 'Monitor for favoritism.'),
+(31, 'Chopped fruit and insects', 'Daily', '09:30:00', 'Loves grapes.'),
+(32, 'Thawed mice or small rats', 'Daily', '20:00:00', 'Nocturnal feeding schedule.'),
+(33, 'Seed mix with fresh vegetables', 'Daily', '09:00:00', 'Loves sunflower seeds.'),
+(34, 'Specialized flamingo pellets and brine shrimp', 'Twice daily', '08:00:00', 'For color maintenance.'),
+(35, 'Bone marrow and meat scraps', 'Daily', '11:00:00', 'Specialized diet.'),
+(36, 'Whole fish (herring/mackerel)', 'Daily', '10:00:00', 'Swallows whole.'),
+(37, 'Fish, insects, and scraps', 'Daily', '10:30:00', 'Opportunistic feeder.');
+
 
 
 -- =======================================
@@ -335,6 +469,42 @@ INSERT INTO feeding_logs (animal_id, keeper_id, feeding_time, food_given, quanti
 (8, 7, DATE_SUB(NOW(), INTERVAL 16 DAY) + INTERVAL 19 HOUR, 'Frozen-thawed adult rat', '1 rat', 'Good appetite'),
 (8, 7, DATE_SUB(NOW(), INTERVAL 23 DAY) + INTERVAL 19 HOUR, 'Frozen-thawed adult rat', '1 rat', 'Excellent feeding response'),
 (8, 7, DATE_SUB(NOW(), INTERVAL 30 DAY) + INTERVAL 19 HOUR, 'Frozen-thawed adult rat', '1 rat', 'Normal');
+
+-- Feeding logs for new animals
+INSERT INTO feeding_logs (animal_id, keeper_id, feeding_time, food_given, quantity_given, notes) VALUES
+-- Zazu (Lion, 9) - Keeper: Chris (9)
+(9, 9, DATE_SUB(NOW(), INTERVAL 1 DAY) + INTERVAL 9 HOUR, 'Raw beef', '12kg', 'Good appetite'),
+(9, 9, DATE_SUB(NOW(), INTERVAL 2 DAY) + INTERVAL 9 HOUR, 'Raw chicken', '12kg', 'Normal'),
+(9, 9, DATE_SUB(NOW(), INTERVAL 3 DAY) + INTERVAL 9 HOUR, 'Raw beef', '12kg', 'Ate well'),
+
+-- Tantor (Elephant, 11) - Keeper: Chris (9)
+(11, 9, DATE_SUB(NOW(), INTERVAL 1 DAY) + INTERVAL 7 HOUR, 'Hay', '60kg', 'Normal consumption'),
+(11, 9, DATE_SUB(NOW(), INTERVAL 1 DAY) + INTERVAL 12 HOUR, 'Fruits and vegetables', '35kg', 'Enjoyed the watermelon'),
+(11, 9, DATE_SUB(NOW(), INTERVAL 2 DAY) + INTERVAL 7 HOUR, 'Hay', '60kg', 'Good appetite'),
+
+-- Kerchak (Gorilla, 13) - Keeper: Jessica (10)
+(13, 10, DATE_SUB(NOW(), INTERVAL 1 DAY) + INTERVAL 8 HOUR, 'Fruits and leafy greens', '10kg', 'Ate all the bananas first'),
+(13, 10, DATE_SUB(NOW(), INTERVAL 1 DAY) + INTERVAL 14 HOUR, 'Vegetables and protein', '6kg', 'Normal'),
+(13, 10, DATE_SUB(NOW(), INTERVAL 2 DAY) + INTERVAL 8 HOUR, 'Fruits and leafy greens', '10kg', 'Good'),
+
+-- Pingu (Penguin, 15) - Keeper: Jessica (10)
+(15, 10, DATE_SUB(NOW(), INTERVAL 1 DAY) + INTERVAL 10 HOUR, 'Herring with vitamins', '2.5kg', 'Ate well'),
+(15, 10, DATE_SUB(NOW(), INTERVAL 1 DAY) + INTERVAL 17 HOUR, 'Capelin', '2kg', 'Normal'),
+(15, 10, DATE_SUB(NOW(), INTERVAL 2 DAY) + INTERVAL 10 HOUR, 'Herring', '2.5kg', 'Good appetite'),
+
+-- Lars (Polar Bear, 20) - Keeper: Laura (12)
+(20, 12, DATE_SUB(NOW(), INTERVAL 1 DAY) + INTERVAL 9 HOUR, 'Salmon and trout', '25kg', 'Very active'),
+(20, 12, DATE_SUB(NOW(), INTERVAL 2 DAY) + INTERVAL 9 HOUR, 'Mixed fish', '25kg', 'Normal'),
+(20, 12, DATE_SUB(NOW(), INTERVAL 3 DAY) + INTERVAL 9 HOUR, 'Salmon', '25kg', 'Good'),
+
+-- Iago (Macaw, 28) - Keeper: Mike (2)
+(28, 2, DATE_SUB(NOW(), INTERVAL 1 DAY) + INTERVAL 9 HOUR, 'Fruit and seed mix', '100g', 'Very vocal today'),
+(28, 2, DATE_SUB(NOW(), INTERVAL 2 DAY) + INTERVAL 9 HOUR, 'Fruit and seed mix', '100g', 'Normal'),
+
+-- Hedwig (Snowy Owl, 32) - Keeper: Anna (7)
+(32, 7, DATE_SUB(NOW(), INTERVAL 1 DAY) + INTERVAL 20 HOUR, 'Thawed mice', '2 mice', 'Ate quickly'),
+(32, 7, DATE_SUB(NOW(), INTERVAL 2 DAY) + INTERVAL 20 HOUR, 'Thawed mice', '2 mice', 'Normal');
+
 
 
 -- =======================================
