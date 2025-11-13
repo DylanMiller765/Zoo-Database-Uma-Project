@@ -11,4 +11,6 @@ jobs:
         with:
           node-version: 18
       - run: npm install
+      - run: cd backend && npm install
+      - run: cd frontend && npm install
       - run: npm run build
