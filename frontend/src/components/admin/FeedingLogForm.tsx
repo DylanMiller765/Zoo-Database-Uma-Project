@@ -143,7 +143,7 @@ export function FeedingLogForm({ animalId, log, schedules = [], onSuccess, onCan
           <Input
             id="quantity_given"
             name="quantity_given"
-            value={formData.quantity_given}
+            value={formData.quantity_given || ''}
             onChange={handleChange}
             placeholder="e.g., 15kg, 2.5 lbs"
             maxLength={50}
@@ -156,7 +156,7 @@ export function FeedingLogForm({ animalId, log, schedules = [], onSuccess, onCan
           <Textarea
             id="notes"
             name="notes"
-            value={formData.notes}
+            value={formData.notes || ''}
             onChange={handleChange}
             placeholder="Observations about appetite, behavior, etc."
             rows={3}

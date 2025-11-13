@@ -520,7 +520,7 @@ export function AnimalDetailModal({ open, onClose, animal, onEdit, canEdit = tru
                       </label>
                       <select
                         value={medicalForm.health_status}
-                        onChange={(e) => setMedicalForm({ ...medicalForm, health_status: e.target.value })}
+                        onChange={(e) => setMedicalForm({ ...medicalForm, health_status: e.target.value as 'excellent' | 'good' | 'fair' | 'poor' | 'critical' })}
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sea_green-600 focus:border-transparent"
                       >
                         <option value="excellent">Excellent</option>

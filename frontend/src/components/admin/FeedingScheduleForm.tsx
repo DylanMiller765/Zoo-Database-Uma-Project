@@ -96,7 +96,7 @@ export function FeedingScheduleForm({ animalId, schedule, onSuccess, onCancel }:
           <Input
             id="frequency"
             name="frequency"
-            value={formData.frequency}
+            value={formData.frequency || ''}
             onChange={handleChange}
             placeholder="e.g., Daily, Twice daily, Weekly"
             maxLength={100}
@@ -110,7 +110,7 @@ export function FeedingScheduleForm({ animalId, schedule, onSuccess, onCancel }:
             id="scheduled_time"
             name="scheduled_time"
             type="time"
-            value={formData.scheduled_time}
+            value={formData.scheduled_time || ''}
             onChange={handleChange}
           />
         </div>
@@ -121,7 +121,7 @@ export function FeedingScheduleForm({ animalId, schedule, onSuccess, onCancel }:
           <Textarea
             id="notes"
             name="notes"
-            value={formData.notes}
+            value={formData.notes || ''}
             onChange={handleChange}
             placeholder="Additional feeding instructions or requirements"
             rows={3}
