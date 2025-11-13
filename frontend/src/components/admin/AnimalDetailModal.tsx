@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { Animal, FeedingSchedule, FeedingLogWithKeeper } from '@/types';
 import { feedingScheduleService } from '@/services/feedingSchedule.service';
 import { feedingLogService } from '@/services/feedingLog.service';
+import { animalService } from '@/services/animal.service';
 import { Modal } from '@/components/ui/modal';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -43,6 +44,13 @@ export function AnimalDetailModal({ open, onClose, animal, onEdit, canEdit = tru
   const [showLogForm, setShowLogForm] = useState(false);
   const [editingSchedule, setEditingSchedule] = useState<FeedingSchedule | null>(null);
   const [editingLog, setEditingLog] = useState<FeedingLogWithKeeper | null>(null);
+
+  // Medical tab states
+  const [editingMedical, setEditingMedical] = useState(false);
+  const [medicalForm, setMedicalForm] = useState({
+    health_status: animal?.health_status || 'good',
+    medical_notes: animal?.medical_notes || ''
+  });
 
   const canManageFeeding = hasRole('keeper') || hasRole('veterinarian') || hasRole('manager');
   const canViewLogs = hasRole('keeper') || hasRole('veterinarian') || hasRole('manager');
@@ -166,6 +174,18 @@ export function AnimalDetailModal({ open, onClose, animal, onEdit, canEdit = tru
             >
               Basic Information
             </button>
+            {(hasRole('veterinarian') || hasRole('manager')) && (
+              <button
+                onClick={() => setActiveTab('medical')}
+                className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                  activeTab === 'medical'
+                    ? 'border-sea_green-600 text-sea_green-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }`}
+              >
+                Medical Overview
+              </button>
+            )}
             <button
               onClick={() => setActiveTab('schedules')}
               className={`py-2 px-1 border-b-2 font-medium text-sm flex items-center gap-2 ${
@@ -465,6 +485,183 @@ export function AnimalDetailModal({ open, onClose, animal, onEdit, canEdit = tru
                   ))}
                 </div>
               )}
+            </div>
+          )}
+
+          {activeTab === 'medical' && (hasRole('veterinarian') || hasRole('manager')) && (
+            <div className="space-y-6">
+              {/* Medical Status Card */}
+              <div className="border border-gray-200 rounded-lg p-6 bg-gradient-to-br from-white to-gray-50">
+                <div className="flex justify-between items-start mb-4">
+                  <h3 className="text-lg font-semibold text-gray-900">Medical Information</h3>
+                  {!editingMedical && (
+                    <Button
+                      onClick={() => {
+                        setEditingMedical(true);
+                        setMedicalForm({
+                          health_status: animal.health_status || 'good',
+                          medical_notes: animal.medical_notes || ''
+                        });
+                      }}
+                      size="sm"
+                      variant="outline"
+                    >
+                      <Edit className="h-4 w-4 mr-2" />
+                      Update Medical Info
+                    </Button>
+                  )}
+                </div>
+
+                {editingMedical ? (
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Health Status
+                      </label>
+                      <select
+                        value={medicalForm.health_status}
+                        onChange={(e) => setMedicalForm({ ...medicalForm, health_status: e.target.value })}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sea_green-600 focus:border-transparent"
+                      >
+                        <option value="excellent">Excellent</option>
+                        <option value="good">Good</option>
+                        <option value="fair">Fair</option>
+                        <option value="poor">Poor</option>
+                        <option value="critical">Critical</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Medical Notes
+                      </label>
+                      <textarea
+                        value={medicalForm.medical_notes}
+                        onChange={(e) => setMedicalForm({ ...medicalForm, medical_notes: e.target.value })}
+                        rows={6}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sea_green-600 focus:border-transparent"
+                        placeholder="Enter medical observations, diagnoses, treatments, or concerns..."
+                      />
+                    </div>
+
+                    <div className="flex justify-end gap-2">
+                      <Button
+                        variant="outline"
+                        onClick={() => {
+                          setEditingMedical(false);
+                          setMedicalForm({
+                            health_status: animal.health_status || 'good',
+                            medical_notes: animal.medical_notes || ''
+                          });
+                        }}
+                      >
+                        Cancel
+                      </Button>
+                      <Button
+                        onClick={async () => {
+                          try {
+                            await animalService.update(animal.animal_id, medicalForm);
+                            setEditingMedical(false);
+                            // Update local animal object
+                            animal.health_status = medicalForm.health_status as any;
+                            animal.medical_notes = medicalForm.medical_notes;
+                            // Force reload by closing and reopening would be better, but this works
+                            onClose();
+                          } catch (error) {
+                            console.error('Failed to update medical info:', error);
+                            alert('Failed to update medical information. Please try again.');
+                          }
+                        }}
+                      >
+                        Save Changes
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-2 gap-6">
+                      <div>
+                        <p className="text-sm text-gray-500 mb-1">Health Status</p>
+                        <Badge
+                          variant={
+                            animal.health_status === 'excellent' || animal.health_status === 'good'
+                              ? 'success'
+                              : animal.health_status === 'fair'
+                              ? 'warning'
+                              : 'danger'
+                          }
+                          className="capitalize text-base"
+                        >
+                          {animal.health_status || 'Good'}
+                        </Badge>
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-500 mb-1">Last Updated</p>
+                        <p className="font-medium">
+                          {animal.updated_date
+                            ? new Date(animal.updated_date).toLocaleString()
+                            : 'N/A'}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div>
+                      <p className="text-sm text-gray-500 mb-2">Medical Notes</p>
+                      <div className="bg-white border border-gray-200 rounded-lg p-4 min-h-[120px]">
+                        <p className="text-gray-900 whitespace-pre-wrap">
+                          {animal.medical_notes || 'No medical notes recorded.'}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Additional Stats */}
+              <div className="grid grid-cols-3 gap-4">
+                <div className="border border-gray-200 rounded-lg p-4 text-center">
+                  <p className="text-sm text-gray-500 mb-1">Weight</p>
+                  <p className="text-2xl font-bold text-gray-900">
+                    {animal.weight ? `${animal.weight} kg` : 'N/A'}
+                  </p>
+                </div>
+                <div className="border border-gray-200 rounded-lg p-4 text-center">
+                  <p className="text-sm text-gray-500 mb-1">Age (Approx)</p>
+                  <p className="text-2xl font-bold text-gray-900">
+                    {animal.date_of_birth
+                      ? `${Math.floor(
+                          (Date.now() - new Date(animal.date_of_birth).getTime()) /
+                            (365.25 * 24 * 60 * 60 * 1000)
+                        )} years`
+                      : 'Unknown'}
+                  </p>
+                </div>
+                <div className="border border-gray-200 rounded-lg p-4 text-center">
+                  <p className="text-sm text-gray-500 mb-1">Status</p>
+                  <Badge
+                    variant={animal.active_status === 'active' ? 'success' : 'secondary'}
+                    className="capitalize text-base"
+                  >
+                    {animal.active_status || 'Active'}
+                  </Badge>
+                </div>
+              </div>
+
+              {/* Recent Feeding Summary */}
+              <div className="border border-gray-200 rounded-lg p-4 bg-blue-50">
+                <h4 className="font-semibold text-gray-900 mb-2">Nutrition Summary</h4>
+                <p className="text-sm text-gray-600">
+                  {schedules.length > 0
+                    ? `${schedules.length} active feeding schedule${schedules.length !== 1 ? 's' : ''}`
+                    : 'No feeding schedules defined'}
+                  {logs.length > 0 && ` • ${logs.length} feeding log${logs.length !== 1 ? 's' : ''} recorded`}
+                </p>
+                {logs.length > 0 && (
+                  <p className="text-sm text-gray-600 mt-1">
+                    Last fed: {new Date(logs[0].feeding_time).toLocaleString()}
+                  </p>
+                )}
+              </div>
             </div>
           )}
         </div>

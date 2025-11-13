@@ -93,16 +93,16 @@ export class DashboardService {
         });
       });
 
-      // Get recent events (last 5) - Fixed column name and sort order
+      // Get recent events (last 5) - Use created_at for timestamp
       const recentEvents = await query<any[]>(
-        'SELECT event_id, name, event_date FROM events ORDER BY event_date DESC, event_id DESC LIMIT 5'
+        'SELECT event_id, name, event_date, created_at FROM events ORDER BY created_at DESC, event_id DESC LIMIT 5'
       );
       recentEvents.forEach(event => {
         activities.push({
           type: 'event',
           title: 'Event scheduled',
           description: `${event.name} scheduled for ${new Date(event.event_date).toLocaleDateString()}`,
-          timestamp: event.event_date,
+          timestamp: event.created_at,
         });
       });
 
@@ -156,14 +156,14 @@ export class DashboardService {
     // Coordinators, Guides, Security see event activities
     if (userRole === 'coordinator' || userRole === 'guide' || userRole === 'security') {
       const recentEvents = await query<any[]>(
-        'SELECT event_id, name, event_date FROM events ORDER BY event_date DESC, event_id DESC LIMIT 8'
+        'SELECT event_id, name, event_date, created_at FROM events ORDER BY created_at DESC, event_id DESC LIMIT 8'
       );
       recentEvents.forEach(event => {
         activities.push({
           type: 'event',
           title: 'Event scheduled',
           description: `${event.name} scheduled for ${new Date(event.event_date).toLocaleDateString()}`,
-          timestamp: event.event_date,
+          timestamp: event.created_at,
         });
       });
     }
@@ -201,8 +201,8 @@ export class DashboardService {
     // Sort all activities by timestamp (most recent first)
     activities.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
 
-    // Return top 10
-    return activities.slice(0, 10);
+    // Return top 30
+    return activities.slice(0, 30);
   }
 
   static async getKeeperAssignments(keeperId: number) {

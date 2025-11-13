@@ -101,6 +101,7 @@ export interface Event {
   coordinator_id?: number;
   coordinator_name?: string | null;
   current_registrations?: number;
+  created_at?: string;
   deleted_at?: string | null;
 }
 
