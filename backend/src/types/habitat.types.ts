@@ -11,3 +11,7 @@ export interface Habitat {
   created_date: string;
   deleted_at?: string | null;
 }
+
+export interface HabitatWithDetails extends Habitat {
+  attraction_name: string | null;
+}

@@ -463,9 +463,24 @@ export default function AnimalHealthCarePage() {
 
                             {/* Feeding Info */}
                             <div className="pt-2 border-t space-y-1">
-                              <div className="flex items-center gap-1 text-gray-700 font-medium">
-                                <Calendar className="h-3 w-3" />
-                                <span>Feeding Information</span>
+                              <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-1 text-gray-700 font-medium">
+                                  <Calendar className="h-3 w-3" />
+                                  <span>Feeding Information</span>
+                                </div>
+                                {(() => {
+                                  if (!animal.last_fed_time) {
+                                    return <Badge variant="danger" className="text-xs">Never Fed</Badge>;
+                                  }
+                                  const hoursSinceLastFed = (Date.now() - new Date(animal.last_fed_time).getTime()) / (1000 * 60 * 60);
+                                  if (hoursSinceLastFed < 24) {
+                                    return <Badge variant="success" className="text-xs">Fed Recently</Badge>;
+                                  } else if (hoursSinceLastFed < 48) {
+                                    return <Badge variant="warning" className="text-xs">Check Schedule</Badge>;
+                                  } else {
+                                    return <Badge variant="danger" className="text-xs">Overdue!</Badge>;
+                                  }
+                                })()}
                               </div>
 
                               {animal.scheduled_food && (
@@ -478,9 +493,17 @@ export default function AnimalHealthCarePage() {
 
                               <div className="text-xs text-gray-600 pl-4">
                                 <span className="font-medium">Last Fed:</span>{" "}
-                                {animal.last_fed_time
-                                  ? new Date(animal.last_fed_time).toLocaleString()
-                                  : "No record"}
+                                {animal.last_fed_time ? (
+                                  <>
+                                    {new Date(animal.last_fed_time).toLocaleString()}
+                                    {" "}
+                                    <span className="text-gray-500">
+                                      ({Math.round((Date.now() - new Date(animal.last_fed_time).getTime()) / (1000 * 60 * 60))}h ago)
+                                    </span>
+                                  </>
+                                ) : (
+                                  "No record"
+                                )}
                               </div>
 
                               {animal.last_food_given && (
@@ -489,12 +512,15 @@ export default function AnimalHealthCarePage() {
                                 </div>
                               )}
 
-                              <div className="text-xs pl-4">
+                              <div className="text-xs pl-4 flex items-center gap-2">
                                 <Badge
-                                  variant={animal.feeding_logs_count > 0 ? "success" : "warning"}
+                                  variant={
+                                    animal.feeding_logs_count === 0 ? "danger" :
+                                    animal.feeding_logs_count < 3 ? "warning" : "success"
+                                  }
                                   className="text-xs"
                                 >
-                                  {animal.feeding_logs_count} feeding logs in period
+                                  {animal.feeding_logs_count} feeding{animal.feeding_logs_count !== 1 ? 's' : ''} in period
                                 </Badge>
                               </div>
                             </div>

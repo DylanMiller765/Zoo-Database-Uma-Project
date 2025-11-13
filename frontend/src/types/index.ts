@@ -72,6 +72,7 @@ export interface Animal {
   gender?: 'male' | 'female' | 'unknown';
   place_of_origin?: string;
   habitat_id?: number;
+  habitat_name?: string | null;
   medical_notes?: string;
   health_status?: 'excellent' | 'good' | 'fair' | 'poor' | 'critical';
   active_status?: 'active' | 'transferred' | 'deceased';
@@ -97,7 +98,10 @@ export interface Event {
   ticket_price?: number;
   status?: 'scheduled' | 'ongoing' | 'completed' | 'cancelled';
   created_by?: number;
+  coordinator_id?: number;
+  coordinator_name?: string | null;
   current_registrations?: number;
+  created_at?: string;
   deleted_at?: string | null;
 }
 
@@ -212,6 +216,7 @@ export interface Habitat {
   habitat_id: number;
   habitat_name: string;
   attraction_id: number;
+  attraction_name?: string | null;
   size: string;
   environment_type: string;
   animal_capacity: number;
@@ -252,3 +257,60 @@ export interface CafeItem {
 }
 
 export interface CreateCafeItemData extends Omit<CafeItem, 'item_id'> {}
+
+// Feeding Schedule Types
+export interface FeedingSchedule {
+  schedule_id: number;
+  animal_id: number;
+  food_description: string;
+  frequency?: string | null;
+  scheduled_time?: string | null;
+  notes?: string | null;
+}
+
+export interface CreateFeedingScheduleData extends Omit<FeedingSchedule, 'schedule_id'> {}
+
+export interface UpdateFeedingScheduleData extends Partial<Omit<FeedingSchedule, 'schedule_id' | 'animal_id'>> {}
+
+// Feeding Log Types
+export interface FeedingLog {
+  log_id: number;
+  animal_id: number;
+  keeper_id?: number | null;
+  feeding_time: string;
+  food_given: string;
+  quantity_given?: string | null;
+  notes?: string | null;
+}
+
+export interface FeedingLogWithKeeper extends FeedingLog {
+  keeper_name?: string | null;
+  animal_name?: string | null;
+}
+
+export interface CreateFeedingLogData extends Omit<FeedingLog, 'log_id'> {}
+
+export interface UpdateFeedingLogData extends Partial<Omit<FeedingLog, 'log_id' | 'animal_id'>> {}
+
+export interface FeedingLogFilters {
+  animalId?: number;
+  keeperId?: number;
+  startDate?: string;
+  endDate?: string;
+}
+
+// Zookeeper Assignment Types
+export interface ZookeeperAssignment {
+  assignment_id: number;
+  keeper_id: number;
+  animal_id: number;
+  shift: string | null;
+}
+
+export interface ZookeeperAssignmentWithDetails extends ZookeeperAssignment {
+  keeper_name: string;
+  animal_name: string;
+  animal_species: string;
+  animal_health_status: string | null;
+  last_fed_time: string | null;
+}

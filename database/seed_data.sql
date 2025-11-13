@@ -197,6 +197,147 @@ INSERT INTO event_registrations (event_id, customer_id, number_of_participants, 
 
 
 -- =======================================
+-- ZOOKEEPER ASSIGNMENTS (Assigning keepers to animals)
+-- =======================================
+-- Mike Chen (employee_id: 2) and Anna Martinez (employee_id: 7) are keepers
+INSERT INTO zookeeper_assignments (keeper_id, animal_id, shift) VALUES
+-- Mike Chen assignments
+(2, 1, 'Morning'), -- Simba
+(2, 2, 'Morning'), -- Nala
+(2, 5, 'Morning'), -- Skipper (Penguin)
+(2, 7, 'Afternoon'), -- Flipper (Dolphin)
+-- Anna Martinez assignments
+(7, 3, 'Morning'), -- Dumbo (Elephant)
+(7, 4, 'Morning'), -- Koko (Gorilla)
+(7, 6, 'Afternoon'), -- Snowball (Polar Bear)
+(7, 8, 'Weekly'); -- Monty (Python)
+
+
+-- =======================================
+-- FEEDING SCHEDULES (Define feeding routines for each animal)
+-- =======================================
+INSERT INTO feeding_schedules (animal_id, food_description, frequency, scheduled_time, notes) VALUES
+-- Simba (Lion) - 2 schedules
+(1, 'Raw beef 15kg with bone', 'Daily', '09:00:00', 'Prime cuts, vary between beef and chicken. Monitor for dental health.'),
+(1, 'Supplemental bones', 'Daily', '17:00:00', 'Large femur bones for enrichment and dental care'),
+
+-- Nala (Lion) - 2 schedules
+(2, 'Raw chicken/beef 10kg', 'Daily', '09:30:00', 'Smaller portions than male, alternate proteins daily'),
+(2, 'Enrichment feeding', '3x per week', '16:00:00', 'Hide meat in various locations for natural hunting behavior'),
+
+-- Dumbo (Elephant) - 3 schedules
+(3, 'Hay 50kg', 'Daily', '07:00:00', 'Timothy hay primary diet'),
+(3, 'Fruits and vegetables 30kg', 'Daily', '12:00:00', 'Apples, carrots, sweet potatoes, melons - vary daily'),
+(3, 'Browse and branches', 'Daily', '16:00:00', 'Fresh tree branches for foraging behavior'),
+
+-- Koko (Gorilla) - 3 schedules
+(4, 'Fruits and leafy greens 8kg', 'Daily', '08:00:00', 'Bananas, apples, kale, romaine, celery'),
+(4, 'Vegetables and protein 5kg', 'Daily', '14:00:00', 'Sweet potato, carrots, hard-boiled eggs, nuts'),
+(4, 'Browse and enrichment', 'Daily', '18:00:00', 'Bamboo, branches, occasional insects'),
+
+-- Skipper (Penguin) - 2 schedules
+(5, 'Fresh fish (herring/capelin) 2kg', 'Twice daily', '10:00:00', 'Vitamin supplements mixed in'),
+(5, 'Evening fish feeding', 'Daily', '17:30:00', 'Monitor for individual consumption'),
+
+-- Snowball (Polar Bear) - 2 schedules
+(6, 'Fish 20kg', 'Daily', '09:00:00', 'Salmon, trout, and mackerel'),
+(6, 'Meat and enrichment', 'Daily', '15:00:00', 'Seal meat when available, frozen treats in summer'),
+
+-- Flipper (Dolphin) - 3 schedules
+(7, 'Fresh fish 18kg', 'Three times daily', '09:00:00', 'Herring, capelin - vitamin E supplement'),
+(7, 'Mid-day feeding', 'Daily', '13:00:00', 'Monitor weight, adjust portions as needed'),
+(7, 'Evening feeding with training', 'Daily', '17:00:00', 'Combined with enrichment and training session'),
+
+-- Monty (Ball Python) - 1 schedule
+(8, 'Frozen-thawed rat (adult)', 'Weekly', '19:00:00', 'Feed on Fridays, monitor for strike and consumption. Skip if recent shed.');
+
+
+-- =======================================
+-- FEEDING LOGS (Last 30 days of feeding records)
+-- =======================================
+-- Creating realistic patterns with some gaps to demonstrate compliance tracking
+-- Using Mike Chen (keeper_id: 2) and Anna Martinez (keeper_id: 7)
+
+-- Simba (Lion, animal_id: 1) - Mostly consistent, one gap
+INSERT INTO feeding_logs (animal_id, keeper_id, feeding_time, food_given, quantity_given, notes) VALUES
+(1, 2, DATE_SUB(NOW(), INTERVAL 1 DAY) + INTERVAL 9 HOUR, 'Raw beef with bone', '15kg', 'Good appetite, very active'),
+(1, 2, DATE_SUB(NOW(), INTERVAL 1 DAY) + INTERVAL 17 HOUR, 'Femur bone', '2 large bones', 'Engaged with enrichment for 45 minutes'),
+(1, 2, DATE_SUB(NOW(), INTERVAL 2 DAY) + INTERVAL 9 HOUR, 'Raw chicken', '15kg', 'Ate everything within 20 minutes'),
+(1, 2, DATE_SUB(NOW(), INTERVAL 2 DAY) + INTERVAL 17 HOUR, 'Femur bone', '2 large bones', 'Normal behavior'),
+(1, 2, DATE_SUB(NOW(), INTERVAL 3 DAY) + INTERVAL 9 HOUR, 'Raw beef', '15kg', 'Good appetite'),
+(1, 2, DATE_SUB(NOW(), INTERVAL 4 DAY) + INTERVAL 9 HOUR, 'Raw beef', '15kg', 'Normal feeding'),
+(1, 2, DATE_SUB(NOW(), INTERVAL 4 DAY) + INTERVAL 17 HOUR, 'Femur bone', '2 large bones', 'Good dental activity'),
+(1, 2, DATE_SUB(NOW(), INTERVAL 5 DAY) + INTERVAL 9 HOUR, 'Raw chicken', '15kg', 'Excellent appetite'),
+-- GAP on day 6 (missed evening feeding)
+(1, 2, DATE_SUB(NOW(), INTERVAL 6 DAY) + INTERVAL 9 HOUR, 'Raw beef', '15kg', 'Normal'),
+(1, 2, DATE_SUB(NOW(), INTERVAL 7 DAY) + INTERVAL 9 HOUR, 'Raw beef', '15kg', 'Good'),
+
+-- Nala (Lion, animal_id: 2) - Very consistent
+(2, 2, DATE_SUB(NOW(), INTERVAL 1 DAY) + INTERVAL 9 HOUR + INTERVAL 30 MINUTE, 'Raw chicken', '10kg', 'Healthy appetite'),
+(2, 2, DATE_SUB(NOW(), INTERVAL 2 DAY) + INTERVAL 9 HOUR + INTERVAL 30 MINUTE, 'Raw beef', '10kg', 'Normal feeding behavior'),
+(2, 2, DATE_SUB(NOW(), INTERVAL 3 DAY) + INTERVAL 9 HOUR + INTERVAL 30 MINUTE, 'Raw chicken', '10kg', 'Good'),
+(2, 2, DATE_SUB(NOW(), INTERVAL 3 DAY) + INTERVAL 16 HOUR, 'Enrichment - hidden meat', '3kg', 'Successfully foraged all portions'),
+(2, 2, DATE_SUB(NOW(), INTERVAL 4 DAY) + INTERVAL 9 HOUR + INTERVAL 30 MINUTE, 'Raw beef', '10kg', 'Excellent'),
+(2, 2, DATE_SUB(NOW(), INTERVAL 5 DAY) + INTERVAL 9 HOUR + INTERVAL 30 MINUTE, 'Raw chicken', '10kg', 'Normal'),
+(2, 2, DATE_SUB(NOW(), INTERVAL 6 DAY) + INTERVAL 9 HOUR + INTERVAL 30 MINUTE, 'Raw beef', '10kg', 'Good appetite'),
+
+-- Dumbo (Elephant, animal_id: 3) - Consistent, multiple feedings per day
+(3, 7, DATE_SUB(NOW(), INTERVAL 1 DAY) + INTERVAL 7 HOUR, 'Timothy hay', '50kg', 'Consumed throughout morning'),
+(3, 7, DATE_SUB(NOW(), INTERVAL 1 DAY) + INTERVAL 12 HOUR, 'Mixed fruits and vegetables', '30kg', 'Apples, carrots, sweet potatoes'),
+(3, 7, DATE_SUB(NOW(), INTERVAL 1 DAY) + INTERVAL 16 HOUR, 'Oak and willow branches', '20kg', 'Active foraging behavior'),
+(3, 7, DATE_SUB(NOW(), INTERVAL 2 DAY) + INTERVAL 7 HOUR, 'Timothy hay', '50kg', 'Normal'),
+(3, 7, DATE_SUB(NOW(), INTERVAL 2 DAY) + INTERVAL 12 HOUR, 'Watermelon, carrots, apples', '30kg', 'Very engaged with watermelon'),
+(3, 7, DATE_SUB(NOW(), INTERVAL 2 DAY) + INTERVAL 16 HOUR, 'Mixed branches', '20kg', 'Good'),
+(3, 7, DATE_SUB(NOW(), INTERVAL 3 DAY) + INTERVAL 7 HOUR, 'Timothy hay', '50kg', 'Excellent consumption'),
+(3, 7, DATE_SUB(NOW(), INTERVAL 3 DAY) + INTERVAL 12 HOUR, 'Fruits and vegetables', '30kg', 'Normal'),
+
+-- Koko (Gorilla, animal_id: 4) - Consistent
+(4, 7, DATE_SUB(NOW(), INTERVAL 1 DAY) + INTERVAL 8 HOUR, 'Fruits and leafy greens', '8kg', 'Bananas, kale, romaine - good appetite'),
+(4, 7, DATE_SUB(NOW(), INTERVAL 1 DAY) + INTERVAL 14 HOUR, 'Vegetables with eggs', '5kg', 'Sweet potato, 3 hard-boiled eggs, almonds'),
+(4, 7, DATE_SUB(NOW(), INTERVAL 1 DAY) + INTERVAL 18 HOUR, 'Bamboo shoots', '3kg', 'Very interested in bamboo today'),
+(4, 7, DATE_SUB(NOW(), INTERVAL 2 DAY) + INTERVAL 8 HOUR, 'Mixed fruits and greens', '8kg', 'Normal feeding'),
+(4, 7, DATE_SUB(NOW(), INTERVAL 2 DAY) + INTERVAL 14 HOUR, 'Vegetables with protein', '5kg', 'Good appetite'),
+(4, 7, DATE_SUB(NOW(), INTERVAL 3 DAY) + INTERVAL 8 HOUR, 'Fruits and greens', '8kg', 'Excellent'),
+(4, 7, DATE_SUB(NOW(), INTERVAL 3 DAY) + INTERVAL 14 HOUR, 'Vegetables and nuts', '5kg', 'Favored the almonds'),
+
+-- Skipper (Penguin, animal_id: 5) - Twice daily, very consistent
+(5, 2, DATE_SUB(NOW(), INTERVAL 1 DAY) + INTERVAL 10 HOUR, 'Herring with vitamins', '2kg', 'Ate enthusiastically, vitamin supplement included'),
+(5, 2, DATE_SUB(NOW(), INTERVAL 1 DAY) + INTERVAL 17 HOUR + INTERVAL 30 MINUTE, 'Capelin', '1.5kg', 'Normal consumption'),
+(5, 2, DATE_SUB(NOW(), INTERVAL 2 DAY) + INTERVAL 10 HOUR, 'Capelin with vitamins', '2kg', 'Good appetite'),
+(5, 2, DATE_SUB(NOW(), INTERVAL 2 DAY) + INTERVAL 17 HOUR + INTERVAL 30 MINUTE, 'Herring', '1.5kg', 'Normal'),
+(5, 2, DATE_SUB(NOW(), INTERVAL 3 DAY) + INTERVAL 10 HOUR, 'Herring with vitamins', '2kg', 'Excellent'),
+(5, 2, DATE_SUB(NOW(), INTERVAL 3 DAY) + INTERVAL 17 HOUR + INTERVAL 30 MINUTE, 'Capelin', '1.5kg', 'Good'),
+(5, 2, DATE_SUB(NOW(), INTERVAL 4 DAY) + INTERVAL 10 HOUR, 'Mixed fish with vitamins', '2kg', 'Normal'),
+
+-- Snowball (Polar Bear, animal_id: 6) - Consistent with one gap
+(6, 7, DATE_SUB(NOW(), INTERVAL 1 DAY) + INTERVAL 9 HOUR, 'Salmon and trout', '20kg', 'Very active during feeding'),
+(6, 7, DATE_SUB(NOW(), INTERVAL 1 DAY) + INTERVAL 15 HOUR, 'Frozen fish treats', '5kg', 'Enrichment - played with ice blocks'),
+(6, 7, DATE_SUB(NOW(), INTERVAL 2 DAY) + INTERVAL 9 HOUR, 'Mixed fish', '20kg', 'Good appetite'),
+(6, 7, DATE_SUB(NOW(), INTERVAL 2 DAY) + INTERVAL 15 HOUR, 'Seal meat', '8kg', 'Special enrichment day'),
+(6, 7, DATE_SUB(NOW(), INTERVAL 3 DAY) + INTERVAL 9 HOUR, 'Salmon', '20kg', 'Normal feeding'),
+-- GAP on day 4 (missed afternoon feeding)
+(6, 7, DATE_SUB(NOW(), INTERVAL 4 DAY) + INTERVAL 9 HOUR, 'Mackerel and salmon', '20kg', 'Excellent'),
+(6, 7, DATE_SUB(NOW(), INTERVAL 5 DAY) + INTERVAL 9 HOUR, 'Mixed fish', '20kg', 'Good'),
+
+-- Flipper (Dolphin, animal_id: 7) - Three times daily, very consistent
+(7, 2, DATE_SUB(NOW(), INTERVAL 1 DAY) + INTERVAL 9 HOUR, 'Herring with vitamin E', '6kg', 'Training session - responded well'),
+(7, 2, DATE_SUB(NOW(), INTERVAL 1 DAY) + INTERVAL 13 HOUR, 'Capelin', '6kg', 'Normal consumption'),
+(7, 2, DATE_SUB(NOW(), INTERVAL 1 DAY) + INTERVAL 17 HOUR, 'Herring with training', '6kg', 'Excellent training session, all behaviors performed'),
+(7, 2, DATE_SUB(NOW(), INTERVAL 2 DAY) + INTERVAL 9 HOUR, 'Mixed fish with vitamin E', '6kg', 'Good appetite'),
+(7, 2, DATE_SUB(NOW(), INTERVAL 2 DAY) + INTERVAL 13 HOUR, 'Herring', '6kg', 'Normal'),
+(7, 2, DATE_SUB(NOW(), INTERVAL 2 DAY) + INTERVAL 17 HOUR, 'Capelin with training', '6kg', 'Worked on new behaviors'),
+(7, 2, DATE_SUB(NOW(), INTERVAL 3 DAY) + INTERVAL 9 HOUR, 'Herring with vitamin E', '6kg', 'Excellent'),
+(7, 2, DATE_SUB(NOW(), INTERVAL 3 DAY) + INTERVAL 13 HOUR, 'Mixed fish', '6kg', 'Good'),
+
+-- Monty (Ball Python, animal_id: 8) - Weekly feeding, showing last 4 weeks
+(8, 7, DATE_SUB(NOW(), INTERVAL 2 DAY) + INTERVAL 19 HOUR, 'Frozen-thawed adult rat', '1 rat', 'Successful strike and consumption, eating well'),
+(8, 7, DATE_SUB(NOW(), INTERVAL 9 DAY) + INTERVAL 19 HOUR, 'Frozen-thawed adult rat', '1 rat', 'Normal feeding response'),
+(8, 7, DATE_SUB(NOW(), INTERVAL 16 DAY) + INTERVAL 19 HOUR, 'Frozen-thawed adult rat', '1 rat', 'Good appetite'),
+(8, 7, DATE_SUB(NOW(), INTERVAL 23 DAY) + INTERVAL 19 HOUR, 'Frozen-thawed adult rat', '1 rat', 'Excellent feeding response'),
+(8, 7, DATE_SUB(NOW(), INTERVAL 30 DAY) + INTERVAL 19 HOUR, 'Frozen-thawed adult rat', '1 rat', 'Normal');
+
+
+-- =======================================
 -- Display Summary
 -- =======================================
 SELECT '========================================' as '';
@@ -209,6 +350,9 @@ SELECT 'User Accounts:' as '', COUNT(*) as count FROM user_accounts;
 SELECT 'Animals:' as '', COUNT(*) as count FROM animals;
 SELECT 'Events:' as '', COUNT(*) as count FROM events;
 SELECT 'Tickets Sold:' as '', COUNT(*) as count FROM tickets;
+SELECT 'Zookeeper Assignments:' as '', COUNT(*) as count FROM zookeeper_assignments;
+SELECT 'Feeding Schedules:' as '', COUNT(*) as count FROM feeding_schedules;
+SELECT 'Feeding Logs:' as '', COUNT(*) as count FROM feeding_logs;
 
 SELECT '========================================' as '';
 SELECT 'LOGIN CREDENTIALS (All passwords: "password")' as '';
