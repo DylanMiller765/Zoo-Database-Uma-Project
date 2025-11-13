@@ -42,10 +42,6 @@ export class QueryService {
       includeDeleted = false
     } = params;
 
-    // Calculate default date range (last 30 days for feeding data)
-    const feedingStartDate = startDate || `DATE_SUB(CURDATE(), INTERVAL 30 DAY)`;
-    const feedingEndDate = endDate || 'CURDATE()';
-
     const sql = `
       SELECT
         -- Habitat data
@@ -61,6 +57,8 @@ export class QueryService {
         a.animal_id,
         a.name as animal_name,
         a.species,
+        a.date_of_birth,
+        a.arrival_date,
         a.health_status,
         a.active_status,
         a.endangerment_status,
@@ -78,12 +76,11 @@ export class QueryService {
         fs.frequency as feeding_frequency,
         fs.scheduled_time,
 
-        -- Feeding compliance (within date range)
+        -- Recent feeding activity (last 30 days)
         (SELECT COUNT(*)
          FROM feeding_logs fl
          WHERE fl.animal_id = a.animal_id
-         AND fl.feeding_time >= ${startDate ? '?' : feedingStartDate}
-         AND fl.feeding_time <= ${endDate ? '?' : feedingEndDate}
+         AND fl.feeding_time >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)
         ) as feeding_logs_count,
 
         (SELECT MAX(fl.feeding_time)
@@ -111,6 +108,8 @@ export class QueryService {
              (? = 'needs_attention' AND a.health_status IN ('fair', 'poor', 'critical')))
         AND (? = 'all' OR a.endangerment_status = ? OR
              (? = 'endangered_plus' AND a.endangerment_status IN ('endangered', 'critically_endangered', 'extinct_in_the_wild')))
+        ${startDate ? 'AND (a.animal_id IS NULL OR a.arrival_date >= ?)' : ''}
+        ${endDate ? 'AND (a.animal_id IS NULL OR a.arrival_date <= ?)' : ''}
         AND (h.deleted_at IS NULL ${includeDeleted ? 'OR 1=1' : ''})
 
       ORDER BY h.habitat_name, a.name
@@ -118,14 +117,14 @@ export class QueryService {
 
     const queryParams: any[] = [];
 
-    // Add date params if provided
-    if (startDate) queryParams.push(startDate);
-    if (endDate) queryParams.push(endDate);
-
     // Add filter params (need to add twice for SQL conditions)
     queryParams.push(habitatStatus, habitatStatus);
     queryParams.push(healthStatus, healthStatus, healthStatus);
     queryParams.push(endangerment, endangerment, endangerment);
+
+    // Add arrival date filters if provided
+    if (startDate) queryParams.push(startDate);
+    if (endDate) queryParams.push(endDate);
 
     return await query<any[]>(sql, queryParams);
   }
