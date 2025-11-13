@@ -389,7 +389,11 @@ export default function AdminDashboard() {
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {keeperAssignments.map((assignment) => (
-                  <div key={assignment.animal_id} className="border-2 border-gray-200 rounded-lg p-4 hover:border-dark_spring_green-400 transition-colors">
+                  <div
+                    key={assignment.animal_id}
+                    className="border-2 border-gray-200 rounded-lg p-4 hover:border-dark_spring_green-400 transition-colors cursor-pointer"
+                    onClick={() => router.push(`/admin/animals?animalId=${assignment.animal_id}&autoOpen=true`)}
+                  >
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
                         <h3 className="font-semibold text-gray-900">{assignment.name}</h3>
@@ -438,7 +442,11 @@ export default function AdminDashboard() {
             ) : (
               <div className="space-y-3">
                 {vetAnimals.slice(0, 10).map((animal) => (
-                  <div key={animal.animal_id} className="border-2 border-gray-200 rounded-lg p-4 hover:border-dark_spring_green-400 transition-colors">
+                  <div
+                    key={animal.animal_id}
+                    className="border-2 border-gray-200 rounded-lg p-4 hover:border-dark_spring_green-400 transition-colors cursor-pointer"
+                    onClick={() => router.push(`/admin/animals?animalId=${animal.animal_id}&autoOpen=true`)}
+                  >
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
                         <div className="flex items-center gap-2">
