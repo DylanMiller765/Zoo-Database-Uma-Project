@@ -39,6 +39,7 @@ export default function HabitatsPage() {
   const [isRestoreModalOpen, setIsRestoreModalOpen] = useState(false);
   const [habitatToRestore, setHabitatToRestore] = useState<Habitat | null>(null);
   const isManager = hasRole('manager');
+  const canManageHabitats = hasRole('manager') || hasRole('veterinarian');
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -165,13 +166,15 @@ export default function HabitatsPage() {
           </h1>
           <p className="text-gray-600 mt-1">Manage zoo habitats and environments</p>
         </div>
-        <Button
-          onClick={handleAdd}
-          className="bg-dark_spring_green-600 hover:bg-dark_spring_green-700 text-white"
-        >
-          <Plus className="mr-2 h-4 w-4" />
-          Add Habitat
-        </Button>
+        {canManageHabitats && (
+          <Button
+            onClick={handleAdd}
+            className="bg-dark_spring_green-600 hover:bg-dark_spring_green-700 text-white"
+          >
+            <Plus className="mr-2 h-4 w-4" />
+            Add Habitat
+          </Button>
+        )}
       </div>
 
       {/* Search and Filters */}
@@ -240,23 +243,27 @@ export default function HabitatsPage() {
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-2">
                       {!isDeleted(habitat) ? (
-                        <>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={(e) => handleEdit(habitat, e)}
-                          >
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={(e) => handleDeleteClick(habitat, e)}
-                            className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </>
+                        canManageHabitats ? (
+                          <>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={(e) => handleEdit(habitat, e)}
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={(e) => handleDeleteClick(habitat, e)}
+                              className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </>
+                        ) : (
+                          <span className="text-sm text-gray-500">View only</span>
+                        )
                       ) : (
                         isManager && (
                           <Button
