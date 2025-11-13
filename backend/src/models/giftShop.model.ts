@@ -7,10 +7,16 @@ export interface GiftShop {
   opening_time?: string;
   closing_time?: string;
   manager_id?: number;
+  deleted_at?: string | null;
 }
 
 export class GiftShopModel {
   static async findAll(): Promise<GiftShop[]> {
+    const sql = 'SELECT * FROM gift_shops WHERE deleted_at IS NULL';
+    return await query<GiftShop[]>(sql);
+  }
+
+  static async findAllIncludingDeleted(): Promise<GiftShop[]> {
     const sql = 'SELECT * FROM gift_shops';
     return await query<GiftShop[]>(sql);
   }
@@ -26,7 +32,7 @@ export class GiftShopModel {
   }
 
   static async findById(id: number): Promise<GiftShop | null> {
-    const sql = 'SELECT * FROM gift_shops WHERE gift_shop_id = ?';
+    const sql = 'SELECT * FROM gift_shops WHERE gift_shop_id = ? AND deleted_at IS NULL';
     const results = await query<GiftShop[]>(sql, [id]);
     return results.length > 0 ? results[0] : null;
   }
@@ -41,7 +47,13 @@ export class GiftShopModel {
   }
 
   static async remove(id: number): Promise<void> {
-    const sql = 'DELETE FROM gift_shops WHERE gift_shop_id = ?';
+    const sql = 'UPDATE gift_shops SET deleted_at = NOW() WHERE gift_shop_id = ?';
     await query(sql, [id]);
+  }
+
+  static async restore(id: number): Promise<GiftShop | null> {
+    const sql = 'UPDATE gift_shops SET deleted_at = NULL WHERE gift_shop_id = ?';
+    await query(sql, [id]);
+    return await this.findById(id);
   }
 }

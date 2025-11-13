@@ -8,4 +8,5 @@ export interface GiftShopItem {
   cost: number;
   quantity_in_stock: number;
   supplier: string;
+  deleted_at?: string | null;
 }

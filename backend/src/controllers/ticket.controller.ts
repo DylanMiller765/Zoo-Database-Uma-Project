@@ -4,7 +4,10 @@ import { TicketService } from '../services/ticket.service';
 export class TicketController {
   static async getAllTickets(req: Request, res: Response): Promise<void> {
     try {
-      const tickets = await TicketService.getAllTickets();
+      const includeDeleted = req.query.includeDeleted === 'true';
+      const tickets = includeDeleted
+        ? await TicketService.getAllTicketsIncludingDeleted()
+        : await TicketService.getAllTickets();
       res.status(200).json(tickets);
     } catch (error) {
       res.status(500).json({ message: 'Error fetching tickets', error });
@@ -44,6 +47,19 @@ export class TicketController {
       res.status(204).send();
     } catch (error) {
       res.status(500).json({ message: 'Error deleting ticket', error });
+    }
+  }
+
+  static async restoreTicket(req: Request, res: Response): Promise<void> {
+    try {
+      const restoredTicket = await TicketService.restoreTicket(parseInt(req.params.id));
+      if (restoredTicket) {
+        res.status(200).json(restoredTicket);
+      } else {
+        res.status(404).json({ message: 'Ticket not found' });
+      }
+    } catch (error) {
+      res.status(500).json({ message: 'Error restoring ticket', error });
     }
   }
 

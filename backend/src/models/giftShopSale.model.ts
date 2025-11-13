@@ -1,17 +1,17 @@
-import { query } from '../config/database';
+import { query, pool } from '../config/database';
 import { GiftShopSale, GiftShopSaleItem } from '../types/giftShopSale.types';
 
 export class GiftShopSaleModel {
   static async create(sale: GiftShopSale): Promise<GiftShopSale> {
     // This should be a transaction
-    const connection = await (query as any).getConnection();
+    const connection = await pool.getConnection();
     await connection.beginTransaction();
 
     try {
       const { items, ...saleData } = sale;
       const saleSql = 'INSERT INTO gift_shop_sales_transactions SET ?';
       const saleResult = await connection.query(saleSql, [saleData]);
-      const transactionId = saleResult.insertId;
+      const transactionId = (saleResult[0] as any).insertId;
 
       const itemPromises = items.map(item => {
         const itemSql = 'INSERT INTO gift_shop_sale_items SET ?';
@@ -50,10 +50,10 @@ export class GiftShopSaleModel {
     return await query<GiftShopSale[]>(sql, [date]);
   }
 
-  // process_gift_return would be a complex operation involving stock updates and transaction marking.
-  // For now, a simple delete is implemented.
+  // A return is not a "deletion" of the original transaction.
+  // It should be marked as "returned" to preserve the financial record.
   static async remove(id: number): Promise<void> {
-    const sql = 'DELETE FROM gift_shop_sales_transactions WHERE transaction_id = ?';
+    const sql = 'UPDATE gift_shop_sales_transactions SET status = "returned" WHERE transaction_id = ?';
     await query(sql, [id]);
   }
 }

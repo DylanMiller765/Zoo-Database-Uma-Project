@@ -4,9 +4,9 @@ import { Attraction, AttractionData } from '@/types';
 
 export const attractionService = {
   // Function to get all attractions
-  async getAll(): Promise<Attraction[]> {
-    const response = await apiClient.get<Attraction[]>('/attractions'); // Make GET request to /attractions
-    return response.data; // Return the array of attractions from the response
+  async getAll(includeDeleted: boolean = false): Promise<Attraction[]> {
+    const response = await apiClient.get<Attraction[]>(`/attractions${includeDeleted ? '?includeDeleted=true' : ''}`);
+    return response.data;
   },
 
   // (Optional) Add other functions for CRUD operations following the same pattern:

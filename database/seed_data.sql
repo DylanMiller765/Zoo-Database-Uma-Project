@@ -8,6 +8,7 @@ USE zoo_database;
 SET FOREIGN_KEY_CHECKS = 0;
 
 -- Truncate all tables to ensure a clean slate
+TRUNCATE TABLE notifications;
 TRUNCATE TABLE cafe_items;
 TRUNCATE TABLE cafe_sales;
 TRUNCATE TABLE cafes;
@@ -27,6 +28,7 @@ TRUNCATE TABLE passwords;
 TRUNCATE TABLE user_accounts;
 TRUNCATE TABLE customers;
 TRUNCATE TABLE employees;
+TRUNCATE TABLE tickets;
 
 -- Re-enable foreign key checks
 SET FOREIGN_KEY_CHECKS = 1;

@@ -28,6 +28,7 @@ CREATE TABLE `employees` (
     `zip_code` VARCHAR(10),
     `gender` ENUM('male', 'female', 'other', 'prefer_not_to_say'),
     `birthday` DATE,
+    `deleted_at` DATETIME DEFAULT NULL,
     CONSTRAINT `chk_salary` CHECK ((`employment_type` = 'full_time' AND `salary` IS NOT NULL) OR (`employment_type` = 'part_time' AND `salary` IS NULL))
 );
 
@@ -45,6 +46,7 @@ CREATE TABLE `customers` (
     `membership_start_date` DATE DEFAULT NULL,
     `membership_end_date` DATE DEFAULT NULL,
     `registration_date` DATE,
+    `deleted_at` DATETIME DEFAULT NULL,
     INDEX `idx_customer_email` (`email`)
 );
 
@@ -55,7 +57,8 @@ CREATE TABLE `attractions` (
     `human_capacity` INT,
     `opening_time` TIME,
     `closing_time` TIME,
-    `status` ENUM('open', 'closed', 'maintenance') DEFAULT 'open'
+    `status` ENUM('open', 'closed', 'maintenance') DEFAULT 'open',
+    `deleted_at` DATETIME DEFAULT NULL
 );
 
 CREATE TABLE `gift_shops` (
@@ -65,6 +68,7 @@ CREATE TABLE `gift_shops` (
     `opening_time` TIME,
     `closing_time` TIME,
     `manager_id` INT,
+    `deleted_at` DATETIME DEFAULT NULL,
     FOREIGN KEY (`manager_id`) REFERENCES `employees`(`employee_id`) ON DELETE SET NULL
 );
 
@@ -75,6 +79,7 @@ CREATE TABLE `cafes` (
     `opening_time` TIME,
     `closing_time` TIME,
     `manager_id` INT,
+    `deleted_at` DATETIME DEFAULT NULL,
     FOREIGN KEY (`manager_id`) REFERENCES `employees`(`employee_id`) ON DELETE SET NULL
 );
 
@@ -89,6 +94,7 @@ CREATE TABLE `events` (
     `max_participants` INT,
     `ticket_price` DECIMAL(8, 2),
     `coordinator_id` INT,
+    `deleted_at` DATETIME DEFAULT NULL,
     FOREIGN KEY (`coordinator_id`) REFERENCES `employees`(`employee_id`) ON DELETE SET NULL
 );
 
@@ -129,6 +135,7 @@ CREATE TABLE `habitats` (
     `last_maintenance` DATE,
     `status` ENUM('active', 'maintenance', 'renovation', 'closed') DEFAULT 'active',
     `created_date` DATETIME DEFAULT CURRENT_TIMESTAMP,
+    `deleted_at` DATETIME DEFAULT NULL,
     FOREIGN KEY (`attraction_id`) REFERENCES `attractions`(`attraction_id`) ON DELETE SET NULL
 );
 
@@ -149,6 +156,7 @@ CREATE TABLE `animals` (
     `weight` DECIMAL(8, 2),
     `created_date` DATETIME DEFAULT CURRENT_TIMESTAMP,
     `updated_date` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    `deleted_at` DATETIME DEFAULT NULL,
     FOREIGN KEY (`habitat_id`) REFERENCES `habitats`(`habitat_id`) ON DELETE SET NULL,
     INDEX `idx_animal_species` (`species`)
 );
@@ -161,6 +169,7 @@ CREATE TABLE `tickets` (
     `ticket_type` ENUM('adult', 'child', 'senior', 'student') NOT NULL,
     `price` DECIMAL(8, 2) NOT NULL,
     `payment_method` ENUM('cash', 'credit', 'debit', 'online'),
+    `deleted_at` DATETIME DEFAULT NULL,
     FOREIGN KEY (`customer_id`) REFERENCES `customers`(`customer_id`) ON DELETE SET NULL,
     INDEX `idx_ticket_date` (`visit_date`)
 );
@@ -197,6 +206,7 @@ CREATE TABLE `event_registrations` (
     `number_of_participants` INT DEFAULT 1,
     `total_amount` DECIMAL(10, 2),
     `payment_status` ENUM('pending', 'paid', 'cancelled') DEFAULT 'pending',
+    `deleted_at` DATETIME DEFAULT NULL,
     FOREIGN KEY (`event_id`) REFERENCES `events`(`event_id`) ON DELETE CASCADE,
     FOREIGN KEY (`customer_id`) REFERENCES `customers`(`customer_id`) ON DELETE SET NULL
 );
@@ -245,6 +255,7 @@ CREATE TABLE `gift_shop_sales_transactions` (
     `sale_date` DATETIME DEFAULT CURRENT_TIMESTAMP,
     `total_amount` DECIMAL(10, 2) NOT NULL,
     `payment_method` ENUM('cash', 'credit', 'debit'),
+    `status` ENUM('completed', 'returned') DEFAULT 'completed',
     FOREIGN KEY (`gift_shop_id`) REFERENCES `gift_shops`(`gift_shop_id`),
     FOREIGN KEY (`customer_id`) REFERENCES `customers`(`customer_id`) ON DELETE SET NULL,
     FOREIGN KEY (`employee_id`) REFERENCES `employees`(`employee_id`) ON DELETE SET NULL
@@ -271,6 +282,7 @@ CREATE TABLE `cafe_sales` (
     `quantity` INT NOT NULL,
     `line_total` DECIMAL(10, 2) NOT NULL,
     `sale_timestamp` DATETIME DEFAULT CURRENT_TIMESTAMP,
+    `status` ENUM('completed', 'returned') DEFAULT 'completed',
     FOREIGN KEY (`cafe_id`) REFERENCES `cafes`(`cafe_id`),
     FOREIGN KEY (`customer_id`) REFERENCES `customers`(`customer_id`) ON DELETE SET NULL,
     FOREIGN KEY (`employee_id`) REFERENCES `employees`(`employee_id`) ON DELETE SET NULL,
@@ -290,44 +302,57 @@ CREATE TABLE `notifications` (
     INDEX `idx_created_at` (`created_at`)
 );
 
--- Stored procedure to check for expiring memberships and create notifications
+-- Indexes for soft delete columns (performance optimization)
+CREATE INDEX `idx_employees_deleted` ON `employees`(`deleted_at`);
+CREATE INDEX `idx_customers_deleted` ON `customers`(`deleted_at`);
+CREATE INDEX `idx_animals_deleted` ON `animals`(`deleted_at`);
+CREATE INDEX `idx_habitats_deleted` ON `habitats`(`deleted_at`);
+CREATE INDEX `idx_events_deleted` ON `events`(`deleted_at`);
+CREATE INDEX `idx_gift_shops_deleted` ON `gift_shops`(`deleted_at`);
+CREATE INDEX `idx_cafes_deleted` ON `cafes`(`deleted_at`);
+CREATE INDEX `idx_tickets_deleted` ON `tickets`(`deleted_at`);
+
+-- Trigger to create expiring membership notifications
+-- Business Rule: Customers with memberships expiring within 30 days should receive a warning notification
+-- This enforces the semantic constraint that customers must be notified before their membership expires
 DELIMITER //
-CREATE PROCEDURE check_expiring_memberships()
+CREATE TRIGGER trg_membership_expiration_notification
+AFTER UPDATE ON customers
+FOR EACH ROW
 BEGIN
-    DECLARE days_threshold INT DEFAULT 7;
+    -- Only proceed if this is a membership-related update
+    IF NEW.annual_pass = 'yes' AND NEW.membership_end_date IS NOT NULL THEN
+        -- Check if membership is expiring within 30 days
+        IF DATEDIFF(NEW.membership_end_date, CURDATE()) BETWEEN 1 AND 30 THEN
+            -- Only create notification if one doesn't already exist for this expiration date
+            IF NOT EXISTS (
+                SELECT 1 FROM notifications n
+                WHERE n.customer_id = NEW.customer_id
+                AND n.message LIKE CONCAT('%', DATE_FORMAT(NEW.membership_end_date, '%M %d, %Y'), '%')
+                AND DATE(n.created_at) >= DATE_ADD(CURDATE(), INTERVAL -7 DAY)
+            ) THEN
+                INSERT INTO notifications (customer_id, message, notification_type, created_at)
+                VALUES (
+                    NEW.customer_id,
+                    CONCAT('Your membership expires on ', DATE_FORMAT(NEW.membership_end_date, '%M %d, %Y'),
+                           '. Renew now to continue enjoying member benefits!'),
+                    'warning',
+                    NOW()
+                );
+            END IF;
+        END IF;
+    END IF;
 
-    -- Insert notifications for memberships expiring in 30 days or less
-    INSERT INTO notifications (customer_id, message, notification_type, created_at)
-    SELECT
-        c.customer_id,
-        CONCAT('Your membership expires on ', DATE_FORMAT(c.membership_end_date, '%M %d, %Y'),
-               '. Renew now to continue enjoying member benefits!') as message,
-        'warning' as notification_type,
-        NOW() as created_at
-    FROM customers c
-    WHERE c.annual_pass = 'yes'
-    AND c.membership_end_date IS NOT NULL
-    AND DATEDIFF(c.membership_end_date, CURDATE()) BETWEEN 1 AND 30
-    AND NOT EXISTS (
-        -- Avoid duplicate notifications for the same expiration date
-        SELECT 1 FROM notifications n
-        WHERE n.customer_id = c.customer_id
-        AND n.message LIKE CONCAT('%', DATE_FORMAT(c.membership_end_date, '%M %d, %Y'), '%')
-        AND DATE(n.created_at) >= DATE_ADD(CURDATE(), INTERVAL -7 DAY)
-    );
-
-    -- Mark memberships as expired if the end date has passed
-    UPDATE customers
-    SET annual_pass = 'no'
-    WHERE annual_pass = 'yes'
-    AND membership_end_date IS NOT NULL
-    AND membership_end_date < CURDATE();
+    -- Automatically expire memberships that have passed their end date
+    -- Business Rule: Expired memberships should automatically have annual_pass set to 'no'
+    IF NEW.annual_pass = 'yes' AND NEW.membership_end_date IS NOT NULL THEN
+        IF NEW.membership_end_date < CURDATE() THEN
+            -- This will trigger another UPDATE, but the trigger won't recurse
+            -- because the condition NEW.annual_pass = 'yes' will be false on the next iteration
+            UPDATE customers
+            SET annual_pass = 'no'
+            WHERE customer_id = NEW.customer_id;
+        END IF;
+    END IF;
 END//
 DELIMITER ;
-
--- Event to run the membership check daily at midnight
--- Note: Requires event_scheduler to be ON (SET GLOBAL event_scheduler = ON;)
-CREATE EVENT IF NOT EXISTS daily_membership_check
-ON SCHEDULE EVERY 1 DAY
-STARTS (CURRENT_DATE + INTERVAL 1 DAY)
-DO CALL check_expiring_memberships();
