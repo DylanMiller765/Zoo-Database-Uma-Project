@@ -4,9 +4,9 @@ import apiClient from '@/lib/api';
 export interface AnimalHealthCareParams {
   startDate?: string;
   endDate?: string;
-  habitatStatus?: string;
-  healthStatus?: string;
-  endangerment?: string;
+  habitatStatus?: string | string[];
+  healthStatus?: string | string[];
+  endangerment?: string | string[];
   feedingCompliance?: string;
   includeDeleted?: boolean;
 }
@@ -37,9 +37,21 @@ export const queryService = {
 
     if (params.startDate) searchParams.append('startDate', params.startDate);
     if (params.endDate) searchParams.append('endDate', params.endDate);
-    if (params.habitatStatus) searchParams.append('habitatStatus', params.habitatStatus);
-    if (params.healthStatus) searchParams.append('healthStatus', params.healthStatus);
-    if (params.endangerment) searchParams.append('endangerment', params.endangerment);
+
+    // Handle array parameters
+    if (params.habitatStatus) {
+      const statuses = Array.isArray(params.habitatStatus) ? params.habitatStatus : [params.habitatStatus];
+      statuses.forEach(status => searchParams.append('habitatStatus', status));
+    }
+    if (params.healthStatus) {
+      const statuses = Array.isArray(params.healthStatus) ? params.healthStatus : [params.healthStatus];
+      statuses.forEach(status => searchParams.append('healthStatus', status));
+    }
+    if (params.endangerment) {
+      const statuses = Array.isArray(params.endangerment) ? params.endangerment : [params.endangerment];
+      statuses.forEach(status => searchParams.append('endangerment', status));
+    }
+
     if (params.feedingCompliance) searchParams.append('feedingCompliance', params.feedingCompliance);
     if (params.includeDeleted !== undefined) searchParams.append('includeDeleted', String(params.includeDeleted));
 
