@@ -10,6 +10,7 @@ export interface Event {
   max_participants: number | null;
   ticket_price: number | null;
   coordinator_id: number | null;
+  created_at: string;
   deleted_at?: string | null;
 }
 

@@ -60,9 +60,11 @@ export function FeedingLogForm({ animalId, log, schedules = [], onSuccess, onCan
 
     try {
       // Convert datetime-local format to MySQL datetime format
+      // Use current time as fallback if feeding_time is not set
+      const feedingTime = formData.feeding_time || new Date().toISOString().slice(0, 16);
       const submitData = {
         ...formData,
-        feeding_time: formData.feeding_time ? new Date(formData.feeding_time).toISOString().slice(0, 19).replace('T', ' ') : undefined,
+        feeding_time: new Date(feedingTime).toISOString().slice(0, 19).replace('T', ' '),
       };
 
       if (log?.log_id) {
