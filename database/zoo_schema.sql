@@ -165,6 +165,18 @@ CREATE TABLE `tickets` (
     INDEX `idx_ticket_date` (`visit_date`)
 );
 
+CREATE TABLE `membership_purchases` (
+    `purchase_id` INT PRIMARY KEY AUTO_INCREMENT,
+    `customer_id` INT NOT NULL,
+    `purchase_date` DATETIME DEFAULT CURRENT_TIMESTAMP,
+    `start_date` DATE NOT NULL,
+    `end_date` DATE NOT NULL,
+    `price` DECIMAL(8, 2) NOT NULL,
+    `payment_method` ENUM('cash', 'credit', 'debit', 'online') DEFAULT 'online',
+    FOREIGN KEY (`customer_id`) REFERENCES `customers`(`customer_id`) ON DELETE CASCADE,
+    INDEX `idx_customer_purchases` (`customer_id`, `purchase_date`)
+);
+
 CREATE TABLE `gift_shop_items` (
     `item_id` INT PRIMARY KEY AUTO_INCREMENT,
     `gift_shop_id` INT NOT NULL,

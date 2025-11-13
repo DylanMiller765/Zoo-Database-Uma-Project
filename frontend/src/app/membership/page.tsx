@@ -79,9 +79,27 @@ export default function MembershipPage() {
       alert('Please fill in all required fields');
       return;
     }
-    // In a real app, this would process payment and create membership
-    // Redirect to confirmation page with plan name
-  router.push(`/membership/confirmation?plan=${MEMBERSHIP_PLANS[effectivePlan].name}`);
+
+    // Check if user is logged in
+    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+    if (!token) {
+      alert('Please log in to purchase a membership');
+      router.push('/login');
+      return;
+    }
+
+    // Build checkout URL with order data
+    const params = new URLSearchParams({
+      type: 'membership',
+      firstName,
+      lastName,
+      email,
+      startDate: startDate || '',
+      donation: finalDonation.toString(),
+    });
+
+    // Redirect to checkout page
+    router.push(`/checkout?${params.toString()}`);
   };
 
   return (
@@ -371,7 +389,9 @@ export default function MembershipPage() {
                   disabled={!firstName || !lastName || !email}
                   className="w-full mt-6 py-6 rounded-xl bg-sea_green-600 text-white font-semibold hover:bg-sea_green-700 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {!firstName || !lastName || !email ? 'Fill Required Fields' : 'Complete Purchase'}
+                  {!firstName || !lastName || !email 
+                    ? 'Fill Required Fields' 
+                    : 'Proceed to Checkout'}
                 </Button>
               </CardContent>
             </Card>

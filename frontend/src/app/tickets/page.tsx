@@ -46,7 +46,7 @@ function TicketsPageContent() {
 
   const grandTotal = ticketsTotal + (includeDonation ? finalDonation : 0);
 
-  const handleCheckout = async () => {
+  const handleCheckout = () => {
     // Allow donation-only purchases (no tickets required)
     if (totalTickets === 0 && (!includeDonation || finalDonation === 0)) {
       alert('Please select at least one ticket or add a donation');
@@ -76,76 +76,18 @@ function TicketsPageContent() {
       }
     }
 
-    setIsProcessing(true);
-    setError(null);
+    // Build checkout URL with order data
+    const params = new URLSearchParams({
+      type: 'tickets',
+      adults: adults.toString(),
+      children: children.toString(),
+      seniors: seniors.toString(),
+      date: visitDate || '',
+      donation: finalDonation.toString(),
+    });
 
-    try {
-      // Get current user if logged in (customer_id will be null for guest checkout)
-      const user = authService.getStoredUser();
-      const customerId = user?.role === 'customer' && user.customer_id ? user.customer_id : undefined;
-
-      console.log('Ticket purchase - User:', user);
-      console.log('Ticket purchase - Customer ID:', customerId);
-
-      // Create ticket records for each ticket type (only if tickets selected)
-      const ticketPromises = [];
-
-      if (totalTickets > 0) {
-        // Adult tickets
-        for (let i = 0; i < adults; i++) {
-          const ticketData = {
-            customer_id: customerId,
-            visit_date: visitDate,
-            ticket_type: 'adult' as const,
-            price: TICKET_PRICES.adult,
-            payment_method: 'online' as const,
-          };
-          console.log('Creating adult ticket:', ticketData);
-          ticketPromises.push(ticketService.create(ticketData));
-        }
-
-        // Child tickets
-        for (let i = 0; i < children; i++) {
-          ticketPromises.push(
-            ticketService.create({
-              customer_id: customerId,
-              visit_date: visitDate,
-              ticket_type: 'child',
-              price: TICKET_PRICES.child,
-              payment_method: 'online',
-            })
-          );
-        }
-
-        // Senior tickets
-        for (let i = 0; i < seniors; i++) {
-          ticketPromises.push(
-            ticketService.create({
-              customer_id: customerId,
-              visit_date: visitDate,
-              ticket_type: 'senior',
-              price: TICKET_PRICES.senior,
-              payment_method: 'online',
-            })
-          );
-        }
-      }
-
-      // Process all tickets (if any)
-      if (ticketPromises.length > 0) {
-        await Promise.all(ticketPromises);
-      }
-
-      // Redirect to confirmation page with ticket count and total
-      router.push(
-        `/tickets/confirmation?tickets=${totalTickets}&total=${grandTotal.toFixed(2)}&date=${visitDate}`
-      );
-    } catch (err: any) {
-      console.error('Error processing tickets:', err);
-      setError(err.response?.data?.message || 'Failed to process ticket purchase. Please try again.');
-    } finally {
-      setIsProcessing(false);
-    }
+    // Redirect to checkout page
+    router.push(`/checkout?${params.toString()}`);
   };
 
   return (
