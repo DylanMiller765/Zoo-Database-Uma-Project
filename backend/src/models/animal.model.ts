@@ -20,15 +20,28 @@ export interface Animal {
   deleted_at?: string | null;
 }
 
+export interface AnimalWithDetails extends Animal {
+  habitat_name?: string | null;
+}
+
 export class AnimalModel {
-  static async findAll(): Promise<Animal[]> {
-    const sql = 'SELECT * FROM animals WHERE deleted_at IS NULL';
-    return await query<Animal[]>(sql);
+  static async findAll(): Promise<AnimalWithDetails[]> {
+    const sql = `
+      SELECT a.*, h.habitat_name
+      FROM animals a
+      LEFT JOIN habitats h ON a.habitat_id = h.habitat_id
+      WHERE a.deleted_at IS NULL
+    `;
+    return await query<AnimalWithDetails[]>(sql);
   }
 
-  static async findAllIncludingDeleted(): Promise<Animal[]> {
-    const sql = 'SELECT * FROM animals';
-    return await query<Animal[]>(sql);
+  static async findAllIncludingDeleted(): Promise<AnimalWithDetails[]> {
+    const sql = `
+      SELECT a.*, h.habitat_name
+      FROM animals a
+      LEFT JOIN habitats h ON a.habitat_id = h.habitat_id
+    `;
+    return await query<AnimalWithDetails[]>(sql);
   }
 
   static async create(animal: Omit<Animal, 'animal_id'>): Promise<Animal> {

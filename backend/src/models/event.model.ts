@@ -1,15 +1,26 @@
 import { query } from '../config/database';
-import { Event } from '../types/event.types';
+import { Event, EventWithDetails } from '../types/event.types';
 
 export class EventModel {
-  static async findAll(): Promise<Event[]> {
-    const sql = 'SELECT * FROM events WHERE deleted_at IS NULL ORDER BY event_date DESC';
-    return await query<Event[]>(sql);
+  static async findAll(): Promise<EventWithDetails[]> {
+    const sql = `
+      SELECT e.*, CONCAT(emp.first_name, ' ', emp.last_name) as coordinator_name
+      FROM events e
+      LEFT JOIN employees emp ON e.coordinator_id = emp.employee_id
+      WHERE e.deleted_at IS NULL
+      ORDER BY e.event_date DESC
+    `;
+    return await query<EventWithDetails[]>(sql);
   }
 
-  static async findAllIncludingDeleted(): Promise<Event[]> {
-    const sql = 'SELECT * FROM events ORDER BY event_date DESC';
-    return await query<Event[]>(sql);
+  static async findAllIncludingDeleted(): Promise<EventWithDetails[]> {
+    const sql = `
+      SELECT e.*, CONCAT(emp.first_name, ' ', emp.last_name) as coordinator_name
+      FROM events e
+      LEFT JOIN employees emp ON e.coordinator_id = emp.employee_id
+      ORDER BY e.event_date DESC
+    `;
+    return await query<EventWithDetails[]>(sql);
   }
 
   static async create(eventData: Omit<Event, 'event_id'>): Promise<Event> {

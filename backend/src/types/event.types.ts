@@ -13,6 +13,10 @@ export interface Event {
   deleted_at?: string | null;
 }
 
+export interface EventWithDetails extends Event {
+  coordinator_name: string | null;
+}
+
 export interface EventRegistration {
   registration_id: number;
   event_id: number;

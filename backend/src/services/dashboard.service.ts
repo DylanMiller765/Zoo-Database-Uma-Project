@@ -225,7 +225,7 @@ export class DashboardService {
   }
 
   static async getVeterinarianAnimals() {
-    // Vets can see all animals, but prioritize those with health issues
+    // Vets see animals that need medical attention (fair/poor/critical health status)
     const animals = await query<any[]>(
       `SELECT
         a.animal_id,
@@ -237,14 +237,14 @@ export class DashboardService {
         a.updated_date
        FROM animals a
        LEFT JOIN habitats h ON a.habitat_id = h.habitat_id
-       WHERE a.deleted_at IS NULL AND a.active_status = 'active'
+       WHERE a.deleted_at IS NULL
+         AND a.active_status = 'active'
+         AND a.health_status IN ('fair', 'poor', 'critical')
        ORDER BY
          CASE a.health_status
            WHEN 'critical' THEN 1
            WHEN 'poor' THEN 2
            WHEN 'fair' THEN 3
-           WHEN 'good' THEN 4
-           WHEN 'excellent' THEN 5
          END,
          a.name
        LIMIT 20`
