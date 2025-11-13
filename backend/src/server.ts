@@ -22,6 +22,9 @@ import dashboardRoutes from './routes/dashboard.routes';
 import queryRoutes from './routes/query.routes';
 import meRoutes from './routes/me.routes';
 import notificationRoutes from './routes/notification.routes';
+import feedingScheduleRoutes from './routes/feedingSchedule.routes';
+import feedingLogRoutes from './routes/feedingLog.routes';
+import zookeeperAssignmentRoutes from './routes/zookeeperAssignment.routes';
 
 dotenv.config();
 
@@ -65,6 +68,9 @@ app.use('/api/cafe-sales', cafeSaleRoutes);
 app.use('/api/event-registrations', eventRegistrationRoutes);
 app.use('/api/me', meRoutes);
 app.use('/api/notifications', notificationRoutes);
+app.use('/api/feeding-schedules', feedingScheduleRoutes);
+app.use('/api/feeding-logs', feedingLogRoutes);
+app.use('/api/zookeeper-assignments', zookeeperAssignmentRoutes);
 
 // Error handling
 app.use(notFound);

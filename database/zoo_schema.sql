@@ -94,6 +94,7 @@ CREATE TABLE `events` (
     `max_participants` INT,
     `ticket_price` DECIMAL(8, 2),
     `coordinator_id` INT,
+    `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
     `deleted_at` DATETIME DEFAULT NULL,
     FOREIGN KEY (`coordinator_id`) REFERENCES `employees`(`employee_id`) ON DELETE SET NULL
 );

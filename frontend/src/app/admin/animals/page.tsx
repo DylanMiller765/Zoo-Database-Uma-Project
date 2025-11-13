@@ -2,8 +2,9 @@
 
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { animalService } from '@/services/animal.service';
+import { zookeeperAssignmentService } from '@/services/zookeeperAssignment.service';
 import { Animal } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -20,13 +21,14 @@ import {
 import { Plus, Search, Edit, Trash2, Leaf, RotateCcw } from 'lucide-react';
 import { Modal } from '@/components/ui/modal';
 import { AnimalForm } from '@/components/admin/AnimalForm';
-import { EntityDetailModal } from '@/components/ui/EntityDetailModal';
+import { AnimalDetailModal } from '@/components/admin/AnimalDetailModal';
 import { ShowDeletedToggle } from '@/components/admin/ShowDeletedToggle';
 import { RestoreConfirmationModal } from '@/components/admin/RestoreConfirmationModal';
 
 export default function AnimalsPage() {
   const { isAuthenticated, user, loading: authLoading, hasRole } = useAuth();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [animals, setAnimals] = useState<Animal[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -44,13 +46,36 @@ export default function AnimalsPage() {
   const [isRestoreModalOpen, setIsRestoreModalOpen] = useState(false);
   const [animalToRestore, setAnimalToRestore] = useState<Animal | null>(null);
 
+  // Keeper assignments state
+  const [myAnimalIds, setMyAnimalIds] = useState<number[]>([]);
+
   const isManager = hasRole('manager');
+  const isKeeper = hasRole('keeper');
+  const isVet = hasRole('veterinarian');
 
   useEffect(() => {
     if (isAuthenticated) {
       loadAnimals();
+      if (isKeeper && user?.employee_id) {
+        loadKeeperAssignments();
+      }
     }
-  }, [isAuthenticated, showDeleted]);
+  }, [isAuthenticated, showDeleted, isKeeper, user?.employee_id]);
+
+  // Handle URL parameters to auto-open animal
+  useEffect(() => {
+    const animalIdParam = searchParams?.get('animalId');
+    const autoOpenParam = searchParams?.get('autoOpen');
+
+    if (animalIdParam && autoOpenParam === 'true' && animals.length > 0) {
+      const animalId = parseInt(animalIdParam);
+      const animal = animals.find(a => a.animal_id === animalId);
+      if (animal) {
+        setDetailAnimal(animal);
+        setIsDetailModalOpen(true);
+      }
+    }
+  }, [searchParams, animals]);
 
   const loadAnimals = async () => {
     try {
@@ -61,6 +86,16 @@ export default function AnimalsPage() {
       console.error('Failed to load animals:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadKeeperAssignments = async () => {
+    if (!user?.employee_id) return;
+    try {
+      const assignments = await zookeeperAssignmentService.getByKeeperId(user.employee_id);
+      setMyAnimalIds(assignments.map(a => a.animal_id));
+    } catch (error) {
+      console.error('Failed to load keeper assignments:', error);
     }
   };
 
@@ -153,38 +188,6 @@ export default function AnimalsPage() {
 
   const isDeleted = (animal: Animal) => animal.deleted_at !== null && animal.deleted_at !== undefined;
 
-  // Detail modal field configuration
-  const detailSections = [
-    {
-      title: 'Basic Information',
-      fields: [
-        { label: 'Name', key: 'name' },
-        { label: 'Scientific Name', key: 'scientific_name' },
-        { label: 'Species', key: 'species' },
-        { label: 'Gender', key: 'gender', type: 'enum' as const },
-        { label: 'Date of Birth', key: 'date_of_birth', type: 'date' as const },
-        { label: 'Arrival Date', key: 'arrival_date', type: 'date' as const },
-      ],
-    },
-    {
-      title: 'Health & Status',
-      fields: [
-        { label: 'Health Status', key: 'health_status', type: 'enum' as const },
-        { label: 'Active Status', key: 'active_status', type: 'enum' as const },
-        { label: 'Endangerment Status', key: 'endangerment_status', type: 'enum' as const },
-        { label: 'Weight (kg)', key: 'weight', type: 'number' as const },
-        { label: 'Medical Notes', key: 'medical_notes' },
-      ],
-    },
-    {
-      title: 'Location & Origin',
-      fields: [
-        { label: 'Place of Origin', key: 'place_of_origin' },
-        { label: 'Habitat ID', key: 'habitat_id' },
-      ],
-    },
-  ];
-
   if (authLoading || loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -271,7 +274,10 @@ export default function AnimalsPage() {
               <TableRow
                 key={animal.animal_id}
                 onClick={() => handleRowClick(animal)}
-                className={`cursor-pointer hover:bg-gray-50 ${isDeleted(animal) ? 'opacity-60 bg-red-50' : ''}`}
+                className={`cursor-pointer hover:bg-gray-50 ${
+                  isDeleted(animal) ? 'opacity-60 bg-red-50' :
+                  myAnimalIds.includes(animal.animal_id) ? 'bg-sea_green-50 border-l-4 border-sea_green-600' : ''
+                }`}
               >
                 <TableCell className="font-medium">{animal.name}</TableCell>
                 <TableCell>
@@ -388,12 +394,10 @@ export default function AnimalsPage() {
       </Modal>
 
       {/* Detail Modal */}
-      <EntityDetailModal
+      <AnimalDetailModal
         open={isDetailModalOpen}
         onClose={() => setIsDetailModalOpen(false)}
-        title={`Animal: ${detailAnimal?.name || ''}`}
-        entity={detailAnimal}
-        sections={detailSections}
+        animal={detailAnimal}
         onEdit={() => {
           setIsDetailModalOpen(false);
           setSelectedAnimal(detailAnimal);

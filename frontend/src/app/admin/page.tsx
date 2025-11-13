@@ -8,6 +8,7 @@ import { DashboardStats } from '@/types';
 import { StatsCard } from '@/components/admin/StatsCard';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Modal } from '@/components/ui/modal';
 import {
   Leaf,
   Users,
@@ -36,6 +37,7 @@ export default function AdminDashboard() {
   const [statsLoading, setStatsLoading] = useState(true);
   const [recentActivities, setRecentActivities] = useState<RecentActivity[]>([]);
   const [activitiesLoading, setActivitiesLoading] = useState(true);
+  const [showActivityModal, setShowActivityModal] = useState(false);
   const [keeperAssignments, setKeeperAssignments] = useState<KeeperAssignment[]>([]);
   const [assignmentsLoading, setAssignmentsLoading] = useState(true);
   const [vetAnimals, setVetAnimals] = useState<VeterinarianAnimal[]>([]);
@@ -296,11 +298,19 @@ export default function AdminDashboard() {
       {/* Main Content Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Recent Activity */}
-        <Card>
+        <Card
+          className={recentActivities.length > 5 ? 'cursor-pointer hover:shadow-lg transition-shadow' : ''}
+          onClick={() => recentActivities.length > 5 && setShowActivityModal(true)}
+        >
           <CardHeader>
-            <CardTitle className="flex items-center space-x-2">
-              <TrendingUp className="h-5 w-5 text-dark_spring_green-600" />
-              <span>Recent Activity</span>
+            <CardTitle className="flex items-center justify-between">
+              <div className="flex items-center space-x-2">
+                <TrendingUp className="h-5 w-5 text-dark_spring_green-600" />
+                <span>Recent Activity</span>
+              </div>
+              {recentActivities.length > 5 && (
+                <span className="text-xs text-gray-500 font-normal">Click to see all</span>
+              )}
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -313,24 +323,36 @@ export default function AdminDashboard() {
                 <p className="text-gray-500">No recent activity</p>
               </div>
             ) : (
-              <div className="space-y-4">
-                {recentActivities.map((activity, index) => {
-                  const Icon = getActivityIcon(activity.type);
-                  const iconColor = getActivityIconColor(activity.type);
-                  return (
-                    <div key={index} className="flex items-start space-x-3 pb-4 border-b border-gray-100 last:border-0 last:pb-0">
-                      <div className={`p-2 rounded-lg bg-gray-50`}>
-                        <Icon className={`h-4 w-4 ${iconColor}`} />
+              <>
+                <div className="space-y-4">
+                  {recentActivities.slice(0, 5).map((activity, index) => {
+                    const Icon = getActivityIcon(activity.type);
+                    const iconColor = getActivityIconColor(activity.type);
+                    return (
+                      <div key={index} className="flex items-start space-x-3 pb-4 border-b border-gray-100 last:border-0 last:pb-0">
+                        <div className={`p-2 rounded-lg bg-gray-50`}>
+                          <Icon className={`h-4 w-4 ${iconColor}`} />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-gray-900">{activity.title}</p>
+                          <p className="text-sm text-gray-600 mt-0.5">{activity.description}</p>
+                          <p className="text-xs text-gray-500 mt-1">{getTimeAgo(activity.timestamp)}</p>
+                        </div>
                       </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-gray-900">{activity.title}</p>
-                        <p className="text-sm text-gray-600 mt-0.5">{activity.description}</p>
-                        <p className="text-xs text-gray-500 mt-1">{getTimeAgo(activity.timestamp)}</p>
-                      </div>
+                    );
+                  })}
+                </div>
+                {recentActivities.length > 5 && (
+                  <div className="mt-4 pt-4 border-t border-gray-200">
+                    <div className="text-center">
+                      <p className="text-sm text-dark_spring_green-600 font-medium">
+                        +{recentActivities.length - 5} more {recentActivities.length - 5 === 1 ? 'item' : 'items'}
+                      </p>
+                      <p className="text-xs text-gray-500 mt-1">Click card to view all</p>
                     </div>
-                  );
-                })}
-              </div>
+                  </div>
+                )}
+              </>
             )}
           </CardContent>
         </Card>
@@ -389,7 +411,11 @@ export default function AdminDashboard() {
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {keeperAssignments.map((assignment) => (
-                  <div key={assignment.animal_id} className="border-2 border-gray-200 rounded-lg p-4 hover:border-dark_spring_green-400 transition-colors">
+                  <div
+                    key={assignment.animal_id}
+                    className="border-2 border-gray-200 rounded-lg p-4 hover:border-dark_spring_green-400 transition-colors cursor-pointer"
+                    onClick={() => router.push(`/admin/animals?animalId=${assignment.animal_id}&autoOpen=true`)}
+                  >
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
                         <h3 className="font-semibold text-gray-900">{assignment.name}</h3>
@@ -438,7 +464,11 @@ export default function AdminDashboard() {
             ) : (
               <div className="space-y-3">
                 {vetAnimals.slice(0, 10).map((animal) => (
-                  <div key={animal.animal_id} className="border-2 border-gray-200 rounded-lg p-4 hover:border-dark_spring_green-400 transition-colors">
+                  <div
+                    key={animal.animal_id}
+                    className="border-2 border-gray-200 rounded-lg p-4 hover:border-dark_spring_green-400 transition-colors cursor-pointer"
+                    onClick={() => router.push(`/admin/animals?animalId=${animal.animal_id}&autoOpen=true`)}
+                  >
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
                         <div className="flex items-center gap-2">
@@ -469,6 +499,42 @@ export default function AdminDashboard() {
           </CardContent>
         </Card>
       )}
+
+      {/* Recent Activity Modal */}
+      <Modal
+        open={showActivityModal}
+        onClose={() => setShowActivityModal(false)}
+        title="Recent Activity"
+        description="Complete list of recent zoo activities"
+        size="xl"
+      >
+        <div className="max-h-[60vh] overflow-y-auto space-y-3">
+          {recentActivities.map((activity, index) => {
+            const Icon = getActivityIcon(activity.type);
+            const iconColor = getActivityIconColor(activity.type);
+            return (
+              <div key={index} className="flex items-start space-x-3 p-4 rounded-lg border border-gray-200 hover:bg-gray-50">
+                <div className={`p-2 rounded-lg bg-gray-50`}>
+                  <Icon className={`h-4 w-4 ${iconColor}`} />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-gray-900">{activity.title}</p>
+                  <p className="text-sm text-gray-600 mt-0.5">{activity.description}</p>
+                  <p className="text-xs text-gray-500 mt-1">{getTimeAgo(activity.timestamp)}</p>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+        <div className="mt-4 pt-4 border-t border-gray-200 flex justify-between items-center">
+          <p className="text-sm text-gray-600">
+            Showing {recentActivities.length} {recentActivities.length === 1 ? 'item' : 'items'}
+          </p>
+          <Button onClick={() => setShowActivityModal(false)}>
+            Close
+          </Button>
+        </div>
+      </Modal>
     </div>
   );
 }

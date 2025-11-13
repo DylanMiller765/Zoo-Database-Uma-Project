@@ -415,7 +415,7 @@ export default function EventsPage() {
           {
             title: 'Coordinator',
             fields: [
-              { label: 'Coordinator ID', key: 'coordinator_id' },
+              { label: 'Coordinator', key: 'coordinator_name' },
             ],
           },
         ]}
