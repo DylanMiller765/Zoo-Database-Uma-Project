@@ -3,9 +3,9 @@ import { query } from '../config/database';
 interface AnimalHealthCareParams {
   startDate?: string;
   endDate?: string;
-  habitatStatus?: string;
-  healthStatus?: string;
-  endangerment?: string;
+  habitatStatus?: string | string[];
+  healthStatus?: string | string[];
+  endangerment?: string | string[];
   feedingCompliance?: string;
   includeDeleted?: boolean;
 }
@@ -36,11 +36,29 @@ export class QueryService {
     const {
       startDate,
       endDate,
-      habitatStatus = 'all',
-      healthStatus = 'all',
-      endangerment = 'all',
+      habitatStatus,
+      healthStatus,
+      endangerment,
       includeDeleted = false
     } = params;
+
+    // Helper to convert params to arrays
+    const habitatStatuses = Array.isArray(habitatStatus) ? habitatStatus : (habitatStatus ? [habitatStatus] : []);
+    const healthStatuses = Array.isArray(healthStatus) ? healthStatus : (healthStatus ? [healthStatus] : []);
+    const endangermentStatuses = Array.isArray(endangerment) ? endangerment : (endangerment ? [endangerment] : []);
+
+    // Build WHERE clauses
+    const habitatWhere = habitatStatuses.length > 0
+      ? `h.status IN (${habitatStatuses.map(() => '?').join(',')})`
+      : '1=1';
+
+    const healthWhere = healthStatuses.length > 0
+      ? `a.health_status IN (${healthStatuses.map(() => '?').join(',')})`
+      : '1=1';
+
+    const endangermentWhere = endangermentStatuses.length > 0
+      ? `a.endangerment_status IN (${endangermentStatuses.map(() => '?').join(',')})`
+      : '1=1';
 
     const sql = `
       SELECT
@@ -103,11 +121,9 @@ export class QueryService {
       LEFT JOIN feeding_schedules fs ON a.animal_id = fs.animal_id
 
       WHERE
-        (? = 'all' OR h.status = ?)
-        AND (? = 'all' OR a.health_status = ? OR
-             (? = 'needs_attention' AND a.health_status IN ('fair', 'poor', 'critical')))
-        AND (? = 'all' OR a.endangerment_status = ? OR
-             (? = 'endangered_plus' AND a.endangerment_status IN ('endangered', 'critically_endangered', 'extinct_in_the_wild')))
+        (${habitatWhere})
+        AND (a.animal_id IS NULL OR ${healthWhere})
+        AND (a.animal_id IS NULL OR ${endangermentWhere})
         ${startDate ? 'AND (a.animal_id IS NULL OR a.arrival_date >= ?)' : ''}
         ${endDate ? 'AND (a.animal_id IS NULL OR a.arrival_date <= ?)' : ''}
         AND (h.deleted_at IS NULL ${includeDeleted ? 'OR 1=1' : ''})
@@ -117,10 +133,10 @@ export class QueryService {
 
     const queryParams: any[] = [];
 
-    // Add filter params (need to add twice for SQL conditions)
-    queryParams.push(habitatStatus, habitatStatus);
-    queryParams.push(healthStatus, healthStatus, healthStatus);
-    queryParams.push(endangerment, endangerment, endangerment);
+    // Add filter array values
+    queryParams.push(...habitatStatuses);
+    queryParams.push(...healthStatuses);
+    queryParams.push(...endangermentStatuses);
 
     // Add arrival date filters if provided
     if (startDate) queryParams.push(startDate);

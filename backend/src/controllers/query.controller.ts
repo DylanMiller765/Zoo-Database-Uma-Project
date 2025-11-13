@@ -17,12 +17,25 @@ export class QueryController {
         includeDeleted
       } = req.query;
 
+      // Parse array parameters
+      const habitatStatusArray = habitatStatus
+        ? (Array.isArray(habitatStatus) ? habitatStatus as string[] : [habitatStatus as string])
+        : undefined;
+
+      const healthStatusArray = healthStatus
+        ? (Array.isArray(healthStatus) ? healthStatus as string[] : [healthStatus as string])
+        : undefined;
+
+      const endangermentArray = endangerment
+        ? (Array.isArray(endangerment) ? endangerment as string[] : [endangerment as string])
+        : undefined;
+
       const data = await QueryService.getAnimalHealthAndCare({
         startDate: startDate as string,
         endDate: endDate as string,
-        habitatStatus: habitatStatus as string,
-        healthStatus: healthStatus as string,
-        endangerment: endangerment as string,
+        habitatStatus: habitatStatusArray,
+        healthStatus: healthStatusArray,
+        endangerment: endangermentArray,
         feedingCompliance: feedingCompliance as string,
         includeDeleted: includeDeleted === 'true'
       });

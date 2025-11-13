@@ -74,16 +74,17 @@ export default function AnimalHealthCarePage() {
   const [loading, setLoading] = useState(false);
 
   // View options
-  const [groupByHabitat, setGroupByHabitat] = useState(true);
+  const [groupBy, setGroupBy] = useState<'habitat' | 'keeper' | 'none'>('habitat');
   const [viewMode, setViewMode] = useState<'cards' | 'table'>('cards');
+  const [sortBy, setSortBy] = useState<string>('name');
 
-  // Parameters
+  // Parameters - all filters enabled by default
   const [params, setParams] = useState<AnimalHealthCareParams>({
     startDate: '',
     endDate: '',
-    habitatStatus: 'all',
-    healthStatus: 'all',
-    endangerment: 'all',
+    habitatStatus: ['active', 'maintenance', 'renovation', 'closed'],
+    healthStatus: ['excellent', 'good', 'fair', 'poor', 'critical'],
+    endangerment: ['least_concern', 'near_threatened', 'vulnerable', 'endangered', 'critically_endangered', 'extinct_in_the_wild'],
     includeDeleted: false
   });
 
@@ -115,6 +116,73 @@ export default function AnimalHealthCarePage() {
     return data.filter(row => row.animal_id !== null);
   }, [data]);
 
+  // Group data by keeper
+  type KeeperGroup = {
+    keeper_id: number | null;
+    keeper_name: string | null;
+    animals: AnimalRow[];
+  };
+
+  const keepers: KeeperGroup[] = useMemo(() => {
+    const groups = data.reduce<Record<string, KeeperGroup>>((acc, row) => {
+      if (!row.animal_id) return acc; // Skip rows without animals
+
+      const keeperKey = row.keeper_id ? `keeper_${row.keeper_id}` : 'unassigned';
+
+      if (!acc[keeperKey]) {
+        acc[keeperKey] = {
+          keeper_id: row.keeper_id,
+          keeper_name: row.keeper_name,
+          animals: []
+        };
+      }
+
+      acc[keeperKey].animals.push(row);
+      return acc;
+    }, {});
+
+    // Sort: assigned keepers first (alphabetically), then unassigned
+    const groupArray = Object.values(groups);
+    const assigned = groupArray.filter(g => g.keeper_id !== null).sort((a, b) =>
+      (a.keeper_name || '').localeCompare(b.keeper_name || '')
+    );
+    const unassigned = groupArray.filter(g => g.keeper_id === null);
+
+    return [...assigned, ...unassigned];
+  }, [data]);
+
+  // Sorting function for animals
+  const sortedAnimals = useMemo(() => {
+    const animals = [...allAnimals];
+
+    switch (sortBy) {
+      case 'name':
+        return animals.sort((a, b) => (a.animal_name || '').localeCompare(b.animal_name || ''));
+      case 'species':
+        return animals.sort((a, b) => (a.species || '').localeCompare(b.species || ''));
+      case 'health':
+        const healthOrder = { 'critical': 0, 'poor': 1, 'fair': 2, 'good': 3, 'excellent': 4 };
+        return animals.sort((a, b) =>
+          (healthOrder[a.health_status as keyof typeof healthOrder] || 5) -
+          (healthOrder[b.health_status as keyof typeof healthOrder] || 5)
+        );
+      case 'arrival_date':
+        return animals.sort((a, b) => {
+          if (!a.arrival_date) return 1;
+          if (!b.arrival_date) return -1;
+          return new Date(b.arrival_date).getTime() - new Date(a.arrival_date).getTime();
+        });
+      case 'last_fed':
+        return animals.sort((a, b) => {
+          if (!a.last_fed_time) return 1;
+          if (!b.last_fed_time) return -1;
+          return new Date(a.last_fed_time).getTime() - new Date(b.last_fed_time).getTime();
+        });
+      default:
+        return animals;
+    }
+  }, [allAnimals, sortBy]);
+
   // Generate report handler
   const handleGenerate = async () => {
     try {
@@ -135,13 +203,22 @@ export default function AnimalHealthCarePage() {
     setParams({
       startDate: '',
       endDate: '',
-      habitatStatus: 'all',
-      healthStatus: 'all',
-      endangerment: 'all',
+      habitatStatus: ['active', 'maintenance', 'renovation', 'closed'],
+      healthStatus: ['excellent', 'good', 'fair', 'poor', 'critical'],
+      endangerment: ['least_concern', 'near_threatened', 'vulnerable', 'endangered', 'critically_endangered', 'extinct_in_the_wild'],
       includeDeleted: false
     });
     setHasGenerated(false);
     setData([]);
+  };
+
+  // Toggle helper for multi-select
+  const toggleArrayParam = (param: 'habitatStatus' | 'healthStatus' | 'endangerment', value: string) => {
+    const currentArray = (params[param] || []) as string[];
+    const newArray = currentArray.includes(value)
+      ? currentArray.filter(v => v !== value)
+      : [...currentArray, value];
+    setParams({ ...params, [param]: newArray });
   };
 
   // Helper functions
@@ -219,7 +296,7 @@ export default function AnimalHealthCarePage() {
       </div>
 
       {/* Parameters Form */}
-      <ReportParametersCard>
+      <ReportParametersCard title="">
         <DateRangePicker
           startDate={params.startDate || ''}
           endDate={params.endDate || ''}
@@ -229,67 +306,79 @@ export default function AnimalHealthCarePage() {
           showQuickSelect={true}
         />
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {/* Habitat Status Filter */}
-          <div>
-            <Label htmlFor="habitatStatus" className="text-sm font-medium text-gray-700">
-              Habitat Status
-            </Label>
-            <select
-              id="habitatStatus"
-              value={params.habitatStatus}
-              onChange={(e) => setParams({ ...params, habitatStatus: e.target.value })}
-              className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
-            >
-              <option value="all">All Statuses</option>
-              <option value="active">Active</option>
-              <option value="maintenance">Maintenance</option>
-              <option value="renovation">Renovation</option>
-              <option value="closed">Closed</option>
-            </select>
+        {/* Habitat Status Filter */}
+        <div>
+          <Label className="text-sm font-medium text-gray-700 mb-1.5 block">
+            Habitat Status {(params.habitatStatus || []).length > 0 && `(${(params.habitatStatus || []).length} selected)`}
+          </Label>
+          <div className="flex flex-wrap gap-1.5">
+            {['active', 'maintenance', 'renovation', 'closed'].map((status) => (
+              <button
+                key={status}
+                type="button"
+                onClick={() => toggleArrayParam('habitatStatus', status)}
+                className={`px-2.5 py-1 text-sm rounded-md border transition-colors capitalize ${
+                  (params.habitatStatus || []).includes(status)
+                    ? 'bg-sea_green-600 text-white border-sea_green-600'
+                    : 'bg-white text-gray-700 border-gray-300 hover:border-sea_green-400'
+                }`}
+              >
+                {status}
+              </button>
+            ))}
           </div>
+        </div>
 
-          {/* Health Status Filter */}
-          <div>
-            <Label htmlFor="healthStatus" className="text-sm font-medium text-gray-700">
-              Health Status
-            </Label>
-            <select
-              id="healthStatus"
-              value={params.healthStatus}
-              onChange={(e) => setParams({ ...params, healthStatus: e.target.value })}
-              className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
-            >
-              <option value="all">All Health Levels</option>
-              <option value="needs_attention">Needs Attention (Fair/Poor/Critical)</option>
-              <option value="excellent">Excellent</option>
-              <option value="good">Good</option>
-              <option value="fair">Fair</option>
-              <option value="poor">Poor</option>
-              <option value="critical">Critical</option>
-            </select>
+        {/* Health Status Filter */}
+        <div>
+          <Label className="text-sm font-medium text-gray-700 mb-1.5 block">
+            Health Status {(params.healthStatus || []).length > 0 && `(${(params.healthStatus || []).length} selected)`}
+          </Label>
+          <div className="flex flex-wrap gap-1.5">
+            {['excellent', 'good', 'fair', 'poor', 'critical'].map((status) => (
+              <button
+                key={status}
+                type="button"
+                onClick={() => toggleArrayParam('healthStatus', status)}
+                className={`px-2.5 py-1 text-sm rounded-md border transition-colors capitalize ${
+                  (params.healthStatus || []).includes(status)
+                    ? 'bg-sea_green-600 text-white border-sea_green-600'
+                    : 'bg-white text-gray-700 border-gray-300 hover:border-sea_green-400'
+                }`}
+              >
+                {status}
+              </button>
+            ))}
           </div>
+        </div>
 
-          {/* Endangerment Filter */}
-          <div>
-            <Label htmlFor="endangerment" className="text-sm font-medium text-gray-700">
-              Endangerment Status
-            </Label>
-            <select
-              id="endangerment"
-              value={params.endangerment}
-              onChange={(e) => setParams({ ...params, endangerment: e.target.value })}
-              className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
-            >
-              <option value="all">All Levels</option>
-              <option value="endangered_plus">Endangered or Higher</option>
-              <option value="least_concern">Least Concern</option>
-              <option value="near_threatened">Near Threatened</option>
-              <option value="vulnerable">Vulnerable</option>
-              <option value="endangered">Endangered</option>
-              <option value="critically_endangered">Critically Endangered</option>
-              <option value="extinct_in_the_wild">Extinct in Wild</option>
-            </select>
+        {/* Endangerment Filter */}
+        <div>
+          <Label className="text-sm font-medium text-gray-700 mb-1.5 block">
+            Conservation Status {(params.endangerment || []).length > 0 && `(${(params.endangerment || []).length} selected)`}
+          </Label>
+          <div className="flex flex-wrap gap-1.5">
+            {[
+              { value: 'least_concern', label: 'Least Concern' },
+              { value: 'near_threatened', label: 'Near Threatened' },
+              { value: 'vulnerable', label: 'Vulnerable' },
+              { value: 'endangered', label: 'Endangered' },
+              { value: 'critically_endangered', label: 'Critically Endangered' },
+              { value: 'extinct_in_the_wild', label: 'Extinct in Wild' }
+            ].map(({ value, label }) => (
+              <button
+                key={value}
+                type="button"
+                onClick={() => toggleArrayParam('endangerment', value)}
+                className={`px-2.5 py-1 text-xs rounded-md border transition-colors ${
+                  (params.endangerment || []).includes(value)
+                    ? 'bg-sea_green-600 text-white border-sea_green-600'
+                    : 'bg-white text-gray-700 border-gray-300 hover:border-sea_green-400'
+                }`}
+              >
+                {label}
+              </button>
+            ))}
           </div>
         </div>
 
@@ -385,44 +474,65 @@ export default function AnimalHealthCarePage() {
           {/* View Controls and Export Button */}
           <div className="flex flex-wrap items-center justify-between gap-4">
             {/* View Options */}
-            <div className="flex items-center gap-4">
-              {/* Group by Habitat Toggle */}
-              <div className="flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  id="groupByHabitat"
-                  checked={groupByHabitat}
-                  onChange={(e) => setGroupByHabitat(e.target.checked)}
-                  className="rounded border-gray-300 text-sea_green-600 focus:ring-sea_green-500"
-                />
-                <Label htmlFor="groupByHabitat" className="text-sm text-gray-700 cursor-pointer">
-                  Group by Habitat
-                </Label>
+            <div className="flex flex-wrap items-center gap-4">
+              {/* Group By Selector */}
+              <div>
+                <Label className="text-xs text-gray-600 mb-1 block">Group By</Label>
+                <select
+                  value={groupBy}
+                  onChange={(e) => setGroupBy(e.target.value as 'habitat' | 'keeper' | 'none')}
+                  className="rounded-md border border-gray-300 px-3 py-1.5 text-sm"
+                >
+                  <option value="habitat">Habitat</option>
+                  <option value="keeper">Keeper</option>
+                  <option value="none">No Grouping</option>
+                </select>
               </div>
 
               {/* View Mode Toggle */}
-              <div className="flex items-center gap-2 border border-gray-300 rounded-md p-1">
-                <button
-                  onClick={() => setViewMode('cards')}
-                  className={`px-3 py-1 text-sm rounded transition-colors ${
-                    viewMode === 'cards'
-                      ? 'bg-sea_green-600 text-white'
-                      : 'text-gray-600 hover:bg-gray-100'
-                  }`}
-                >
-                  Cards
-                </button>
-                <button
-                  onClick={() => setViewMode('table')}
-                  className={`px-3 py-1 text-sm rounded transition-colors ${
-                    viewMode === 'table'
-                      ? 'bg-sea_green-600 text-white'
-                      : 'text-gray-600 hover:bg-gray-100'
-                  }`}
-                >
-                  Table
-                </button>
+              <div>
+                <Label className="text-xs text-gray-600 mb-1 block">Display</Label>
+                <div className="flex items-center gap-1 border border-gray-300 rounded-md p-1">
+                  <button
+                    onClick={() => setViewMode('cards')}
+                    className={`px-3 py-1 text-sm rounded transition-colors ${
+                      viewMode === 'cards'
+                        ? 'bg-sea_green-600 text-white'
+                        : 'text-gray-600 hover:bg-gray-100'
+                    }`}
+                  >
+                    Cards
+                  </button>
+                  <button
+                    onClick={() => setViewMode('table')}
+                    className={`px-3 py-1 text-sm rounded transition-colors ${
+                      viewMode === 'table'
+                        ? 'bg-sea_green-600 text-white'
+                        : 'text-gray-600 hover:bg-gray-100'
+                    }`}
+                  >
+                    Table
+                  </button>
+                </div>
               </div>
+
+              {/* Sort By (only for table view or ungrouped) */}
+              {(viewMode === 'table' || groupBy === 'none') && (
+                <div>
+                  <Label className="text-xs text-gray-600 mb-1 block">Sort By</Label>
+                  <select
+                    value={sortBy}
+                    onChange={(e) => setSortBy(e.target.value)}
+                    className="rounded-md border border-gray-300 px-3 py-1.5 text-sm"
+                  >
+                    <option value="name">Name (A-Z)</option>
+                    <option value="species">Species</option>
+                    <option value="health">Health (Worst First)</option>
+                    <option value="arrival_date">Arrival Date (Newest)</option>
+                    <option value="last_fed">Last Fed (Most Urgent)</option>
+                  </select>
+                </div>
+              )}
             </div>
 
             {/* Export Button */}
@@ -436,7 +546,7 @@ export default function AnimalHealthCarePage() {
           </div>
 
           {/* Data Display - Conditional based on view options */}
-          {groupByHabitat && viewMode === 'cards' && (
+          {groupBy === 'habitat' && viewMode === 'cards' && (
             /* Grouped by Habitat - Cards View */
             <div className="space-y-6">
               {habitats.map((habitat) => (
@@ -521,7 +631,7 @@ export default function AnimalHealthCarePage() {
             </div>
           )}
 
-          {groupByHabitat && viewMode === 'table' && (
+          {groupBy === 'habitat' && viewMode === 'table' && (
             /* Grouped by Habitat - Table View */
             <div className="space-y-6">
               {habitats.map((habitat) => (
@@ -592,12 +702,151 @@ export default function AnimalHealthCarePage() {
             </div>
           )}
 
-          {!groupByHabitat && viewMode === 'cards' && (
+          {groupBy === 'keeper' && viewMode === 'cards' && (
+            /* Grouped by Keeper - Cards View */
+            <div className="space-y-6">
+              {keepers.map((keeper) => (
+                <Card key={keeper.keeper_id || 'unassigned'} className="border-l-4 border-l-dark_spring_green-500">
+                  <CardHeader className="pb-3">
+                    <div className="flex items-center justify-between">
+                      <CardTitle className="flex items-center gap-2 text-lg">
+                        <User className="h-4 w-4 text-dark_spring_green-600" />
+                        {keeper.keeper_name || 'Unassigned Animals'}
+                      </CardTitle>
+                      <Badge variant="secondary" className="text-xs">
+                        {keeper.animals.length} animal{keeper.animals.length !== 1 ? 's' : ''}
+                      </Badge>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
+                      {keeper.animals.map((animal) => (
+                        <div
+                          key={animal.animal_id}
+                          className="border rounded-lg p-3 hover:border-sea_green-400 transition-colors bg-white"
+                        >
+                          <div className="flex items-start justify-between mb-2">
+                            <div className="flex-1 min-w-0">
+                              <h4 className="font-semibold text-sm truncate">{animal.animal_name}</h4>
+                              <p className="text-xs text-gray-600 truncate">{animal.species}</p>
+                            </div>
+                            <Badge variant={getHealthBadge(animal.health_status)} className="text-xs ml-2 capitalize">
+                              {animal.health_status}
+                            </Badge>
+                          </div>
+                          <div className="space-y-1 text-xs">
+                            <div className="flex justify-between">
+                              <span className="text-gray-600">Habitat:</span>
+                              <span className="font-medium truncate ml-2">{animal.habitat_name}</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span className="text-gray-600">Conservation:</span>
+                              <span className="font-medium capitalize">{formatEndangerment(animal.endangerment_status)}</span>
+                            </div>
+                            <div className="pt-1 border-t">
+                              {(() => {
+                                if (!animal.last_fed_time) {
+                                  return <Badge variant="danger" className="text-xs w-full justify-center">Never Fed</Badge>;
+                                }
+                                const hoursSinceLastFed = (Date.now() - new Date(animal.last_fed_time).getTime()) / (1000 * 60 * 60);
+                                if (hoursSinceLastFed < 24) {
+                                  return <Badge variant="success" className="text-xs w-full justify-center">Fed {Math.round(hoursSinceLastFed)}h ago</Badge>;
+                                } else {
+                                  return <Badge variant="warning" className="text-xs w-full justify-center">Fed {Math.round(hoursSinceLastFed)}h ago</Badge>;
+                                }
+                              })()}
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+              {keepers.length === 0 && (
+                <Card>
+                  <CardContent className="py-12 text-center">
+                    <User className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                    <p className="text-gray-600">No animals found matching the selected criteria.</p>
+                  </CardContent>
+                </Card>
+              )}
+            </div>
+          )}
+
+          {groupBy === 'keeper' && viewMode === 'table' && (
+            /* Grouped by Keeper - Table View */
+            <div className="space-y-6">
+              {keepers.map((keeper) => (
+                <Card key={keeper.keeper_id || 'unassigned'} className="border-l-4 border-l-dark_spring_green-500">
+                  <CardHeader className="pb-3">
+                    <div className="flex items-center justify-between">
+                      <CardTitle className="flex items-center gap-2 text-lg">
+                        <User className="h-4 w-4 text-dark_spring_green-600" />
+                        {keeper.keeper_name || 'Unassigned Animals'}
+                      </CardTitle>
+                      <Badge variant="secondary" className="text-xs">
+                        {keeper.animals.length} animal{keeper.animals.length !== 1 ? 's' : ''}
+                      </Badge>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="p-0">
+                    <div className="overflow-x-auto">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Name</TableHead>
+                            <TableHead>Species</TableHead>
+                            <TableHead>Habitat</TableHead>
+                            <TableHead>Health</TableHead>
+                            <TableHead>Conservation</TableHead>
+                            <TableHead>Last Fed</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {keeper.animals.map((animal) => (
+                            <TableRow key={animal.animal_id}>
+                              <TableCell className="font-medium">{animal.animal_name}</TableCell>
+                              <TableCell className="text-sm">{animal.species}</TableCell>
+                              <TableCell className="text-sm">{animal.habitat_name}</TableCell>
+                              <TableCell>
+                                <Badge variant={getHealthBadge(animal.health_status)} className="text-xs capitalize">
+                                  {animal.health_status}
+                                </Badge>
+                              </TableCell>
+                              <TableCell className="text-sm capitalize">{formatEndangerment(animal.endangerment_status)}</TableCell>
+                              <TableCell className="text-sm">
+                                {animal.last_fed_time ? (
+                                  <span>{Math.round((Date.now() - new Date(animal.last_fed_time).getTime()) / (1000 * 60 * 60))}h ago</span>
+                                ) : (
+                                  <span className="text-red-600">Never</span>
+                                )}
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+              {keepers.length === 0 && (
+                <Card>
+                  <CardContent className="py-12 text-center">
+                    <User className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                    <p className="text-gray-600">No animals found matching the selected criteria.</p>
+                  </CardContent>
+                </Card>
+              )}
+            </div>
+          )}
+
+          {groupBy === 'none' && viewMode === 'cards' && (
             /* Flat List - Cards View */
             <div>
-              {allAnimals.length > 0 ? (
+              {sortedAnimals.length > 0 ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
-                  {allAnimals.map((animal) => (
+                  {sortedAnimals.map((animal) => (
                     <div
                       key={animal.animal_id}
                       className="border rounded-lg p-3 hover:border-sea_green-400 transition-colors bg-white"
@@ -654,11 +903,11 @@ export default function AnimalHealthCarePage() {
             </div>
           )}
 
-          {!groupByHabitat && viewMode === 'table' && (
+          {groupBy === 'none' && viewMode === 'table' && (
             /* Flat List - Table View */
             <Card>
               <CardContent className="p-0">
-                {allAnimals.length > 0 ? (
+                {sortedAnimals.length > 0 ? (
                   <div className="overflow-x-auto">
                     <Table>
                       <TableHeader>
@@ -674,7 +923,7 @@ export default function AnimalHealthCarePage() {
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {allAnimals.map((animal) => (
+                        {sortedAnimals.map((animal) => (
                           <TableRow key={animal.animal_id}>
                             <TableCell className="font-medium">{animal.animal_name}</TableCell>
                             <TableCell className="text-sm">{animal.species}</TableCell>
