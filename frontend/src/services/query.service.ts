@@ -1,33 +1,86 @@
 import apiClient from '@/lib/api';
 
+// Parameter types matching backend
+export interface AnimalHealthCareParams {
+  startDate?: string;
+  endDate?: string;
+  habitatStatus?: string;
+  healthStatus?: string;
+  endangerment?: string;
+  feedingCompliance?: string;
+  includeDeleted?: boolean;
+}
+
+export interface EventPerformanceParams {
+  startDate: string;
+  endDate: string;
+  eventStatus?: string;
+  minCapacity?: number;
+  includeCanceled?: boolean;
+  includeDeleted?: boolean;
+}
+
+export interface FinancialReportParams {
+  startDate: string;
+  endDate: string;
+  sources?: string[];
+  grouping?: string;
+  includeReturns?: boolean;
+}
+
 export const queryService = {
-  async getAnimalsByHabitat(): Promise<any[]> {
-    const response = await apiClient.get<any[]>('/queries/animals-by-habitat');
+  /**
+   * Report 1: Animal Health & Care Report
+   */
+  async getAnimalHealthAndCare(params: AnimalHealthCareParams = {}): Promise<any[]> {
+    const searchParams = new URLSearchParams();
+
+    if (params.startDate) searchParams.append('startDate', params.startDate);
+    if (params.endDate) searchParams.append('endDate', params.endDate);
+    if (params.habitatStatus) searchParams.append('habitatStatus', params.habitatStatus);
+    if (params.healthStatus) searchParams.append('healthStatus', params.healthStatus);
+    if (params.endangerment) searchParams.append('endangerment', params.endangerment);
+    if (params.feedingCompliance) searchParams.append('feedingCompliance', params.feedingCompliance);
+    if (params.includeDeleted !== undefined) searchParams.append('includeDeleted', String(params.includeDeleted));
+
+    const url = `/queries/animal-health-care${searchParams.toString() ? `?${searchParams.toString()}` : ''}`;
+    const response = await apiClient.get<any[]>(url);
     return response.data;
   },
 
-  async getEmployeeAssignments(): Promise<any[]> {
-    const response = await apiClient.get<any[]>('/queries/employee-assignments');
+  /**
+   * Report 2: Event Performance Report
+   */
+  async getEventPerformance(params: EventPerformanceParams): Promise<any[]> {
+    const searchParams = new URLSearchParams();
+
+    searchParams.append('startDate', params.startDate);
+    searchParams.append('endDate', params.endDate);
+    if (params.eventStatus) searchParams.append('eventStatus', params.eventStatus);
+    if (params.minCapacity !== undefined) searchParams.append('minCapacity', String(params.minCapacity));
+    if (params.includeCanceled !== undefined) searchParams.append('includeCanceled', String(params.includeCanceled));
+    if (params.includeDeleted !== undefined) searchParams.append('includeDeleted', String(params.includeDeleted));
+
+    const response = await apiClient.get<any[]>(`/queries/event-performance?${searchParams.toString()}`);
     return response.data;
   },
 
-  async getRevenueAnalysis(): Promise<any[]> {
-    const response = await apiClient.get<any[]>('/queries/revenue-analysis');
-    return response.data;
-  },
+  /**
+   * Report 3: Financial Report
+   */
+  async getFinancialReport(params: FinancialReportParams): Promise<{ data: any[]; summary: any }> {
+    const searchParams = new URLSearchParams();
 
-  async getEventAttendance(): Promise<any[]> {
-    const response = await apiClient.get<any[]>('/queries/event-attendance');
-    return response.data;
-  },
-
-  async getVisitorStatistics(startDate?: string, endDate?: string): Promise<{ data: any[]; summary: any }> {
-    const params = new URLSearchParams();
-    if (startDate) params.append('startDate', startDate);
-    if (endDate) params.append('endDate', endDate);
+    searchParams.append('startDate', params.startDate);
+    searchParams.append('endDate', params.endDate);
+    if (params.sources && params.sources.length > 0) {
+      searchParams.append('sources', params.sources.join(','));
+    }
+    if (params.grouping) searchParams.append('grouping', params.grouping);
+    if (params.includeReturns !== undefined) searchParams.append('includeReturns', String(params.includeReturns));
 
     const response = await apiClient.get<{ data: any[]; summary: any }>(
-      `/queries/visitor-statistics${params.toString() ? `?${params.toString()}` : ''}`
+      `/queries/financial-report?${searchParams.toString()}`
     );
     return response.data;
   },
