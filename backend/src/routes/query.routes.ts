@@ -7,10 +7,9 @@ const router = Router();
 // All query routes require authentication
 router.use(protect);
 
-router.get('/animals-by-habitat', QueryController.getAnimalsByHabitat);
-router.get('/employee-assignments', QueryController.getEmployeeAssignments);
-router.get('/revenue-analysis', QueryController.getRevenueAnalysis);
-router.get('/event-attendance', QueryController.getEventAttendance);
-router.get('/visitor-statistics', QueryController.getVisitorStatistics);
+// New 3-Report System
+router.get('/animal-health-care', QueryController.getAnimalHealthAndCare);
+router.get('/event-performance', QueryController.getEventPerformance);
+router.get('/financial-report', QueryController.getFinancialReport);
 
 export default router;
