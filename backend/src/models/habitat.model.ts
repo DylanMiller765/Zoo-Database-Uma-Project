@@ -1,15 +1,24 @@
 import { query } from '../config/database';
-import { Habitat } from '../types/habitat.types';
+import { Habitat, HabitatWithDetails } from '../types/habitat.types';
 
 export class HabitatModel {
-  static async findAll(): Promise<Habitat[]> {
-    const sql = 'SELECT * FROM habitats WHERE deleted_at IS NULL';
-    return await query<Habitat[]>(sql);
+  static async findAll(): Promise<HabitatWithDetails[]> {
+    const sql = `
+      SELECT h.*, a.name as attraction_name
+      FROM habitats h
+      LEFT JOIN attractions a ON h.attraction_id = a.attraction_id
+      WHERE h.deleted_at IS NULL
+    `;
+    return await query<HabitatWithDetails[]>(sql);
   }
 
-  static async findAllIncludingDeleted(): Promise<Habitat[]> {
-    const sql = 'SELECT * FROM habitats';
-    return await query<Habitat[]>(sql);
+  static async findAllIncludingDeleted(): Promise<HabitatWithDetails[]> {
+    const sql = `
+      SELECT h.*, a.name as attraction_name
+      FROM habitats h
+      LEFT JOIN attractions a ON h.attraction_id = a.attraction_id
+    `;
+    return await query<HabitatWithDetails[]>(sql);
   }
 
   static async findById(id: number): Promise<Habitat | null> {

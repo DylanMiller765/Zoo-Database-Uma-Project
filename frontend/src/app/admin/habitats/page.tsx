@@ -355,16 +355,16 @@ export default function HabitatsPage() {
           {
             title: 'Association',
             fields: [
-              { label: 'Attraction ID', key: 'attraction_id' },
+              { label: 'Attraction', key: 'attraction_name' },
             ],
           },
         ]}
-        onEdit={detailHabitat && !isDeleted(detailHabitat) ? () => {
+        onEdit={detailHabitat && !isDeleted(detailHabitat) && canManageHabitats ? () => {
           setIsDetailModalOpen(false);
           setSelectedHabitat(detailHabitat);
           setIsModalOpen(true);
         } : undefined}
-        canEdit={detailHabitat ? !isDeleted(detailHabitat) : false}
+        canEdit={detailHabitat ? !isDeleted(detailHabitat) && canManageHabitats : false}
       />
 
       {/* Restore Confirmation Modal */}

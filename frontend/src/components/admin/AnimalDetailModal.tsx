@@ -49,6 +49,13 @@ export function AnimalDetailModal({ open, onClose, animal, onEdit, canEdit = tru
   const canDeleteSchedule = hasRole('veterinarian') || hasRole('manager');
   const canDeleteLog = hasRole('manager');
 
+  // Reset tab to default when modal opens
+  useEffect(() => {
+    if (open) {
+      setActiveTab(getDefaultTab());
+    }
+  }, [open]);
+
   useEffect(() => {
     if (open && animal) {
       loadSchedules();
@@ -261,8 +268,8 @@ export function AnimalDetailModal({ open, onClose, animal, onEdit, canEdit = tru
                     <p className="font-medium">{animal.place_of_origin || 'N/A'}</p>
                   </div>
                   <div>
-                    <p className="text-sm text-gray-500">Habitat ID</p>
-                    <p className="font-medium">{animal.habitat_id || 'N/A'}</p>
+                    <p className="text-sm text-gray-500">Habitat</p>
+                    <p className="font-medium">{animal.habitat_name || 'N/A'}</p>
                   </div>
                 </div>
               </div>

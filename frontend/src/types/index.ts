@@ -72,6 +72,7 @@ export interface Animal {
   gender?: 'male' | 'female' | 'unknown';
   place_of_origin?: string;
   habitat_id?: number;
+  habitat_name?: string | null;
   medical_notes?: string;
   health_status?: 'excellent' | 'good' | 'fair' | 'poor' | 'critical';
   active_status?: 'active' | 'transferred' | 'deceased';
@@ -97,6 +98,8 @@ export interface Event {
   ticket_price?: number;
   status?: 'scheduled' | 'ongoing' | 'completed' | 'cancelled';
   created_by?: number;
+  coordinator_id?: number;
+  coordinator_name?: string | null;
   current_registrations?: number;
   deleted_at?: string | null;
 }
@@ -212,6 +215,7 @@ export interface Habitat {
   habitat_id: number;
   habitat_name: string;
   attraction_id: number;
+  attraction_name?: string | null;
   size: string;
   environment_type: string;
   animal_capacity: number;
