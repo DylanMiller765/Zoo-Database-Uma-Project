@@ -2,8 +2,10 @@ import apiClient from '@/lib/api';
 import { Employee, CreateEmployeeData } from '@/types';
 
 export const employeeService = {
-  async getAll(): Promise<Employee[]> {
-    const response = await apiClient.get<Employee[]>('/employees');
+  async getAll(includeDeleted = false): Promise<Employee[]> {
+    const response = await apiClient.get<Employee[]>('/employees', {
+      params: { includeDeleted: includeDeleted ? 'true' : 'false' }
+    });
     return response.data;
   },
 
@@ -24,5 +26,10 @@ export const employeeService = {
 
   async delete(id: number): Promise<void> {
     await apiClient.delete(`/employees/${id}`);
+  },
+
+  async restore(id: number): Promise<Employee> {
+    const response = await apiClient.put<Employee>(`/employees/${id}/restore`);
+    return response.data;
   },
 };

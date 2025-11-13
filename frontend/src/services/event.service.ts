@@ -2,8 +2,10 @@ import apiClient from '@/lib/api';
 import { Event, CreateEventData } from '@/types';
 
 export const eventService = {
-  async getAll(): Promise<Event[]> {
-    const response = await apiClient.get<Event[]>('/events');
+  async getAll(includeDeleted = false): Promise<Event[]> {
+    const response = await apiClient.get<Event[]>('/events', {
+      params: { includeDeleted: includeDeleted ? 'true' : 'false' }
+    });
     return response.data;
   },
 
@@ -24,5 +26,10 @@ export const eventService = {
 
   async delete(id: number): Promise<void> {
     await apiClient.delete(`/events/${id}`);
+  },
+
+  async restore(id: number): Promise<Event> {
+    const response = await apiClient.put<Event>(`/events/${id}/restore`);
+    return response.data;
   },
 };

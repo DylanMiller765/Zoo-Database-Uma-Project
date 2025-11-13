@@ -9,5 +9,6 @@ router.post('/', protect, restrictTo('manager', 'coordinator'), CustomerControll
 router.get('/:id', protect, restrictTo('manager', 'coordinator'), CustomerController.getCustomerById);
 router.put('/:id', protect, restrictTo('manager', 'coordinator'), CustomerController.updateCustomer);
 router.delete('/:id', protect, restrictTo('manager'), CustomerController.deleteCustomer);
+router.put('/:id/restore', protect, restrictTo('manager'), CustomerController.restoreCustomer);
 
 export default router;

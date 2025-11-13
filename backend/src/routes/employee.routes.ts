@@ -15,4 +15,6 @@ router
   .put(EmployeeController.updateEmployee)
   .delete(EmployeeController.deleteEmployee);
 
+router.put('/:id/restore', EmployeeController.restoreEmployee);
+
 export default router;

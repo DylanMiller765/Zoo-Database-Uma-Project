@@ -2,61 +2,134 @@ import { Request, Response } from 'express';
 import { QueryService } from '../services/query.service';
 
 export class QueryController {
-  static async getAnimalsByHabitat(req: Request, res: Response): Promise<void> {
+  /**
+   * Report 1: Animal Health & Care Report
+   */
+  static async getAnimalHealthAndCare(req: Request, res: Response): Promise<void> {
     try {
-      const data = await QueryService.getAnimalsByHabitat();
+      const {
+        startDate,
+        endDate,
+        habitatStatus,
+        healthStatus,
+        endangerment,
+        feedingCompliance,
+        includeDeleted
+      } = req.query;
+
+      const data = await QueryService.getAnimalHealthAndCare({
+        startDate: startDate as string,
+        endDate: endDate as string,
+        habitatStatus: habitatStatus as string,
+        healthStatus: healthStatus as string,
+        endangerment: endangerment as string,
+        feedingCompliance: feedingCompliance as string,
+        includeDeleted: includeDeleted === 'true'
+      });
+
       res.status(200).json(data);
     } catch (error) {
-      console.error('❌ Error fetching animals by habitat:', error);
-      res.status(500).json({ message: 'Error fetching animals by habitat', error });
+      console.error('❌ Error fetching animal health and care report:', error);
+      res.status(500).json({
+        message: 'Error fetching animal health and care report',
+        error: error instanceof Error ? error.message : 'Unknown error'
+      });
     }
   }
 
-  static async getEmployeeAssignments(req: Request, res: Response): Promise<void> {
+  /**
+   * Report 2: Event Performance Report
+   */
+  static async getEventPerformance(req: Request, res: Response): Promise<void> {
     try {
-      const data = await QueryService.getEmployeeAssignments();
+      const {
+        startDate,
+        endDate,
+        eventStatus,
+        minCapacity,
+        includeCanceled,
+        includeDeleted
+      } = req.query;
+
+      // Validate required parameters
+      if (!startDate || !endDate) {
+        res.status(400).json({
+          message: 'Start date and end date are required for Event Performance Report'
+        });
+        return;
+      }
+
+      const data = await QueryService.getEventPerformance({
+        startDate: startDate as string,
+        endDate: endDate as string,
+        eventStatus: eventStatus as string,
+        minCapacity: minCapacity ? parseInt(minCapacity as string) : 0,
+        includeCanceled: includeCanceled === 'true',
+        includeDeleted: includeDeleted === 'true'
+      });
+
       res.status(200).json(data);
     } catch (error) {
-      console.error('❌ Error fetching employee assignments:', error);
-      res.status(500).json({ message: 'Error fetching employee assignments', error });
+      console.error('❌ Error fetching event performance report:', error);
+      res.status(500).json({
+        message: 'Error fetching event performance report',
+        error: error instanceof Error ? error.message : 'Unknown error'
+      });
     }
   }
 
-  static async getRevenueAnalysis(req: Request, res: Response): Promise<void> {
+  /**
+   * Report 3: Financial Report
+   */
+  static async getFinancialReport(req: Request, res: Response): Promise<void> {
     try {
-      const data = await QueryService.getRevenueAnalysis();
-      res.status(200).json(data);
-    } catch (error) {
-      console.error('❌ Error fetching revenue analysis:', error);
-      res.status(500).json({ message: 'Error fetching revenue analysis', error });
-    }
-  }
+      const {
+        startDate,
+        endDate,
+        sources,
+        grouping,
+        includeReturns
+      } = req.query;
 
-  static async getEventAttendance(req: Request, res: Response): Promise<void> {
-    try {
-      const data = await QueryService.getEventAttendance();
-      res.status(200).json(data);
-    } catch (error) {
-      console.error('❌ Error fetching event attendance:', error);
-      res.status(500).json({ message: 'Error fetching event attendance', error });
-    }
-  }
+      // Validate required parameters
+      if (!startDate || !endDate) {
+        res.status(400).json({
+          message: 'Start date and end date are required for Financial Report'
+        });
+        return;
+      }
 
-  static async getVisitorStatistics(req: Request, res: Response): Promise<void> {
-    try {
-      const { startDate, endDate } = req.query;
-      const data = await QueryService.getVisitorStatistics(
-        startDate as string,
-        endDate as string
-      );
-      const summary = await QueryService.getVisitorStatisticsSummary(
-        startDate as string,
-        endDate as string
-      );
+      // Parse sources array
+      let sourcesArray: string[] | undefined;
+      if (sources) {
+        sourcesArray = typeof sources === 'string'
+          ? sources.split(',')
+          : sources as string[];
+      }
+
+      const data = await QueryService.getFinancialReport({
+        startDate: startDate as string,
+        endDate: endDate as string,
+        sources: sourcesArray,
+        grouping: grouping as string,
+        includeReturns: includeReturns === 'true'
+      });
+
+      const summary = await QueryService.getFinancialReportSummary({
+        startDate: startDate as string,
+        endDate: endDate as string,
+        sources: sourcesArray,
+        grouping: grouping as string,
+        includeReturns: includeReturns === 'true'
+      });
+
       res.status(200).json({ data, summary });
     } catch (error) {
-      console.error('❌ Error fetching visitor statistics:', error);
-      res.status(500).json({ message: 'Error fetching visitor statistics', error });
+      console.error('❌ Error fetching financial report:', error);
+      res.status(500).json({
+        message: 'Error fetching financial report',
+        error: error instanceof Error ? error.message : 'Unknown error'
+      });
     }
   }
 }

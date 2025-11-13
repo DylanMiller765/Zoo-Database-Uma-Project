@@ -4,7 +4,10 @@ import { CafeService } from '../services/cafe.service';
 export class CafeController {
   static async getAllCafes(req: Request, res: Response): Promise<void> {
     try {
-      const cafes = await CafeService.getAllCafes();
+      const includeDeleted = req.query.includeDeleted === 'true';
+      const cafes = includeDeleted
+        ? await CafeService.getAllCafesIncludingDeleted()
+        : await CafeService.getAllCafes();
       res.status(200).json(cafes);
     } catch (error) {
       res.status(500).json({ message: 'Error fetching cafes', error });
@@ -55,6 +58,19 @@ export class CafeController {
       res.status(204).send();
     } catch (error) {
       res.status(500).json({ message: 'Error deleting cafe', error });
+    }
+  }
+
+  static async restoreCafe(req: Request, res: Response): Promise<void> {
+    try {
+      const restoredCafe = await CafeService.restoreCafe(parseInt(req.params.id));
+      if (restoredCafe) {
+        res.status(200).json(restoredCafe);
+      } else {
+        res.status(404).json({ message: 'Cafe not found' });
+      }
+    } catch (error) {
+      res.status(500).json({ message: 'Error restoring cafe', error });
     }
   }
 }

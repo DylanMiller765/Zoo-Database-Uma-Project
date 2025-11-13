@@ -17,12 +17,15 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { Plus, Search, Edit, Trash2, Calendar } from 'lucide-react';
+import { Plus, Search, Edit, Trash2, Calendar, RotateCcw } from 'lucide-react';
 import { Modal } from '@/components/ui/modal';
 import { EventForm } from '@/components/admin/EventForm';
+import { EntityDetailModal } from '@/components/ui/EntityDetailModal';
+import { ShowDeletedToggle } from '@/components/admin/ShowDeletedToggle';
+import { RestoreConfirmationModal } from '@/components/admin/RestoreConfirmationModal';
 
 export default function EventsPage() {
-  const { isAuthenticated, loading: authLoading } = useAuth();
+  const { isAuthenticated, loading: authLoading, hasRole } = useAuth();
   const router = useRouter();
   const [events, setEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(true);
@@ -30,12 +33,16 @@ export default function EventsPage() {
   const [statusFilter, setStatusFilter] = useState('all');
   const [dateFilter, setDateFilter] = useState('all');
   const [sortBy, setSortBy] = useState('date');
+  const [showDeleted, setShowDeleted] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [eventToDelete, setEventToDelete] = useState<Event | null>(null);
-
-
+  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
+  const [detailEvent, setDetailEvent] = useState<Event | null>(null);
+  const [isRestoreModalOpen, setIsRestoreModalOpen] = useState(false);
+  const [eventToRestore, setEventToRestore] = useState<Event | null>(null);
+  const isManager = hasRole('manager');
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -43,10 +50,16 @@ export default function EventsPage() {
     }
   }, [isAuthenticated]);
 
+  useEffect(() => {
+    if (isAuthenticated) {
+      loadEvents();
+    }
+  }, [showDeleted]);
+
   const loadEvents = async () => {
     try {
       setLoading(true);
-      const data = await eventService.getAll();
+      const data = await eventService.getAll(showDeleted);
       setEvents(data);
     } catch (error) {
       console.error('Failed to load events:', error);
@@ -60,15 +73,43 @@ export default function EventsPage() {
     setIsModalOpen(true);
   };
 
-  const handleEdit = (event: Event) => {
+  const handleEdit = (event: Event, e: React.MouseEvent) => {
+    e.stopPropagation();
     setSelectedEvent(event);
     setIsModalOpen(true);
   };
 
-  const handleDeleteClick = (event: Event) => {
+  const handleRowClick = (event: Event) => {
+    setDetailEvent(event);
+    setIsDetailModalOpen(true);
+  };
+
+  const handleRestoreClick = (event: Event, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setEventToRestore(event);
+    setIsRestoreModalOpen(true);
+  };
+
+  const handleRestore = async () => {
+    if (!eventToRestore?.event_id) return;
+
+    try {
+      await eventService.restore(eventToRestore.event_id);
+      await loadEvents();
+      setIsRestoreModalOpen(false);
+      setEventToRestore(null);
+    } catch (error) {
+      console.error('Failed to restore event:', error);
+    }
+  };
+
+  const handleDeleteClick = (event: Event, e: React.MouseEvent) => {
+    e.stopPropagation();
     setEventToDelete(event);
     setIsDeleteModalOpen(true);
   };
+
+  const isDeleted = (event: Event) => event.deleted_at !== null && event.deleted_at !== undefined;
 
   const handleDelete = async () => {
     if (!eventToDelete?.event_id) return;
@@ -90,6 +131,7 @@ export default function EventsPage() {
   };
 
   const filteredEvents = events
+    .filter(event => event) // Add this line to filter out null or undefined events
     .filter(event => {
       // Search filter
       const matchesSearch = event.event_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -184,6 +226,13 @@ export default function EventsPage() {
           />
         </div>
 
+        {isManager && (
+          <ShowDeletedToggle
+            checked={showDeleted}
+            onChange={setShowDeleted}
+          />
+        )}
+
         <div className="w-auto">
           <Select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
             <option value="all">All Status</option>
@@ -230,7 +279,11 @@ export default function EventsPage() {
           </TableHeader>
           <TableBody>
             {filteredEvents.map((event) => (
-              <TableRow key={event.event_id}>
+              <TableRow
+                key={event.event_id}
+                onClick={() => handleRowClick(event)}
+                className={`cursor-pointer hover:bg-gray-50 ${isDeleted(event) ? 'opacity-60 bg-red-50' : ''}`}
+              >
                 <TableCell className="font-medium">{event.event_name}</TableCell>
                 <TableCell>{formatDate(event.event_date)}</TableCell>
                 <TableCell>
@@ -241,23 +294,42 @@ export default function EventsPage() {
                   {event.current_registrations || 0} / {event.max_capacity || 'Unlimited'}
                 </TableCell>
                 <TableCell>
-                  <Badge variant={getStatusBadge(event.status || 'scheduled')} className="capitalize">
-                    {event.status || 'scheduled'}
-                  </Badge>
+                  {isDeleted(event) ? (
+                    <Badge variant="danger">Deleted</Badge>
+                  ) : (
+                    <Badge variant={getStatusBadge(event.status || 'scheduled')} className="capitalize">
+                      {event.status || 'scheduled'}
+                    </Badge>
+                  )}
                 </TableCell>
                 <TableCell className="text-right">
                   <div className="flex items-center justify-end gap-2">
-                    <Button variant="ghost" size="sm" onClick={() => handleEdit(event)}>
-                      <Edit className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleDeleteClick(event)}
-                      className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
+                    {!isDeleted(event) ? (
+                      <>
+                        <Button variant="ghost" size="sm" onClick={(e) => handleEdit(event, e)}>
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={(e) => handleDeleteClick(event, e)}
+                          className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </>
+                    ) : (
+                      isManager && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={(e) => handleRestoreClick(event, e)}
+                          className="text-green-600 hover:text-green-700 hover:bg-green-50"
+                        >
+                          <RotateCcw className="h-4 w-4" />
+                        </Button>
+                      )
+                    )}
                   </div>
                 </TableCell>
               </TableRow>
@@ -307,6 +379,62 @@ export default function EventsPage() {
           </div>
         </div>
       </Modal>
+
+      {/* Detail Modal */}
+      <EntityDetailModal
+        open={isDetailModalOpen}
+        onClose={() => setIsDetailModalOpen(false)}
+        title="Event Details"
+        entity={detailEvent}
+        sections={[
+          {
+            title: 'Basic Information',
+            fields: [
+              { label: 'Event Name', key: 'event_name' },
+              { label: 'Description', key: 'description' },
+              { label: 'Location', key: 'location' },
+              { label: 'Status', key: 'status', type: 'enum' as const },
+            ],
+          },
+          {
+            title: 'Schedule',
+            fields: [
+              { label: 'Event Date', key: 'event_date', type: 'date' as const },
+              { label: 'Start Time', key: 'start_time' },
+              { label: 'End Time', key: 'end_time' },
+            ],
+          },
+          {
+            title: 'Capacity & Pricing',
+            fields: [
+              { label: 'Max Participants', key: 'max_capacity', type: 'number' as const },
+              { label: 'Current Registrations', key: 'current_registrations', type: 'number' as const },
+              { label: 'Ticket Price', key: 'ticket_price', type: 'currency' as const },
+            ],
+          },
+          {
+            title: 'Coordinator',
+            fields: [
+              { label: 'Coordinator ID', key: 'coordinator_id' },
+            ],
+          },
+        ]}
+        onEdit={detailEvent && !isDeleted(detailEvent) ? () => {
+          setIsDetailModalOpen(false);
+          setSelectedEvent(detailEvent);
+          setIsModalOpen(true);
+        } : undefined}
+        canEdit={detailEvent ? !isDeleted(detailEvent) : false}
+      />
+
+      {/* Restore Confirmation Modal */}
+      <RestoreConfirmationModal
+        open={isRestoreModalOpen}
+        onClose={() => setIsRestoreModalOpen(false)}
+        onConfirm={handleRestore}
+        itemName={eventToRestore?.event_name || ''}
+        itemType="event"
+      />
     </div>
   );
 }

@@ -6,4 +6,5 @@ export interface CafeItem {
   category: string;
   price: number;
   is_available: boolean;
+  deleted_at?: string | null;
 }

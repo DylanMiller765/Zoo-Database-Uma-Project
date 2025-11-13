@@ -9,4 +9,5 @@ export interface Habitat {
   last_maintenance: string;
   status: 'active' | 'maintenance' | 'renovation' | 'closed';
   created_date: string;
+  deleted_at?: string | null;
 }

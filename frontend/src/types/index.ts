@@ -54,9 +54,12 @@ export interface Employee {
   zip_code?: string;
   gender?: 'male' | 'female' | 'other' | 'prefer_not_to_say';
   birthday?: string;
+  deleted_at?: string | null;
 }
 
-export interface CreateEmployeeData extends Omit<Employee, 'employee_id'> {}
+export interface CreateEmployeeData extends Omit<Employee, 'employee_id'> {
+  password: string;
+}
 
 // Animal Types
 export interface Animal {
@@ -76,6 +79,7 @@ export interface Animal {
   weight?: number;
   created_date?: string;
   updated_date?: string;
+  deleted_at?: string | null;
 }
 
 export interface CreateAnimalData extends Omit<Animal, 'animal_id' | 'created_date' | 'updated_date'> {}
@@ -94,6 +98,7 @@ export interface Event {
   status?: 'scheduled' | 'ongoing' | 'completed' | 'cancelled';
   created_by?: number;
   current_registrations?: number;
+  deleted_at?: string | null;
 }
 
 export interface CreateEventData extends Omit<Event, 'event_id' | 'current_registrations' | 'created_at'> {
@@ -113,9 +118,12 @@ export interface Customer {
   zip_code?: string;
   annual_pass?: 'yes' | 'no';
   registration_date?: string;
+  deleted_at?: string | null;
 }
 
-export interface CreateCustomerData extends Omit<Customer, 'customer_id'> {}
+export interface CreateCustomerData extends Omit<Customer, 'customer_id'> {
+  password: string;
+}
 
 // API Response Types
 export interface ApiResponse<T> {
@@ -211,6 +219,7 @@ export interface Habitat {
   last_maintenance: string;
   status: 'active' | 'maintenance' | 'renovation' | 'closed';
   created_date: string;
+  deleted_at?: string | null;
 }
 
 export interface CreateHabitatData extends Omit<Habitat, 'habitat_id' | 'created_date'> {}
