@@ -22,4 +22,7 @@ router.put('/mark-all-read', NotificationController.markAllAsRead);
 // DELETE /api/notifications/:id - Delete a notification
 router.delete('/:id', NotificationController.deleteNotification);
 
+// DELETE /api/notifications/by-type/:type - Delete notifications by type
+router.delete('/by-type/:type', NotificationController.deleteByType);
+
 export default router;

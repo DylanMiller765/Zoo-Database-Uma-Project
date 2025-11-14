@@ -92,4 +92,19 @@ export class NotificationController {
       res.status(500).json({ message: 'Error deleting notification', error });
     }
   }
+
+  static async deleteByType(req: AuthRequest, res: Response): Promise<void> {
+    try {
+      const customerId = req.user?.customer_id;
+      if (!customerId) {
+        res.status(403).json({ message: 'Customer authentication required' });
+        return;
+      }
+      const type = req.params.type;
+      await NotificationService.deleteByCustomerIdAndType(customerId, type);
+      res.status(204).send();
+    } catch (error) {
+      res.status(500).json({ message: 'Error deleting notification by type', error });
+    }
+  }
 }

@@ -21,6 +21,10 @@ export class NotificationService {
     return await NotificationModel.delete(notificationId);
   }
 
+  static async deleteByCustomerIdAndType(customerId: number, type: string): Promise<void> {
+    return await NotificationModel.deleteByCustomerIdAndType(customerId, type);
+  }
+
   static async getUnreadCount(customerId: number): Promise<number> {
     return await NotificationModel.getUnreadCount(customerId);
   }

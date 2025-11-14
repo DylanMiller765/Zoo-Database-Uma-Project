@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useAuth } from '@/context/AuthContext';
+import { useSearchParams } from 'next/navigation';
 import { cafeService } from '@/services/cafe.service';
 import { Cafe, CafeItem, CreateCafeItemData } from '@/types';
 import { Button } from '@/components/ui/button';
@@ -33,6 +34,16 @@ export default function CafesPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [availabilityFilter, setAvailabilityFilter] = useState('all');
+  const hasOpenedModal = useRef(false);
+  const searchParams = useSearchParams();
+
+  useEffect(() => {
+    if (hasOpenedModal.current) return;
+    if (searchParams.get('autoOpen') === 'true') {
+      setIsAddOpen(true);
+      hasOpenedModal.current = true;
+    }
+  }, [searchParams]);
   // Edit removed per request
 
 
