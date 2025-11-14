@@ -181,9 +181,6 @@ export default function FinancialReportPage() {
           <DollarSign className="h-8 w-8 text-sea_green-600" />
           Financial Report
         </h1>
-        <p className="text-gray-600 mt-1">
-          Comprehensive revenue analysis across all zoo revenue streams
-        </p>
       </div>
 
       {/* Parameters Form */}

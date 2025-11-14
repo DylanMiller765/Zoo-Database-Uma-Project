@@ -193,7 +193,8 @@ export default function AnimalHealthCarePage() {
           animals: []
         };
       }
-      if (row.animal_id) {
+      // Only add animal if it's not already in this habitat's animals array (deduplicate)
+      if (row.animal_id && !acc[row.habitat_id].animals.some(a => a.animal_id === row.animal_id)) {
         acc[row.habitat_id].animals.push(row);
       }
       return acc;
@@ -209,9 +210,19 @@ export default function AnimalHealthCarePage() {
     return habitatArray.filter(h => selectedHabitats.includes(h.habitat_id));
   }, [data, sortAnimals, selectedHabitats]);
 
-  // Get flat list of all animals (for ungrouped view)
+  // Get flat list of all animals (for ungrouped view) - deduplicate by animal_id
   const allAnimals: AnimalRow[] = useMemo(() => {
-    return data.filter(row => row.animal_id !== null);
+    const seen = new Set<number>();
+    const uniqueAnimals: AnimalRow[] = [];
+
+    for (const row of data) {
+      if (row.animal_id && !seen.has(row.animal_id)) {
+        seen.add(row.animal_id);
+        uniqueAnimals.push(row);
+      }
+    }
+
+    return uniqueAnimals;
   }, [data]);
 
   // Group data by keeper
@@ -235,7 +246,10 @@ export default function AnimalHealthCarePage() {
         };
       }
 
-      acc[keeperKey].animals.push(row);
+      // Only add animal if it's not already in this keeper's animals array (deduplicate)
+      if (!acc[keeperKey].animals.some(a => a.animal_id === row.animal_id)) {
+        acc[keeperKey].animals.push(row);
+      }
       return acc;
     }, {});
 
@@ -374,6 +388,11 @@ export default function AnimalHealthCarePage() {
     return timeString.substring(0, 5);
   };
 
+  const formatWeight = (weight: number | null) => {
+    if (!weight) return "N/A";
+    return `${weight} lbs`;
+  };
+
   // Export functionality (placeholder for now - we'll add xlsx later)
   const handleExport = () => {
     alert("Export functionality will be implemented after xlsx dependency is resolved");
@@ -416,9 +435,6 @@ export default function AnimalHealthCarePage() {
           <Heart className="h-8 w-8 text-sea_green-600" />
           Animal Health & Care Report
         </h1>
-        <p className="text-gray-600 mt-1">
-          Comprehensive animal welfare data including health status, feeding compliance, and habitat information
-        </p>
       </div>
 
       {/* Parameters Form */}
@@ -543,7 +559,7 @@ export default function AnimalHealthCarePage() {
       {hasGenerated && (
         <>
           {/* Summary Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
             <Card>
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm font-medium text-gray-600">Total Animals</CardTitle>
@@ -592,6 +608,35 @@ export default function AnimalHealthCarePage() {
                       ['endangered', 'critically_endangered', 'extinct_in_the_wild'].includes(a.endangerment_status || '')
                     ).length, 0
                   )}
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium text-gray-600">Unassigned Animals</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-2xl font-bold text-persian_orange-600">
+                  {habitats.reduce((sum, h) =>
+                    sum + h.animals.filter(a => !a.keeper_name).length, 0
+                  )}
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium text-gray-600">Habitat Capacity</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-2xl font-bold text-dark_spring_green-600">
+                  {(() => {
+                    const totalAnimals = habitats.reduce((sum, h) => sum + h.animals.length, 0);
+                    const totalCapacity = habitats.reduce((sum, h) => sum + h.animal_capacity, 0);
+                    const percent = totalCapacity > 0 ? Math.round((totalAnimals / totalCapacity) * 100) : 0;
+                    return `${percent}%`;
+                  })()}
                 </p>
               </CardContent>
             </Card>
@@ -749,6 +794,10 @@ export default function AnimalHealthCarePage() {
                                   <span className="font-medium">{animal.keeper_name.split(' ')[0]}</span>
                                 </div>
                               )}
+                              <div className="flex justify-between">
+                                <span className="text-gray-600">Weight:</span>
+                                <span className="font-medium">{formatWeight(animal.weight)}</span>
+                              </div>
                               <div className="pt-1 border-t">
                                 {(() => {
                                   if (!animal.last_fed_time) {
@@ -810,6 +859,7 @@ export default function AnimalHealthCarePage() {
                               <TableHead>Health</TableHead>
                               <TableHead>Conservation</TableHead>
                               <TableHead>Keeper</TableHead>
+                              <TableHead>Weight</TableHead>
                               <TableHead>Last Fed</TableHead>
                             </TableRow>
                           </TableHeader>
@@ -825,6 +875,7 @@ export default function AnimalHealthCarePage() {
                                 </TableCell>
                                 <TableCell className="text-sm capitalize">{formatEndangerment(animal.endangerment_status)}</TableCell>
                                 <TableCell className="text-sm">{animal.keeper_name || 'Unassigned'}</TableCell>
+                                <TableCell className="text-sm">{formatWeight(animal.weight)}</TableCell>
                                 <TableCell className="text-sm">
                                   {animal.last_fed_time ? (
                                     <span>{Math.round((Date.now() - new Date(animal.last_fed_time).getTime()) / (1000 * 60 * 60))}h ago</span>
@@ -895,6 +946,10 @@ export default function AnimalHealthCarePage() {
                               <span className="text-gray-600">Conservation:</span>
                               <span className="font-medium capitalize">{formatEndangerment(animal.endangerment_status)}</span>
                             </div>
+                            <div className="flex justify-between">
+                              <span className="text-gray-600">Weight:</span>
+                              <span className="font-medium">{formatWeight(animal.weight)}</span>
+                            </div>
                             <div className="pt-1 border-t">
                               {(() => {
                                 if (!animal.last_fed_time) {
@@ -952,6 +1007,7 @@ export default function AnimalHealthCarePage() {
                             <TableHead>Habitat</TableHead>
                             <TableHead>Health</TableHead>
                             <TableHead>Conservation</TableHead>
+                            <TableHead>Weight</TableHead>
                             <TableHead>Last Fed</TableHead>
                           </TableRow>
                         </TableHeader>
@@ -967,6 +1023,7 @@ export default function AnimalHealthCarePage() {
                                 </Badge>
                               </TableCell>
                               <TableCell className="text-sm capitalize">{formatEndangerment(animal.endangerment_status)}</TableCell>
+                              <TableCell className="text-sm">{formatWeight(animal.weight)}</TableCell>
                               <TableCell className="text-sm">
                                 {animal.last_fed_time ? (
                                   <span>{Math.round((Date.now() - new Date(animal.last_fed_time).getTime()) / (1000 * 60 * 60))}h ago</span>
@@ -1027,6 +1084,10 @@ export default function AnimalHealthCarePage() {
                             <span className="font-medium">{animal.keeper_name.split(' ')[0]}</span>
                           </div>
                         )}
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Weight:</span>
+                          <span className="font-medium">{formatWeight(animal.weight)}</span>
+                        </div>
                         <div className="pt-1 border-t">
                           {(() => {
                             if (!animal.last_fed_time) {
@@ -1070,6 +1131,7 @@ export default function AnimalHealthCarePage() {
                           <TableHead>Health</TableHead>
                           <TableHead>Conservation</TableHead>
                           <TableHead>Keeper</TableHead>
+                          <TableHead>Weight</TableHead>
                           <TableHead>Arrival Date</TableHead>
                           <TableHead>Last Fed</TableHead>
                         </TableRow>
@@ -1087,6 +1149,7 @@ export default function AnimalHealthCarePage() {
                             </TableCell>
                             <TableCell className="text-sm capitalize">{formatEndangerment(animal.endangerment_status)}</TableCell>
                             <TableCell className="text-sm">{animal.keeper_name || 'Unassigned'}</TableCell>
+                            <TableCell className="text-sm">{formatWeight(animal.weight)}</TableCell>
                             <TableCell className="text-sm">{animal.arrival_date ? formatDate(animal.arrival_date) : 'N/A'}</TableCell>
                             <TableCell className="text-sm">
                               {animal.last_fed_time ? (

@@ -83,7 +83,7 @@ export function DateRangePicker({
         {required && <span className="text-red-500">*</span>}
       </Label>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-md">
         <div>
           <Label htmlFor="startDate" className="text-xs text-gray-600">
             Start Date
