@@ -21,8 +21,8 @@ export interface EventPerformanceParams {
 }
 
 export interface FinancialReportParams {
-  startDate: string;
-  endDate: string;
+  startDate?: string;
+  endDate?: string;
   sources?: string[];
   grouping?: string;
   includeReturns?: boolean;
@@ -80,18 +80,18 @@ export const queryService = {
   /**
    * Report 3: Financial Report
    */
-  async getFinancialReport(params: FinancialReportParams): Promise<{ data: any[]; summary: any }> {
+  async getFinancialReport(params: FinancialReportParams): Promise<any> {
     const searchParams = new URLSearchParams();
 
-    searchParams.append('startDate', params.startDate);
-    searchParams.append('endDate', params.endDate);
+    if (params.startDate) searchParams.append('startDate', params.startDate);
+    if (params.endDate) searchParams.append('endDate', params.endDate);
     if (params.sources && params.sources.length > 0) {
       searchParams.append('sources', params.sources.join(','));
     }
     if (params.grouping) searchParams.append('grouping', params.grouping);
     if (params.includeReturns !== undefined) searchParams.append('includeReturns', String(params.includeReturns));
 
-    const response = await apiClient.get<{ data: any[]; summary: any }>(
+    const response = await apiClient.get<any>(
       `/queries/financial-report?${searchParams.toString()}`
     );
     return response.data;

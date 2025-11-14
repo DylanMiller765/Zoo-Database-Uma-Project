@@ -20,8 +20,8 @@ interface EventPerformanceParams {
 }
 
 interface FinancialReportParams {
-  startDate: string;
-  endDate: string;
+  startDate?: string;
+  endDate?: string;
   sources?: string[];
   grouping?: string;
   includeReturns?: boolean;
@@ -217,146 +217,309 @@ export class QueryService {
   }
 
   /**
-   * Report 3: Financial Report
-   * Comprehensive revenue analysis across all sources
+   * Report 3: Financial Report - Ticket Revenue
+   * Detailed breakdown of ticket sales by type and payment method
+   */
+  static async getTicketRevenue(startDate?: string, endDate?: string, includeReturns: boolean = false) {
+    const dateFilter = startDate && endDate ? 'WHERE purchase_date BETWEEN ? AND ?' : 'WHERE 1=1';
+    const params = startDate && endDate ? [startDate, endDate] : [];
+
+    // Query 1: Revenue by ticket type
+    const byType = await query<any[]>(`
+      SELECT
+        ticket_type,
+        COUNT(*) as count,
+        SUM(price) as revenue,
+        price as unit_price
+      FROM tickets
+      ${dateFilter}
+        AND deleted_at IS NULL
+      GROUP BY ticket_type, price
+      ORDER BY revenue DESC
+    `, params);
+
+    // Query 2: Revenue by payment method
+    const byPaymentMethod = await query<any[]>(`
+      SELECT
+        payment_method,
+        COUNT(*) as count,
+        SUM(price) as revenue
+      FROM tickets
+      ${dateFilter}
+        AND deleted_at IS NULL
+      GROUP BY payment_method
+      ORDER BY revenue DESC
+    `, params);
+
+    const total = byType.reduce((sum, row) => sum + parseFloat(row.revenue || 0), 0);
+    const transactions = byType.reduce((sum, row) => sum + parseInt(row.count || 0), 0);
+
+    return {
+      total,
+      transactions,
+      byType,
+      byPaymentMethod
+    };
+  }
+
+  /**
+   * Report 3: Financial Report - Event Revenue
+   * Detailed breakdown of event registrations by event
+   */
+  static async getEventRevenue(startDate?: string, endDate?: string, includeCanceled: boolean = false) {
+    const dateFilter = startDate && endDate ? 'e.event_date BETWEEN ? AND ?' : '1=1';
+    const params = startDate && endDate ? [startDate, endDate] : [];
+
+    const byEvent = await query<any[]>(`
+      SELECT
+        e.event_id,
+        e.name as event_name,
+        e.event_date,
+        e.location,
+        e.ticket_price,
+        COUNT(er.registration_id) as registrations,
+        SUM(er.number_of_participants) as participants,
+        SUM(er.total_amount) as revenue,
+        er.payment_status
+      FROM events e
+      LEFT JOIN event_registrations er ON e.event_id = er.event_id
+        AND (er.deleted_at IS NULL)
+        ${includeCanceled ? '' : "AND er.payment_status = 'paid'"}
+      WHERE ${dateFilter}
+        AND e.deleted_at IS NULL
+        AND er.registration_id IS NOT NULL
+      GROUP BY e.event_id, e.name, e.event_date, e.location, e.ticket_price, er.payment_status
+      ORDER BY revenue DESC
+    `, params);
+
+    const total = byEvent.reduce((sum, row) => sum + parseFloat(row.revenue || 0), 0);
+    const registrations = byEvent.reduce((sum, row) => sum + parseInt(row.registrations || 0), 0);
+    const participants = byEvent.reduce((sum, row) => sum + parseInt(row.participants || 0), 0);
+
+    return {
+      total,
+      registrations,
+      participants,
+      byEvent
+    };
+  }
+
+  /**
+   * Report 3: Financial Report - Gift Shop Revenue
+   * Detailed breakdown of gift shop sales by shop and payment method
+   */
+  static async getGiftShopRevenue(startDate?: string, endDate?: string, includeReturns: boolean = false) {
+    const dateFilter = startDate && endDate ? 'WHERE gst.sale_date BETWEEN ? AND ?' : 'WHERE 1=1';
+    const params = startDate && endDate ? [startDate, endDate] : [];
+
+    // Query 1: Revenue by gift shop
+    const byShop = await query<any[]>(`
+      SELECT
+        gs.gift_shop_id,
+        gs.name as shop_name,
+        gs.location,
+        COUNT(*) as transactions,
+        SUM(gst.total_amount) as revenue,
+        SUM(CASE WHEN gst.status = 'returned' THEN 1 ELSE 0 END) as returns
+      FROM gift_shop_sales_transactions gst
+      JOIN gift_shops gs ON gst.gift_shop_id = gs.gift_shop_id
+      ${dateFilter}
+        ${includeReturns ? '' : "AND gst.status = 'completed'"}
+      GROUP BY gs.gift_shop_id, gs.name, gs.location
+      ORDER BY revenue DESC
+    `, params);
+
+    // Query 2: Revenue by payment method
+    const byPaymentMethod = await query<any[]>(`
+      SELECT
+        gst.payment_method,
+        COUNT(*) as count,
+        SUM(gst.total_amount) as revenue
+      FROM gift_shop_sales_transactions gst
+      ${dateFilter}
+        ${includeReturns ? '' : "AND gst.status = 'completed'"}
+      GROUP BY gst.payment_method
+      ORDER BY revenue DESC
+    `, params);
+
+    const total = byShop.reduce((sum, row) => sum + parseFloat(row.revenue || 0), 0);
+    const transactions = byShop.reduce((sum, row) => sum + parseInt(row.transactions || 0), 0);
+    const returns = byShop.reduce((sum, row) => sum + parseInt(row.returns || 0), 0);
+
+    return {
+      total,
+      transactions,
+      returns,
+      byShop,
+      byPaymentMethod
+    };
+  }
+
+  /**
+   * Report 3: Financial Report - Cafe Revenue
+   * Detailed breakdown of cafe sales by cafe
+   */
+  static async getCafeRevenue(startDate?: string, endDate?: string, includeReturns: boolean = false) {
+    const dateFilter = startDate && endDate ? 'WHERE cs.sale_timestamp BETWEEN ? AND ?' : 'WHERE 1=1';
+    const params = startDate && endDate ? [startDate, endDate] : [];
+
+    const byCafe = await query<any[]>(`
+      SELECT
+        c.cafe_id,
+        c.name as cafe_name,
+        c.location,
+        COUNT(DISTINCT cs.transaction_id) as transactions,
+        COUNT(*) as line_items,
+        SUM(cs.line_total) as revenue,
+        SUM(CASE WHEN cs.status = 'returned' THEN 1 ELSE 0 END) as returns
+      FROM cafe_sales cs
+      JOIN cafes c ON cs.cafe_id = c.cafe_id
+      ${dateFilter}
+        ${includeReturns ? '' : "AND cs.status = 'completed'"}
+      GROUP BY c.cafe_id, c.name, c.location
+      ORDER BY revenue DESC
+    `, params);
+
+    const total = byCafe.reduce((sum, row) => sum + parseFloat(row.revenue || 0), 0);
+    const transactions = byCafe.reduce((sum, row) => sum + parseInt(row.transactions || 0), 0);
+    const lineItems = byCafe.reduce((sum, row) => sum + parseInt(row.line_items || 0), 0);
+    const returns = byCafe.reduce((sum, row) => sum + parseInt(row.returns || 0), 0);
+
+    return {
+      total,
+      transactions,
+      lineItems,
+      returns,
+      byCafe
+    };
+  }
+
+  /**
+   * Report 3: Financial Report - Membership Revenue
+   * Detailed breakdown of membership purchases
+   */
+  static async getMembershipRevenue(startDate?: string, endDate?: string) {
+    const dateFilter = startDate && endDate ? 'WHERE purchase_date BETWEEN ? AND ?' : 'WHERE 1=1';
+    const params = startDate && endDate ? [startDate, endDate] : [];
+
+    // Query 1: Revenue by purchase type (manual vs auto-renewal)
+    const byType = await query<any[]>(`
+      SELECT
+        CASE WHEN auto_renewed = TRUE THEN 'Auto-Renewal' ELSE 'Manual Purchase' END as purchase_type,
+        COUNT(*) as count,
+        SUM(price) as revenue
+      FROM membership_purchases
+      ${dateFilter}
+      GROUP BY auto_renewed
+      ORDER BY revenue DESC
+    `, params);
+
+    // Query 2: Revenue by payment method
+    const byPaymentMethod = await query<any[]>(`
+      SELECT
+        payment_method,
+        COUNT(*) as count,
+        SUM(price) as revenue
+      FROM membership_purchases
+      ${dateFilter}
+      GROUP BY payment_method
+      ORDER BY revenue DESC
+    `, params);
+
+    const total = byType.reduce((sum, row) => sum + parseFloat(row.revenue || 0), 0);
+    const memberships = byType.reduce((sum, row) => sum + parseInt(row.count || 0), 0);
+    const manualPurchases = byType.find(r => r.purchase_type === 'Manual Purchase')?.count || 0;
+    const autoRenewals = byType.find(r => r.purchase_type === 'Auto-Renewal')?.count || 0;
+
+    return {
+      total,
+      memberships,
+      manualPurchases,
+      autoRenewals,
+      byType,
+      byPaymentMethod
+    };
+  }
+
+  /**
+   * Report 3: Financial Report (Comprehensive)
+   * Aggregates all revenue sources into a single comprehensive report
    */
   static async getFinancialReport(params: FinancialReportParams) {
     const {
       startDate,
       endDate,
-      sources = ['tickets', 'events', 'gift_shops', 'cafes'],
-      grouping = 'monthly',
+      sources = ['ticket', 'event', 'gift_shop', 'cafe', 'membership'],
       includeReturns = false
     } = params;
 
-    // Build UNION query based on selected sources
-    const queries: string[] = [];
-    const queryParams: any[] = [];
+    const result: any = {
+      summary: {
+        totalRevenue: 0,
+        totalTransactions: 0,
+        dateRange: {
+          start: startDate || null,
+          end: endDate || null,
+          isAllTime: !startDate && !endDate
+        },
+        sources: []
+      }
+    };
 
-    // Ticket Sales
-    if (sources.includes('tickets')) {
-      queries.push(`
-        SELECT
-          'Ticket Sales' as revenue_source,
-          DATE(purchase_date) as transaction_date,
-          ticket_type as category,
-          payment_method,
-          COUNT(*) as transaction_count,
-          SUM(price) as total_revenue,
-          AVG(price) as avg_transaction_value
-        FROM tickets
-        WHERE purchase_date BETWEEN ? AND ?
-          AND deleted_at IS NULL
-        GROUP BY DATE(purchase_date), ticket_type, payment_method
-      `);
-      queryParams.push(startDate, endDate);
+    // Fetch each revenue source if selected
+    if (sources.includes('ticket')) {
+      result.ticketRevenue = await this.getTicketRevenue(startDate, endDate, includeReturns);
+      result.summary.totalRevenue += result.ticketRevenue.total;
+      result.summary.totalTransactions += result.ticketRevenue.transactions;
+      result.summary.sources.push({ name: 'ticket', revenue: result.ticketRevenue.total });
     }
 
-    // Event Registrations
-    if (sources.includes('events')) {
-      queries.push(`
-        SELECT
-          'Event Registrations' as revenue_source,
-          DATE(er.registration_date) as transaction_date,
-          e.name as category,
-          'online' as payment_method,
-          COUNT(*) as transaction_count,
-          SUM(er.total_amount) as total_revenue,
-          AVG(er.total_amount) as avg_transaction_value
-        FROM event_registrations er
-        JOIN events e ON er.event_id = e.event_id
-        WHERE er.registration_date BETWEEN ? AND ?
-          AND er.payment_status = 'paid'
-          AND er.deleted_at IS NULL
-        GROUP BY DATE(er.registration_date), e.name
-      `);
-      queryParams.push(startDate, endDate);
+    if (sources.includes('event')) {
+      result.eventRevenue = await this.getEventRevenue(startDate, endDate, includeReturns);
+      result.summary.totalRevenue += result.eventRevenue.total;
+      result.summary.totalTransactions += result.eventRevenue.registrations;
+      result.summary.sources.push({ name: 'event', revenue: result.eventRevenue.total });
     }
 
-    // Gift Shop Sales
-    if (sources.includes('gift_shops')) {
-      queries.push(`
-        SELECT
-          'Gift Shop Sales' as revenue_source,
-          DATE(gst.sale_date) as transaction_date,
-          gs.name as category,
-          gst.payment_method,
-          COUNT(*) as transaction_count,
-          SUM(gst.total_amount) as total_revenue,
-          AVG(gst.total_amount) as avg_transaction_value
-        FROM gift_shop_sales_transactions gst
-        JOIN gift_shops gs ON gst.gift_shop_id = gs.gift_shop_id
-        WHERE gst.sale_date BETWEEN ? AND ?
-          ${includeReturns ? '' : "AND gst.status = 'completed'"}
-        GROUP BY DATE(gst.sale_date), gs.name, gst.payment_method
-      `);
-      queryParams.push(startDate, endDate);
+    if (sources.includes('gift_shop')) {
+      result.giftShopRevenue = await this.getGiftShopRevenue(startDate, endDate, includeReturns);
+      result.summary.totalRevenue += result.giftShopRevenue.total;
+      result.summary.totalTransactions += result.giftShopRevenue.transactions;
+      result.summary.sources.push({ name: 'gift_shop', revenue: result.giftShopRevenue.total });
     }
 
-    // Cafe Sales
-    if (sources.includes('cafes')) {
-      queries.push(`
-        SELECT
-          'Cafe Sales' as revenue_source,
-          DATE(cs.sale_timestamp) as transaction_date,
-          c.name as category,
-          'pos' as payment_method,
-          COUNT(DISTINCT cs.transaction_id) as transaction_count,
-          SUM(cs.line_total) as total_revenue,
-          AVG(cs.line_total) as avg_transaction_value
-        FROM cafe_sales cs
-        JOIN cafes c ON cs.cafe_id = c.cafe_id
-        WHERE cs.sale_timestamp BETWEEN ? AND ?
-          ${includeReturns ? '' : "AND cs.status = 'completed'"}
-        GROUP BY DATE(cs.sale_timestamp), c.name
-      `);
-      queryParams.push(startDate, endDate);
+    if (sources.includes('cafe')) {
+      result.cafeRevenue = await this.getCafeRevenue(startDate, endDate, includeReturns);
+      result.summary.totalRevenue += result.cafeRevenue.total;
+      result.summary.totalTransactions += result.cafeRevenue.transactions;
+      result.summary.sources.push({ name: 'cafe', revenue: result.cafeRevenue.total });
     }
 
-    if (queries.length === 0) {
-      return [];
+    if (sources.includes('membership')) {
+      result.membershipRevenue = await this.getMembershipRevenue(startDate, endDate);
+      result.summary.totalRevenue += result.membershipRevenue.total;
+      result.summary.totalTransactions += result.membershipRevenue.memberships;
+      result.summary.sources.push({ name: 'membership', revenue: result.membershipRevenue.total });
     }
 
-    const sql = queries.join('\n      UNION ALL\n      ') + `
-      ORDER BY transaction_date DESC, revenue_source
-    `;
+    // Calculate insights
+    if (result.summary.sources.length > 0) {
+      const largestSource = result.summary.sources.reduce((max: any, src: any) =>
+        src.revenue > max.revenue ? src : max
+      );
+      result.summary.largestRevenueSource = largestSource.name;
+      result.summary.largestRevenueAmount = largestSource.revenue;
+    }
 
-    return await query<any[]>(sql, queryParams);
+    return result;
   }
 
   /**
-   * Financial Report Summary
+   * Financial Report Summary (Legacy - kept for backwards compatibility)
    * Aggregated totals across all revenue sources
    */
   static async getFinancialReportSummary(params: FinancialReportParams) {
-    const data = await this.getFinancialReport(params);
-
-    const summary = {
-      total_revenue: 0,
-      total_transactions: 0,
-      avg_transaction: 0,
-      by_source: {} as Record<string, any>
-    };
-
-    data.forEach((row: any) => {
-      summary.total_revenue += parseFloat(row.total_revenue || 0);
-      summary.total_transactions += parseInt(row.transaction_count || 0);
-
-      if (!summary.by_source[row.revenue_source]) {
-        summary.by_source[row.revenue_source] = {
-          revenue: 0,
-          transactions: 0
-        };
-      }
-
-      summary.by_source[row.revenue_source].revenue += parseFloat(row.total_revenue || 0);
-      summary.by_source[row.revenue_source].transactions += parseInt(row.transaction_count || 0);
-    });
-
-    summary.avg_transaction = summary.total_transactions > 0
-      ? summary.total_revenue / summary.total_transactions
-      : 0;
-
-    return summary;
+    const fullReport = await this.getFinancialReport(params);
+    return fullReport.summary;
   }
 }
