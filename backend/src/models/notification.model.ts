@@ -54,6 +54,11 @@ export class NotificationModel {
     await query(sql, [notificationId]);
   }
 
+  static async deleteByCustomerIdAndType(customerId: number, type: string): Promise<void> {
+    const sql = 'DELETE FROM notifications WHERE customer_id = ? AND notification_type = ?';
+    await query(sql, [customerId, type]);
+  }
+
   static async getUnreadCount(customerId: number): Promise<number> {
     const sql = 'SELECT COUNT(*) as count FROM notifications WHERE customer_id = ? AND is_read = FALSE';
     const results = await query<any[]>(sql, [customerId]);

@@ -27,6 +27,7 @@ import feedingLogRoutes from './routes/feedingLog.routes';
 import zookeeperAssignmentRoutes from './routes/zookeeperAssignment.routes';
 import checkoutRoutes from './routes/checkout.routes';
 import donationRoutes from './routes/donation.routes';
+import transactionRoutes from './routes/transaction.routes';
 
 dotenv.config();
 
@@ -75,6 +76,7 @@ app.use('/api/feeding-logs', feedingLogRoutes);
 app.use('/api/zookeeper-assignments', zookeeperAssignmentRoutes);
 app.use('/api/checkout', checkoutRoutes);
 app.use('/api/donations', donationRoutes);
+app.use('/api/transactions', transactionRoutes);
 
 // Error handling
 app.use(notFound);

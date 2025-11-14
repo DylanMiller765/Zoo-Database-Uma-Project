@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { animalService } from '@/services/animal.service';
@@ -62,17 +62,27 @@ export default function AnimalsPage() {
     }
   }, [isAuthenticated, showDeleted, isKeeper, user?.employee_id]);
 
+  const hasOpenedModal = useRef(false);
+
   // Handle URL parameters to auto-open animal
   useEffect(() => {
+    if (hasOpenedModal.current) return;
+
     const animalIdParam = searchParams?.get('animalId');
     const autoOpenParam = searchParams?.get('autoOpen');
 
-    if (animalIdParam && autoOpenParam === 'true' && animals.length > 0) {
-      const animalId = parseInt(animalIdParam);
-      const animal = animals.find(a => a.animal_id === animalId);
-      if (animal) {
-        setDetailAnimal(animal);
-        setIsDetailModalOpen(true);
+    if (autoOpenParam === 'true') {
+      if (animalIdParam && animals.length > 0) {
+        const animalId = parseInt(animalIdParam);
+        const animal = animals.find(a => a.animal_id === animalId);
+        if (animal) {
+          setDetailAnimal(animal);
+          setIsDetailModalOpen(true);
+          hasOpenedModal.current = true;
+        }
+      } else if (!animalIdParam) {
+        handleAdd();
+        hasOpenedModal.current = true;
       }
     }
   }, [searchParams, animals]);

@@ -40,7 +40,7 @@ const menuItems: MenuItem[] = [
   { href: '/admin/employees', icon: Users, label: 'Employees', roles: ['manager'] },
   { href: '/admin/events', icon: Calendar, label: 'Events', roles: ['manager', 'coordinator', 'guide'] },
   { href: '/admin/customers', icon: UserCircle, label: 'Customers', roles: ['manager', 'cashier'] },
-  { href: '/admin/tickets', icon: Ticket, label: 'Tickets', roles: ['manager', 'cashier'] },
+  { href: '/admin/transactions', icon: DollarSign, label: 'Transactions', roles: ['manager', 'cashier'] },
   { href: '/admin/gift-shops', icon: Store, label: 'Gift Shops', roles: ['manager', 'cashier'] },
   { href: '/admin/cafes', icon: Coffee, label: 'Cafes', roles: ['manager', 'cashier'] },
   { href: '/admin/queries/animal-health-care', icon: Activity, label: 'Animal Health & Care', roles: ['manager', 'keeper', 'veterinarian'] },

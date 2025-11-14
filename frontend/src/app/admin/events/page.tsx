@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useAuth } from '@/context/AuthContext';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { eventService } from '@/services/event.service';
 import { Event } from '@/types';
 import { Button } from '@/components/ui/button';
@@ -43,6 +43,17 @@ export default function EventsPage() {
   const [isRestoreModalOpen, setIsRestoreModalOpen] = useState(false);
   const [eventToRestore, setEventToRestore] = useState<Event | null>(null);
   const isManager = hasRole('manager');
+
+  const hasOpenedModal = useRef(false);
+  const searchParams = useSearchParams();
+
+  useEffect(() => {
+    if (hasOpenedModal.current) return;
+    if (searchParams.get('autoOpen') === 'true') {
+      handleAdd();
+      hasOpenedModal.current = true;
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     if (isAuthenticated) {
