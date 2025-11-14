@@ -76,8 +76,8 @@ export default function CheckoutPage() {
         payment_data: {
           cardNumber: payment.cardNumber,
           cardholderName: payment.cardholderName,
-          expiryMonth: payment.expiryMonth,
-          expiryYear: payment.expiryYear,
+          expiryMonth: parseInt(payment.expiryMonth, 10),
+          expiryYear: parseInt(payment.expiryYear, 10),
           cvv: payment.cvv,
           billingAddress: payment.billingAddress,
           billingCity: payment.billingCity,

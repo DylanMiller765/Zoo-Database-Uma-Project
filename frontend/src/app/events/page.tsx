@@ -2,8 +2,10 @@
 
 // Import necessary React hooks and components
 import { useMemo, useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { useCart } from '@/context/CartContext';
+import { ShoppingCart } from 'lucide-react';
 // Import the service and type
 import { eventService } from '@/services/event.service';
 import { Event } from '@/types'; // Import the Event type from the centralized types file [cite: dylanmiller765/zoo-database-uma-project/Zoo-Database-Uma-Project-ecc1d164d13de8e703063347a8cd967fa2ddaede/frontend/src/types/index.ts]
@@ -84,6 +86,7 @@ export default function EventsPage() {
     const [q, setQ] = useState('');
     // Use the StatusFilter type for status state
     const [statusFilter, setStatusFilter] = useState<StatusFilter>('All');
+    const { addItem } = useCart();
     
     // Fetch data on component mount
     useEffect( () => {
@@ -215,7 +218,7 @@ export default function EventsPage() {
                                 {filteredEvents.map((ev) => (
                                     <Card
                                         key={ev.event_id} // Use event_id from Event type
-                                        className="group overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
+                                        className="group overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md flex flex-col"
                                     >
                                         <CardHeader className="px-6 pt-6 pb-3">
                                             {/* Use event_name from Event type */}
@@ -230,10 +233,41 @@ export default function EventsPage() {
                                                 </span>
                                             </div>
                                         </CardHeader>
-                                        <CardContent className="px-6 pb-6 text-sm text-gray-700">
+                                        <CardContent className="px-6 pb-6 text-sm text-gray-700 flex-grow">
                                             {/* Use description from Event type */}
                                             <p className="leading-relaxed">{ev.description || 'No description available.'}</p>
                                         </CardContent>
+                                        <CardFooter className="px-6 pb-6 mt-auto">
+                                            {ev.status === 'scheduled' && ev.ticket_price != null ? (
+                                                <Button
+                                                    onClick={() => {
+                                                        addItem({
+                                                            id: `event-${ev.event_id}`,
+                                                            item_id: ev.event_id,
+                                                            name: ev.event_name,
+                                                            item_type: 'event',
+                                                            quantity: 1,
+                                                            unit_price: ev.ticket_price!,
+                                                            description: `Event on ${formatEventDate(ev.event_date)}`,
+                                                            metadata: {
+                                                                event_date: ev.event_date,
+                                                            },
+                                                        });
+                                                    }}
+                                                    className="w-full bg-sea_green-600 hover:bg-sea_green-700 text-white"
+                                                >
+                                                    <ShoppingCart className="h-4 w-4 mr-2" />
+                                                    Add to Cart (${ev.ticket_price.toFixed(2)})
+                                                </Button>
+                                            ) : (
+                                                <Button
+                                                    disabled
+                                                    className="w-full"
+                                                >
+                                                    {ev.status !== 'scheduled' ? `Event ${ev.status}` : 'Registration Unavailable'}
+                                                </Button>
+                                            )}
+                                        </CardFooter>
                                     </Card>
                                 ))}
 
