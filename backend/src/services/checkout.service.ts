@@ -175,6 +175,11 @@ export class CheckoutService {
 
   /**
    * Save payment method for customer
+   * 
+   * @SECURITY_RISK - This method stores raw, unencrypted credit card information
+   * including the CVV. This is a major security vulnerability and is not PCI compliant.
+   * This is for demonstration purposes only in a student project.
+   * In a real-world application, use a secure payment gateway like Stripe or Braintree.
    */
   private static async savePaymentMethod(customerId: number, paymentData: any): Promise<void> {
     // Check if payment method already exists
