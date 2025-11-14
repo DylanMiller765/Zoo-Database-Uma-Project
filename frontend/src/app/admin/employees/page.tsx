@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useAuth } from '@/context/AuthContext';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { employeeService } from '@/services/employee.service';
 import { Employee } from '@/types';
 import { Button } from '@/components/ui/button';
@@ -44,6 +44,17 @@ export default function EmployeesPage() {
   const [isRestoreModalOpen, setIsRestoreModalOpen] = useState(false);
   const [employeeToRestore, setEmployeeToRestore] = useState<Employee | null>(null);
   const isManager = hasRole('manager');
+
+  const hasOpenedModal = useRef(false);
+  const searchParams = useSearchParams();
+
+  useEffect(() => {
+    if (hasOpenedModal.current) return;
+    if (searchParams.get('autoOpen') === 'true') {
+      handleAdd();
+      hasOpenedModal.current = true;
+    }
+  }, [searchParams]);
 
   useEffect(() => {
 
