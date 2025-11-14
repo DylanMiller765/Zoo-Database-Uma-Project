@@ -63,6 +63,18 @@ export function DateRangePicker({
     onRangeChange(start.toISOString().split('T')[0], end.toISOString().split('T')[0]);
   };
 
+  const handleClear = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    onRangeChange('', '');
+  };
+
+  const handleAllTime = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    onRangeChange('', '');
+  };
+
   return (
     <div className="space-y-3">
       <Label className="text-sm font-medium text-gray-700 flex items-center gap-1">
@@ -71,7 +83,7 @@ export function DateRangePicker({
         {required && <span className="text-red-500">*</span>}
       </Label>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-md">
         <div>
           <Label htmlFor="startDate" className="text-xs text-gray-600">
             Start Date
@@ -148,6 +160,24 @@ export function DateRangePicker({
             className="text-xs"
           >
             Next 30 Days
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={handleAllTime}
+            className="text-xs"
+          >
+            All Time
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={handleClear}
+            className="text-xs"
+          >
+            Clear
           </Button>
         </div>
       )}

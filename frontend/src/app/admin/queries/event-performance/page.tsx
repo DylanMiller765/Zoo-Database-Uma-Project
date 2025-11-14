@@ -160,9 +160,6 @@ export default function EventPerformancePage() {
           <Calendar className="h-8 w-8 text-persian_orange-600" />
           Event Performance Report
         </h1>
-        <p className="text-gray-600 mt-1">
-          Analyze event attendance, capacity utilization, and revenue generation
-        </p>
       </div>
 
       {/* Parameters Form */}
