@@ -104,13 +104,7 @@ export class QueryController {
         includeReturns
       } = req.query;
 
-      // Validate required parameters
-      if (!startDate || !endDate) {
-        res.status(400).json({
-          message: 'Start date and end date are required for Financial Report'
-        });
-        return;
-      }
+      // Note: startDate and endDate are now optional (empty = all-time)
 
       // Parse sources array
       let sourcesArray: string[] | undefined;
@@ -120,23 +114,16 @@ export class QueryController {
           : sources as string[];
       }
 
-      const data = await QueryService.getFinancialReport({
-        startDate: startDate as string,
-        endDate: endDate as string,
+      // Get comprehensive financial report
+      const report = await QueryService.getFinancialReport({
+        startDate: startDate as string | undefined,
+        endDate: endDate as string | undefined,
         sources: sourcesArray,
         grouping: grouping as string,
         includeReturns: includeReturns === 'true'
       });
 
-      const summary = await QueryService.getFinancialReportSummary({
-        startDate: startDate as string,
-        endDate: endDate as string,
-        sources: sourcesArray,
-        grouping: grouping as string,
-        includeReturns: includeReturns === 'true'
-      });
-
-      res.status(200).json({ data, summary });
+      res.status(200).json(report);
     } catch (error) {
       console.error('❌ Error fetching financial report:', error);
       res.status(500).json({
