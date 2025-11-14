@@ -242,7 +242,6 @@ export default function EventsPage() {
                                                 <Button
                                                     onClick={() => {
                                                         addItem({
-                                                            id: `event-${ev.event_id}`,
                                                             item_id: ev.event_id,
                                                             name: ev.event_name,
                                                             item_type: 'event',
