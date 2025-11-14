@@ -166,10 +166,10 @@ export default function AdminDashboard() {
     // Cashier quick actions
     if (role === 'cashier') {
       return [
-        { href: '/admin/tickets', icon: DollarSign, label: 'Sell Tickets', description: 'Process ticket sales' },
+        { href: '/admin/transactions?type=Ticket&autoOpen=true', icon: DollarSign, label: 'Sell Tickets', description: 'Process ticket sales' },
         { href: '/admin/customers', icon: UserCircle, label: 'Manage Customers', description: 'View and manage customer accounts' },
-        { href: '/admin/gift-shops', icon: DollarSign, label: 'Gift Shop Sales', description: 'Process gift shop transactions' },
-        { href: '/admin/cafes', icon: DollarSign, label: 'Café Sales', description: 'Process café transactions' },
+        { href: '/admin/transactions?type=Gift+Shop&autoOpen=true', icon: DollarSign, label: 'Gift Shop Sales', description: 'Process gift shop transactions' },
+        { href: '/admin/transactions?type=Cafe&autoOpen=true', icon: DollarSign, label: 'Café Sales', description: 'Process café transactions' },
       ];
     }
 
@@ -190,11 +190,11 @@ export default function AdminDashboard() {
     // Manager quick actions (full access)
     if (role === 'manager') {
       return [
-        { href: '/admin/animals', icon: Leaf, label: 'Add New Animal', description: 'Register a new animal to the zoo' },
-        { href: '/admin/events', icon: Calendar, label: 'Schedule Event', description: 'Create a new zoo event' },
-        { href: '/admin/employees', icon: Users, label: 'Add Employee', description: 'Onboard a new team member' },
-        { href: '/admin/gift-shops', icon: DollarSign, label: 'Gift Shops & Items', description: 'Manage shops and their items' },
-        { href: '/admin/cafes', icon: DollarSign, label: 'Cafés & Menu Items', description: 'Manage cafés and their menus' },
+        { href: '/admin/animals?autoOpen=true', icon: Leaf, label: 'Add New Animal', description: 'Register a new animal to the zoo' },
+        { href: '/admin/events?autoOpen=true', icon: Calendar, label: 'Schedule Event', description: 'Create a new zoo event' },
+        { href: '/admin/employees?autoOpen=true', icon: Users, label: 'Add Employee', description: 'Onboard a new team member' },
+        { href: '/admin/gift-shops?autoOpen=true', icon: DollarSign, label: 'Gift Shops & Items', description: 'Manage shops and their items' },
+        { href: '/admin/cafes?autoOpen=true', icon: DollarSign, label: 'Cafés & Menu Items', description: 'Manage cafés and their menus' },
       ];
     }
 
@@ -217,7 +217,7 @@ export default function AdminDashboard() {
     // Coordinator quick actions
     if (role === 'coordinator') {
       return [
-        { href: '/admin/events', icon: Calendar, label: 'Manage Events', description: 'Create and manage zoo events' },
+        { href: '/admin/events?autoOpen=true', icon: Calendar, label: 'Manage Events', description: 'Create and manage zoo events' },
       ];
     }
 
