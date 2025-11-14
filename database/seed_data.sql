@@ -1,13 +1,9 @@
--- Consolidated Seed Data for Zoo Management System
--- This file combines and harmonizes data from mock_data.sql and seed_test_users.sql.
--- Run this script after zoo_schema.sql to populate the database with consistent test data.
+-- Zoo Management System - Seed Data
+-- Comprehensive test data for the Zoo Management System
 
 USE zoo_database;
 
--- Temporarily disable foreign key checks to allow truncating tables
 SET FOREIGN_KEY_CHECKS = 0;
-
--- Truncate all tables to ensure a clean slate
 TRUNCATE TABLE notifications;
 TRUNCATE TABLE cafe_items;
 TRUNCATE TABLE cafe_sales;
@@ -29,12 +25,10 @@ TRUNCATE TABLE user_accounts;
 TRUNCATE TABLE customers;
 TRUNCATE TABLE employees;
 TRUNCATE TABLE tickets;
-
--- Re-enable foreign key checks
 SET FOREIGN_KEY_CHECKS = 1;
 
 -- =======================================
--- EMPLOYEES (Source: seed_test_users.sql, with Sarah Johnson as Manager)
+-- EMPLOYEES
 -- =======================================
 INSERT INTO employees (employee_id, first_name, last_name, email, phone, ssn, job_role, employment_type, salary, status, hire_date, gender) VALUES
 (1, 'Sarah', 'Johnson', 'sarah.johnson@zoo.com', '555-0101', '123-45-6789', 'manager', 'full_time', 75000.00, 'active', '2020-01-15', 'female'),
@@ -51,13 +45,15 @@ INSERT INTO employees (employee_id, first_name, last_name, email, phone, ssn, jo
 (12, 'Laura', 'Black', 'laura.black@zoo.com', '555-0112', '654-32-1098', 'keeper', 'part_time', NULL, 'active', '2024-01-10', 'female');
 
 -- =======================================
--- CUSTOMERS (Source: seed_test_users.sql, including john.smith@email.com)
+-- CUSTOMERS
 -- =======================================
--- Note: Maria Garcia has a membership expiring in 20 days (for notification testing)
+-- Maria Garcia has membership expiring in 20 days (for notification testing)
 INSERT INTO customers (customer_id, first_name, last_name, email, phone, address, city, state, zip_code, annual_pass, membership_start_date, membership_end_date, registration_date) VALUES
 (1, 'John', 'Smith', 'john.smith@email.com', '555-1001', '123 Main St', 'Springfield', 'IL', '62701', 'no', NULL, NULL, '2024-01-10'),
 (2, 'Maria', 'Garcia', 'maria.garcia@email.com', '555-1002', '456 Oak Ave', 'Springfield', 'IL', '62702', 'yes', '2024-01-01', '2025-01-01', '2023-11-15'),
-(3, 'Robert', 'Davis', 'robert.davis@email.com', '555-1003', '789 Pine Rd', 'Springfield', 'IL', '62703', 'no', NULL, NULL, '2024-02-20');
+(3, 'Robert', 'Davis', 'robert.davis@email.com', '555-1003', '789 Pine Rd', 'Springfield', 'IL', '62703', 'no', NULL, NULL, '2024-02-20'),
+(4, 'Sarah', 'Wilson', 'sarah.wilson@email.com', '555-1004', '321 Elm St', 'Springfield', 'IL', '62704', 'yes', '2024-06-01', '2025-06-01', '2024-05-15'),
+(5, 'Michael', 'Johnson', 'michael.johnson@email.com', '555-1005', '654 Maple Dr', 'Springfield', 'IL', '62705', 'yes', '2024-03-15', '2025-03-15', '2024-03-01');
 
 -- Update Maria Garcia's membership to expire in 20 days (dynamic date calculation)
 UPDATE customers
@@ -88,10 +84,12 @@ INSERT INTO user_accounts (account_id, username, email, role, employee_id) VALUE
 INSERT INTO user_accounts (account_id, username, email, role, customer_id) VALUES
 (9, 'john.smith', 'john.smith@email.com', 'customer', 1),
 (10, 'maria.garcia', 'maria.garcia@email.com', 'customer', 2),
-(11, 'robert.davis', 'robert.davis@email.com', 'customer', 3);
+(11, 'robert.davis', 'robert.davis@email.com', 'customer', 3),
+(16, 'sarah.wilson', 'sarah.wilson@email.com', 'customer', 4),
+(17, 'michael.johnson', 'michael.johnson@email.com', 'customer', 5);
 
 -- =======================================
--- PASSWORDS (All passwords are "password")
+-- PASSWORDS
 -- =======================================
 INSERT INTO passwords (account_id, password_hash) VALUES
 (1, 'password'),  -- Sarah Johnson (Manager)
@@ -108,10 +106,12 @@ INSERT INTO passwords (account_id, password_hash) VALUES
 (12, 'password'),
 (13, 'password'),
 (14, 'password'),
-(15, 'password');
+(15, 'password'),
+(16, 'password'), -- Sarah Wilson (Customer)
+(17, 'password'); -- Michael Johnson (Customer)
 
 -- =======================================
--- ATTRACTIONS (Source: mock_data.sql)
+-- ATTRACTIONS
 -- =======================================
 INSERT INTO attractions (name, location, human_capacity, opening_time, closing_time, status) VALUES
 ('African Savanna', 'North Zone', 500, '09:00:00', '18:00:00', 'open'),
@@ -121,7 +121,7 @@ INSERT INTO attractions (name, location, human_capacity, opening_time, closing_t
 ('Reptile House', 'Central Zone', 200, '09:00:00', '17:00:00', 'open');
 
 -- =======================================
--- HABITATS (Source: mock_data.sql)
+-- HABITATS
 -- =======================================
 INSERT INTO habitats (habitat_name, attraction_id, size, environment_type, animal_capacity, status) VALUES
 ('Lion Pride Rock', 1, 'Large', 'Grassland', 8, 'active'),
@@ -134,7 +134,7 @@ INSERT INTO habitats (habitat_name, attraction_id, size, environment_type, anima
 ('Aviary', 2, 'Large', 'Tropical Forest', 50, 'active');
 
 -- =======================================
--- ANIMALS (Source: mock_data.sql)
+-- ANIMALS
 -- =======================================
 INSERT INTO animals (name, scientific_name, species, date_of_birth, arrival_date, gender, place_of_origin, habitat_id, health_status, active_status, endangerment_status, weight) VALUES
 ('Simba', 'Panthera leo', 'African Lion', '2018-05-12', '2019-06-15', 'male', 'South Africa', 1, 'excellent', 'active', 'vulnerable', 190.5),
@@ -177,7 +177,7 @@ INSERT INTO animals (name, scientific_name, species, date_of_birth, arrival_date
 
 
 -- =======================================
--- EVENTS (Source: mock_data.sql, FKs adjusted)
+-- EVENTS
 -- =======================================
 INSERT INTO events (name, description, event_date, start_time, end_time, location, max_participants, ticket_price, coordinator_id) VALUES
 ('Dolphin Show', 'Watch our amazing dolphins perform tricks and learn about marine conservation', '2025-11-15', '14:00:00', '15:00:00', 'Aquatic Center Amphitheater', 400, 15.00, 4),
@@ -187,21 +187,21 @@ INSERT INTO events (name, description, event_date, start_time, end_time, locatio
 ('Night at the Zoo', 'Special after-hours tour experience with nocturnal animals', '2025-12-01', '19:00:00', '22:00:00', 'Various Locations', 150, 35.00, 4);
 
 -- =======================================
--- GIFT SHOPS (Source: mock_data.sql, FKs adjusted)
+-- GIFT SHOPS
 -- =======================================
 INSERT INTO gift_shops (name, location, opening_time, closing_time, manager_id) VALUES
 ('Safari Shop', 'Main Entrance', '09:00:00', '18:00:00', 1),
 ('Jungle Treasures', 'Tropical Rainforest', '09:30:00', '17:30:00', 1);
 
 -- =======================================
--- CAFES (Source: mock_data.sql, FKs adjusted)
+-- CAFES
 -- =======================================
 INSERT INTO cafes (name, location, opening_time, closing_time, manager_id) VALUES
 ('Savanna Snacks', 'African Savanna Area', '10:00:00', '17:00:00', 1),
 ('Penguin Cafe', 'Arctic Tundra Zone', '10:00:00', '17:00:00', 1);
 
 -- =======================================
--- GIFT SHOP ITEMS (Source: mock_data.sql)
+-- GIFT SHOP ITEMS
 -- =======================================
 INSERT INTO gift_shop_items (gift_shop_id, name, description, category, price, cost, quantity_in_stock, supplier) VALUES
 (1, 'Plush Lion', 'Soft and cuddly lion plushie', 'Toys', 19.99, 8.00, 150, 'ToyWorld Inc'),
@@ -214,7 +214,7 @@ INSERT INTO gift_shop_items (gift_shop_id, name, description, category, price, c
 (1, 'Savanna Hat', 'Wide-brimmed hat for sun protection', 'Apparel', 29.99, 12.00, 80, 'Apparel Plus');
 
 -- =======================================
--- CAFE ITEMS (Source: mock_data.sql)
+-- CAFE ITEMS
 -- =======================================
 INSERT INTO cafe_items (cafe_id, name, description, category, price, is_available) VALUES
 (1, 'Burger', 'Classic beef burger with fries', 'Entrees', 12.99, TRUE),
@@ -229,7 +229,7 @@ INSERT INTO cafe_items (cafe_id, name, description, category, price, is_availabl
 (2, 'Bottled Water', '500ml bottled water', 'Beverages', 2.49, TRUE);
 
 -- =======================================
--- TICKETS (Source: mock_data.sql, FKs adjusted)
+-- TICKETS
 -- =======================================
 INSERT INTO tickets (customer_id, visit_date, ticket_type, price, payment_method) VALUES
 (1, '2025-11-15', 'adult', 45.00, 'credit'),
@@ -239,273 +239,372 @@ INSERT INTO tickets (customer_id, visit_date, ticket_type, price, payment_method
 
 
 -- =======================================
--- EVENT REGISTRATIONS (Source: mock_data.sql, FKs adjusted)
+-- EVENT REGISTRATIONS
 -- =======================================
-INSERT INTO event_registrations (event_id, customer_id, number_of_participants, total_amount, payment_status) VALUES
-(1, 1, 2, 30.00, 'paid'),
-(2, 2, 1, 10.00, 'paid'),
-(3, 3, 3, 60.00, 'pending');
+INSERT INTO event_registrations (event_id, customer_id, number_of_participants, total_amount, payment_status, registration_date) VALUES
+(1, 1, 2, 30.00, 'paid', '2024-01-10 10:00:00'),
+(1, 2, 1, 15.00, 'paid', '2024-01-12 14:30:00'),
+(1, NULL, 3, 45.00, 'paid', '2024-01-15 09:15:00'),
+(1, 3, 2, 30.00, 'pending', '2024-01-18 11:00:00'),
+(1, 1, 4, 60.00, 'paid', '2024-01-20 13:45:00'),
+(1, NULL, 1, 15.00, 'paid', '2024-01-25 10:30:00'),
+(1, 2, 2, 30.00, 'cancelled', '2024-01-28 15:00:00'),
+(1, 3, 3, 45.00, 'paid', '2024-02-01 09:00:00'),
+(1, NULL, 2, 30.00, 'paid', '2024-02-05 12:00:00'),
+(1, 1, 1, 15.00, 'pending', '2024-02-08 14:15:00'),
+(2, 2, 1, 10.00, 'paid', '2024-01-08 10:00:00'),
+(2, 3, 2, 20.00, 'paid', '2024-01-15 11:30:00'),
+(2, NULL, 1, 10.00, 'paid', '2024-01-20 09:45:00'),
+(2, 1, 3, 30.00, 'pending', '2024-01-25 13:00:00'),
+(2, NULL, 2, 20.00, 'paid', '2024-02-02 10:15:00'),
+(2, 2, 1, 10.00, 'paid', '2024-02-10 14:30:00'),
+(2, 3, 2, 20.00, 'cancelled', '2024-02-15 11:00:00'),
+(2, NULL, 1, 10.00, 'paid', '2024-02-20 09:30:00'),
+(2, 1, 3, 30.00, 'paid', '2024-02-25 12:45:00'),
+(2, 2, 2, 20.00, 'pending', '2024-03-01 10:00:00'),
+(3, 3, 3, 60.00, 'pending', '2024-01-05 14:00:00'),
+(3, 1, 2, 40.00, 'paid', '2024-01-12 10:30:00'),
+(3, 2, 1, 20.00, 'paid', '2024-01-18 13:15:00'),
+(3, NULL, 4, 80.00, 'paid', '2024-01-25 09:00:00'),
+(3, 3, 2, 40.00, 'paid', '2024-02-01 11:45:00'),
+(3, NULL, 3, 60.00, 'pending', '2024-02-08 14:20:00'),
+(3, 1, 1, 20.00, 'paid', '2024-02-14 10:15:00'),
+(3, 2, 2, 40.00, 'cancelled', '2024-02-20 12:30:00'),
+(3, NULL, 3, 60.00, 'paid', '2024-02-27 09:45:00'),
+(3, 3, 2, 40.00, 'paid', '2024-03-05 13:00:00'),
+(4, 1, 1, 250.00, 'paid', '2024-01-02 09:00:00'),
+(4, 2, 2, 500.00, 'paid', '2024-01-10 11:30:00'),
+(4, NULL, 1, 250.00, 'pending', '2024-01-20 14:15:00'),
+(4, 3, 3, 750.00, 'paid', '2024-02-01 10:00:00'),
+(4, 1, 2, 500.00, 'cancelled', '2024-02-10 13:45:00'),
+(4, NULL, 1, 250.00, 'paid', '2024-02-20 09:30:00'),
+(4, 2, 1, 250.00, 'pending', '2024-03-01 11:00:00'),
+(4, 3, 2, 500.00, 'paid', '2024-03-10 14:20:00'),
+(5, 2, 2, 70.00, 'paid', '2024-01-15 10:00:00'),
+(5, 3, 1, 35.00, 'paid', '2024-01-20 13:30:00'),
+(5, NULL, 3, 105.00, 'pending', '2024-01-28 09:45:00'),
+(5, 1, 2, 70.00, 'paid', '2024-02-05 11:15:00'),
+(5, NULL, 4, 140.00, 'paid', '2024-02-12 14:00:00'),
+(5, 2, 1, 35.00, 'cancelled', '2024-02-18 10:30:00'),
+(5, 3, 2, 70.00, 'paid', '2024-02-25 12:45:00'),
+(5, NULL, 3, 105.00, 'paid', '2024-03-05 09:15:00'),
+(1, 2, 2, 30.00, 'paid', '2024-03-10 10:00:00'),
+(1, NULL, 3, 45.00, 'pending', '2024-03-15 14:30:00'),
+(1, 3, 1, 15.00, 'paid', '2024-03-20 09:00:00'),
+(2, 1, 2, 20.00, 'paid', '2024-03-08 11:00:00'),
+(2, NULL, 1, 10.00, 'pending', '2024-03-18 13:15:00'),
+(3, 2, 2, 40.00, 'paid', '2024-03-12 10:30:00'),
+(3, 1, 3, 60.00, 'paid', '2024-03-22 14:00:00'),
+(4, NULL, 2, 500.00, 'pending', '2024-03-25 09:30:00'),
+(4, 3, 1, 250.00, 'paid', '2024-04-01 11:45:00'),
+(5, 1, 2, 70.00, 'paid', '2024-03-28 10:15:00'),
+(5, 2, 3, 105.00, 'cancelled', '2024-04-05 13:00:00'),
+(1, 1, 4, 60.00, 'paid', '2024-04-10 09:00:00'),
+(2, 3, 2, 20.00, 'paid', '2024-04-12 11:30:00'),
+(3, NULL, 1, 20.00, 'pending', '2024-04-15 14:45:00'),
+(1, 2, 1, 15.00, 'paid', '2024-04-20 10:00:00'),
+(5, NULL, 2, 70.00, 'paid', '2024-04-25 12:15:00'),
+(4, 1, 1, 250.00, 'pending', '2024-05-01 09:30:00'),
+(2, 2, 3, 30.00, 'paid', '2024-05-05 13:00:00'),
+(3, 3, 2, 40.00, 'paid', '2024-05-10 10:45:00'),
+(1, NULL, 2, 30.00, 'paid', '2024-05-15 14:20:00'),
+(5, 1, 1, 35.00, 'cancelled', '2024-05-20 09:15:00'),
+(4, 2, 3, 750.00, 'paid', '2024-06-01 11:00:00'),
+(1, 3, 3, 45.00, 'paid', '2024-06-10 10:30:00'),
+(2, NULL, 1, 10.00, 'pending', '2024-06-15 13:45:00'),
+(3, 1, 2, 40.00, 'paid', '2024-06-20 09:00:00'),
+(5, 2, 2, 70.00, 'paid', '2024-06-25 12:30:00'),
+(1, 2, 2, 30.00, 'paid', '2024-07-05 10:00:00'),
+(2, 3, 2, 20.00, 'paid', '2024-07-10 14:15:00'),
+(3, NULL, 3, 60.00, 'pending', '2024-07-15 09:30:00'),
+(4, 1, 2, 500.00, 'paid', '2024-07-20 11:45:00'),
+(5, NULL, 3, 105.00, 'paid', '2024-07-25 13:00:00'),
+(1, 3, 1, 15.00, 'paid', '2024-08-05 10:30:00'),
+(2, 1, 3, 30.00, 'paid', '2024-08-10 12:00:00'),
+(3, 2, 2, 40.00, 'cancelled', '2024-08-15 09:45:00'),
+(4, NULL, 1, 250.00, 'pending', '2024-08-20 14:30:00'),
+(5, 3, 2, 70.00, 'paid', '2024-08-25 10:15:00'),
+(1, NULL, 2, 30.00, 'paid', '2024-09-01 11:00:00'),
+(2, 2, 1, 10.00, 'paid', '2024-09-08 13:30:00'),
+(3, 1, 3, 60.00, 'paid', '2024-09-15 09:00:00'),
+(4, 3, 2, 500.00, 'pending', '2024-09-20 10:45:00'),
+(5, NULL, 1, 35.00, 'paid', '2024-09-25 12:15:00'),
+(1, 2, 3, 45.00, 'paid', '2024-10-05 10:00:00'),
+(2, NULL, 2, 20.00, 'paid', '2024-10-10 14:00:00'),
+(3, 3, 1, 20.00, 'pending', '2024-10-15 09:30:00'),
+(4, 1, 1, 250.00, 'paid', '2024-10-20 11:15:00'),
+(5, 2, 2, 70.00, 'cancelled', '2024-10-25 13:45:00'),
+(1, 3, 2, 30.00, 'paid', '2024-11-01 10:30:00'),
+(2, 1, 3, 30.00, 'paid', '2024-11-05 12:00:00'),
+(3, NULL, 2, 40.00, 'paid', '2024-11-10 09:45:00'),
+(4, 2, 2, 500.00, 'pending', '2024-11-15 14:20:00'),
+(5, 3, 3, 105.00, 'paid', '2024-11-20 10:15:00'),
+(1, NULL, 1, 15.00, 'paid', '2024-12-01 11:00:00'),
+(2, 2, 2, 20.00, 'paid', '2024-12-05 13:30:00'),
+(3, 1, 3, 60.00, 'paid', '2024-12-10 09:00:00'),
+(4, NULL, 1, 250.00, 'cancelled', '2024-12-15 10:45:00'),
+(5, 3, 2, 70.00, 'paid', '2024-12-20 12:15:00');
 
 
 -- =======================================
--- ZOOKEEPER ASSIGNMENTS (Assigning keepers to animals)
+-- ZOOKEEPER ASSIGNMENTS
 -- =======================================
--- Mike Chen (employee_id: 2) and Anna Martinez (employee_id: 7) are keepers
 INSERT INTO zookeeper_assignments (keeper_id, animal_id, shift) VALUES
--- Mike Chen assignments
-(2, 1, 'Morning'), -- Simba
-(2, 2, 'Morning'), -- Nala
-(2, 5, 'Morning'), -- Skipper (Penguin)
-(2, 7, 'Afternoon'), -- Flipper (Dolphin)
--- Anna Martinez assignments
-(7, 3, 'Morning'), -- Dumbo (Elephant)
-(7, 4, 'Morning'), -- Koko (Gorilla)
-(7, 6, 'Afternoon'), -- Snowball (Polar Bear)
-(7, 8, 'Weekly'); -- Monty (Python)
-
--- More assignments for new animals and keepers
-INSERT INTO zookeeper_assignments (keeper_id, animal_id, shift) VALUES
--- Chris Green (keeper_id: 9) assignments
-(9, 9, 'Morning'), -- Zazu (Lion)
-(9, 10, 'Morning'), -- Sarabi (Lion)
-(9, 11, 'Afternoon'), -- Tantor (Elephant)
-(9, 12, 'Afternoon'), -- Kala (Elephant)
-(9, 29, 'Morning'), -- Kevin (Flamingo)
-(9, 30, 'Morning'), -- Becky (Vulture)
-
--- Jessica Blue (keeper_id: 10) assignments
-(10, 13, 'Morning'), -- Kerchak (Gorilla)
-(10, 14, 'Morning'), -- Terk (Gorilla)
-(10, 15, 'Afternoon'), -- Pingu (Penguin)
-(10, 16, 'Afternoon'), -- Pingi (Penguin)
-(10, 17, 'Afternoon'), -- Pinga (Penguin)
-(10, 18, 'Afternoon'), -- Kowalski (Penguin)
-(10, 19, 'Afternoon'), -- Rico (Penguin)
-
--- Laura Black (keeper_id: 12) assignments
-(12, 20, 'Morning'), -- Lars (Polar Bear)
-(12, 21, 'Afternoon'), -- Echo (Dolphin)
-(12, 22, 'Afternoon'), -- Coral (Dolphin)
-(12, 23, 'Weekly'), -- Kaa (Python)
-(12, 24, 'Weekly'), -- Nagini (Python)
-(12, 25, 'Weekly'), -- Salazar (Boa)
-(12, 26, 'Weekly'), -- Medusa (Anaconda)
-(12, 27, 'Weekly'), -- Basilisk (Komodo Dragon)
-
--- Additional assignments for existing keepers
--- Mike Chen (employee_id: 2)
-(2, 28, 'Morning'), -- Iago (Macaw)
-(2, 31, 'Morning'), -- Nigel (Pelican)
--- Anna Martinez (employee_id: 7)
-(7, 32, 'Morning'), -- Scuttle (Gull)
-(7, 33, 'Afternoon'), -- Blu (Macaw)
-(7, 34, 'Afternoon'), -- Jewel (Macaw)
-(7, 35, 'Afternoon'), -- Touki (Toucan)
-(7, 36, 'Afternoon'), -- Hedwig (Owl)
-(7, 37, 'Afternoon'); -- Errol (Cockatoo)
+(2, 1, 'Morning'), (2, 2, 'Morning'), (2, 5, 'Morning'), (2, 7, 'Afternoon'),
+(7, 3, 'Morning'), (7, 4, 'Morning'), (7, 6, 'Afternoon'), (7, 8, 'Weekly'),
+(9, 9, 'Morning'), (9, 10, 'Morning'), (9, 11, 'Afternoon'), (9, 12, 'Afternoon'),
+(9, 29, 'Morning'), (9, 30, 'Morning'),
+(10, 13, 'Morning'), (10, 14, 'Morning'), (10, 15, 'Afternoon'), (10, 16, 'Afternoon'),
+(10, 17, 'Afternoon'), (10, 18, 'Afternoon'), (10, 19, 'Afternoon'),
+(12, 20, 'Morning'), (12, 21, 'Afternoon'), (12, 22, 'Afternoon'), (12, 23, 'Weekly'),
+(12, 24, 'Weekly'), (12, 25, 'Weekly'), (12, 26, 'Weekly'), (12, 27, 'Weekly'),
+(2, 28, 'Morning'), (2, 31, 'Morning'),
+(7, 32, 'Morning'), (7, 33, 'Afternoon'), (7, 34, 'Afternoon'), (7, 35, 'Afternoon'),
+(7, 36, 'Afternoon'), (7, 37, 'Afternoon');
 
 
 
 -- =======================================
--- FEEDING SCHEDULES (Define feeding routines for each animal)
+-- FEEDING SCHEDULES
 -- =======================================
 INSERT INTO feeding_schedules (animal_id, food_description, frequency, scheduled_time, notes) VALUES
--- Simba (Lion) - 2 schedules
-(1, 'Raw beef 15kg with bone', 'Daily', '09:00:00', 'Prime cuts, vary between beef and chicken. Monitor for dental health.'),
-(1, 'Supplemental bones', 'Daily', '17:00:00', 'Large femur bones for enrichment and dental care'),
-
--- Nala (Lion) - 2 schedules
-(2, 'Raw chicken/beef 10kg', 'Daily', '09:30:00', 'Smaller portions than male, alternate proteins daily'),
-(2, 'Enrichment feeding', '3x per week', '16:00:00', 'Hide meat in various locations for natural hunting behavior'),
-
--- Dumbo (Elephant) - 3 schedules
+(1, 'Raw beef 15kg with bone', 'Daily', '09:00:00', 'Prime cuts, vary between beef and chicken'),
+(1, 'Supplemental bones', 'Daily', '17:00:00', 'Large femur bones for enrichment'),
+(2, 'Raw chicken/beef 10kg', 'Daily', '09:30:00', 'Alternate proteins daily'),
+(2, 'Enrichment feeding', '3x per week', '16:00:00', 'Hide meat for natural hunting behavior'),
 (3, 'Hay 50kg', 'Daily', '07:00:00', 'Timothy hay primary diet'),
-(3, 'Fruits and vegetables 30kg', 'Daily', '12:00:00', 'Apples, carrots, sweet potatoes, melons - vary daily'),
-(3, 'Browse and branches', 'Daily', '16:00:00', 'Fresh tree branches for foraging behavior'),
+(3, 'Fruits and vegetables 30kg', 'Daily', '12:00:00', 'Apples, carrots, sweet potatoes'),
+(3, 'Browse and branches', 'Daily', '16:00:00', 'Fresh tree branches'),
+(4, 'Fruits and leafy greens 8kg', 'Daily', '08:00:00', 'Bananas, apples, kale, romaine'),
+(4, 'Vegetables and protein 5kg', 'Daily', '14:00:00', 'Sweet potato, eggs, nuts'),
+(4, 'Browse and enrichment', 'Daily', '18:00:00', 'Bamboo, branches, insects'),
+(5, 'Fresh fish 2kg', 'Twice daily', '10:00:00', 'Herring/capelin with vitamins'),
+(5, 'Evening fish feeding', 'Daily', '17:30:00', 'Monitor consumption'),
+(6, 'Fish 20kg', 'Daily', '09:00:00', 'Salmon, trout, mackerel'),
+(6, 'Meat and enrichment', 'Daily', '15:00:00', 'Seal meat or frozen treats'),
+(7, 'Fresh fish 18kg', 'Three times daily', '09:00:00', 'Herring, capelin with vitamin E'),
+(7, 'Mid-day feeding', 'Daily', '13:00:00', 'Monitor weight'),
+(7, 'Evening feeding with training', 'Daily', '17:00:00', 'Enrichment and training'),
+(8, 'Frozen-thawed rat (adult)', 'Weekly', '19:00:00', 'Feed Fridays, monitor strike');
 
--- Koko (Gorilla) - 3 schedules
-(4, 'Fruits and leafy greens 8kg', 'Daily', '08:00:00', 'Bananas, apples, kale, romaine, celery'),
-(4, 'Vegetables and protein 5kg', 'Daily', '14:00:00', 'Sweet potato, carrots, hard-boiled eggs, nuts'),
-(4, 'Browse and enrichment', 'Daily', '18:00:00', 'Bamboo, branches, occasional insects'),
-
--- Skipper (Penguin) - 2 schedules
-(5, 'Fresh fish (herring/capelin) 2kg', 'Twice daily', '10:00:00', 'Vitamin supplements mixed in'),
-(5, 'Evening fish feeding', 'Daily', '17:30:00', 'Monitor for individual consumption'),
-
--- Snowball (Polar Bear) - 2 schedules
-(6, 'Fish 20kg', 'Daily', '09:00:00', 'Salmon, trout, and mackerel'),
-(6, 'Meat and enrichment', 'Daily', '15:00:00', 'Seal meat when available, frozen treats in summer'),
-
--- Flipper (Dolphin) - 3 schedules
-(7, 'Fresh fish 18kg', 'Three times daily', '09:00:00', 'Herring, capelin - vitamin E supplement'),
-(7, 'Mid-day feeding', 'Daily', '13:00:00', 'Monitor weight, adjust portions as needed'),
-(7, 'Evening feeding with training', 'Daily', '17:00:00', 'Combined with enrichment and training session'),
-
--- Monty (Ball Python) - 1 schedule
-(8, 'Frozen-thawed rat (adult)', 'Weekly', '19:00:00', 'Feed on Fridays, monitor for strike and consumption. Skip if recent shed.');
-
--- Feeding schedules for new animals
 INSERT INTO feeding_schedules (animal_id, food_description, frequency, scheduled_time, notes) VALUES
--- New Lions (9, 10)
-(9, 'Raw beef 15kg', 'Daily', '09:00:00', 'Vary protein sources.'),
-(10, 'Raw chicken 10kg', 'Daily', '09:30:00', 'Monitor consumption.'),
--- New Elephants (11, 12)
-(11, 'Hay 60kg and Fruits 40kg', 'Daily', '07:00:00', 'Primary diet of Timothy hay.'),
-(12, 'Hay 55kg and Vegetables 35kg', 'Daily', '07:30:00', 'Ensure access to fresh water.'),
--- New Gorillas (13, 14)
-(13, 'Fruits and leafy greens 10kg', 'Daily', '08:00:00', 'Include enrichment items.'),
-(14, 'Fruits and leafy greens 9kg', 'Daily', '08:00:00', 'Monitor for food aggression.'),
--- New Penguins (15-19)
-(15, 'Fresh fish (herring/capelin) 2.5kg', 'Twice daily', '10:00:00', 'With vitamin supplements.'),
-(16, 'Fresh fish (herring/capelin) 2.5kg', 'Twice daily', '10:00:00', 'With vitamin supplements.'),
-(17, 'Fresh fish (herring/capelin) 2kg', 'Twice daily', '10:00:00', 'Younger, smaller portions.'),
-(18, 'Fresh fish (herring/capelin) 2.5kg', 'Twice daily', '10:00:00', 'With vitamin supplements.'),
-(19, 'Fresh fish (herring/capelin) 2.5kg', 'Twice daily', '10:00:00', 'With vitamin supplements.'),
--- New Polar Bear (20)
-(20, 'Fish 25kg and meat 5kg', 'Daily', '09:00:00', 'Include fatty fish like salmon.'),
--- New Dolphins (21, 22)
-(21, 'Fresh fish 20kg', 'Three times daily', '09:00:00', 'Used in training sessions.'),
-(22, 'Fresh fish 18kg', 'Three times daily', '09:00:00', 'Monitor weight closely.'),
--- New Reptiles (23-27)
-(23, 'Frozen-thawed large rat', 'Every 2 weeks', '18:00:00', 'Ensure full consumption.'),
-(24, 'Frozen-thawed rabbit', 'Every 2-3 weeks', '18:00:00', 'Monitor shedding cycle.'),
-(25, 'Frozen-thawed medium rat', 'Weekly', '18:00:00', 'Normal feeding.'),
-(26, 'Frozen-thawed piglet or large rabbit', 'Monthly', '18:00:00', 'Very large meal.'),
-(27, 'Whole goat or large deer', 'Every 1-2 months', '12:00:00', 'Massive feeding, requires multiple keepers.'),
--- New Birds (28-37)
-(28, 'Fruit and seed mix', 'Daily', '09:00:00', 'Include nuts for enrichment.'),
-(29, 'Fruit and seed mix', 'Daily', '09:00:00', 'Ensure variety.'),
-(30, 'Fruit and seed mix', 'Daily', '09:00:00', 'Monitor for favoritism.'),
-(31, 'Chopped fruit and insects', 'Daily', '09:30:00', 'Loves grapes.'),
-(32, 'Thawed mice or small rats', 'Daily', '20:00:00', 'Nocturnal feeding schedule.'),
-(33, 'Seed mix with fresh vegetables', 'Daily', '09:00:00', 'Loves sunflower seeds.'),
-(34, 'Specialized flamingo pellets and brine shrimp', 'Twice daily', '08:00:00', 'For color maintenance.'),
-(35, 'Bone marrow and meat scraps', 'Daily', '11:00:00', 'Specialized diet.'),
-(36, 'Whole fish (herring/mackerel)', 'Daily', '10:00:00', 'Swallows whole.'),
-(37, 'Fish, insects, and scraps', 'Daily', '10:30:00', 'Opportunistic feeder.');
+(9, 'Raw beef 15kg', 'Daily', '09:00:00', 'Vary protein sources'),
+(10, 'Raw chicken 10kg', 'Daily', '09:30:00', 'Monitor consumption'),
+(11, 'Hay 60kg and Fruits 40kg', 'Daily', '07:00:00', 'Timothy hay primary'),
+(12, 'Hay 55kg and Vegetables 35kg', 'Daily', '07:30:00', 'Fresh water access'),
+(13, 'Fruits and leafy greens 10kg', 'Daily', '08:00:00', 'Enrichment items'),
+(14, 'Fruits and leafy greens 9kg', 'Daily', '08:00:00', 'Monitor aggression'),
+(15, 'Fresh fish 2.5kg', 'Twice daily', '10:00:00', 'With vitamins'),
+(16, 'Fresh fish 2.5kg', 'Twice daily', '10:00:00', 'With vitamins'),
+(17, 'Fresh fish 2kg', 'Twice daily', '10:00:00', 'Smaller portions'),
+(18, 'Fresh fish 2.5kg', 'Twice daily', '10:00:00', 'With vitamins'),
+(19, 'Fresh fish 2.5kg', 'Twice daily', '10:00:00', 'With vitamins'),
+(20, 'Fish 25kg and meat 5kg', 'Daily', '09:00:00', 'Fatty fish'),
+(21, 'Fresh fish 20kg', 'Three times daily', '09:00:00', 'Training sessions'),
+(22, 'Fresh fish 18kg', 'Three times daily', '09:00:00', 'Weight monitoring'),
+(23, 'Frozen-thawed large rat', 'Every 2 weeks', '18:00:00', 'Full consumption'),
+(24, 'Frozen-thawed rabbit', 'Every 2-3 weeks', '18:00:00', 'Shedding cycle'),
+(25, 'Frozen-thawed medium rat', 'Weekly', '18:00:00', 'Normal feeding'),
+(26, 'Frozen-thawed rabbit', 'Monthly', '18:00:00', 'Large meal'),
+(27, 'Whole goat or deer', 'Every 1-2 months', '12:00:00', 'Multiple keepers'),
+(28, 'Fruit and seed mix', 'Daily', '09:00:00', 'Nuts enrichment'),
+(29, 'Fruit and seed mix', 'Daily', '09:00:00', 'Variety'),
+(30, 'Fruit and seed mix', 'Daily', '09:00:00', 'Monitor variety'),
+(31, 'Chopped fruit and insects', 'Daily', '09:30:00', 'Grapes favorite'),
+(32, 'Thawed mice or small rats', 'Daily', '20:00:00', 'Nocturnal'),
+(33, 'Seed mix and vegetables', 'Daily', '09:00:00', 'Sunflower seeds'),
+(34, 'Flamingo pellets and brine shrimp', 'Twice daily', '08:00:00', 'Color maintenance'),
+(35, 'Bone marrow and meat scraps', 'Daily', '11:00:00', 'Specialized'),
+(36, 'Whole fish', 'Daily', '10:00:00', 'Herring/mackerel'),
+(37, 'Fish and insects', 'Daily', '10:30:00', 'Opportunistic');
 
 
 
 -- =======================================
--- FEEDING LOGS (Last 30 days of feeding records)
+-- FEEDING LOGS
 -- =======================================
--- Creating realistic patterns with some gaps to demonstrate compliance tracking
--- Using Mike Chen (keeper_id: 2) and Anna Martinez (keeper_id: 7)
-
--- Simba (Lion, animal_id: 1) - Mostly consistent, one gap
 INSERT INTO feeding_logs (animal_id, keeper_id, feeding_time, food_given, quantity_given, notes) VALUES
-(1, 2, DATE_SUB(NOW(), INTERVAL 1 DAY) + INTERVAL 9 HOUR, 'Raw beef with bone', '15kg', 'Good appetite, very active'),
-(1, 2, DATE_SUB(NOW(), INTERVAL 1 DAY) + INTERVAL 17 HOUR, 'Femur bone', '2 large bones', 'Engaged with enrichment for 45 minutes'),
-(1, 2, DATE_SUB(NOW(), INTERVAL 2 DAY) + INTERVAL 9 HOUR, 'Raw chicken', '15kg', 'Ate everything within 20 minutes'),
-(1, 2, DATE_SUB(NOW(), INTERVAL 2 DAY) + INTERVAL 17 HOUR, 'Femur bone', '2 large bones', 'Normal behavior'),
-(1, 2, DATE_SUB(NOW(), INTERVAL 3 DAY) + INTERVAL 9 HOUR, 'Raw beef', '15kg', 'Good appetite'),
-(1, 2, DATE_SUB(NOW(), INTERVAL 4 DAY) + INTERVAL 9 HOUR, 'Raw beef', '15kg', 'Normal feeding'),
-(1, 2, DATE_SUB(NOW(), INTERVAL 4 DAY) + INTERVAL 17 HOUR, 'Femur bone', '2 large bones', 'Good dental activity'),
-(1, 2, DATE_SUB(NOW(), INTERVAL 5 DAY) + INTERVAL 9 HOUR, 'Raw chicken', '15kg', 'Excellent appetite'),
--- GAP on day 6 (missed evening feeding)
-(1, 2, DATE_SUB(NOW(), INTERVAL 6 DAY) + INTERVAL 9 HOUR, 'Raw beef', '15kg', 'Normal'),
-(1, 2, DATE_SUB(NOW(), INTERVAL 7 DAY) + INTERVAL 9 HOUR, 'Raw beef', '15kg', 'Good'),
-
--- Nala (Lion, animal_id: 2) - Very consistent
+(1, 2, DATE_SUB(NOW(), INTERVAL 1 DAY) + INTERVAL 9 HOUR, 'Raw beef with bone', '15kg', 'Good appetite'),
+(1, 2, DATE_SUB(NOW(), INTERVAL 2 DAY) + INTERVAL 9 HOUR, 'Raw chicken', '15kg', 'Ate enthusiastically'),
+(1, 2, DATE_SUB(NOW(), INTERVAL 3 DAY) + INTERVAL 9 HOUR, 'Raw beef', '15kg', 'Normal'),
+(1, 2, DATE_SUB(NOW(), INTERVAL 4 DAY) + INTERVAL 9 HOUR, 'Raw beef', '15kg', 'Active'),
+(1, 2, DATE_SUB(NOW(), INTERVAL 5 DAY) + INTERVAL 9 HOUR, 'Raw chicken', '15kg', 'Good'),
+(1, 2, DATE_SUB(NOW(), INTERVAL 6 DAY) + INTERVAL 9 HOUR, 'Raw beef', '15kg', 'Excellent'),
 (2, 2, DATE_SUB(NOW(), INTERVAL 1 DAY) + INTERVAL 9 HOUR + INTERVAL 30 MINUTE, 'Raw chicken', '10kg', 'Healthy appetite'),
-(2, 2, DATE_SUB(NOW(), INTERVAL 2 DAY) + INTERVAL 9 HOUR + INTERVAL 30 MINUTE, 'Raw beef', '10kg', 'Normal feeding behavior'),
+(2, 2, DATE_SUB(NOW(), INTERVAL 2 DAY) + INTERVAL 9 HOUR + INTERVAL 30 MINUTE, 'Raw beef', '10kg', 'Normal'),
 (2, 2, DATE_SUB(NOW(), INTERVAL 3 DAY) + INTERVAL 9 HOUR + INTERVAL 30 MINUTE, 'Raw chicken', '10kg', 'Good'),
-(2, 2, DATE_SUB(NOW(), INTERVAL 3 DAY) + INTERVAL 16 HOUR, 'Enrichment - hidden meat', '3kg', 'Successfully foraged all portions'),
 (2, 2, DATE_SUB(NOW(), INTERVAL 4 DAY) + INTERVAL 9 HOUR + INTERVAL 30 MINUTE, 'Raw beef', '10kg', 'Excellent'),
 (2, 2, DATE_SUB(NOW(), INTERVAL 5 DAY) + INTERVAL 9 HOUR + INTERVAL 30 MINUTE, 'Raw chicken', '10kg', 'Normal'),
-(2, 2, DATE_SUB(NOW(), INTERVAL 6 DAY) + INTERVAL 9 HOUR + INTERVAL 30 MINUTE, 'Raw beef', '10kg', 'Good appetite'),
-
--- Dumbo (Elephant, animal_id: 3) - Consistent, multiple feedings per day
-(3, 7, DATE_SUB(NOW(), INTERVAL 1 DAY) + INTERVAL 7 HOUR, 'Timothy hay', '50kg', 'Consumed throughout morning'),
-(3, 7, DATE_SUB(NOW(), INTERVAL 1 DAY) + INTERVAL 12 HOUR, 'Mixed fruits and vegetables', '30kg', 'Apples, carrots, sweet potatoes'),
-(3, 7, DATE_SUB(NOW(), INTERVAL 1 DAY) + INTERVAL 16 HOUR, 'Oak and willow branches', '20kg', 'Active foraging behavior'),
+(2, 2, DATE_SUB(NOW(), INTERVAL 6 DAY) + INTERVAL 9 HOUR + INTERVAL 30 MINUTE, 'Raw beef', '10kg', 'Good'),
+(3, 7, DATE_SUB(NOW(), INTERVAL 1 DAY) + INTERVAL 7 HOUR, 'Timothy hay', '50kg', 'Good consumption'),
+(3, 7, DATE_SUB(NOW(), INTERVAL 1 DAY) + INTERVAL 12 HOUR, 'Mixed fruits and vegetables', '30kg', 'Apples, carrots'),
 (3, 7, DATE_SUB(NOW(), INTERVAL 2 DAY) + INTERVAL 7 HOUR, 'Timothy hay', '50kg', 'Normal'),
-(3, 7, DATE_SUB(NOW(), INTERVAL 2 DAY) + INTERVAL 12 HOUR, 'Watermelon, carrots, apples', '30kg', 'Very engaged with watermelon'),
-(3, 7, DATE_SUB(NOW(), INTERVAL 2 DAY) + INTERVAL 16 HOUR, 'Mixed branches', '20kg', 'Good'),
-(3, 7, DATE_SUB(NOW(), INTERVAL 3 DAY) + INTERVAL 7 HOUR, 'Timothy hay', '50kg', 'Excellent consumption'),
-(3, 7, DATE_SUB(NOW(), INTERVAL 3 DAY) + INTERVAL 12 HOUR, 'Fruits and vegetables', '30kg', 'Normal'),
-
--- Koko (Gorilla, animal_id: 4) - Consistent
-(4, 7, DATE_SUB(NOW(), INTERVAL 1 DAY) + INTERVAL 8 HOUR, 'Fruits and leafy greens', '8kg', 'Bananas, kale, romaine - good appetite'),
-(4, 7, DATE_SUB(NOW(), INTERVAL 1 DAY) + INTERVAL 14 HOUR, 'Vegetables with eggs', '5kg', 'Sweet potato, 3 hard-boiled eggs, almonds'),
-(4, 7, DATE_SUB(NOW(), INTERVAL 1 DAY) + INTERVAL 18 HOUR, 'Bamboo shoots', '3kg', 'Very interested in bamboo today'),
-(4, 7, DATE_SUB(NOW(), INTERVAL 2 DAY) + INTERVAL 8 HOUR, 'Mixed fruits and greens', '8kg', 'Normal feeding'),
-(4, 7, DATE_SUB(NOW(), INTERVAL 2 DAY) + INTERVAL 14 HOUR, 'Vegetables with protein', '5kg', 'Good appetite'),
+(3, 7, DATE_SUB(NOW(), INTERVAL 2 DAY) + INTERVAL 12 HOUR, 'Watermelon, carrots', '30kg', 'Engaged'),
+(3, 7, DATE_SUB(NOW(), INTERVAL 3 DAY) + INTERVAL 7 HOUR, 'Timothy hay', '50kg', 'Excellent'),
+(3, 7, DATE_SUB(NOW(), INTERVAL 3 DAY) + INTERVAL 12 HOUR, 'Fruits and vegetables', '30kg', 'Good'),
+(3, 7, DATE_SUB(NOW(), INTERVAL 4 DAY) + INTERVAL 7 HOUR, 'Timothy hay', '50kg', 'Active'),
+(4, 7, DATE_SUB(NOW(), INTERVAL 1 DAY) + INTERVAL 8 HOUR, 'Fruits and leafy greens', '8kg', 'Good appetite'),
+(4, 7, DATE_SUB(NOW(), INTERVAL 1 DAY) + INTERVAL 14 HOUR, 'Vegetables with eggs', '5kg', 'Ate well'),
+(4, 7, DATE_SUB(NOW(), INTERVAL 2 DAY) + INTERVAL 8 HOUR, 'Mixed fruits', '8kg', 'Normal'),
+(4, 7, DATE_SUB(NOW(), INTERVAL 2 DAY) + INTERVAL 14 HOUR, 'Vegetables with protein', '5kg', 'Good'),
 (4, 7, DATE_SUB(NOW(), INTERVAL 3 DAY) + INTERVAL 8 HOUR, 'Fruits and greens', '8kg', 'Excellent'),
-(4, 7, DATE_SUB(NOW(), INTERVAL 3 DAY) + INTERVAL 14 HOUR, 'Vegetables and nuts', '5kg', 'Favored the almonds'),
-
--- Skipper (Penguin, animal_id: 5) - Twice daily, very consistent
-(5, 2, DATE_SUB(NOW(), INTERVAL 1 DAY) + INTERVAL 10 HOUR, 'Herring with vitamins', '2kg', 'Ate enthusiastically, vitamin supplement included'),
-(5, 2, DATE_SUB(NOW(), INTERVAL 1 DAY) + INTERVAL 17 HOUR + INTERVAL 30 MINUTE, 'Capelin', '1.5kg', 'Normal consumption'),
+(4, 7, DATE_SUB(NOW(), INTERVAL 4 DAY) + INTERVAL 8 HOUR, 'Mixed fruits', '8kg', 'Active'),
+(5, 2, DATE_SUB(NOW(), INTERVAL 1 DAY) + INTERVAL 10 HOUR, 'Herring with vitamins', '2kg', 'Ate enthusiastically'),
+(5, 2, DATE_SUB(NOW(), INTERVAL 1 DAY) + INTERVAL 17 HOUR + INTERVAL 30 MINUTE, 'Capelin', '1.5kg', 'Normal'),
 (5, 2, DATE_SUB(NOW(), INTERVAL 2 DAY) + INTERVAL 10 HOUR, 'Capelin with vitamins', '2kg', 'Good appetite'),
 (5, 2, DATE_SUB(NOW(), INTERVAL 2 DAY) + INTERVAL 17 HOUR + INTERVAL 30 MINUTE, 'Herring', '1.5kg', 'Normal'),
 (5, 2, DATE_SUB(NOW(), INTERVAL 3 DAY) + INTERVAL 10 HOUR, 'Herring with vitamins', '2kg', 'Excellent'),
-(5, 2, DATE_SUB(NOW(), INTERVAL 3 DAY) + INTERVAL 17 HOUR + INTERVAL 30 MINUTE, 'Capelin', '1.5kg', 'Good'),
-(5, 2, DATE_SUB(NOW(), INTERVAL 4 DAY) + INTERVAL 10 HOUR, 'Mixed fish with vitamins', '2kg', 'Normal'),
-
--- Snowball (Polar Bear, animal_id: 6) - Consistent with one gap
-(6, 7, DATE_SUB(NOW(), INTERVAL 1 DAY) + INTERVAL 9 HOUR, 'Salmon and trout', '20kg', 'Very active during feeding'),
-(6, 7, DATE_SUB(NOW(), INTERVAL 1 DAY) + INTERVAL 15 HOUR, 'Frozen fish treats', '5kg', 'Enrichment - played with ice blocks'),
+(5, 2, DATE_SUB(NOW(), INTERVAL 3 DAY) + INTERVAL 17 HOUR + INTERVAL 30 MINUTE, 'Capelin', '1.5kg', 'Active'),
+(5, 2, DATE_SUB(NOW(), INTERVAL 4 DAY) + INTERVAL 10 HOUR, 'Mixed fish with vitamins', '2kg', 'Good'),
+(6, 7, DATE_SUB(NOW(), INTERVAL 1 DAY) + INTERVAL 9 HOUR, 'Salmon and trout', '20kg', 'Very active'),
 (6, 7, DATE_SUB(NOW(), INTERVAL 2 DAY) + INTERVAL 9 HOUR, 'Mixed fish', '20kg', 'Good appetite'),
-(6, 7, DATE_SUB(NOW(), INTERVAL 2 DAY) + INTERVAL 15 HOUR, 'Seal meat', '8kg', 'Special enrichment day'),
-(6, 7, DATE_SUB(NOW(), INTERVAL 3 DAY) + INTERVAL 9 HOUR, 'Salmon', '20kg', 'Normal feeding'),
--- GAP on day 4 (missed afternoon feeding)
+(6, 7, DATE_SUB(NOW(), INTERVAL 3 DAY) + INTERVAL 9 HOUR, 'Salmon', '20kg', 'Normal'),
 (6, 7, DATE_SUB(NOW(), INTERVAL 4 DAY) + INTERVAL 9 HOUR, 'Mackerel and salmon', '20kg', 'Excellent'),
-(6, 7, DATE_SUB(NOW(), INTERVAL 5 DAY) + INTERVAL 9 HOUR, 'Mixed fish', '20kg', 'Good'),
-
--- Flipper (Dolphin, animal_id: 7) - Three times daily, very consistent
-(7, 2, DATE_SUB(NOW(), INTERVAL 1 DAY) + INTERVAL 9 HOUR, 'Herring with vitamin E', '6kg', 'Training session - responded well'),
-(7, 2, DATE_SUB(NOW(), INTERVAL 1 DAY) + INTERVAL 13 HOUR, 'Capelin', '6kg', 'Normal consumption'),
-(7, 2, DATE_SUB(NOW(), INTERVAL 1 DAY) + INTERVAL 17 HOUR, 'Herring with training', '6kg', 'Excellent training session, all behaviors performed'),
-(7, 2, DATE_SUB(NOW(), INTERVAL 2 DAY) + INTERVAL 9 HOUR, 'Mixed fish with vitamin E', '6kg', 'Good appetite'),
-(7, 2, DATE_SUB(NOW(), INTERVAL 2 DAY) + INTERVAL 13 HOUR, 'Herring', '6kg', 'Normal'),
-(7, 2, DATE_SUB(NOW(), INTERVAL 2 DAY) + INTERVAL 17 HOUR, 'Capelin with training', '6kg', 'Worked on new behaviors'),
-(7, 2, DATE_SUB(NOW(), INTERVAL 3 DAY) + INTERVAL 9 HOUR, 'Herring with vitamin E', '6kg', 'Excellent'),
-(7, 2, DATE_SUB(NOW(), INTERVAL 3 DAY) + INTERVAL 13 HOUR, 'Mixed fish', '6kg', 'Good'),
-
--- Monty (Ball Python, animal_id: 8) - Weekly feeding, showing last 4 weeks
-(8, 7, DATE_SUB(NOW(), INTERVAL 2 DAY) + INTERVAL 19 HOUR, 'Frozen-thawed adult rat', '1 rat', 'Successful strike and consumption, eating well'),
-(8, 7, DATE_SUB(NOW(), INTERVAL 9 DAY) + INTERVAL 19 HOUR, 'Frozen-thawed adult rat', '1 rat', 'Normal feeding response'),
-(8, 7, DATE_SUB(NOW(), INTERVAL 16 DAY) + INTERVAL 19 HOUR, 'Frozen-thawed adult rat', '1 rat', 'Good appetite'),
-(8, 7, DATE_SUB(NOW(), INTERVAL 23 DAY) + INTERVAL 19 HOUR, 'Frozen-thawed adult rat', '1 rat', 'Excellent feeding response'),
-(8, 7, DATE_SUB(NOW(), INTERVAL 30 DAY) + INTERVAL 19 HOUR, 'Frozen-thawed adult rat', '1 rat', 'Normal');
-
--- Feeding logs for new animals
-INSERT INTO feeding_logs (animal_id, keeper_id, feeding_time, food_given, quantity_given, notes) VALUES
--- Zazu (Lion, 9) - Keeper: Chris (9)
+(6, 7, DATE_SUB(NOW(), INTERVAL 5 DAY) + INTERVAL 9 HOUR, 'Mixed fish', '20kg', 'Active'),
+(6, 7, DATE_SUB(NOW(), INTERVAL 6 DAY) + INTERVAL 9 HOUR, 'Salmon', '20kg', 'Good'),
+(7, 2, DATE_SUB(NOW(), INTERVAL 1 DAY) + INTERVAL 9 HOUR, 'Herring with vitamin E', '6kg', 'Training session'),
+(7, 2, DATE_SUB(NOW(), INTERVAL 1 DAY) + INTERVAL 13 HOUR, 'Capelin', '6kg', 'Normal'),
+(7, 2, DATE_SUB(NOW(), INTERVAL 1 DAY) + INTERVAL 17 HOUR, 'Herring with training', '6kg', 'Excellent'),
+(7, 2, DATE_SUB(NOW(), INTERVAL 2 DAY) + INTERVAL 9 HOUR, 'Mixed fish with vitamin E', '6kg', 'Good'),
+(7, 2, DATE_SUB(NOW(), INTERVAL 2 DAY) + INTERVAL 13 HOUR, 'Herring', '6kg', 'Active'),
+(7, 2, DATE_SUB(NOW(), INTERVAL 3 DAY) + INTERVAL 9 HOUR, 'Herring with vitamin E', '6kg', 'Good'),
+(7, 2, DATE_SUB(NOW(), INTERVAL 3 DAY) + INTERVAL 13 HOUR, 'Mixed fish', '6kg', 'Normal'),
+(8, 7, DATE_SUB(NOW(), INTERVAL 2 DAY) + INTERVAL 19 HOUR, 'Frozen-thawed adult rat', '1 rat', 'Good strike'),
+(8, 7, DATE_SUB(NOW(), INTERVAL 9 DAY) + INTERVAL 19 HOUR, 'Frozen-thawed adult rat', '1 rat', 'Normal'),
+(8, 7, DATE_SUB(NOW(), INTERVAL 16 DAY) + INTERVAL 19 HOUR, 'Frozen-thawed adult rat', '1 rat', 'Good'),
+(8, 7, DATE_SUB(NOW(), INTERVAL 23 DAY) + INTERVAL 19 HOUR, 'Frozen-thawed adult rat', '1 rat', 'Excellent'),
 (9, 9, DATE_SUB(NOW(), INTERVAL 1 DAY) + INTERVAL 9 HOUR, 'Raw beef', '12kg', 'Good appetite'),
 (9, 9, DATE_SUB(NOW(), INTERVAL 2 DAY) + INTERVAL 9 HOUR, 'Raw chicken', '12kg', 'Normal'),
 (9, 9, DATE_SUB(NOW(), INTERVAL 3 DAY) + INTERVAL 9 HOUR, 'Raw beef', '12kg', 'Ate well'),
-
--- Tantor (Elephant, 11) - Keeper: Chris (9)
-(11, 9, DATE_SUB(NOW(), INTERVAL 1 DAY) + INTERVAL 7 HOUR, 'Hay', '60kg', 'Normal consumption'),
-(11, 9, DATE_SUB(NOW(), INTERVAL 1 DAY) + INTERVAL 12 HOUR, 'Fruits and vegetables', '35kg', 'Enjoyed the watermelon'),
-(11, 9, DATE_SUB(NOW(), INTERVAL 2 DAY) + INTERVAL 7 HOUR, 'Hay', '60kg', 'Good appetite'),
-
--- Kerchak (Gorilla, 13) - Keeper: Jessica (10)
-(13, 10, DATE_SUB(NOW(), INTERVAL 1 DAY) + INTERVAL 8 HOUR, 'Fruits and leafy greens', '10kg', 'Ate all the bananas first'),
-(13, 10, DATE_SUB(NOW(), INTERVAL 1 DAY) + INTERVAL 14 HOUR, 'Vegetables and protein', '6kg', 'Normal'),
-(13, 10, DATE_SUB(NOW(), INTERVAL 2 DAY) + INTERVAL 8 HOUR, 'Fruits and leafy greens', '10kg', 'Good'),
-
--- Pingu (Penguin, 15) - Keeper: Jessica (10)
-(15, 10, DATE_SUB(NOW(), INTERVAL 1 DAY) + INTERVAL 10 HOUR, 'Herring with vitamins', '2.5kg', 'Ate well'),
-(15, 10, DATE_SUB(NOW(), INTERVAL 1 DAY) + INTERVAL 17 HOUR, 'Capelin', '2kg', 'Normal'),
-(15, 10, DATE_SUB(NOW(), INTERVAL 2 DAY) + INTERVAL 10 HOUR, 'Herring', '2.5kg', 'Good appetite'),
-
--- Lars (Polar Bear, 20) - Keeper: Laura (12)
+(9, 9, DATE_SUB(NOW(), INTERVAL 4 DAY) + INTERVAL 9 HOUR, 'Raw beef', '12kg', 'Good'),
+(9, 9, DATE_SUB(NOW(), INTERVAL 5 DAY) + INTERVAL 9 HOUR, 'Raw chicken', '12kg', 'Active'),
+(10, 9, DATE_SUB(NOW(), INTERVAL 1 DAY) + INTERVAL 9 HOUR + INTERVAL 30 MINUTE, 'Raw chicken', '10kg', 'Good appetite'),
+(10, 9, DATE_SUB(NOW(), INTERVAL 2 DAY) + INTERVAL 9 HOUR + INTERVAL 30 MINUTE, 'Raw beef', '10kg', 'Normal'),
+(10, 9, DATE_SUB(NOW(), INTERVAL 3 DAY) + INTERVAL 9 HOUR + INTERVAL 30 MINUTE, 'Raw chicken', '10kg', 'Active'),
+(10, 9, DATE_SUB(NOW(), INTERVAL 4 DAY) + INTERVAL 9 HOUR + INTERVAL 30 MINUTE, 'Raw beef', '10kg', 'Good'),
+(10, 9, DATE_SUB(NOW(), INTERVAL 5 DAY) + INTERVAL 9 HOUR + INTERVAL 30 MINUTE, 'Raw chicken', '10kg', 'Excellent'),
+(11, 9, DATE_SUB(NOW(), INTERVAL 1 DAY) + INTERVAL 7 HOUR, 'Hay', '60kg', 'Good consumption'),
+(11, 9, DATE_SUB(NOW(), INTERVAL 1 DAY) + INTERVAL 12 HOUR, 'Fruits and vegetables', '35kg', 'Engaged'),
+(11, 9, DATE_SUB(NOW(), INTERVAL 2 DAY) + INTERVAL 7 HOUR, 'Hay', '60kg', 'Normal'),
+(11, 9, DATE_SUB(NOW(), INTERVAL 2 DAY) + INTERVAL 12 HOUR, 'Mixed fruits', '35kg', 'Good'),
+(11, 9, DATE_SUB(NOW(), INTERVAL 3 DAY) + INTERVAL 7 HOUR, 'Hay', '60kg', 'Excellent'),
+(12, 9, DATE_SUB(NOW(), INTERVAL 1 DAY) + INTERVAL 7 HOUR + INTERVAL 30 MINUTE, 'Hay', '55kg', 'Good'),
+(12, 9, DATE_SUB(NOW(), INTERVAL 2 DAY) + INTERVAL 7 HOUR + INTERVAL 30 MINUTE, 'Hay', '55kg', 'Normal'),
+(12, 9, DATE_SUB(NOW(), INTERVAL 3 DAY) + INTERVAL 7 HOUR + INTERVAL 30 MINUTE, 'Vegetables', '35kg', 'Active'),
+(12, 9, DATE_SUB(NOW(), INTERVAL 4 DAY) + INTERVAL 7 HOUR + INTERVAL 30 MINUTE, 'Hay', '55kg', 'Excellent'),
+(13, 10, DATE_SUB(NOW(), INTERVAL 1 DAY) + INTERVAL 8 HOUR, 'Fruits and leafy greens', '10kg', 'Good appetite'),
+(13, 10, DATE_SUB(NOW(), INTERVAL 1 DAY) + INTERVAL 14 HOUR, 'Vegetables and protein', '6kg', 'Active'),
+(13, 10, DATE_SUB(NOW(), INTERVAL 2 DAY) + INTERVAL 8 HOUR, 'Fruits and leafy greens', '10kg', 'Normal'),
+(13, 10, DATE_SUB(NOW(), INTERVAL 3 DAY) + INTERVAL 8 HOUR, 'Mixed fruits', '10kg', 'Good'),
+(13, 10, DATE_SUB(NOW(), INTERVAL 4 DAY) + INTERVAL 8 HOUR, 'Fruits and greens', '10kg', 'Excellent'),
+(14, 10, DATE_SUB(NOW(), INTERVAL 1 DAY) + INTERVAL 8 HOUR, 'Fruits and leafy greens', '9kg', 'Good'),
+(14, 10, DATE_SUB(NOW(), INTERVAL 2 DAY) + INTERVAL 8 HOUR, 'Mixed fruits', '9kg', 'Normal'),
+(14, 10, DATE_SUB(NOW(), INTERVAL 3 DAY) + INTERVAL 8 HOUR, 'Fruits and greens', '9kg', 'Active'),
+(14, 10, DATE_SUB(NOW(), INTERVAL 4 DAY) + INTERVAL 8 HOUR, 'Leafy greens', '9kg', 'Good'),
+(15, 10, DATE_SUB(NOW(), INTERVAL 1 DAY) + INTERVAL 10 HOUR, 'Herring with vitamins', '2.5kg', 'Active'),
+(15, 10, DATE_SUB(NOW(), INTERVAL 1 DAY) + INTERVAL 17 HOUR, 'Capelin', '2kg', 'Good'),
+(15, 10, DATE_SUB(NOW(), INTERVAL 2 DAY) + INTERVAL 10 HOUR, 'Herring', '2.5kg', 'Normal'),
+(15, 10, DATE_SUB(NOW(), INTERVAL 3 DAY) + INTERVAL 10 HOUR, 'Herring with vitamins', '2.5kg', 'Excellent'),
+(15, 10, DATE_SUB(NOW(), INTERVAL 4 DAY) + INTERVAL 10 HOUR, 'Capelin', '2kg', 'Good'),
+(16, 10, DATE_SUB(NOW(), INTERVAL 1 DAY) + INTERVAL 10 HOUR, 'Fresh fish', '2.5kg', 'Active'),
+(16, 10, DATE_SUB(NOW(), INTERVAL 1 DAY) + INTERVAL 17 HOUR, 'Fish', '2kg', 'Normal'),
+(16, 10, DATE_SUB(NOW(), INTERVAL 2 DAY) + INTERVAL 10 HOUR, 'Fresh fish', '2.5kg', 'Good'),
+(16, 10, DATE_SUB(NOW(), INTERVAL 3 DAY) + INTERVAL 10 HOUR, 'Fish', '2.5kg', 'Excellent'),
+(17, 10, DATE_SUB(NOW(), INTERVAL 1 DAY) + INTERVAL 10 HOUR, 'Fresh fish', '2kg', 'Good appetite'),
+(17, 10, DATE_SUB(NOW(), INTERVAL 2 DAY) + INTERVAL 10 HOUR, 'Fish', '2kg', 'Normal'),
+(17, 10, DATE_SUB(NOW(), INTERVAL 3 DAY) + INTERVAL 10 HOUR, 'Fresh fish', '2kg', 'Active'),
+(17, 10, DATE_SUB(NOW(), INTERVAL 4 DAY) + INTERVAL 10 HOUR, 'Fish', '2kg', 'Good'),
+(18, 10, DATE_SUB(NOW(), INTERVAL 1 DAY) + INTERVAL 10 HOUR, 'Fresh fish', '2.5kg', 'Normal'),
+(18, 10, DATE_SUB(NOW(), INTERVAL 2 DAY) + INTERVAL 10 HOUR, 'Fish', '2.5kg', 'Good'),
+(18, 10, DATE_SUB(NOW(), INTERVAL 3 DAY) + INTERVAL 10 HOUR, 'Fresh fish', '2.5kg', 'Excellent'),
+(19, 10, DATE_SUB(NOW(), INTERVAL 1 DAY) + INTERVAL 10 HOUR, 'Fresh fish', '2.5kg', 'Active'),
+(19, 10, DATE_SUB(NOW(), INTERVAL 2 DAY) + INTERVAL 10 HOUR, 'Fish', '2.5kg', 'Good'),
+(19, 10, DATE_SUB(NOW(), INTERVAL 3 DAY) + INTERVAL 10 HOUR, 'Fresh fish', '2.5kg', 'Normal'),
+(19, 10, DATE_SUB(NOW(), INTERVAL 4 DAY) + INTERVAL 10 HOUR, 'Fish', '2.5kg', 'Excellent'),
 (20, 12, DATE_SUB(NOW(), INTERVAL 1 DAY) + INTERVAL 9 HOUR, 'Salmon and trout', '25kg', 'Very active'),
-(20, 12, DATE_SUB(NOW(), INTERVAL 2 DAY) + INTERVAL 9 HOUR, 'Mixed fish', '25kg', 'Normal'),
-(20, 12, DATE_SUB(NOW(), INTERVAL 3 DAY) + INTERVAL 9 HOUR, 'Salmon', '25kg', 'Good'),
-
--- Iago (Macaw, 28) - Keeper: Mike (2)
-(28, 2, DATE_SUB(NOW(), INTERVAL 1 DAY) + INTERVAL 9 HOUR, 'Fruit and seed mix', '100g', 'Very vocal today'),
+(20, 12, DATE_SUB(NOW(), INTERVAL 2 DAY) + INTERVAL 9 HOUR, 'Mixed fish', '25kg', 'Good appetite'),
+(20, 12, DATE_SUB(NOW(), INTERVAL 3 DAY) + INTERVAL 9 HOUR, 'Salmon', '25kg', 'Normal'),
+(20, 12, DATE_SUB(NOW(), INTERVAL 4 DAY) + INTERVAL 9 HOUR, 'Mixed fish', '25kg', 'Excellent'),
+(20, 12, DATE_SUB(NOW(), INTERVAL 5 DAY) + INTERVAL 9 HOUR, 'Salmon', '25kg', 'Active'),
+(21, 12, DATE_SUB(NOW(), INTERVAL 1 DAY) + INTERVAL 9 HOUR, 'Fresh fish', '20kg', 'Training session'),
+(21, 12, DATE_SUB(NOW(), INTERVAL 1 DAY) + INTERVAL 13 HOUR, 'Fish', '20kg', 'Good'),
+(21, 12, DATE_SUB(NOW(), INTERVAL 2 DAY) + INTERVAL 9 HOUR, 'Fresh fish', '20kg', 'Normal'),
+(21, 12, DATE_SUB(NOW(), INTERVAL 3 DAY) + INTERVAL 9 HOUR, 'Fish', '20kg', 'Active'),
+(22, 12, DATE_SUB(NOW(), INTERVAL 1 DAY) + INTERVAL 9 HOUR, 'Fresh fish', '18kg', 'Good'),
+(22, 12, DATE_SUB(NOW(), INTERVAL 2 DAY) + INTERVAL 9 HOUR, 'Fish', '18kg', 'Normal'),
+(22, 12, DATE_SUB(NOW(), INTERVAL 3 DAY) + INTERVAL 9 HOUR, 'Fresh fish', '18kg', 'Excellent'),
+(22, 12, DATE_SUB(NOW(), INTERVAL 4 DAY) + INTERVAL 9 HOUR, 'Fish', '18kg', 'Active'),
+(23, 12, DATE_SUB(NOW(), INTERVAL 5 DAY) + INTERVAL 18 HOUR, 'Frozen-thawed rat', '1 rat', 'Good strike'),
+(23, 12, DATE_SUB(NOW(), INTERVAL 19 DAY) + INTERVAL 18 HOUR, 'Frozen-thawed rat', '1 rat', 'Normal'),
+(24, 12, DATE_SUB(NOW(), INTERVAL 4 DAY) + INTERVAL 18 HOUR, 'Frozen-thawed rabbit', '1 rabbit', 'Good consumption'),
+(24, 12, DATE_SUB(NOW(), INTERVAL 18 DAY) + INTERVAL 18 HOUR, 'Frozen-thawed rabbit', '1 rabbit', 'Excellent'),
+(25, 12, DATE_SUB(NOW(), INTERVAL 6 DAY) + INTERVAL 18 HOUR, 'Frozen-thawed rat', '1 rat', 'Normal'),
+(25, 12, DATE_SUB(NOW(), INTERVAL 13 DAY) + INTERVAL 18 HOUR, 'Frozen-thawed rat', '1 rat', 'Good'),
+(25, 12, DATE_SUB(NOW(), INTERVAL 20 DAY) + INTERVAL 18 HOUR, 'Frozen-thawed rat', '1 rat', 'Active'),
+(26, 12, DATE_SUB(NOW(), INTERVAL 1 DAY) + INTERVAL 18 HOUR, 'Frozen-thawed rabbit', '1 rabbit', 'Good'),
+(26, 12, DATE_SUB(NOW(), INTERVAL 30 DAY) + INTERVAL 18 HOUR, 'Frozen-thawed rabbit', '1 rabbit', 'Excellent'),
+(27, 12, DATE_SUB(NOW(), INTERVAL 10 DAY) + INTERVAL 12 HOUR, 'Whole goat', '10kg', 'Large meal'),
+(27, 12, DATE_SUB(NOW(), INTERVAL 45 DAY) + INTERVAL 12 HOUR, 'Large deer', '12kg', 'Massive feeding'),
+(28, 2, DATE_SUB(NOW(), INTERVAL 1 DAY) + INTERVAL 9 HOUR, 'Fruit and seed mix', '100g', 'Vocal'),
 (28, 2, DATE_SUB(NOW(), INTERVAL 2 DAY) + INTERVAL 9 HOUR, 'Fruit and seed mix', '100g', 'Normal'),
+(28, 2, DATE_SUB(NOW(), INTERVAL 3 DAY) + INTERVAL 9 HOUR, 'Fruit and seed mix', '100g', 'Active'),
+(28, 2, DATE_SUB(NOW(), INTERVAL 4 DAY) + INTERVAL 9 HOUR, 'Fruit and seed mix', '100g', 'Good'),
+(29, 9, DATE_SUB(NOW(), INTERVAL 1 DAY) + INTERVAL 9 HOUR, 'Fruit and seed mix', '100g', 'Good appetite'),
+(29, 9, DATE_SUB(NOW(), INTERVAL 2 DAY) + INTERVAL 9 HOUR, 'Fruit and seed mix', '100g', 'Normal'),
+(29, 9, DATE_SUB(NOW(), INTERVAL 3 DAY) + INTERVAL 9 HOUR, 'Fruit and seed mix', '100g', 'Active'),
+(29, 9, DATE_SUB(NOW(), INTERVAL 4 DAY) + INTERVAL 9 HOUR, 'Fruit and seed mix', '100g', 'Good'),
+(30, 9, DATE_SUB(NOW(), INTERVAL 1 DAY) + INTERVAL 9 HOUR, 'Fruit and seed mix', '100g', 'Hunting'),
+(30, 9, DATE_SUB(NOW(), INTERVAL 2 DAY) + INTERVAL 9 HOUR, 'Fruit and seed mix', '100g', 'Normal'),
+(30, 9, DATE_SUB(NOW(), INTERVAL 3 DAY) + INTERVAL 9 HOUR, 'Fruit and seed mix', '100g', 'Good'),
+(30, 9, DATE_SUB(NOW(), INTERVAL 4 DAY) + INTERVAL 9 HOUR, 'Fruit and seed mix', '100g', 'Excellent'),
+(31, 2, DATE_SUB(NOW(), INTERVAL 1 DAY) + INTERVAL 9 HOUR + INTERVAL 30 MINUTE, 'Chopped fruit and insects', '150g', 'Engaged'),
+(31, 2, DATE_SUB(NOW(), INTERVAL 2 DAY) + INTERVAL 9 HOUR + INTERVAL 30 MINUTE, 'Chopped fruit and insects', '150g', 'Good'),
+(31, 2, DATE_SUB(NOW(), INTERVAL 3 DAY) + INTERVAL 9 HOUR + INTERVAL 30 MINUTE, 'Chopped fruit and insects', '150g', 'Normal'),
+(31, 2, DATE_SUB(NOW(), INTERVAL 4 DAY) + INTERVAL 9 HOUR + INTERVAL 30 MINUTE, 'Chopped fruit and insects', '150g', 'Active'),
+(32, 7, DATE_SUB(NOW(), INTERVAL 1 DAY) + INTERVAL 20 HOUR, 'Thawed mice', '2 mice', 'Quick strike'),
+(32, 7, DATE_SUB(NOW(), INTERVAL 2 DAY) + INTERVAL 20 HOUR, 'Thawed mice', '2 mice', 'Good'),
+(32, 7, DATE_SUB(NOW(), INTERVAL 3 DAY) + INTERVAL 20 HOUR, 'Thawed mice', '2 mice', 'Normal'),
+(32, 7, DATE_SUB(NOW(), INTERVAL 4 DAY) + INTERVAL 20 HOUR, 'Thawed mice', '2 mice', 'Excellent'),
+(33, 7, DATE_SUB(NOW(), INTERVAL 1 DAY) + INTERVAL 9 HOUR, 'Seed mix', '150g', 'Vocal'),
+(33, 7, DATE_SUB(NOW(), INTERVAL 2 DAY) + INTERVAL 9 HOUR, 'Seed mix', '150g', 'Normal'),
+(33, 7, DATE_SUB(NOW(), INTERVAL 3 DAY) + INTERVAL 9 HOUR, 'Seed mix', '150g', 'Active'),
+(33, 7, DATE_SUB(NOW(), INTERVAL 4 DAY) + INTERVAL 9 HOUR, 'Seed mix', '150g', 'Good'),
+(34, 7, DATE_SUB(NOW(), INTERVAL 1 DAY) + INTERVAL 8 HOUR, 'Flamingo pellets', '200g', 'Color maintenance'),
+(34, 7, DATE_SUB(NOW(), INTERVAL 2 DAY) + INTERVAL 8 HOUR, 'Flamingo pellets', '200g', 'Good'),
+(34, 7, DATE_SUB(NOW(), INTERVAL 3 DAY) + INTERVAL 8 HOUR, 'Flamingo pellets', '200g', 'Normal'),
+(34, 7, DATE_SUB(NOW(), INTERVAL 4 DAY) + INTERVAL 8 HOUR, 'Flamingo pellets', '200g', 'Active'),
+(35, 7, DATE_SUB(NOW(), INTERVAL 1 DAY) + INTERVAL 11 HOUR, 'Bone marrow', '150g', 'Aggressive eating'),
+(35, 7, DATE_SUB(NOW(), INTERVAL 2 DAY) + INTERVAL 11 HOUR, 'Bone marrow', '150g', 'Good'),
+(35, 7, DATE_SUB(NOW(), INTERVAL 3 DAY) + INTERVAL 11 HOUR, 'Meat scraps', '150g', 'Normal'),
+(35, 7, DATE_SUB(NOW(), INTERVAL 4 DAY) + INTERVAL 11 HOUR, 'Bone marrow', '150g', 'Excellent'),
+(36, 7, DATE_SUB(NOW(), INTERVAL 1 DAY) + INTERVAL 10 HOUR, 'Whole fish', '200g', 'Swallowed whole'),
+(36, 7, DATE_SUB(NOW(), INTERVAL 2 DAY) + INTERVAL 10 HOUR, 'Whole fish', '200g', 'Good'),
+(36, 7, DATE_SUB(NOW(), INTERVAL 3 DAY) + INTERVAL 10 HOUR, 'Whole fish', '200g', 'Normal'),
+(36, 7, DATE_SUB(NOW(), INTERVAL 4 DAY) + INTERVAL 10 HOUR, 'Whole fish', '200g', 'Active'),
+(37, 7, DATE_SUB(NOW(), INTERVAL 1 DAY) + INTERVAL 10 HOUR + INTERVAL 30 MINUTE, 'Fish and insects', '180g', 'Opportunistic'),
+(37, 7, DATE_SUB(NOW(), INTERVAL 2 DAY) + INTERVAL 10 HOUR + INTERVAL 30 MINUTE, 'Fish and insects', '180g', 'Good'),
+(37, 7, DATE_SUB(NOW(), INTERVAL 3 DAY) + INTERVAL 10 HOUR + INTERVAL 30 MINUTE, 'Fish and insects', '180g', 'Normal'),
+(37, 7, DATE_SUB(NOW(), INTERVAL 4 DAY) + INTERVAL 10 HOUR + INTERVAL 30 MINUTE, 'Fish and insects', '180g', 'Excellent');
 
--- Hedwig (Snowy Owl, 32) - Keeper: Anna (7)
-(32, 7, DATE_SUB(NOW(), INTERVAL 1 DAY) + INTERVAL 20 HOUR, 'Thawed mice', '2 mice', 'Ate quickly'),
-(32, 7, DATE_SUB(NOW(), INTERVAL 2 DAY) + INTERVAL 20 HOUR, 'Thawed mice', '2 mice', 'Normal');
 
 
+-- =======================================
+-- CUSTOMER PAYMENT METHODS
+-- =======================================
+INSERT INTO customer_payment_methods (payment_method_id, customer_id, card_number, cardholder_name, expiry_month, expiry_year, cvv, billing_address, billing_city, billing_state, billing_zip) VALUES
+(1, 2, '4532123456789012', 'Maria Garcia', 12, 2026, '456', '456 Oak Ave', 'Springfield', 'IL', '62702'),
+(2, 4, '5412876543210987', 'Sarah Wilson', 6, 2027, '789', '321 Elm St', 'Springfield', 'IL', '62704'),
+(3, 5, '6011234567890123', 'Michael Johnson', 3, 2028, '234', '654 Maple Dr', 'Springfield', 'IL', '62705');
+
+-- =======================================
+-- MEMBERSHIP PURCHASES
+-- =======================================
+INSERT INTO membership_purchases (customer_id, purchase_date, start_date, end_date, price, payment_method, auto_renewed, payment_method_id) VALUES
+(2, '2023-11-15 10:00:00', '2023-11-15', '2024-11-15', 149.00, 'online', 0, 1),
+(2, '2024-11-15 09:30:00', '2024-11-15', '2025-11-15', 149.00, 'online', 1, 1),
+(4, '2024-05-15 14:20:00', '2024-06-01', '2025-06-01', 149.00, 'credit', 0, 2),
+(5, '2024-02-15 11:45:00', '2024-03-15', '2025-03-15', 149.00, 'online', 0, 3),
+(5, '2024-03-10 10:00:00', '2024-03-15', '2025-03-15', 149.00, 'online', 1, 3);
 
 -- =======================================
 -- Display Summary
