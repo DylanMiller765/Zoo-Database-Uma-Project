@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback, useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
 import { queryService, type AnimalHealthCareParams } from "@/services/query.service";
@@ -16,7 +16,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { MapPin, Leaf, Heart, Calendar, User, FileDown, AlertTriangle } from "lucide-react";
+import { MapPin, Leaf, Heart, Calendar, User, FileDown, AlertTriangle, ArrowUpDown, ArrowUp, ArrowDown, Filter, X, Search } from "lucide-react";
 import {
   ReportParametersCard,
   DateRangePicker,
@@ -77,6 +77,13 @@ export default function AnimalHealthCarePage() {
   const [groupBy, setGroupBy] = useState<'habitat' | 'keeper' | 'none'>('habitat');
   const [viewMode, setViewMode] = useState<'cards' | 'table'>('cards');
   const [sortBy, setSortBy] = useState<string>('name');
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
+
+  // Filter modal state
+  const [showFilterModal, setShowFilterModal] = useState(false);
+  const [filterSearch, setFilterSearch] = useState('');
+  const [selectedHabitats, setSelectedHabitats] = useState<number[]>([]);
+  const [selectedKeepers, setSelectedKeepers] = useState<number[]>([]);
 
   // Parameters - all filters enabled by default
   const [params, setParams] = useState<AnimalHealthCareParams>({
@@ -87,6 +94,89 @@ export default function AnimalHealthCarePage() {
     endangerment: ['least_concern', 'near_threatened', 'vulnerable', 'endangered', 'critically_endangered', 'extinct_in_the_wild'],
     includeDeleted: false
   });
+
+  // Reusable sorting function for any array of animals
+  const sortAnimals = useCallback((animals: AnimalRow[]) => {
+    const sorted = [...animals];
+
+    switch (sortBy) {
+      case 'name':
+        sorted.sort((a, b) => (a.animal_name || '').localeCompare(b.animal_name || ''));
+        break;
+      case 'species':
+        sorted.sort((a, b) => (a.species || '').localeCompare(b.species || ''));
+        break;
+      case 'health':
+        const healthOrder = { 'critical': 0, 'poor': 1, 'fair': 2, 'good': 3, 'excellent': 4 };
+        sorted.sort((a, b) =>
+          (healthOrder[a.health_status as keyof typeof healthOrder] || 5) -
+          (healthOrder[b.health_status as keyof typeof healthOrder] || 5)
+        );
+        break;
+      case 'arrival_date':
+        sorted.sort((a, b) => {
+          if (!a.arrival_date) return 1;
+          if (!b.arrival_date) return -1;
+          return new Date(b.arrival_date).getTime() - new Date(a.arrival_date).getTime();
+        });
+        break;
+      case 'last_fed':
+        sorted.sort((a, b) => {
+          if (!a.last_fed_time) return 1;
+          if (!b.last_fed_time) return -1;
+          return new Date(a.last_fed_time).getTime() - new Date(b.last_fed_time).getTime();
+        });
+        break;
+    }
+
+    // Apply sort direction (use slice to avoid mutation issues)
+    return sortDirection === 'desc' ? sorted.slice().reverse() : sorted;
+  }, [sortBy, sortDirection]);
+
+  // Get unique habitats and keepers from data
+  const allHabitatOptions = useMemo(() => {
+    if (data.length === 0) return [];
+    const seen = new Set<number>();
+    const uniqueHabitats: {id: number; name: string}[] = [];
+    for (const row of data) {
+      if (!seen.has(row.habitat_id)) {
+        seen.add(row.habitat_id);
+        uniqueHabitats.push({ id: row.habitat_id, name: row.habitat_name });
+      }
+    }
+    return uniqueHabitats.sort((a, b) => a.name.localeCompare(b.name));
+  }, [data]);
+
+  const allKeeperOptions = useMemo(() => {
+    if (data.length === 0) return [];
+    const seen = new Set<number>();
+    const uniqueKeepers: {id: number; name: string}[] = [];
+    for (const row of data) {
+      if (row.keeper_id && !seen.has(row.keeper_id) && row.keeper_name) {
+        seen.add(row.keeper_id);
+        uniqueKeepers.push({ id: row.keeper_id, name: row.keeper_name });
+      }
+    }
+    // Add unassigned option if there are animals without keepers
+    const hasUnassigned = data.some(row => row.animal_id && !row.keeper_id);
+    if (hasUnassigned) {
+      uniqueKeepers.push({ id: -1, name: 'Unassigned Animals' });
+    }
+    return uniqueKeepers.sort((a, b) => a.name.localeCompare(b.name));
+  }, [data]);
+
+  // Initialize selections when data changes
+  useEffect(() => {
+    if (data.length > 0 && allHabitatOptions.length > 0 && selectedHabitats.length === 0) {
+      setSelectedHabitats(allHabitatOptions.map(h => h.id));
+    }
+  }, [data.length, allHabitatOptions, selectedHabitats.length]);
+
+  useEffect(() => {
+    if (data.length > 0 && allKeeperOptions.length > 0 && selectedKeepers.length === 0) {
+      setSelectedKeepers(allKeeperOptions.map(k => k.id));
+    }
+  }, [data.length, allKeeperOptions, selectedKeepers.length]);
 
   // Group data by habitat
   const habitats: HabitatGroup[] = useMemo(() => {
@@ -108,8 +198,16 @@ export default function AnimalHealthCarePage() {
       }
       return acc;
     }, {});
-    return Object.values(groups);
-  }, [data]);
+
+    // Sort animals within each habitat and create fresh objects
+    const habitatArray = Object.values(groups).map(habitat => ({
+      ...habitat,
+      animals: sortAnimals(habitat.animals)
+    }));
+
+    // Filter by selected habitats
+    return habitatArray.filter(h => selectedHabitats.includes(h.habitat_id));
+  }, [data, sortAnimals, selectedHabitats]);
 
   // Get flat list of all animals (for ungrouped view)
   const allAnimals: AnimalRow[] = useMemo(() => {
@@ -141,52 +239,78 @@ export default function AnimalHealthCarePage() {
       return acc;
     }, {});
 
-    // Sort: assigned keepers first (alphabetically), then unassigned
-    const groupArray = Object.values(groups);
-    const assigned = groupArray.filter(g => g.keeper_id !== null).sort((a, b) =>
+    // Sort animals within each keeper group and create fresh objects
+    const groupArray = Object.values(groups).map(keeper => ({
+      ...keeper,
+      animals: sortAnimals(keeper.animals)
+    }));
+
+    // Filter by selected keepers (treat null keeper_id as -1 for unassigned)
+    const filteredGroups = groupArray.filter(g =>
+      selectedKeepers.includes(g.keeper_id ?? -1)
+    );
+
+    // Sort keepers: assigned keepers first (alphabetically), then unassigned
+    const assigned = filteredGroups.filter(g => g.keeper_id !== null).sort((a, b) =>
       (a.keeper_name || '').localeCompare(b.keeper_name || '')
     );
-    const unassigned = groupArray.filter(g => g.keeper_id === null);
+    const unassigned = filteredGroups.filter(g => g.keeper_id === null);
 
     return [...assigned, ...unassigned];
-  }, [data]);
+  }, [data, sortAnimals, selectedKeepers]);
 
-  // Sorting function for animals
-  const sortedAnimals = useMemo(() => {
-    const animals = [...allAnimals];
+  // Sorted animals for ungrouped view
+  const sortedAnimals = useMemo(() => sortAnimals(allAnimals), [allAnimals, sortAnimals]);
 
-    switch (sortBy) {
-      case 'name':
-        return animals.sort((a, b) => (a.animal_name || '').localeCompare(b.animal_name || ''));
-      case 'species':
-        return animals.sort((a, b) => (a.species || '').localeCompare(b.species || ''));
-      case 'health':
-        const healthOrder = { 'critical': 0, 'poor': 1, 'fair': 2, 'good': 3, 'excellent': 4 };
-        return animals.sort((a, b) =>
-          (healthOrder[a.health_status as keyof typeof healthOrder] || 5) -
-          (healthOrder[b.health_status as keyof typeof healthOrder] || 5)
-        );
-      case 'arrival_date':
-        return animals.sort((a, b) => {
-          if (!a.arrival_date) return 1;
-          if (!b.arrival_date) return -1;
-          return new Date(b.arrival_date).getTime() - new Date(a.arrival_date).getTime();
-        });
-      case 'last_fed':
-        return animals.sort((a, b) => {
-          if (!a.last_fed_time) return 1;
-          if (!b.last_fed_time) return -1;
-          return new Date(a.last_fed_time).getTime() - new Date(b.last_fed_time).getTime();
-        });
-      default:
-        return animals;
-    }
-  }, [allAnimals, sortBy]);
+  // Determine if sort should be visible (only when groupBy=none OR single selection)
+  const shouldShowSort = useMemo(() => {
+    if (groupBy === 'none') return true;
+    if (groupBy === 'habitat') return selectedHabitats.length === 1;
+    if (groupBy === 'keeper') return selectedKeepers.length === 1;
+    return false;
+  }, [groupBy, selectedHabitats.length, selectedKeepers.length]);
+
+  // Handle groupBy change - reset to all selections
+  const handleGroupByChange = (newGroupBy: 'habitat' | 'keeper' | 'none') => {
+    setGroupBy(newGroupBy);
+    setFilterSearch('');
+  };
+
+  // Modal filter handlers
+  const currentFilterOptions = groupBy === 'habitat' ? allHabitatOptions : allKeeperOptions;
+  const currentSelected = groupBy === 'habitat' ? selectedHabitats : selectedKeepers;
+  const setCurrentSelected = groupBy === 'habitat' ? setSelectedHabitats : setSelectedKeepers;
+
+  const filteredOptions = currentFilterOptions.filter(option =>
+    option.name.toLowerCase().includes(filterSearch.toLowerCase())
+  );
+
+  const toggleSelection = (id: number) => {
+    const selected = currentSelected.includes(id)
+      ? currentSelected.filter(s => s !== id)
+      : [...currentSelected, id];
+    setCurrentSelected(selected);
+  };
+
+  const selectOnly = (id: number) => {
+    setCurrentSelected([id]);
+  };
+
+  const selectAll = () => {
+    setCurrentSelected(currentFilterOptions.map(o => o.id));
+  };
+
+  const deselectAll = () => {
+    setCurrentSelected([]);
+  };
 
   // Generate report handler
   const handleGenerate = async () => {
     try {
       setLoading(true);
+      // Reset selections to force re-initialization with new data
+      setSelectedHabitats([]);
+      setSelectedKeepers([]);
       const result = await queryService.getAnimalHealthAndCare(params);
       setData(result);
       setHasGenerated(true);
@@ -210,6 +334,8 @@ export default function AnimalHealthCarePage() {
     });
     setHasGenerated(false);
     setData([]);
+    setSelectedHabitats([]);
+    setSelectedKeepers([]);
   };
 
   // Toggle helper for multi-select
@@ -478,15 +604,28 @@ export default function AnimalHealthCarePage() {
               {/* Group By Selector */}
               <div>
                 <Label className="text-xs text-gray-600 mb-1 block">Group By</Label>
-                <select
-                  value={groupBy}
-                  onChange={(e) => setGroupBy(e.target.value as 'habitat' | 'keeper' | 'none')}
-                  className="rounded-md border border-gray-300 px-3 py-1.5 text-sm"
-                >
-                  <option value="habitat">Habitat</option>
-                  <option value="keeper">Keeper</option>
-                  <option value="none">No Grouping</option>
-                </select>
+                <div className="flex items-center gap-2">
+                  <select
+                    value={groupBy}
+                    onChange={(e) => handleGroupByChange(e.target.value as 'habitat' | 'keeper' | 'none')}
+                    className="rounded-md border border-gray-300 px-3 py-1.5 text-sm"
+                  >
+                    <option value="habitat">Habitat</option>
+                    <option value="keeper">Keeper</option>
+                    <option value="none">No Grouping</option>
+                  </select>
+                  {/* Filter Button - only show when grouping */}
+                  {groupBy !== 'none' && (
+                    <button
+                      onClick={() => setShowFilterModal(true)}
+                      className="px-3 py-1.5 rounded-md border border-gray-300 hover:bg-gray-100 transition-colors flex items-center gap-1 text-sm"
+                      title={`Filter ${groupBy === 'habitat' ? 'habitats' : 'keepers'}`}
+                    >
+                      <Filter className="h-4 w-4" />
+                      {currentSelected.length} of {currentFilterOptions.length}
+                    </button>
+                  )}
+                </div>
               </div>
 
               {/* View Mode Toggle */}
@@ -516,21 +655,34 @@ export default function AnimalHealthCarePage() {
                 </div>
               </div>
 
-              {/* Sort By (only for table view or ungrouped) */}
-              {(viewMode === 'table' || groupBy === 'none') && (
+              {/* Sort By - only show in table view or when appropriate */}
+              {shouldShowSort && viewMode === 'table' && (
                 <div>
                   <Label className="text-xs text-gray-600 mb-1 block">Sort By</Label>
-                  <select
-                    value={sortBy}
-                    onChange={(e) => setSortBy(e.target.value)}
-                    className="rounded-md border border-gray-300 px-3 py-1.5 text-sm"
-                  >
-                    <option value="name">Name (A-Z)</option>
-                    <option value="species">Species</option>
-                    <option value="health">Health (Worst First)</option>
-                    <option value="arrival_date">Arrival Date (Newest)</option>
-                    <option value="last_fed">Last Fed (Most Urgent)</option>
-                  </select>
+                  <div className="flex items-center gap-2">
+                    <select
+                      value={sortBy}
+                      onChange={(e) => setSortBy(e.target.value)}
+                      className="rounded-md border border-gray-300 px-3 py-1.5 text-sm"
+                    >
+                      <option value="name">Name</option>
+                      <option value="species">Species</option>
+                      <option value="health">Health Status</option>
+                      <option value="arrival_date">Arrival Date</option>
+                      <option value="last_fed">Last Fed Time</option>
+                    </select>
+                    <button
+                      onClick={() => setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc')}
+                      className="px-2 py-1.5 rounded-md border border-gray-300 hover:bg-gray-100 transition-colors"
+                      title={sortDirection === 'asc' ? 'Sort ascending' : 'Sort descending'}
+                    >
+                      {sortDirection === 'asc' ? (
+                        <ArrowUp className="h-4 w-4 text-gray-600" />
+                      ) : (
+                        <ArrowDown className="h-4 w-4 text-gray-600" />
+                      )}
+                    </button>
+                  </div>
                 </div>
               )}
             </div>
@@ -548,7 +700,7 @@ export default function AnimalHealthCarePage() {
           {/* Data Display - Conditional based on view options */}
           {groupBy === 'habitat' && viewMode === 'cards' && (
             /* Grouped by Habitat - Cards View */
-            <div className="space-y-6">
+            <div key={`habitat-cards-${sortBy}-${sortDirection}`} className="space-y-6">
               {habitats.map((habitat) => (
                 <Card key={habitat.habitat_id} className="border-l-4 border-l-sea_green-500">
                   <CardHeader className="pb-3">
@@ -633,7 +785,7 @@ export default function AnimalHealthCarePage() {
 
           {groupBy === 'habitat' && viewMode === 'table' && (
             /* Grouped by Habitat - Table View */
-            <div className="space-y-6">
+            <div key={`habitat-table-${sortBy}-${sortDirection}`} className="space-y-6">
               {habitats.map((habitat) => (
                 <Card key={habitat.habitat_id} className="border-l-4 border-l-sea_green-500">
                   <CardHeader className="pb-3">
@@ -704,7 +856,7 @@ export default function AnimalHealthCarePage() {
 
           {groupBy === 'keeper' && viewMode === 'cards' && (
             /* Grouped by Keeper - Cards View */
-            <div className="space-y-6">
+            <div key={`keeper-cards-${sortBy}-${sortDirection}`} className="space-y-6">
               {keepers.map((keeper) => (
                 <Card key={keeper.keeper_id || 'unassigned'} className="border-l-4 border-l-dark_spring_green-500">
                   <CardHeader className="pb-3">
@@ -776,7 +928,7 @@ export default function AnimalHealthCarePage() {
 
           {groupBy === 'keeper' && viewMode === 'table' && (
             /* Grouped by Keeper - Table View */
-            <div className="space-y-6">
+            <div key={`keeper-table-${sortBy}-${sortDirection}`} className="space-y-6">
               {keepers.map((keeper) => (
                 <Card key={keeper.keeper_id || 'unassigned'} className="border-l-4 border-l-dark_spring_green-500">
                   <CardHeader className="pb-3">
@@ -843,7 +995,7 @@ export default function AnimalHealthCarePage() {
 
           {groupBy === 'none' && viewMode === 'cards' && (
             /* Flat List - Cards View */
-            <div>
+            <div key={`ungrouped-cards-${sortBy}-${sortDirection}`}>
               {sortedAnimals.length > 0 ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
                   {sortedAnimals.map((animal) => (
@@ -905,7 +1057,7 @@ export default function AnimalHealthCarePage() {
 
           {groupBy === 'none' && viewMode === 'table' && (
             /* Flat List - Table View */
-            <Card>
+            <Card key={`ungrouped-table-${sortBy}-${sortDirection}`}>
               <CardContent className="p-0">
                 {sortedAnimals.length > 0 ? (
                   <div className="overflow-x-auto">
@@ -958,6 +1110,109 @@ export default function AnimalHealthCarePage() {
             </Card>
           )}
         </>
+      )}
+
+      {/* Filter Modal */}
+      {showFilterModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" onClick={() => setShowFilterModal(false)}>
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full max-h-[80vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
+            {/* Modal Header */}
+            <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+              <h3 className="text-lg font-semibold text-gray-900">
+                Select {groupBy === 'habitat' ? 'Habitats' : 'Keepers'}
+              </h3>
+              <button
+                onClick={() => setShowFilterModal(false)}
+                className="text-gray-400 hover:text-gray-600 transition-colors"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            {/* Search Field */}
+            <div className="px-6 py-3 border-b border-gray-200">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <input
+                  type="text"
+                  placeholder="Search..."
+                  value={filterSearch}
+                  onChange={(e) => setFilterSearch(e.target.value)}
+                  className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-sea_green-500 focus:border-transparent"
+                />
+              </div>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="px-6 py-3 border-b border-gray-200 flex gap-2">
+              <Button
+                onClick={selectAll}
+                variant="outline"
+                size="sm"
+                className="flex-1"
+              >
+                Select All
+              </Button>
+              <Button
+                onClick={deselectAll}
+                variant="outline"
+                size="sm"
+                className="flex-1"
+              >
+                Deselect All
+              </Button>
+            </div>
+
+            {/* Scrollable List */}
+            <div className="flex-1 overflow-y-auto px-6 py-3">
+              <div className="space-y-2">
+                {filteredOptions.length > 0 ? (
+                  filteredOptions.map((option) => (
+                    <div
+                      key={option.id}
+                      className="flex items-center gap-2 p-2 rounded hover:bg-gray-50 transition-colors"
+                    >
+                      <input
+                        type="checkbox"
+                        id={`option-${option.id}`}
+                        checked={currentSelected.includes(option.id)}
+                        onChange={() => toggleSelection(option.id)}
+                        className="rounded border-gray-300 text-sea_green-600 focus:ring-sea_green-500"
+                      />
+                      <label
+                        htmlFor={`option-${option.id}`}
+                        className="flex-1 text-sm text-gray-700 cursor-pointer"
+                      >
+                        {option.name}
+                      </label>
+                      <button
+                        onClick={() => selectOnly(option.id)}
+                        className="px-2 py-1 text-xs rounded border border-gray-300 hover:bg-gray-100 transition-colors text-gray-600"
+                        title="Select only this"
+                      >
+                        Only
+                      </button>
+                    </div>
+                  ))
+                ) : (
+                  <p className="text-sm text-gray-500 text-center py-4">
+                    No matches found
+                  </p>
+                )}
+              </div>
+            </div>
+
+            {/* Modal Footer */}
+            <div className="px-6 py-4 border-t border-gray-200 flex justify-end gap-2">
+              <Button
+                onClick={() => setShowFilterModal(false)}
+                variant="outline"
+              >
+                Close
+              </Button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
