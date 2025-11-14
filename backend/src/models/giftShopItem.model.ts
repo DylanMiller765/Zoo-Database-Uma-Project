@@ -3,12 +3,12 @@ import { GiftShopItem } from '../types/giftShopItem.types';
 
 export class GiftShopItemModel {
   static async findAll(): Promise<GiftShopItem[]> {
-    const sql = 'SELECT * FROM gift_shop_items WHERE deleted_at IS NULL';
+    const sql = 'SELECT * FROM gift_shop_items';
     return await query<GiftShopItem[]>(sql);
   }
 
   static async findById(id: number): Promise<GiftShopItem | null> {
-    const sql = 'SELECT * FROM gift_shop_items WHERE item_id = ? AND deleted_at IS NULL';
+    const sql = 'SELECT * FROM gift_shop_items WHERE item_id = ?';
     const results = await query<GiftShopItem[]>(sql, [id]);
     return results.length > 0 ? results[0] : null;
   }
@@ -26,12 +26,12 @@ export class GiftShopItemModel {
   }
 
   static async remove(id: number): Promise<void> {
-    const sql = 'UPDATE gift_shop_items SET deleted_at = NOW() WHERE item_id = ?';
+    const sql = 'DELETE FROM gift_shop_items WHERE item_id = ?';
     await query(sql, [id]);
   }
 
   static async findLowStock(limit: number = 10): Promise<GiftShopItem[]> {
-    const sql = 'SELECT * FROM gift_shop_items WHERE quantity_in_stock < ? AND deleted_at IS NULL';
+    const sql = 'SELECT * FROM gift_shop_items WHERE quantity_in_stock < ?';
     return await query<GiftShopItem[]>(sql, [limit]);
   }
 }

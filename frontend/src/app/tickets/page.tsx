@@ -7,6 +7,8 @@ import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { ticketService } from '@/services/ticket.service';
 import { authService } from '@/services/auth.service';
+import { useCart } from '@/context/CartContext';
+import { useAuth } from '@/context/AuthContext';
 import { Loader2, ChevronDown, ChevronUp } from 'lucide-react';
 
 const TICKET_PRICES = {
@@ -21,6 +23,8 @@ function TicketsPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const isDonationMode = searchParams.get('mode') === 'donate';
+  const { addItem, openCart } = useCart();
+  const { isAuthenticated, user } = useAuth();
 
   const [visitDate, setVisitDate] = useState('');
   const [adults, setAdults] = useState(0);
@@ -47,12 +51,19 @@ function TicketsPageContent() {
   const grandTotal = ticketsTotal + (includeDonation ? finalDonation : 0);
 
   const handleCheckout = () => {
+    // Check if user is logged in
+    if (!isAuthenticated || user?.role !== 'customer') {
+      alert('Please log in to purchase tickets');
+      router.push('/login');
+      return;
+    }
+
     // Allow donation-only purchases (no tickets required)
     if (totalTickets === 0 && (!includeDonation || finalDonation === 0)) {
       alert('Please select at least one ticket or add a donation');
       return;
     }
-    
+
     // Only require visit date if purchasing tickets
     if (totalTickets > 0 && !visitDate) {
       alert('Please select a visit date');
@@ -76,18 +87,58 @@ function TicketsPageContent() {
       }
     }
 
-    // Build checkout URL with order data
-    const params = new URLSearchParams({
-      type: 'tickets',
-      adults: adults.toString(),
-      children: children.toString(),
-      seniors: seniors.toString(),
-      date: visitDate || '',
-      donation: finalDonation.toString(),
-    });
+    // Add tickets to cart
+    for (let i = 0; i < adults; i++) {
+      addItem({
+        item_type: 'ticket',
+        name: 'Adult Ticket',
+        quantity: 1,
+        unit_price: TICKET_PRICES.adult,
+        metadata: { visit_date: visitDate, ticket_type: 'adult' }
+      });
+    }
 
-    // Redirect to checkout page
-    router.push(`/checkout?${params.toString()}`);
+    for (let i = 0; i < children; i++) {
+      addItem({
+        item_type: 'ticket',
+        name: 'Child Ticket',
+        quantity: 1,
+        unit_price: TICKET_PRICES.child,
+        metadata: { visit_date: visitDate, ticket_type: 'child' }
+      });
+    }
+
+    for (let i = 0; i < seniors; i++) {
+      addItem({
+        item_type: 'ticket',
+        name: 'Senior Ticket',
+        quantity: 1,
+        unit_price: TICKET_PRICES.senior,
+        metadata: { visit_date: visitDate, ticket_type: 'senior' }
+      });
+    }
+
+    // Add donation if selected
+    if (includeDonation && finalDonation > 0) {
+      addItem({
+        item_type: 'donation',
+        name: 'Conservation Donation',
+        quantity: 1,
+        unit_price: finalDonation,
+        metadata: { donation_message: '' }
+      });
+    }
+
+    // Open cart sidebar to show added items
+    openCart();
+
+    // Reset form
+    setAdults(0);
+    setChildren(0);
+    setSeniors(0);
+    setVisitDate('');
+    setIncludeDonation(false);
+    setCustomDonation('');
   };
 
   return (
@@ -433,7 +484,7 @@ function TicketsPageContent() {
                         ? 'Select Tickets or Add Donation'
                         : !visitDate
                         ? 'Select Date'
-                        : 'Proceed to Checkout'}
+                        : 'Add to Cart'}
                     </span>
                   )}
                 </Button>
