@@ -5,16 +5,16 @@ USE zoo_database;
 
 SET FOREIGN_KEY_CHECKS = 0;
 TRUNCATE TABLE notifications;
+TRUNCATE TABLE donations;
+TRUNCATE TABLE customer_payment_methods;
+TRUNCATE TABLE membership_purchases;
 TRUNCATE TABLE cafe_items;
-TRUNCATE TABLE cafe_sales;
 TRUNCATE TABLE cafes;
 TRUNCATE TABLE event_registrations;
 TRUNCATE TABLE events;
 TRUNCATE TABLE feeding_logs;
 TRUNCATE TABLE feeding_schedules;
 TRUNCATE TABLE gift_shop_items;
-TRUNCATE TABLE gift_shop_sale_items;
-TRUNCATE TABLE gift_shop_sales_transactions;
 TRUNCATE TABLE gift_shops;
 TRUNCATE TABLE zookeeper_assignments;
 TRUNCATE TABLE animals;
@@ -24,7 +24,6 @@ TRUNCATE TABLE passwords;
 TRUNCATE TABLE user_accounts;
 TRUNCATE TABLE customers;
 TRUNCATE TABLE employees;
-TRUNCATE TABLE tickets;
 SET FOREIGN_KEY_CHECKS = 1;
 
 -- =======================================
@@ -189,16 +188,14 @@ INSERT INTO events (name, description, event_date, start_time, end_time, locatio
 -- =======================================
 -- GIFT SHOPS
 -- =======================================
-INSERT INTO gift_shops (name, location, opening_time, closing_time, manager_id) VALUES
-('Safari Shop', 'Main Entrance', '09:00:00', '18:00:00', 1),
-('Jungle Treasures', 'Tropical Rainforest', '09:30:00', '17:30:00', 1);
+INSERT INTO gift_shops (gift_shop_id, name, location, opening_time, closing_time, manager_id) VALUES
+(1, 'Zoo Gift Shop', 'Main Entrance', '09:00:00', '18:00:00', 1);
 
 -- =======================================
 -- CAFES
 -- =======================================
-INSERT INTO cafes (name, location, opening_time, closing_time, manager_id) VALUES
-('Savanna Snacks', 'African Savanna Area', '10:00:00', '17:00:00', 1),
-('Penguin Cafe', 'Arctic Tundra Zone', '10:00:00', '17:00:00', 1);
+INSERT INTO cafes (cafe_id, name, location, opening_time, closing_time, manager_id) VALUES
+(1, 'Zoo Cafe', 'Central Plaza', '10:00:00', '17:00:00', 1);
 
 -- =======================================
 -- GIFT SHOP ITEMS
@@ -207,11 +204,13 @@ INSERT INTO gift_shop_items (gift_shop_id, name, description, category, price, c
 (1, 'Plush Lion', 'Soft and cuddly lion plushie', 'Toys', 19.99, 8.00, 150, 'ToyWorld Inc'),
 (1, 'Zoo T-Shirt', 'Cotton t-shirt with zoo logo', 'Apparel', 24.99, 10.00, 200, 'Apparel Plus'),
 (1, 'Animal Stickers', 'Pack of 20 animal stickers', 'Souvenirs', 4.99, 1.50, 500, 'Sticker Co'),
-(2, 'Tropical Bird Poster', 'Beautiful rainforest bird poster', 'Art', 12.99, 5.00, 75, 'Art Prints Ltd'),
+(1, 'Tropical Bird Poster', 'Beautiful rainforest bird poster', 'Art', 12.99, 5.00, 75, 'Art Prints Ltd'),
 (1, 'Plush Penguin', 'Soft and cuddly penguin plushie', 'Toys', 19.99, 8.00, 120, 'ToyWorld Inc'),
 (1, 'Dolphin Keychain', 'Metal keychain with a dolphin charm', 'Souvenirs', 7.99, 2.50, 300, 'Sticker Co'),
-(2, 'Zoo Mug', 'Ceramic mug with zoo animal illustrations', 'Homeware', 14.99, 6.00, 100, 'Apparel Plus'),
-(1, 'Savanna Hat', 'Wide-brimmed hat for sun protection', 'Apparel', 29.99, 12.00, 80, 'Apparel Plus');
+(1, 'Zoo Mug', 'Ceramic mug with zoo animal illustrations', 'Homeware', 14.99, 6.00, 100, 'Apparel Plus'),
+(1, 'Savanna Hat', 'Wide-brimmed hat for sun protection', 'Apparel', 29.99, 12.00, 80, 'Apparel Plus'),
+(1, 'Plush Elephant', 'Adorable elephant stuffed animal', 'Toys', 22.99, 9.00, 100, 'ToyWorld Inc'),
+(1, 'Zoo Backpack', 'Canvas backpack with animal prints', 'Apparel', 34.99, 15.00, 60, 'Apparel Plus');
 
 -- =======================================
 -- CAFE ITEMS
@@ -221,22 +220,14 @@ INSERT INTO cafe_items (cafe_id, name, description, category, price, is_availabl
 (1, 'Hot Dog', 'All-beef hot dog', 'Entrees', 8.99, TRUE),
 (1, 'French Fries', 'Crispy golden fries', 'Sides', 4.99, TRUE),
 (1, 'Soda', 'Fountain drink', 'Beverages', 2.99, TRUE),
-(2, 'Chicken Nuggets', 'Kids meal chicken nuggets', 'Entrees', 7.99, TRUE),
-(2, 'Ice Cream', 'Soft serve ice cream cone', 'Desserts', 3.99, TRUE),
+(1, 'Chicken Nuggets', 'Kids meal chicken nuggets', 'Entrees', 7.99, TRUE),
+(1, 'Ice Cream', 'Soft serve ice cream cone', 'Desserts', 3.99, TRUE),
 (1, 'Pizza Slice', 'Slice of cheese or pepperoni pizza', 'Entrees', 6.99, TRUE),
 (1, 'Salad', 'Fresh garden salad with choice of dressing', 'Sides', 7.49, TRUE),
-(2, 'Coffee', 'Freshly brewed hot coffee', 'Beverages', 3.49, TRUE),
-(2, 'Bottled Water', '500ml bottled water', 'Beverages', 2.49, TRUE);
-
--- =======================================
--- TICKETS
--- =======================================
-INSERT INTO tickets (customer_id, visit_date, ticket_type, price, payment_method) VALUES
-(1, '2025-11-15', 'adult', 45.00, 'credit'),
-(1, '2025-11-15', 'child', 30.00, 'credit'),
-(2, '2025-11-16', 'adult', 45.00, 'debit'),
-(3, '2025-11-14', 'senior', 35.00, 'cash');
-
+(1, 'Coffee', 'Freshly brewed hot coffee', 'Beverages', 3.49, TRUE),
+(1, 'Bottled Water', '500ml bottled water', 'Beverages', 2.49, TRUE),
+(1, 'Sandwich', 'Turkey and cheese sandwich', 'Entrees', 9.99, TRUE),
+(1, 'Cookies', 'Chocolate chip cookies (3 pack)', 'Desserts', 4.99, TRUE);
 
 -- =======================================
 -- EVENT REGISTRATIONS

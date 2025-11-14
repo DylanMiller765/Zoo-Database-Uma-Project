@@ -2,6 +2,11 @@
 
 import { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { useCart } from '@/context/CartContext';
+import { useAuth } from '@/context/AuthContext';
+import { useRouter } from 'next/navigation';
+import { ShoppingCart } from 'lucide-react';
 import apiClient from '@/lib/api';
 
 type CafeItem = {
@@ -15,6 +20,28 @@ export default function CafePage() {
   const [items, setItems] = useState<CafeItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { addItem, openCart } = useCart();
+  const { isAuthenticated, user } = useAuth();
+  const router = useRouter();
+
+  const handleAddToCart = (item: CafeItem) => {
+    if (!isAuthenticated || user?.role !== 'customer') {
+      alert('Please log in as a customer to add items to cart');
+      router.push('/login');
+      return;
+    }
+
+    addItem({
+      item_type: 'cafe_item',
+      item_id: item.item_id,
+      name: item.name,
+      description: item.description,
+      quantity: 1,
+      unit_price: typeof item.price === 'number' ? item.price : Number(item.price),
+      metadata: { cafe_id: 1 }
+    });
+    openCart();
+  };
 
   useEffect(() => {
     const load = async () => {
@@ -65,14 +92,24 @@ export default function CafePage() {
             <p className="text-sm text-gray-600">No items available.</p>
           )}
           {items.map((item) => (
-            <Card key={item.item_id} className="rounded-xl border border-gray-200 bg-white shadow-sm hover:shadow-md transition">
+            <Card key={item.item_id} className="rounded-xl border border-gray-200 bg-white shadow-sm hover:shadow-md transition flex flex-col">
               <CardHeader className="px-5 pt-5 pb-2">
                 <CardTitle className="text-sm font-semibold text-dark_spring_green-700 truncate">{item.name}</CardTitle>
               </CardHeader>
-              <CardContent className="px-5 pb-5 text-sm text-gray-700">
+              <CardContent className="px-5 pb-5 text-sm text-gray-700 flex-1 flex flex-col">
                 <div className="font-bold text-sea_green-600 mb-1">${typeof item.price === 'number' ? item.price.toFixed(2) : Number(item.price).toFixed(2)}</div>
                 {item.description && (
-                  <p className="text-xs text-gray-600">{item.description}</p>
+                  <p className="text-xs text-gray-600 mb-3">{item.description}</p>
+                )}
+                {isAuthenticated && user?.role === 'customer' && (
+                  <Button
+                    onClick={() => handleAddToCart(item)}
+                    className="w-full mt-auto bg-sea_green-600 hover:bg-sea_green-700 text-white"
+                    size="sm"
+                  >
+                    <ShoppingCart className="h-4 w-4 mr-2" />
+                    Add to Cart
+                  </Button>
                 )}
               </CardContent>
             </Card>

@@ -264,10 +264,10 @@ CREATE TABLE `gift_shop_sales_transactions` (
     `transaction_id` INT PRIMARY KEY AUTO_INCREMENT,
     `gift_shop_id` INT NOT NULL,
     `customer_id` INT,
-    `employee_id` INT,
+    `employee_id` INT NULL,  -- NULL for customer self-checkout
     `sale_date` DATETIME DEFAULT CURRENT_TIMESTAMP,
     `total_amount` DECIMAL(10, 2) NOT NULL,
-    `payment_method` ENUM('cash', 'credit', 'debit'),
+    `payment_method` ENUM('cash', 'credit', 'debit', 'online'),  -- 'online' added for shopping cart system
     `status` ENUM('completed', 'returned') DEFAULT 'completed',
     FOREIGN KEY (`gift_shop_id`) REFERENCES `gift_shops`(`gift_shop_id`),
     FOREIGN KEY (`customer_id`) REFERENCES `customers`(`customer_id`) ON DELETE SET NULL,
@@ -290,7 +290,7 @@ CREATE TABLE `cafe_sales` (
     `cafe_id` INT NOT NULL,
     `transaction_id` VARCHAR(255) NOT NULL,
     `customer_id` INT,
-    `employee_id` INT,
+    `employee_id` INT NULL,  -- NULL for customer self-checkout
     `item_id` INT NOT NULL,
     `quantity` INT NOT NULL,
     `line_total` DECIMAL(10, 2) NOT NULL,
@@ -313,6 +313,19 @@ CREATE TABLE `notifications` (
     FOREIGN KEY (`customer_id`) REFERENCES `customers`(`customer_id`) ON DELETE CASCADE,
     INDEX `idx_customer_unread` (`customer_id`, `is_read`),
     INDEX `idx_created_at` (`created_at`)
+);
+
+-- Donations table for conservation contributions (added for shopping cart system)
+-- Tracks customer donations made through the website
+CREATE TABLE `donations` (
+    `donation_id` INT PRIMARY KEY AUTO_INCREMENT,
+    `customer_id` INT NOT NULL,
+    `amount` DECIMAL(10, 2) NOT NULL,
+    `donation_date` DATETIME DEFAULT CURRENT_TIMESTAMP,
+    `message` TEXT,
+    FOREIGN KEY (`customer_id`) REFERENCES `customers`(`customer_id`) ON DELETE CASCADE,
+    INDEX `idx_donations_date` (`donation_date`),
+    INDEX `idx_donations_customer` (`customer_id`)
 );
 
 -- Indexes for soft delete columns (performance optimization)

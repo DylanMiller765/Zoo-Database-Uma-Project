@@ -4,11 +4,13 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/context/AuthContext';
-import { ChevronDown, LogOut, User as UserIcon, LayoutDashboard } from 'lucide-react';
+import { useCart } from '@/context/CartContext';
+import { ChevronDown, LogOut, User as UserIcon, LayoutDashboard, ShoppingCart } from 'lucide-react';
 
 export default function Header() {
   const router = useRouter();
   const { user, logout } = useAuth();
+  const { cart, openCart } = useCart();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -61,6 +63,22 @@ export default function Header() {
         <div className="flex items-center justify-end w-0 min-w-fit gap-2 md:gap-3 ml-auto">
           {user ? (
             <>
+              {/* Cart Icon (customers only) */}
+              {user.role === 'customer' && (
+                <button
+                  onClick={openCart}
+                  className="relative p-2 hover:bg-gray-100 rounded-full transition-colors"
+                  aria-label="Shopping cart"
+                >
+                  <ShoppingCart className="h-6 w-6 text-gray-700" />
+                  {cart.itemCount > 0 && (
+                    <span className="absolute -top-1 -right-1 bg-sea_green-600 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
+                      {cart.itemCount > 9 ? '9+' : cart.itemCount}
+                    </span>
+                  )}
+                </button>
+              )}
+
               {/* Show Get Tickets button for customers */}
               {user.role === 'customer' && (
                 <Link href="/tickets" className="rounded-full bg-sea_green-500 text-white px-4 py-1 font-semibold hover:bg-sea_green-600 transition">
@@ -125,6 +143,7 @@ export default function Header() {
           )}
         </div>
       </div>
+
     </header>
   );
 }
