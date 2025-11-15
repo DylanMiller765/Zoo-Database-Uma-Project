@@ -4,7 +4,7 @@ import { CreateDonationRequest } from '../types/donation.types';
 
 export class DonationController {
   /**
-   * Create standalone donation
+   * Create standalone donation (for customers)
    * POST /api/donations
    */
   static async createDonation(req: Request, res: Response) {
@@ -21,6 +21,36 @@ export class DonationController {
       const donationData: CreateDonationRequest = req.body;
 
       const result = await DonationService.createStandaloneDonation(customerId, donationData);
+
+      res.status(201).json(result);
+    } catch (error: any) {
+      console.error('Error creating donation:', error);
+      res.status(400).json({
+        success: false,
+        message: error.message || 'Failed to create donation',
+      });
+    }
+  }
+
+  /**
+   * Create donation for any customer (admin only)
+   * POST /api/donations/admin
+   */
+  static async createDonationAdmin(req: Request, res: Response) {
+    try {
+      const { customer_id, amount, message } = req.body;
+
+      if (!customer_id) {
+        return res.status(400).json({
+          success: false,
+          message: 'Customer ID is required',
+        });
+      }
+
+      const result = await DonationService.createStandaloneDonation(customer_id, {
+        amount,
+        message,
+      });
 
       res.status(201).json(result);
     } catch (error: any) {

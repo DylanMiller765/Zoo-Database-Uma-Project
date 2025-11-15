@@ -215,19 +215,19 @@ INSERT INTO gift_shop_items (gift_shop_id, name, description, category, price, c
 -- =======================================
 -- CAFE ITEMS
 -- =======================================
-INSERT INTO cafe_items (cafe_id, name, description, category, price, is_available) VALUES
-(1, 'Burger', 'Classic beef burger with fries', 'Entrees', 12.99, TRUE),
-(1, 'Hot Dog', 'All-beef hot dog', 'Entrees', 8.99, TRUE),
-(1, 'French Fries', 'Crispy golden fries', 'Sides', 4.99, TRUE),
-(1, 'Soda', 'Fountain drink', 'Beverages', 2.99, TRUE),
-(1, 'Chicken Nuggets', 'Kids meal chicken nuggets', 'Entrees', 7.99, TRUE),
-(1, 'Ice Cream', 'Soft serve ice cream cone', 'Desserts', 3.99, TRUE),
-(1, 'Pizza Slice', 'Slice of cheese or pepperoni pizza', 'Entrees', 6.99, TRUE),
-(1, 'Salad', 'Fresh garden salad with choice of dressing', 'Sides', 7.49, TRUE),
-(1, 'Coffee', 'Freshly brewed hot coffee', 'Beverages', 3.49, TRUE),
-(1, 'Bottled Water', '500ml bottled water', 'Beverages', 2.49, TRUE),
-(1, 'Sandwich', 'Turkey and cheese sandwich', 'Entrees', 9.99, TRUE),
-(1, 'Cookies', 'Chocolate chip cookies (3 pack)', 'Desserts', 4.99, TRUE);
+INSERT INTO cafe_items (cafe_id, name, description, category, price) VALUES
+(1, 'Burger', 'Classic beef burger with fries', 'Entrees', 12.99),
+(1, 'Hot Dog', 'All-beef hot dog', 'Entrees', 8.99),
+(1, 'French Fries', 'Crispy golden fries', 'Sides', 4.99),
+(1, 'Soda', 'Fountain drink', 'Beverages', 2.99),
+(1, 'Chicken Nuggets', 'Kids meal chicken nuggets', 'Entrees', 7.99),
+(1, 'Ice Cream', 'Soft serve ice cream cone', 'Desserts', 3.99),
+(1, 'Pizza Slice', 'Slice of cheese or pepperoni pizza', 'Entrees', 6.99),
+(1, 'Salad', 'Fresh garden salad with choice of dressing', 'Sides', 7.49),
+(1, 'Coffee', 'Freshly brewed hot coffee', 'Beverages', 3.49),
+(1, 'Bottled Water', '500ml bottled water', 'Beverages', 2.49),
+(1, 'Sandwich', 'Turkey and cheese sandwich', 'Entrees', 9.99),
+(1, 'Cookies', 'Chocolate chip cookies (3 pack)', 'Desserts', 4.99);
 
 -- =======================================
 -- EVENT REGISTRATIONS
@@ -336,6 +336,31 @@ INSERT INTO event_registrations (event_id, customer_id, number_of_participants, 
 (4, NULL, 1, 250.00, 'cancelled', '2024-12-15 10:45:00'),
 (5, 3, 2, 70.00, 'paid', '2024-12-20 12:15:00');
 
+
+-- =======================================
+-- DONATIONS
+-- =======================================
+INSERT INTO donations (customer_id, amount, donation_date, message) VALUES
+(1, 50.00, '2024-01-15 16:00:00', 'Happy to support the zoo!'),
+(2, 100.00, '2024-02-10 14:30:00', 'For the penguin habitat'),
+(3, 25.00, '2024-03-05 11:00:00', NULL),
+(1, 75.00, '2024-04-12 15:45:00', 'Love the animals'),
+(2, 150.00, '2024-05-20 10:30:00', 'Conservation is important'),
+(4, 200.00, '2024-06-08 13:00:00', 'For endangered species'),
+(5, 30.00, '2024-07-04 09:15:00', NULL),
+(1, 40.00, '2024-08-15 14:20:00', 'Keep up the great work!'),
+(3, 60.00, '2024-09-10 11:45:00', 'For the lions'),
+(2, 125.00, '2024-10-05 16:30:00', 'In memory of my grandmother'),
+(4, 80.00, '2024-11-12 12:00:00', NULL),
+(5, 45.00, '2024-12-01 10:15:00', 'Merry Christmas!'),
+(1, 100.00, '2024-02-28 13:30:00', 'Annual donation'),
+(3, 35.00, '2024-04-18 15:00:00', NULL),
+(2, 90.00, '2024-06-22 11:30:00', 'For animal enrichment programs'),
+(4, 55.00, '2024-08-30 14:45:00', 'Supporting conservation'),
+(5, 120.00, '2024-10-18 09:00:00', 'For the new aquatic center'),
+(1, 65.00, '2024-11-25 16:00:00', 'Thanksgiving donation'),
+(3, 110.00, '2024-01-28 12:30:00', 'For veterinary care'),
+(2, 85.00, '2024-03-22 10:45:00', NULL);
 
 -- =======================================
 -- ZOOKEEPER ASSIGNMENTS
