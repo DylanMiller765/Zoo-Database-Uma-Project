@@ -28,6 +28,7 @@ export function EventForm({ event, onSuccess, onCancel }: EventFormProps) {
     end_time: '',
     location: '',
     max_capacity: undefined,
+    ticket_price: undefined,
     created_by: undefined,
     status: 'scheduled',
   });
@@ -42,6 +43,7 @@ export function EventForm({ event, onSuccess, onCancel }: EventFormProps) {
         end_time: event.end_time,
         location: event.location || '',
         max_capacity: event.max_capacity,
+        ticket_price: event.ticket_price,
         created_by: event.created_by,
         status: event.status || 'scheduled',
       });
@@ -52,7 +54,7 @@ export function EventForm({ event, onSuccess, onCancel }: EventFormProps) {
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
-      [name]: name === 'max_capacity' ? (value ? Number(value) : undefined) : value,
+      [name]: (name === 'max_capacity' || name === 'ticket_price') ? (value ? Number(value) : undefined) : value,
     }));
   };
 
@@ -164,6 +166,20 @@ export function EventForm({ event, onSuccess, onCancel }: EventFormProps) {
             value={formData.max_capacity || ''}
             onChange={handleChange}
             placeholder="Leave blank for unlimited"
+          />
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="ticket_price">Ticket Price ($)</Label>
+          <Input
+            type="number"
+            step="0.01"
+            min="0"
+            id="ticket_price"
+            name="ticket_price"
+            value={formData.ticket_price || ''}
+            onChange={handleChange}
+            placeholder="e.g., 25.00"
           />
         </div>
 
