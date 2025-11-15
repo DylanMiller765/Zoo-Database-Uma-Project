@@ -39,7 +39,7 @@ export class TransactionService {
       id: `donation-${row.donation_id}`,
       type: 'Donation',
       date: row.donation_date,
-      total: row.amount,
+      total: parseFloat(row.amount),
       customerName: `${row.first_name} ${row.last_name}`,
       details: {},
     }));
@@ -50,12 +50,11 @@ export class TransactionService {
       SELECT
         er.registration_id,
         er.registration_date,
-        er.number_of_tickets,
-        e.ticket_price,
+        er.number_of_participants,
+        er.total_amount,
         c.first_name,
         c.last_name
       FROM event_registrations er
-      JOIN events e ON er.event_id = e.event_id
       LEFT JOIN customers c ON er.customer_id = c.customer_id
       WHERE er.deleted_at IS NULL
     `;
@@ -64,10 +63,10 @@ export class TransactionService {
       id: `event-${row.registration_id}`,
       type: 'Event',
       date: row.registration_date,
-      total: row.number_of_tickets * row.ticket_price,
-      customerName: `${row.first_name} ${row.last_name}`,
+      total: parseFloat(row.total_amount),
+      customerName: row.first_name ? `${row.first_name} ${row.last_name}` : 'Walk-in Customer',
       details: {
-        tickets: row.number_of_tickets,
+        participants: row.number_of_participants,
       },
     }));
   }
@@ -91,7 +90,7 @@ export class TransactionService {
       id: `giftshop-${row.transaction_id}`,
       type: 'Gift Shop',
       date: row.sale_date,
-      total: row.total_amount,
+      total: parseFloat(row.total_amount),
       customerName: row.first_name ? `${row.first_name} ${row.last_name}` : 'N/A',
       employeeName: row.emp_first_name ? `${row.emp_first_name} ${row.emp_last_name}` : 'N/A',
       details: {},
@@ -130,7 +129,7 @@ export class TransactionService {
       id: `cafe-${row.transaction_id}`,
       type: 'Cafe',
       date: row.sale_timestamp,
-      total: row.total,
+      total: parseFloat(row.total),
       customerName: row.customerName,
       employeeName: row.employeeName,
       details: {},
@@ -154,7 +153,7 @@ export class TransactionService {
       id: `ticket-${row.ticket_id}`,
       type: 'Ticket',
       date: row.purchase_date,
-      total: row.price,
+      total: parseFloat(row.price),
       customerName: row.first_name ? `${row.first_name} ${row.last_name}` : 'N/A',
       details: {},
     }));

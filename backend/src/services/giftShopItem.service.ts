@@ -6,6 +6,10 @@ export class GiftShopItemService {
     return await GiftShopItemModel.findAll();
   }
 
+  static async getAllItemsIncludingDeleted(): Promise<GiftShopItem[]> {
+    return await GiftShopItemModel.findAllIncludingDeleted();
+  }
+
   static async createItem(item: Omit<GiftShopItem, 'item_id'>): Promise<GiftShopItem> {
     return await GiftShopItemModel.create(item);
   }
@@ -24,5 +28,9 @@ export class GiftShopItemService {
 
   static async getLowStockItems(): Promise<GiftShopItem[]> {
     return await GiftShopItemModel.findLowStock();
+  }
+
+  static async restoreItem(id: number): Promise<GiftShopItem | null> {
+    return await GiftShopItemModel.restore(id);
   }
 }

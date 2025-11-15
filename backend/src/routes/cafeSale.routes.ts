@@ -9,10 +9,11 @@ router.use(protect);
 
 // Routes for managers
 router.get('/date/:date/cafe/:cafeId', restrictTo('manager'), CafeSaleController.getSalesByDateAndCafe);
-router.delete('/:transactionId', restrictTo('manager'), CafeSaleController.returnSale);
 
 // Routes for sales associates (cashiers) and managers
 router.post('/', restrictTo('manager', 'cashier'), CafeSaleController.createSale);
 router.get('/:transactionId', restrictTo('manager', 'cashier'), CafeSaleController.getSaleByTransactionId);
+
+// DELETE/RETURN functionality removed - transactions are final and cannot be deleted or returned
 
 export default router;

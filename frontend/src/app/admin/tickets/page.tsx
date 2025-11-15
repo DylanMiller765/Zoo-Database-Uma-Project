@@ -16,8 +16,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { Search, Trash2, Ticket as TicketIcon } from 'lucide-react';
-import { Modal } from '@/components/ui/modal';
+import { Search, Ticket as TicketIcon } from 'lucide-react';
 
 export default function TicketsPage() {
   const { isAuthenticated, loading: authLoading } = useAuth();
@@ -25,8 +24,6 @@ export default function TicketsPage() {
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  const [ticketToDelete, setTicketToDelete] = useState<Ticket | null>(null);
 
 
 
@@ -45,24 +42,6 @@ export default function TicketsPage() {
       console.error('Failed to load tickets:', error);
     } finally {
       setLoading(false);
-    }
-  };
-
-  const handleDeleteClick = (ticket: Ticket) => {
-    setTicketToDelete(ticket);
-    setIsDeleteModalOpen(true);
-  };
-
-  const handleDelete = async () => {
-    if (!ticketToDelete?.ticket_id) return;
-
-    try {
-      await ticketService.delete(ticketToDelete.ticket_id);
-      await loadTickets();
-      setIsDeleteModalOpen(false);
-      setTicketToDelete(null);
-    } catch (error) {
-      console.error('Failed to delete ticket:', error);
     }
   };
 
@@ -153,7 +132,6 @@ export default function TicketsPage() {
               <TableHead>Purchase Date</TableHead>
               <TableHead>Price</TableHead>
               <TableHead>Payment Method</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -175,16 +153,6 @@ export default function TicketsPage() {
                     {ticket.payment_method || 'N/A'}
                   </Badge>
                 </TableCell>
-                <TableCell className="text-right">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handleDeleteClick(ticket)}
-                    className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </TableCell>
               </TableRow>
             ))}
           </TableBody>
@@ -197,31 +165,6 @@ export default function TicketsPage() {
           </div>
         )}
       </div>
-
-      <Modal
-        open={isDeleteModalOpen}
-        onClose={() => setIsDeleteModalOpen(false)}
-        title="Delete Ticket"
-        description="Are you sure you want to delete this ticket? This action cannot be undone."
-      >
-        <div className="space-y-4">
-          {ticketToDelete && (
-            <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
-              <p className="text-sm text-gray-900">
-                <span className="font-semibold">Ticket #{ticketToDelete.ticket_id}</span> - {ticketToDelete.ticket_type} (${ticketToDelete.price})
-              </p>
-            </div>
-          )}
-          <div className="flex items-center gap-3 justify-end">
-            <Button variant="outline" onClick={() => setIsDeleteModalOpen(false)}>
-              Cancel
-            </Button>
-            <Button variant="destructive" onClick={handleDelete}>
-              Delete
-            </Button>
-          </div>
-        </div>
-      </Modal>
     </div>
   );
 }

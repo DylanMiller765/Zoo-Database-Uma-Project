@@ -4,7 +4,10 @@ import { GiftShopItemService } from '../services/giftShopItem.service';
 export class GiftShopItemController {
   static async getAllItems(req: Request, res: Response): Promise<void> {
     try {
-      const items = await GiftShopItemService.getAllItems();
+      const includeDeleted = req.query.includeDeleted === 'true';
+      const items = includeDeleted
+        ? await GiftShopItemService.getAllItemsIncludingDeleted()
+        : await GiftShopItemService.getAllItems();
       res.status(200).json(items);
     } catch (error) {
       res.status(500).json({ message: 'Error fetching items', error });
@@ -61,6 +64,19 @@ export class GiftShopItemController {
       res.status(200).json(items);
     } catch (error) {
       res.status(500).json({ message: 'Error fetching low stock items', error });
+    }
+  }
+
+  static async restoreItem(req: Request, res: Response): Promise<void> {
+    try {
+      const restoredItem = await GiftShopItemService.restoreItem(parseInt(req.params.id));
+      if (restoredItem) {
+        res.status(200).json(restoredItem);
+      } else {
+        res.status(404).json({ message: 'Item not found' });
+      }
+    } catch (error) {
+      res.status(500).json({ message: 'Error restoring item', error });
     }
   }
 }

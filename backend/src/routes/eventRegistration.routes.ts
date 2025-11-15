@@ -11,10 +11,11 @@ router.use(protect);
 router.get('/', restrictTo('coordinator'), EventRegistrationController.getAllRegistrations);
 router.get('/event/:eventId', restrictTo('coordinator'), EventRegistrationController.getAttendeesForEvent);
 router.put('/:id', restrictTo('coordinator'), EventRegistrationController.updateRegistration);
-router.delete('/:id', restrictTo('coordinator'), EventRegistrationController.cancelRegistration);
 
-// Routes for sales associates (cashiers) and event coordinators
-router.post('/', restrictTo('coordinator', 'cashier'), EventRegistrationController.createRegistration);
-router.get('/:id', restrictTo('coordinator', 'cashier'), EventRegistrationController.getRegistrationById);
+// Routes for sales associates (cashiers), coordinators, and managers
+router.post('/', restrictTo('coordinator', 'cashier', 'manager'), EventRegistrationController.createRegistration);
+router.get('/:id', restrictTo('coordinator', 'cashier', 'manager'), EventRegistrationController.getRegistrationById);
+
+// DELETE functionality removed - transactions are final and cannot be deleted/cancelled
 
 export default router;
