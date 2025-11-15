@@ -369,8 +369,8 @@ export default function EventsPage() {
       <Modal
         open={isDeleteModalOpen}
         onClose={() => setIsDeleteModalOpen(false)}
-        title="Delete Event"
-        description="Are you sure you want to delete this event? This action cannot be undone."
+        title="Cancel Event"
+        description="Deleting an event will cancel it and automatically notify all registered customers."
       >
         <div className="space-y-4">
           {eventToDelete && (
@@ -380,12 +380,22 @@ export default function EventsPage() {
               </p>
             </div>
           )}
+          <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+            <p className="text-sm text-gray-900">
+              <span className="font-semibold">⚠️ This will:</span>
+            </p>
+            <ul className="text-sm text-gray-700 mt-2 ml-4 list-disc space-y-1">
+              <li>Send cancellation notifications to all registered customers</li>
+              <li>Mark the event as cancelled in the system</li>
+              <li>Process refunds for paid registrations (within 5-7 business days)</li>
+            </ul>
+          </div>
           <div className="flex items-center gap-3 justify-end">
             <Button variant="outline" onClick={() => setIsDeleteModalOpen(false)}>
-              Cancel
+              Keep Event
             </Button>
             <Button variant="destructive" onClick={handleDelete}>
-              Delete
+              Cancel Event
             </Button>
           </div>
         </div>

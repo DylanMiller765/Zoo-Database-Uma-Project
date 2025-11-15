@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { dashboardService, RecentActivity, KeeperAssignment, VeterinarianAnimal } from '@/services/dashboard.service';
 import { DashboardStats } from '@/types';
 import { StatsCard } from '@/components/admin/StatsCard';
+import { EventCancellationWidget } from '@/components/admin/EventCancellationWidget';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Modal } from '@/components/ui/modal';
@@ -498,6 +499,13 @@ export default function AdminDashboard() {
             )}
           </CardContent>
         </Card>
+      )}
+
+      {/* Event Cancellation Widget - Managers and Coordinators Only */}
+      {(user?.job_role === 'manager' || user?.job_role === 'coordinator') && (
+        <div className="mt-6">
+          <EventCancellationWidget limit={5} />
+        </div>
       )}
 
       {/* Recent Activity Modal */}
