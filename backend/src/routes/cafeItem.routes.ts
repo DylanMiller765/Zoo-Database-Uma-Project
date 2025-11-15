@@ -15,6 +15,7 @@ router.get('/', restrictTo('manager'), CafeItemController.getAllItems);
 router.post('/', restrictTo('manager'), CafeItemController.createItem);
 router.put('/:id', restrictTo('manager'), CafeItemController.updateItem);
 router.delete('/:id', restrictTo('manager'), CafeItemController.deleteItem);
+router.put('/:id/restore', restrictTo('manager'), CafeItemController.restoreItem);
 
 // Routes for sales associates (cashiers) and managers
 router.get('/cafe/:cafeId', restrictTo('manager', 'cashier'), CafeItemController.getMenuForCafe);

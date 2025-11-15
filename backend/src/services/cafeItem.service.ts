@@ -6,6 +6,10 @@ export class CafeItemService {
     return await CafeItemModel.findAll();
   }
 
+  static async getAllItemsIncludingDeleted(): Promise<CafeItem[]> {
+    return await CafeItemModel.findAllIncludingDeleted();
+  }
+
   static async createItem(item: Omit<CafeItem, 'item_id'>): Promise<CafeItem> {
     return await CafeItemModel.create(item);
   }
@@ -24,5 +28,9 @@ export class CafeItemService {
 
   static async getMenuForCafe(cafeId: number): Promise<CafeItem[]> {
     return await CafeItemModel.findByCafe(cafeId);
+  }
+
+  static async restoreItem(id: number): Promise<CafeItem | null> {
+    return await CafeItemModel.restore(id);
   }
 }

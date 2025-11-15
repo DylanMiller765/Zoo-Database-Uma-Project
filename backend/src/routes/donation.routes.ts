@@ -1,13 +1,16 @@
 import { Router } from 'express';
 import { DonationController } from '../controllers/donation.controller';
-import { protect } from '../middleware/auth.middleware';
+import { protect, restrictTo } from '../middleware/auth.middleware';
 
 const router = Router();
 
 // All donation routes require authentication
 router.use(protect);
 
-// Create donation
+// Admin route to create donation for any customer
+router.post('/admin', restrictTo('manager', 'cashier'), DonationController.createDonationAdmin);
+
+// Create donation (customer only)
 router.post('/', DonationController.createDonation);
 
 // Get customer donations
