@@ -20,6 +20,7 @@ export function GiftShopItemDetailModal({ open, onClose, item, onEdit, canEdit =
   const price = typeof item.price === 'string' ? parseFloat(item.price) : item.price;
   const cost = typeof item.cost === 'string' ? parseFloat(item.cost) : item.cost;
   const margin = ((price - cost) / price * 100);
+  const isDeleted = item.deleted_at !== null && item.deleted_at !== undefined;
 
   return (
     <Modal
@@ -81,17 +82,17 @@ export function GiftShopItemDetailModal({ open, onClose, item, onEdit, canEdit =
             <label className="block text-sm font-medium text-gray-600 mb-1">Stock Quantity</label>
             <div className="flex items-center gap-2">
               <p className="text-base text-gray-900">{item.quantity_in_stock} units</p>
-              {item.quantity_in_stock < 10 && (
+              {item.quantity_in_stock < 10 && !isDeleted && (
                 <Badge variant="warning">Low Stock</Badge>
               )}
             </div>
           </div>
 
-          {/* Availability Status */}
+          {/* Status */}
           <div>
-            <label className="block text-sm font-medium text-gray-600 mb-1">Availability</label>
-            <Badge variant={item.is_available ? 'success' : 'secondary'}>
-              {item.is_available ? 'Available' : 'Unavailable'}
+            <label className="block text-sm font-medium text-gray-600 mb-1">Status</label>
+            <Badge variant={isDeleted ? 'danger' : 'success'}>
+              {isDeleted ? 'Deleted' : 'Available'}
             </Badge>
           </div>
 
