@@ -25,7 +25,6 @@ export function CafeItemForm({ item, cafeId, onSuccess, onCancel }: CafeItemForm
     description: '',
     category: '',
     price: 0,
-    is_available: true,
   });
 
   useEffect(() => {
@@ -36,7 +35,6 @@ export function CafeItemForm({ item, cafeId, onSuccess, onCancel }: CafeItemForm
         description: item.description || '',
         category: item.category || '',
         price: typeof item.price === 'string' ? parseFloat(item.price) : item.price,
-        is_available: item.is_available,
       });
     } else {
       // Reset to defaults for new item
@@ -46,7 +44,6 @@ export function CafeItemForm({ item, cafeId, onSuccess, onCancel }: CafeItemForm
         description: '',
         category: '',
         price: 0,
-        is_available: true,
       });
     }
   }, [item, cafeId]);
@@ -55,9 +52,7 @@ export function CafeItemForm({ item, cafeId, onSuccess, onCancel }: CafeItemForm
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
-      [name]: name === 'price' ? (value ? parseFloat(value) : 0) :
-              name === 'is_available' ? value === 'true' :
-              value,
+      [name]: name === 'price' ? (value ? parseFloat(value) : 0) : value,
     }));
   };
 
@@ -123,20 +118,6 @@ export function CafeItemForm({ item, cafeId, onSuccess, onCancel }: CafeItemForm
             onChange={handleChange}
             required
           />
-        </div>
-
-        <div>
-          <Label htmlFor="is_available">Availability *</Label>
-          <select
-            id="is_available"
-            name="is_available"
-            value={formData.is_available ? 'true' : 'false'}
-            onChange={handleChange}
-            className="w-full rounded border px-3 py-2"
-          >
-            <option value="true">Available</option>
-            <option value="false">Unavailable</option>
-          </select>
         </div>
       </div>
 

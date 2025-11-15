@@ -95,7 +95,8 @@ export function TransactionForm({ initialType, onSuccess, onCancel }: Transactio
   const loadCafeItems = async () => {
     try {
       const data = await cafeItemService.getAll();
-      setCafeItems(data.filter((item: any) => item.is_available));
+      // getAll() already filters out deleted items (deleted_at IS NULL)
+      setCafeItems(data);
     } catch (err) {
       console.error('Failed to load cafe items:', err);
     }
