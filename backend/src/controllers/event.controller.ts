@@ -66,7 +66,15 @@ export const updateEvent = async (req: Request, res: Response) => {
 export const deleteEvent = async (req: Request, res: Response) => {
   try {
     const eventId = parseInt(req.params.id, 10);
-    const success = await eventService.deleteEvent(eventId);
+    const user = (req as any).user;
+
+    // Pass employee info to track who cancelled the event
+    const employeeInfo = user?.employee_id ? {
+      employee_id: user.employee_id,
+      name: `${user.first_name} ${user.last_name}`.trim()
+    } : undefined;
+
+    const success = await eventService.deleteEvent(eventId, employeeInfo);
     if (success) {
       res.status(204).send(); // No Content
     } else {

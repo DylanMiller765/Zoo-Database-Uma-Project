@@ -21,12 +21,12 @@ export default function NotificationBanner() {
         return;
       }
 
-      console.log('[NOTIFICATIONS FRONTEND] Fetching ALL notifications (for debugging)...');
-      // Temporarily fetch ALL notifications to debug the issue
-      const allNotifications = await notificationService.getNotifications(false);
-      console.log('[NOTIFICATIONS FRONTEND] Received', allNotifications.length, 'notifications');
-      console.log('[NOTIFICATIONS FRONTEND] Notifications:', allNotifications);
-      setNotifications(allNotifications);
+      console.log('[NOTIFICATIONS FRONTEND] Fetching unread notifications...');
+      // Fetch only unread notifications
+      const unreadNotifications = await notificationService.getNotifications(true);
+      console.log('[NOTIFICATIONS FRONTEND] Received', unreadNotifications.length, 'unread notifications');
+      console.log('[NOTIFICATIONS FRONTEND] Notifications:', unreadNotifications);
+      setNotifications(unreadNotifications);
     } catch (error) {
       console.error('[NOTIFICATIONS FRONTEND] Error fetching notifications:', error);
     } finally {
@@ -56,9 +56,14 @@ export default function NotificationBanner() {
 
   const dismissNotification = async (notificationId: number) => {
     try {
+      console.log('[NOTIFICATIONS FRONTEND] Dismissing notification:', notificationId);
+      // Mark as read in database
+      await notificationService.markAsRead(notificationId);
+      // Remove from local state immediately for better UX
       setNotifications(notifications.filter(n => n.notification_id !== notificationId));
+      console.log('[NOTIFICATIONS FRONTEND] Notification dismissed successfully');
     } catch (error) {
-      console.error('Error dismissing notification:', error);
+      console.error('[NOTIFICATIONS FRONTEND] Error dismissing notification:', error);
     }
   };
 
