@@ -18,6 +18,7 @@ export function CafeItemDetailModal({ open, onClose, item, onEdit, canEdit = tru
   if (!item) return null;
 
   const price = typeof item.price === 'string' ? parseFloat(item.price) : item.price;
+  const isDeleted = item.deleted_at !== null && item.deleted_at !== undefined;
 
   return (
     <Modal
@@ -56,11 +57,11 @@ export function CafeItemDetailModal({ open, onClose, item, onEdit, canEdit = tru
             <p className="text-base text-gray-900 font-semibold">${price.toFixed(2)}</p>
           </div>
 
-          {/* Availability Status */}
+          {/* Status */}
           <div>
-            <label className="block text-sm font-medium text-gray-600 mb-1">Availability</label>
-            <Badge variant={item.is_available ? 'success' : 'secondary'}>
-              {item.is_available ? 'Available' : 'Unavailable'}
+            <label className="block text-sm font-medium text-gray-600 mb-1">Status</label>
+            <Badge variant={isDeleted ? 'danger' : 'success'}>
+              {isDeleted ? 'Deleted' : 'Available'}
             </Badge>
           </div>
 
