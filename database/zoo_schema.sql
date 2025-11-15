@@ -386,6 +386,116 @@ BEGIN
 END//
 DELIMITER ;
 
+-- ============================================================================
+-- EVENT CANCELLATION NOTIFICATION SYSTEM
+-- ============================================================================
+-- Business Rule: All customers with active registrations must be notified
+-- immediately when an event is cancelled, regardless of how the cancellation occurs.
+-- This enforces legal/contractual obligations and prevents customer dissatisfaction.
+
+-- Create admin event cancellation log table
+-- Tracks high-level statistics for cancelled events to display in admin dashboard
+CREATE TABLE `event_cancellation_logs` (
+    `log_id` INT PRIMARY KEY AUTO_INCREMENT,
+    `event_id` INT NOT NULL,
+    `event_name` VARCHAR(100) NOT NULL,
+    `event_date` DATE,
+    `cancelled_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
+    `cancelled_by` VARCHAR(100),  -- Stores USER() - which DB user cancelled the event
+    `total_registrations` INT DEFAULT 0,
+    `customers_notified` INT DEFAULT 0,
+    `refunds_needed` INT DEFAULT 0,
+    FOREIGN KEY (`event_id`) REFERENCES `events`(`event_id`) ON DELETE CASCADE,
+    INDEX `idx_cancelled_at` (`cancelled_at`)
+);
+
+-- Trigger to notify customers when event is cancelled
+DELIMITER //
+CREATE TRIGGER trg_event_cancellation_notification
+AFTER UPDATE ON events
+FOR EACH ROW
+BEGIN
+    DECLARE v_total_registrations INT DEFAULT 0;
+    DECLARE v_customers_notified INT DEFAULT 0;
+    DECLARE v_refunds_needed INT DEFAULT 0;
+
+    -- EVENT: An event record is updated
+    -- CONDITION: The event is being cancelled (deleted_at changes from NULL to a timestamp)
+    -- ACTION: 1) Notify all registered customers
+    --         2) Create admin dashboard log entry
+
+    IF OLD.deleted_at IS NULL AND NEW.deleted_at IS NOT NULL THEN
+
+        -- Count total registrations for this event
+        SELECT COUNT(*)
+        INTO v_total_registrations
+        FROM event_registrations
+        WHERE event_id = NEW.event_id
+          AND deleted_at IS NULL;
+
+        -- Count how many paid registrations need refunds
+        SELECT COUNT(*)
+        INTO v_refunds_needed
+        FROM event_registrations
+        WHERE event_id = NEW.event_id
+          AND payment_status = 'paid'
+          AND deleted_at IS NULL;
+
+        -- Insert notifications for all registered customers
+        INSERT INTO notifications (customer_id, message, notification_type, created_at, is_read)
+        SELECT
+            er.customer_id,
+            CONCAT(
+                'CANCELLATION: The event "', NEW.name, '" scheduled for ',
+                DATE_FORMAT(NEW.event_date, '%M %d, %Y at %h:%i %p'),
+                ' has been cancelled. ',
+                CASE
+                    WHEN er.payment_status = 'paid'
+                    THEN 'A full refund will be processed to your payment method within 5-7 business days.'
+                    ELSE 'No payment was processed.'
+                END
+            ),
+            'alert',
+            NOW(),
+            FALSE
+        FROM event_registrations er
+        WHERE er.event_id = NEW.event_id
+          AND er.customer_id IS NOT NULL
+          AND er.payment_status != 'cancelled'
+          AND er.deleted_at IS NULL;
+
+        -- Get count of customers actually notified
+        SET v_customers_notified = ROW_COUNT();
+
+        -- Create admin dashboard log entry
+        INSERT INTO event_cancellation_logs (
+            event_id,
+            event_name,
+            event_date,
+            cancelled_at,
+            cancelled_by,
+            total_registrations,
+            customers_notified,
+            refunds_needed
+        ) VALUES (
+            NEW.event_id,
+            NEW.name,
+            NEW.event_date,
+            NEW.deleted_at,
+            COALESCE(@cancelled_by_employee_name, USER()),  -- Use employee name from app, or DB user as fallback
+            v_total_registrations,
+            v_customers_notified,
+            v_refunds_needed
+        );
+
+    END IF;
+END//
+DELIMITER ;
+
+-- ============================================================================
+-- END EVENT CANCELLATION NOTIFICATION SYSTEM
+-- ============================================================================
+
 -- Start of merged migration: Add Auto-Renewal and Payment Methods Support
 -- Migration: Add Auto-Renewal and Payment Methods Support
 -- Date: 2025-01-XX
