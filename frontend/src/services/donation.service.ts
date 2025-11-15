@@ -5,12 +5,26 @@ export interface CreateDonationRequest {
   message?: string;
 }
 
+export interface CreateDonationAdminRequest {
+  customer_id: number;
+  amount: number;
+  message?: string;
+}
+
 export const donationService = {
   /**
-   * Create standalone donation
+   * Create standalone donation (customer)
    */
   async createDonation(donation: CreateDonationRequest): Promise<any> {
     const response = await api.post('/donations', donation);
+    return response.data;
+  },
+
+  /**
+   * Create donation for any customer (admin)
+   */
+  async createDonationAdmin(donation: CreateDonationAdminRequest): Promise<any> {
+    const response = await api.post('/donations/admin', donation);
     return response.data;
   },
 

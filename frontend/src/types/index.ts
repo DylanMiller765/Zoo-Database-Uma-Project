@@ -241,6 +241,7 @@ export interface GiftShopItem {
   cost: number | string;
   quantity_in_stock: number;
   supplier: string;
+  deleted_at?: string | null;
 }
 
 export interface CreateGiftShopItemData extends Omit<GiftShopItem, 'item_id'> {}
@@ -253,7 +254,7 @@ export interface CafeItem {
   description: string;
   category: string;
   price: number | string;
-  is_available: boolean;
+  deleted_at?: string | null;
 }
 
 export interface CreateCafeItemData extends Omit<CafeItem, 'item_id'> {}
