@@ -1,0 +1,232 @@
+import { DonationModel } from '../models/donation.model';
+import { query } from '../config/database';
+import { CheckoutRequest, CheckoutResponse, CheckoutCartItem } from '../types/checkout.types';
+
+export class CheckoutService {
+  /**
+   * Process checkout - creates records in existing tables from client-side cart
+   */
+  static async processCheckout(
+    customerId: number,
+    checkoutData: CheckoutRequest
+  ): Promise<CheckoutResponse> {
+    if (!checkoutData.items || checkoutData.items.length === 0) {
+      throw new Error('Cart is empty');
+    }
+
+    // Save payment method if requested
+    if (checkoutData.save_payment_method && checkoutData.payment_data) {
+      await this.savePaymentMethod(customerId, checkoutData.payment_data);
+    }
+
+    // Track counts for response
+    const summary = {
+      tickets: 0,
+      events: 0,
+      cafe_items: 0,
+      gift_shop_items: 0,
+      donations: 0,
+    };
+
+    // Process each cart item
+    for (const item of checkoutData.items) {
+      switch (item.item_type) {
+        case 'ticket':
+          await this.createTicketRecords(item, customerId);
+          summary.tickets += item.quantity;
+          break;
+
+        case 'event':
+          await this.createEventRegistration(item, customerId);
+          summary.events++;
+          break;
+
+        case 'cafe_item':
+          await this.createCafeSale(item, customerId);
+          summary.cafe_items += item.quantity;
+          break;
+
+        case 'gift_shop_item':
+          await this.createGiftShopSale(item, customerId);
+          summary.gift_shop_items += item.quantity;
+          break;
+
+        case 'donation':
+          await this.createDonation(item, customerId);
+          summary.donations++;
+          break;
+
+        default:
+          console.error(`Unknown item type: ${item.item_type}`);
+      }
+    }
+
+    // Calculate total
+    const totalAmount = checkoutData.items.reduce(
+      (sum, item) => sum + item.unit_price * item.quantity,
+      0
+    );
+
+    return {
+      success: true,
+      summary,
+      total_amount: totalAmount,
+      message: 'Order completed successfully',
+    };
+  }
+
+  /**
+   * Create ticket records (one per quantity)
+   */
+  private static async createTicketRecords(
+    item: CheckoutCartItem,
+    customerId: number
+  ): Promise<void> {
+    const metadata = item.metadata || {};
+
+    for (let i = 0; i < item.quantity; i++) {
+      await query(
+        `INSERT INTO tickets (customer_id, visit_date, ticket_type, price, payment_method)
+         VALUES (?, ?, ?, ?, 'online')`,
+        [customerId, metadata.visit_date, metadata.ticket_type, item.unit_price]
+      );
+    }
+  }
+
+  /**
+   * Create event registration
+   */
+  private static async createEventRegistration(
+    item: CheckoutCartItem,
+    customerId: number
+  ): Promise<void> {
+    const metadata = item.metadata || {};
+    const totalAmount = item.unit_price * (metadata.participants || 1);
+
+    await query(
+      `INSERT INTO event_registrations (event_id, customer_id, number_of_participants, total_amount, payment_status)
+       VALUES (?, ?, ?, ?, 'paid')`,
+      [metadata.event_id || item.item_id, customerId, metadata.participants || 1, totalAmount]
+    );
+  }
+
+  /**
+   * Create cafe sale
+   */
+  private static async createCafeSale(
+    item: CheckoutCartItem,
+    customerId: number
+  ): Promise<void> {
+    const metadata = item.metadata || {};
+    const cafeId = metadata.cafe_id || 1;
+    const transactionId = `CAFE-ONLINE-${customerId}-${Date.now()}`;
+    const lineTotal = item.unit_price * item.quantity;
+
+    await query(
+      `INSERT INTO cafe_sales (cafe_id, transaction_id, customer_id, employee_id, item_id, quantity, line_total, status)
+       VALUES (?, ?, ?, NULL, ?, ?, ?, 'completed')`,
+      [cafeId, transactionId, customerId, item.item_id, item.quantity, lineTotal]
+    );
+  }
+
+  /**
+   * Create gift shop sale
+   */
+  private static async createGiftShopSale(
+    item: CheckoutCartItem,
+    customerId: number
+  ): Promise<void> {
+    const metadata = item.metadata || {};
+    const giftShopId = metadata.gift_shop_id || 1;
+    const totalAmount = item.unit_price * item.quantity;
+
+    // Create transaction
+    const transactionResult = await query<any>(
+      `INSERT INTO gift_shop_sales_transactions (gift_shop_id, customer_id, employee_id, total_amount, payment_method, status)
+       VALUES (?, ?, NULL, ?, 'online', 'completed')`,
+      [giftShopId, customerId, totalAmount]
+    );
+
+    const transactionId = transactionResult.insertId;
+
+    // Create sale item
+    await query(
+      `INSERT INTO gift_shop_sale_items (transaction_id, item_id, quantity, unit_price)
+       VALUES (?, ?, ?, ?)`,
+      [transactionId, item.item_id, item.quantity, item.unit_price]
+    );
+  }
+
+  /**
+   * Create donation record
+   */
+  private static async createDonation(
+    item: CheckoutCartItem,
+    customerId: number
+  ): Promise<void> {
+    const metadata = item.metadata || {};
+
+    await DonationModel.create({
+      customer_id: customerId,
+      amount: item.unit_price,
+      message: metadata.donation_message,
+    });
+  }
+
+  /**
+   * Save payment method for customer
+   * 
+   * @SECURITY_RISK - This method stores raw, unencrypted credit card information
+   * including the CVV. This is a major security vulnerability and is not PCI compliant.
+   * This is for demonstration purposes only in a student project.
+   * In a real-world application, use a secure payment gateway like Stripe or Braintree.
+   */
+  private static async savePaymentMethod(customerId: number, paymentData: any): Promise<void> {
+    // Check if payment method already exists
+    const [existing] = await query<any[]>(
+      'SELECT payment_method_id FROM customer_payment_methods WHERE customer_id = ?',
+      [customerId]
+    );
+
+    if (existing) {
+      // Update existing
+      await query(
+        `UPDATE customer_payment_methods
+         SET card_number = ?, cardholder_name = ?, expiry_month = ?, expiry_year = ?,
+             cvv = ?, billing_address = ?, billing_city = ?, billing_state = ?, billing_zip = ?
+         WHERE customer_id = ?`,
+        [
+          paymentData.cardNumber,
+          paymentData.cardholderName,
+          paymentData.expiryMonth,
+          paymentData.expiryYear,
+          paymentData.cvv,
+          paymentData.billingAddress,
+          paymentData.billingCity,
+          paymentData.billingState,
+          paymentData.billingZip,
+          customerId,
+        ]
+      );
+    } else {
+      // Create new
+      await query(
+        `INSERT INTO customer_payment_methods
+         (customer_id, card_number, cardholder_name, expiry_month, expiry_year, cvv, billing_address, billing_city, billing_state, billing_zip)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+          customerId,
+          paymentData.cardNumber,
+          paymentData.cardholderName,
+          paymentData.expiryMonth,
+          paymentData.expiryYear,
+          paymentData.cvv,
+          paymentData.billingAddress,
+          paymentData.billingCity,
+          paymentData.billingState,
+          paymentData.billingZip,
+        ]
+      );
+    }
+  }
+}

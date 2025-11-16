@@ -1,37 +1,38 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
 import { queryService, type FinancialReportParams } from "@/services/query.service";
-import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
-import { Button } from "@/components/ui/button";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { DollarSign, TrendingUp, PieChart, FileDown, Calendar } from "lucide-react";
+import { DollarSign, Calendar, Database } from "lucide-react";
 import {
   ReportParametersCard,
   DateRangePicker,
   ReportEmptyState,
-  GenerateReportButton
+  GenerateReportButton,
+  TicketRevenueSection,
+  EventRevenueSection,
+  GiftShopRevenueSection,
+  CafeRevenueSection,
+  MembershipRevenueSection,
 } from "@/components/reports";
 
-type RevenueRow = {
-  transaction_date: string;
-  revenue_source: string;
-  category: string;
-  payment_method: string;
-  transaction_count: number;
-  total_revenue: number;
-  avg_transaction_value: number;
+type FinancialReportData = {
+  ticketRevenue?: any;
+  eventRevenue?: any;
+  giftShopRevenue?: any;
+  cafeRevenue?: any;
+  membershipRevenue?: any;
+  summary: {
+    totalRevenue: number;
+    totalTransactions: number;
+    dateRange: { start: string | null; end: string | null; isAllTime?: boolean };
+    sources: Array<{ name: string; revenue: number }>;
+    largestRevenueSource?: string;
+    largestRevenueAmount?: number;
+  };
 };
 
 export default function FinancialReportPage() {
@@ -40,48 +41,21 @@ export default function FinancialReportPage() {
 
   // Report state
   const [hasGenerated, setHasGenerated] = useState(false);
-  const [data, setData] = useState<RevenueRow[]>([]);
+  const [reportData, setReportData] = useState<FinancialReportData | null>(null);
   const [loading, setLoading] = useState(false);
 
   // Parameters
   const [params, setParams] = useState<FinancialReportParams>({
     startDate: '',
     endDate: '',
-    sources: ['ticket', 'event', 'gift_shop', 'cafe'],
+    sources: ['ticket', 'event', 'gift_shop', 'cafe', 'membership'],
     grouping: 'day',
     includeReturns: false
   });
 
-  // Summary metrics
-  const summary = useMemo(() => {
-    const totalRevenue = data.reduce((sum, row) => sum + parseFloat(String(row.total_revenue || 0)), 0);
-    const totalTransactions = data.reduce((sum, row) => sum + (row.transaction_count || 0), 0);
-
-    // Revenue by source
-    const bySource: Record<string, number> = {};
-    data.forEach(row => {
-      if (!bySource[row.revenue_source]) {
-        bySource[row.revenue_source] = 0;
-      }
-      bySource[row.revenue_source] += parseFloat(String(row.total_revenue || 0));
-    });
-
-    return {
-      totalRevenue,
-      totalTransactions,
-      avgTransaction: totalTransactions > 0 ? totalRevenue / totalTransactions : 0,
-      bySource
-    };
-  }, [data]);
-
   // Generate report handler
   const handleGenerate = async () => {
-    // Validate required fields
-    if (!params.startDate || !params.endDate) {
-      alert("Please select both start and end dates");
-      return;
-    }
-
+    // Allow empty dates for all-time report
     if (!params.sources || params.sources.length === 0) {
       alert("Please select at least one revenue source");
       return;
@@ -90,7 +64,7 @@ export default function FinancialReportPage() {
     try {
       setLoading(true);
       const result = await queryService.getFinancialReport(params);
-      setData(result.data);
+      setReportData(result);
       setHasGenerated(true);
     } catch (error) {
       console.error("Failed to generate report:", error);
@@ -105,39 +79,44 @@ export default function FinancialReportPage() {
     setParams({
       startDate: '',
       endDate: '',
-      sources: ['ticket', 'event', 'gift_shop', 'cafe'],
+      sources: ['ticket', 'event', 'gift_shop', 'cafe', 'membership'],
       grouping: 'day',
       includeReturns: false
     });
     setHasGenerated(false);
-    setData([]);
+    setReportData(null);
   };
 
   // Helper functions
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString();
-  };
-
   const formatMoney = (amount: number | string) => {
     const num = parseFloat(String(amount || 0));
     return num.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   };
 
-  const getSourceBadgeColor = (source: string) => {
-    if (source.includes('Ticket')) return 'bg-blue-100 text-blue-800';
-    if (source.includes('Event')) return 'bg-purple-100 text-purple-800';
-    if (source.includes('Gift Shop')) return 'bg-pink-100 text-pink-800';
-    if (source.includes('Cafe')) return 'bg-orange-100 text-orange-800';
-    return 'bg-gray-100 text-gray-800';
+  const formatDate = (dateString: string | null) => {
+    if (!dateString) return 'All Time';
+    return new Date(dateString).toLocaleDateString();
   };
 
   const getSourceLabel = (source: string) => {
     switch (source) {
-      case 'ticket': return 'Tickets';
-      case 'event': return 'Events';
-      case 'gift_shop': return 'Gift Shop';
-      case 'cafe': return 'Cafe';
+      case 'ticket': return 'Ticket Sales';
+      case 'event': return 'Event Registrations';
+      case 'gift_shop': return 'Gift Shop Sales';
+      case 'cafe': return 'Cafe Sales';
+      case 'membership': return 'Membership Purchases';
       default: return source;
+    }
+  };
+
+  const getSourceColor = (source: string) => {
+    switch (source) {
+      case 'ticket': return 'border-blue-200 bg-blue-50';
+      case 'event': return 'border-purple-200 bg-purple-50';
+      case 'gift_shop': return 'border-pink-200 bg-pink-50';
+      case 'cafe': return 'border-orange-200 bg-orange-50';
+      case 'membership': return 'border-green-200 bg-green-50';
+      default: return 'border-gray-200 bg-gray-50';
     }
   };
 
@@ -151,13 +130,13 @@ export default function FinancialReportPage() {
     }
   };
 
-  // Export functionality (placeholder)
-  const handleExport = () => {
-    alert("Export functionality will be implemented after xlsx dependency is resolved");
+  // Quick select for all-time
+  const setAllTime = () => {
+    setParams({ ...params, startDate: '', endDate: '' });
   };
 
-  // Form validation
-  const isFormValid = params.startDate && params.endDate && params.sources && params.sources.length > 0;
+  // Form validation - sources required, dates optional
+  const isFormValid = params.sources && params.sources.length > 0;
 
   // Auth check
   if (authLoading) {
@@ -181,21 +160,38 @@ export default function FinancialReportPage() {
           <DollarSign className="h-8 w-8 text-sea_green-600" />
           Financial Report
         </h1>
-        <p className="text-gray-600 mt-1">
-          Comprehensive revenue analysis across all zoo revenue streams
+        <p className="text-gray-600 mt-2">
+          Database-driven revenue analysis with transparent data aggregation
         </p>
       </div>
 
       {/* Parameters Form */}
       <ReportParametersCard>
-        <DateRangePicker
-          startDate={params.startDate}
-          endDate={params.endDate}
-          onRangeChange={(startDate, endDate) => setParams({ ...params, startDate, endDate })}
-          label="Transaction Date Range"
-          required={true}
-          showQuickSelect={true}
-        />
+        <div>
+          <div className="flex items-center justify-between mb-2">
+            <Label className="text-sm font-medium text-gray-700">
+              Transaction Date Range
+            </Label>
+            <button
+              type="button"
+              onClick={setAllTime}
+              className="text-xs text-sea_green-600 hover:text-sea_green-700 font-medium"
+            >
+              All Time
+            </button>
+          </div>
+          <DateRangePicker
+            startDate={params.startDate || ''}
+            endDate={params.endDate || ''}
+            onRangeChange={(startDate, endDate) => setParams({ ...params, startDate, endDate })}
+            label=""
+            required={false}
+            showQuickSelect={true}
+          />
+          <p className="text-xs text-gray-500 mt-1">
+            Leave empty for all-time report
+          </p>
+        </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {/* Revenue Sources */}
@@ -204,7 +200,7 @@ export default function FinancialReportPage() {
               Revenue Sources <span className="text-red-500">*</span>
             </Label>
             <div className="grid grid-cols-2 gap-2">
-              {['ticket', 'event', 'gift_shop', 'cafe'].map((source) => (
+              {['ticket', 'event', 'gift_shop', 'cafe', 'membership'].map((source) => (
                 <button
                   key={source}
                   type="button"
@@ -215,7 +211,7 @@ export default function FinancialReportPage() {
                       : 'bg-white text-gray-700 border-gray-300 hover:border-sea_green-400'
                   }`}
                 >
-                  {getSourceLabel(source)}
+                  {getSourceLabel(source).split(' ')[0]}
                 </button>
               ))}
             </div>
@@ -249,7 +245,7 @@ export default function FinancialReportPage() {
             className="rounded border-gray-300 text-sea_green-600 focus:ring-sea_green-500"
           />
           <Label htmlFor="includeReturns" className="text-sm text-gray-700 cursor-pointer">
-            Include returns and refunds
+            Include returns and refunds in revenue totals
           </Label>
         </div>
 
@@ -268,176 +264,112 @@ export default function FinancialReportPage() {
         <ReportEmptyState
           icon={<DollarSign className="h-16 w-16 text-sea_green-400" />}
           title="No Report Generated"
-          description="Select a date range, choose revenue sources, and click Generate Report to view financial data."
+          description="Select revenue sources and click Generate Report. Dates are optional - leave empty for all-time data."
         />
       )}
 
-      {hasGenerated && (
+      {hasGenerated && reportData && (
         <>
-          {/* Summary Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            {/* Total Revenue */}
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-gray-600 flex items-center gap-1">
-                  <DollarSign className="h-3 w-3" />
-                  Total Revenue
+          {/* SUMMARY SECTION - MOVED TO TOP */}
+          <Card className="border-2 border-sea_green-300">
+            <CardHeader className="pb-4">
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-2xl flex items-center gap-2">
+                  <Database className="h-6 w-6 text-sea_green-600" />
+                  Summary
                 </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-2xl font-bold text-sea_green-600">
-                  ${formatMoney(summary.totalRevenue)}
-                </p>
-              </CardContent>
-            </Card>
-
-            {/* Total Transactions */}
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-gray-600">Total Transactions</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-2xl font-bold text-persian_orange-600">
-                  {summary.totalTransactions.toLocaleString()}
-                </p>
-              </CardContent>
-            </Card>
-
-            {/* Avg Transaction */}
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-gray-600 flex items-center gap-1">
-                  <TrendingUp className="h-3 w-3" />
-                  Avg Transaction
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-2xl font-bold text-dark_spring_green-600">
-                  ${formatMoney(summary.avgTransaction)}
-                </p>
-              </CardContent>
-            </Card>
-
-            {/* Revenue Sources */}
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-gray-600 flex items-center gap-1">
-                  <PieChart className="h-3 w-3" />
-                  Active Sources
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-2xl font-bold text-purple-600">
-                  {Object.keys(summary.bySource).length}
-                </p>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Revenue by Source Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            {Object.entries(summary.bySource).map(([source, amount]) => (
-              <Card key={source} className="border-l-4 border-sea_green-500">
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-xs font-medium text-gray-600 flex items-center justify-between">
-                    <span>{getSourceLabel(source)}</span>
-                    <Badge className={getSourceBadgeColor(source)}>
-                      {((amount / summary.totalRevenue) * 100).toFixed(1)}%
-                    </Badge>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-xl font-bold text-gray-900">
-                    ${formatMoney(amount)}
-                  </p>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-
-          {/* Export Button */}
-          <div className="flex justify-end">
-            <Button
-              onClick={handleExport}
-              className="flex items-center gap-2 bg-sea_green-600 hover:bg-sea_green-700 text-white"
-            >
-              <FileDown className="h-4 w-4" />
-              Export to Excel
-            </Button>
-          </div>
-
-          {/* Transactions Table */}
-          <Card>
-            <CardContent className="p-0">
-              <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Date</TableHead>
-                      <TableHead>Source Type</TableHead>
-                      <TableHead>Source Name</TableHead>
-                      <TableHead className="text-right">Transactions</TableHead>
-                      <TableHead className="text-right">Total Revenue</TableHead>
-                      <TableHead className="text-right">Avg Transaction</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {data.map((row, index) => (
-                      <TableRow key={index}>
-                        {/* Date */}
-                        <TableCell className="font-medium">
-                          <div className="flex items-center gap-2">
-                            <Calendar className="h-4 w-4 text-gray-400" />
-                            {formatDate(row.transaction_date)}
-                          </div>
-                        </TableCell>
-
-                        {/* Source Type */}
-                        <TableCell>
-                          <Badge className={getSourceBadgeColor(row.revenue_source)}>
-                            {row.revenue_source}
-                          </Badge>
-                        </TableCell>
-
-                        {/* Source Name */}
-                        <TableCell className="text-sm text-gray-600">
-                          {row.category || 'N/A'}
-                        </TableCell>
-
-                        {/* Transaction Count */}
-                        <TableCell className="text-right font-semibold">
-                          {row.transaction_count}
-                        </TableCell>
-
-                        {/* Total Revenue */}
-                        <TableCell className="text-right font-bold text-sea_green-600">
-                          ${formatMoney(row.total_revenue)}
-                        </TableCell>
-
-                        {/* Average Transaction */}
-                        <TableCell className="text-right text-gray-600">
-                          ${formatMoney(row.avg_transaction_value)}
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
-
-              {/* No Data State */}
-              {data.length === 0 && (
-                <div className="text-center py-12">
-                  <DollarSign className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                  <p className="text-gray-600">
-                    No transactions found matching the selected criteria.
-                  </p>
-                  <p className="text-sm text-gray-500 mt-1">
-                    Try adjusting your date range, revenue sources, or filters.
-                  </p>
+                <div className="text-right">
+                  <div className="text-xs text-gray-500 flex items-center gap-1 justify-end">
+                    <Calendar className="h-3 w-3" />
+                    Report Period
+                  </div>
+                  <div className="text-sm font-semibold text-gray-700">
+                    {reportData.summary.dateRange.isAllTime ? (
+                      'All Time'
+                    ) : (
+                      <>
+                        {formatDate(reportData.summary.dateRange.start)} - {formatDate(reportData.summary.dateRange.end)}
+                      </>
+                    )}
+                  </div>
                 </div>
-              )}
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {/* Stacked Revenue Sources */}
+              <div>
+                <h3 className="text-sm font-semibold text-gray-700 mb-3">
+                  Revenue by Source (Aggregated from Database Tables)
+                </h3>
+                <div className="space-y-2">
+                  {reportData.summary.sources.map((source, index) => (
+                    <div
+                      key={source.name}
+                      className={`border-l-6 ${getSourceColor(source.name)} p-4 rounded-r-md flex items-center justify-between`}
+                    >
+                      <div className="flex-1">
+                        <div className="font-medium text-gray-900">{getSourceLabel(source.name)}</div>
+                        <div className="text-xs text-gray-500">
+                          Table: {source.name === 'ticket' ? 'tickets' : source.name === 'event' ? 'event_registrations' : source.name === 'gift_shop' ? 'gift_shop_sales_transactions' : source.name === 'cafe' ? 'cafe_sales' : 'membership_purchases'} | Aggregation: SUM(price/total_amount)
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <div className="text-xl font-bold text-gray-900">
+                          ${formatMoney(source.revenue)}
+                        </div>
+                        <div className="text-xs text-gray-600">
+                          {((source.revenue / reportData.summary.totalRevenue) * 100).toFixed(1)}% of total
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+
+                  {/* Total Row */}
+                  <div className="border-t-2 border-gray-300 pt-3 mt-3 bg-sea_green-50 p-4 rounded-md">
+                    <div className="flex items-center justify-between">
+                      <div className="flex-1">
+                        <div className="text-lg font-bold text-gray-900">TOTAL REVENUE</div>
+                        <div className="text-xs text-gray-600">
+                          Sum of all revenue sources above
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <div className="text-2xl font-bold text-sea_green-700">
+                          ${formatMoney(reportData.summary.totalRevenue)}
+                        </div>
+                        <div className="text-sm text-gray-600">
+                          {reportData.summary.totalTransactions.toLocaleString()} transactions
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </CardContent>
           </Card>
+
+          {/* Revenue Source Sections */}
+          <div className="space-y-6">
+            {reportData.ticketRevenue && (
+              <TicketRevenueSection data={reportData.ticketRevenue} />
+            )}
+
+            {reportData.eventRevenue && (
+              <EventRevenueSection data={reportData.eventRevenue} />
+            )}
+
+            {reportData.giftShopRevenue && (
+              <GiftShopRevenueSection data={reportData.giftShopRevenue} />
+            )}
+
+            {reportData.cafeRevenue && (
+              <CafeRevenueSection data={reportData.cafeRevenue} />
+            )}
+
+            {reportData.membershipRevenue && (
+              <MembershipRevenueSection data={reportData.membershipRevenue} />
+            )}
+          </div>
         </>
       )}
     </div>

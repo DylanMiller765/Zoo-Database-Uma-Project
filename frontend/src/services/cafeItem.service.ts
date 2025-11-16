@@ -35,4 +35,9 @@ export const cafeItemService = {
   async delete(id: number): Promise<void> {
     await apiClient.delete(`/cafe-items/${id}`);
   },
+
+  async restore(id: number): Promise<CafeItem> {
+    const res = await apiClient.put<CafeItem>(`/cafe-items/${id}/restore`);
+    return res.data;
+  },
 };

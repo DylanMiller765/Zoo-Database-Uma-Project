@@ -49,7 +49,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const logout = () => {
+  const logout = async () => {
+    if (user?.role === 'customer') {
+      try {
+        await authService.clearNotificationOnLogout('warning');
+      } catch (error) {
+        console.error('Failed to clear notifications on logout', error);
+      }
+    }
     authService.logout();
     setUser(null);
     router.push('/login');

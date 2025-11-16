@@ -1,0 +1,122 @@
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Coffee } from "lucide-react";
+
+interface CafeRevenueData {
+  total: number;
+  transactions: number;
+  lineItems: number;
+  returns: number;
+  byCafe: Array<{
+    cafe_id: number;
+    cafe_name: string;
+    location: string | null;
+    transactions: number;
+    line_items: number;
+    revenue: number;
+    avg_transaction: number;
+    returns: number;
+  }>;
+}
+
+interface Props {
+  data: CafeRevenueData;
+}
+
+export function CafeRevenueSection({ data }: Props) {
+  const formatMoney = (amount: number | string) => {
+    const num = parseFloat(String(amount || 0));
+    return num.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  };
+
+  return (
+    <Card className="border-l-4 border-orange-500">
+      <CardHeader>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Coffee className="h-5 w-5 text-orange-600" />
+            <CardTitle className="text-xl">Cafe Revenue</CardTitle>
+          </div>
+          <div className="text-right">
+            <div className="text-2xl font-bold text-orange-600">
+              ${formatMoney(data.total)}
+            </div>
+            <div className="text-sm text-gray-600">
+              {data.transactions} transactions, {data.lineItems} items
+              {data.returns > 0 && ` (${data.returns} returns)`}
+            </div>
+          </div>
+        </div>
+      </CardHeader>
+      <CardContent>
+        <div>
+          <h3 className="text-sm font-semibold text-gray-700 mb-3">
+            Revenue by Cafe
+          </h3>
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Cafe Name</TableHead>
+                  <TableHead>Location</TableHead>
+                  <TableHead className="text-right">Transactions</TableHead>
+                  <TableHead className="text-right">Line Items</TableHead>
+                  <TableHead className="text-right">Revenue</TableHead>
+                  <TableHead className="text-right">Avg Transaction</TableHead>
+                  {data.returns > 0 && <TableHead className="text-right">Returns</TableHead>}
+                  <TableHead className="text-right">% of Total</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {data.byCafe.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={8} className="text-center py-8 text-gray-500">
+                      No cafe revenue data available for the selected period
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  data.byCafe.map((row) => (
+                    <TableRow key={row.cafe_id}>
+                      <TableCell className="font-medium">{row.cafe_name}</TableCell>
+                      <TableCell className="text-sm text-gray-600">
+                        {row.location || 'N/A'}
+                      </TableCell>
+                      <TableCell className="text-right">{row.transactions}</TableCell>
+                      <TableCell className="text-right text-gray-600">
+                        {row.line_items}
+                      </TableCell>
+                      <TableCell className="text-right font-semibold text-orange-600">
+                        ${formatMoney(row.revenue)}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        ${formatMoney(row.avg_transaction)}
+                      </TableCell>
+                      {data.returns > 0 && (
+                        <TableCell className="text-right text-red-600">
+                          {row.returns}
+                        </TableCell>
+                      )}
+                      <TableCell className="text-right">
+                        <Badge className="bg-orange-100 text-orange-800">
+                          {((parseFloat(String(row.revenue)) / data.total) * 100).toFixed(1)}%
+                        </Badge>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}

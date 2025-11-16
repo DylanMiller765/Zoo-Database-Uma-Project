@@ -16,6 +16,7 @@ router.get('/low-stock', restrictTo('manager'), GiftShopItemController.getLowSto
 router.post('/', restrictTo('manager'), GiftShopItemController.createItem);
 router.put('/:id', restrictTo('manager'), GiftShopItemController.updateItem);
 router.delete('/:id', restrictTo('manager'), GiftShopItemController.deleteItem);
+router.put('/:id/restore', restrictTo('manager'), GiftShopItemController.restoreItem);
 
 // Routes for sales associates (cashiers) and managers
 router.get('/:id', restrictTo('manager', 'cashier'), GiftShopItemController.getItemById);

@@ -46,9 +46,23 @@ export class EventModel {
     return await this.findById(eventId);
   }
 
-  static async remove(eventId: number): Promise<boolean> {
+  static async remove(eventId: number, employeeInfo?: { employee_id: number; name: string }): Promise<boolean> {
+    // Set session variable for trigger to read (who cancelled the event)
+    if (employeeInfo) {
+      await query('SET @cancelled_by_employee_id = ?, @cancelled_by_employee_name = ?', [
+        employeeInfo.employee_id,
+        employeeInfo.name
+      ]);
+    }
+
     const sql = 'UPDATE events SET deleted_at = NOW() WHERE event_id = ?';
     const result = await query<any>(sql, [eventId]);
+
+    // Clear session variables
+    if (employeeInfo) {
+      await query('SET @cancelled_by_employee_id = NULL, @cancelled_by_employee_name = NULL');
+    }
+
     return result.affectedRows > 0;
   }
 
