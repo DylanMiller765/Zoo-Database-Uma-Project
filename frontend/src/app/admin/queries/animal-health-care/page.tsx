@@ -78,6 +78,7 @@ export default function AnimalHealthCarePage() {
   const [viewMode, setViewMode] = useState<'cards' | 'table'>('cards');
   const [sortBy, setSortBy] = useState<string>('name');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
+  const [viewSize, setViewSize] = useState<3 | 4 | 5>(4);
 
   // Filter modal state
   const [showFilterModal, setShowFilterModal] = useState(false);
@@ -393,6 +394,19 @@ export default function AnimalHealthCarePage() {
     return `${weight} lbs`;
   };
 
+  const getGridColsClass = () => {
+    switch (viewSize) {
+      case 3:
+        return 'lg:grid-cols-3';
+      case 4:
+        return 'lg:grid-cols-4';
+      case 5:
+        return 'lg:grid-cols-5';
+      default:
+        return 'lg:grid-cols-4';
+    }
+  };
+
   // Export functionality (placeholder for now - we'll add xlsx later)
   const handleExport = () => {
     alert("Export functionality will be implemented after xlsx dependency is resolved");
@@ -700,6 +714,45 @@ export default function AnimalHealthCarePage() {
                 </div>
               </div>
 
+              {/* View Size Toggle */}
+              {viewMode === 'cards' && (
+              <div>
+                <Label className="text-xs text-gray-600 mb-1 block">View Size</Label>
+                <div className="flex items-center gap-1 border border-gray-300 rounded-md p-1">
+                  <button
+                    onClick={() => setViewSize(3)}
+                    className={`px-3 py-1 text-sm rounded transition-colors ${
+                      viewSize === 3
+                        ? 'bg-sea_green-600 text-white'
+                        : 'text-gray-600 hover:bg-gray-100'
+                    }`}
+                  >
+                    3
+                  </button>
+                  <button
+                    onClick={() => setViewSize(4)}
+                    className={`px-3 py-1 text-sm rounded transition-colors ${
+                      viewSize === 4
+                        ? 'bg-sea_green-600 text-white'
+                        : 'text-gray-600 hover:bg-gray-100'
+                    }`}
+                  >
+                    4
+                  </button>
+                  <button
+                    onClick={() => setViewSize(5)}
+                    className={`px-3 py-1 text-sm rounded transition-colors ${
+                      viewSize === 5
+                        ? 'bg-sea_green-600 text-white'
+                        : 'text-gray-600 hover:bg-gray-100'
+                    }`}
+                  >
+                    5
+                  </button>
+                </div>
+              </div>
+              )}
+
               {/* Sort By - only show in table view or when appropriate */}
               {shouldShowSort && viewMode === 'table' && (
                 <div>
@@ -767,9 +820,8 @@ export default function AnimalHealthCarePage() {
                     </div>
                   </CardHeader>
                   <CardContent>
-                    {habitat.animals.length > 0 ? (
-                      <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
-                        {habitat.animals.map((animal) => (
+                                          {habitat.animals.length > 0 ? (
+  <div className={`grid grid-cols-1 ${getGridColsClass()} gap-3`}> {/* lg:grid-cols-3 lg:grid-cols-4 lg:grid-cols-5 */} {/* lg:grid-cols-3 lg:grid-cols-4 lg:grid-cols-5 */}{habitat.animals.map((animal) => (
                           <div
                             key={animal.animal_id}
                             className="border rounded-lg p-3 hover:border-sea_green-400 transition-colors bg-white"
@@ -791,7 +843,7 @@ export default function AnimalHealthCarePage() {
                               {animal.keeper_name && (
                                 <div className="flex justify-between">
                                   <span className="text-gray-600">Keeper:</span>
-                                  <span className="font-medium">{animal.keeper_name.split(' ')[0]}</span>
+                                  <span className="font-medium">{animal.keeper_name}</span>
                                 </div>
                               )}
                               <div className="flex justify-between">
@@ -801,15 +853,14 @@ export default function AnimalHealthCarePage() {
                               <div className="pt-1 border-t">
                                 {(() => {
                                   if (!animal.last_fed_time) {
-                                    return <Badge variant="danger" className="text-xs w-full justify-center">Never Fed</Badge>;
-                                  }
-                                  const hoursSinceLastFed = (Date.now() - new Date(animal.last_fed_time).getTime()) / (1000 * 60 * 60);
-                                  if (hoursSinceLastFed < 24) {
-                                    return <Badge variant="success" className="text-xs w-full justify-center">Fed {Math.round(hoursSinceLastFed)}h ago</Badge>;
-                                  } else {
-                                    return <Badge variant="warning" className="text-xs w-full justify-center">Fed {Math.round(hoursSinceLastFed)}h ago</Badge>;
-                                  }
-                                })()}
+                                    return <Badge variant="danger" className="text-xs justify-center">Never Fed</Badge>;
+                                    }
+                                    const hoursSinceLastFed = (Date.now() - new Date(animal.last_fed_time).getTime()) / (1000 * 60 * 60);
+                                    if (hoursSinceLastFed < 24) {
+                                      return <Badge variant="success" className="text-xs justify-center">Fed {Math.round(hoursSinceLastFed)}h ago</Badge>;
+                                    } else {
+                                      return <Badge variant="warning" className="text-xs justify-center">Fed {Math.round(hoursSinceLastFed)}h ago</Badge>;
+                                    }                                })()}
                               </div>
                             </div>
                           </div>
@@ -922,7 +973,7 @@ export default function AnimalHealthCarePage() {
                     </div>
                   </CardHeader>
                   <CardContent>
-                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
+                    <div className={`grid grid-cols-1 ${getGridColsClass()} gap-3`}> {/* lg:grid-cols-3 lg:grid-cols-4 lg:grid-cols-5 */}
                       {keeper.animals.map((animal) => (
                         <div
                           key={animal.animal_id}
@@ -953,15 +1004,14 @@ export default function AnimalHealthCarePage() {
                             <div className="pt-1 border-t">
                               {(() => {
                                 if (!animal.last_fed_time) {
-                                  return <Badge variant="danger" className="text-xs w-full justify-center">Never Fed</Badge>;
-                                }
-                                const hoursSinceLastFed = (Date.now() - new Date(animal.last_fed_time).getTime()) / (1000 * 60 * 60);
-                                if (hoursSinceLastFed < 24) {
-                                  return <Badge variant="success" className="text-xs w-full justify-center">Fed {Math.round(hoursSinceLastFed)}h ago</Badge>;
-                                } else {
-                                  return <Badge variant="warning" className="text-xs w-full justify-center">Fed {Math.round(hoursSinceLastFed)}h ago</Badge>;
-                                }
-                              })()}
+                                  return <Badge variant="danger" className="text-xs justify-center">Never Fed</Badge>;
+                                  }
+                                  const hoursSinceLastFed = (Date.now() - new Date(animal.last_fed_time).getTime()) / (1000 * 60 * 60);
+                                  if (hoursSinceLastFed < 24) {
+                                    return <Badge variant="success" className="text-xs justify-center">Fed {Math.round(hoursSinceLastFed)}h ago</Badge>;
+                                  } else {
+                                    return <Badge variant="warning" className="text-xs justify-center">Fed {Math.round(hoursSinceLastFed)}h ago</Badge>;
+                                  }                              })()}
                             </div>
                           </div>
                         </div>
@@ -1054,7 +1104,7 @@ export default function AnimalHealthCarePage() {
             /* Flat List - Cards View */
             <div key={`ungrouped-cards-${sortBy}-${sortDirection}`}>
               {sortedAnimals.length > 0 ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+                <div className={`grid grid-cols-1 ${getGridColsClass()} gap-3`}> {/* lg:grid-cols-3 lg:grid-cols-4 lg:grid-cols-5 */}
                   {sortedAnimals.map((animal) => (
                     <div
                       key={animal.animal_id}
@@ -1081,7 +1131,7 @@ export default function AnimalHealthCarePage() {
                         {animal.keeper_name && (
                           <div className="flex justify-between">
                             <span className="text-gray-600">Keeper:</span>
-                            <span className="font-medium">{animal.keeper_name.split(' ')[0]}</span>
+                            <span className="font-medium">{animal.keeper_name}</span>
                           </div>
                         )}
                         <div className="flex justify-between">
@@ -1091,15 +1141,14 @@ export default function AnimalHealthCarePage() {
                         <div className="pt-1 border-t">
                           {(() => {
                             if (!animal.last_fed_time) {
-                              return <Badge variant="danger" className="text-xs w-full justify-center">Never Fed</Badge>;
-                            }
-                            const hoursSinceLastFed = (Date.now() - new Date(animal.last_fed_time).getTime()) / (1000 * 60 * 60);
-                            if (hoursSinceLastFed < 24) {
-                              return <Badge variant="success" className="text-xs w-full justify-center">Fed {Math.round(hoursSinceLastFed)}h ago</Badge>;
-                            } else {
-                              return <Badge variant="warning" className="text-xs w-full justify-center">Fed {Math.round(hoursSinceLastFed)}h ago</Badge>;
-                            }
-                          })()}
+                              return <Badge variant="danger" className="text-xs justify-center">Never Fed</Badge>;
+                              }
+                              const hoursSinceLastFed = (Date.now() - new Date(animal.last_fed_time).getTime()) / (1000 * 60 * 60);
+                              if (hoursSinceLastFed < 24) {
+                                return <Badge variant="success" className="text-xs justify-center">Fed {Math.round(hoursSinceLastFed)}h ago</Badge>;
+                              } else {
+                                return <Badge variant="warning" className="text-xs justify-center">Fed {Math.round(hoursSinceLastFed)}h ago</Badge>;
+                              }                          })()}
                         </div>
                       </div>
                     </div>
