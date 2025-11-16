@@ -317,7 +317,7 @@ CREATE TABLE `notifications` (
 
 CREATE TABLE `animals_alert_queue` (
     `animal_alert_id` INT PRIMARY KEY AUTO_INCREMENT,
-    `alert_reason` ENUM(`health_status`,`active_status`),
+    `alert_reason` ENUM('health_status','active_status') NOT NULL,
     `alert_value` VARCHAR(50),
     `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
     `processed_at` DATETIME DEFAULT NULL,
