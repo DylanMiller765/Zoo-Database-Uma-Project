@@ -30,4 +30,9 @@ export const giftShopItemService = {
   async delete(id: number): Promise<void> {
     await apiClient.delete(`/gift-shop-items/${id}`);
   },
+
+  async restore(id: number): Promise<GiftShopItem> {
+    const res = await apiClient.put<GiftShopItem>(`/gift-shop-items/${id}/restore`);
+    return res.data;
+  },
 };

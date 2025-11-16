@@ -12,8 +12,11 @@ const transformEvent = (dbEvent: any): any => {
     end_time: dbEvent.end_time,
     location: dbEvent.location,
     max_capacity: dbEvent.max_participants,
+    ticket_price: dbEvent.ticket_price ? parseFloat(dbEvent.ticket_price) : null,
     status: 'scheduled', // Default status since DB doesn't have this field
     created_by: dbEvent.coordinator_id,
+    coordinator_name: dbEvent.coordinator_name,
+    deleted_at: dbEvent.deleted_at || null,  // Include deleted_at for soft delete detection
   };
 };
 
@@ -63,8 +66,8 @@ export const updateEvent = async (eventId: number, eventData: any): Promise<any 
   return updated ? transformEvent(updated) : null;
 };
 
-export const deleteEvent = async (eventId: number): Promise<boolean> => {
-  return await EventModel.remove(eventId);
+export const deleteEvent = async (eventId: number, employeeInfo?: { employee_id: number; name: string }): Promise<boolean> => {
+  return await EventModel.remove(eventId, employeeInfo);
 };
 
 export const restoreEvent = async (eventId: number): Promise<any | null> => {

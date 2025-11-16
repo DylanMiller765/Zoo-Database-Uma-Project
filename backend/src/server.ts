@@ -25,6 +25,10 @@ import notificationRoutes from './routes/notification.routes';
 import feedingScheduleRoutes from './routes/feedingSchedule.routes';
 import feedingLogRoutes from './routes/feedingLog.routes';
 import zookeeperAssignmentRoutes from './routes/zookeeperAssignment.routes';
+import checkoutRoutes from './routes/checkout.routes';
+import donationRoutes from './routes/donation.routes';
+import transactionRoutes from './routes/transaction.routes';
+import eventCancellationLogRoutes from './routes/event-cancellation-log.routes';
 
 dotenv.config();
 
@@ -71,6 +75,10 @@ app.use('/api/notifications', notificationRoutes);
 app.use('/api/feeding-schedules', feedingScheduleRoutes);
 app.use('/api/feeding-logs', feedingLogRoutes);
 app.use('/api/zookeeper-assignments', zookeeperAssignmentRoutes);
+app.use('/api/checkout', checkoutRoutes);
+app.use('/api/donations', donationRoutes);
+app.use('/api/transactions', transactionRoutes);
+app.use('/api/event-cancellations', eventCancellationLogRoutes);
 
 // Error handling
 app.use(notFound);

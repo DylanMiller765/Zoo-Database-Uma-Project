@@ -19,12 +19,5 @@ export const ticketService = {
     return response.data;
   },
 
-  async delete(id: number): Promise<void> {
-    await apiClient.delete(`/tickets/${id}`);
-  },
-
-  async restore(id: number): Promise<Ticket> {
-    const response = await apiClient.put<Ticket>(`/tickets/${id}/restore`);
-    return response.data;
-  },
+  // Delete and restore methods removed - transactions are final and cannot be deleted
 };

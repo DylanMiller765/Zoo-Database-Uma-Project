@@ -46,6 +46,10 @@ class AuthService {
     localStorage.removeItem('token');
   }
 
+  async clearNotificationOnLogout(type: string) {
+    await apiClient.delete(`/notifications/by-type/${type}`);
+  }
+
   setAuthData(token: string, user: User): void {
     localStorage.setItem('token', token);
     localStorage.setItem('user', JSON.stringify(user));

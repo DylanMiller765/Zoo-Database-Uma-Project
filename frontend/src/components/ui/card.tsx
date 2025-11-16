@@ -35,4 +35,10 @@ export const CardTitle = ({ children, className, ...props }: React.HTMLAttribute
 	);
 };
 
-export default Card;
+export const CardFooter = ({ children, className, ...props }: React.HTMLAttributes<HTMLDivElement>) => {
+	return (
+		<div className={className ?? "p-4 border-t"} {...props}>
+			{children}
+		</div>
+	);
+};
