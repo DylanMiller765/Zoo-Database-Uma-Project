@@ -15,6 +15,11 @@ import {
   LogOut,
   Award,
   X,
+  User,
+  Mail,
+  Phone,
+  Calendar,
+  Edit,
 } from "lucide-react";
 
 type ProfileResponse = {
@@ -494,28 +499,118 @@ export default function CustomerDashboard() {
 
         {/* Profile/Account Details */}
         {active === 'profile' && (
-          <Card>
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <CardTitle>Account Details</CardTitle>
-                <Button variant="outline" size="sm" onClick={() => router.push('/customer/profile')}>Edit Profile</Button>
-              </div>
-            </CardHeader>
-            <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-3 text-sm">
-              <div><span className="text-gray-500">Name:</span> <span className="font-medium">{`${profile?.customer_first_name || user?.first_name || ''} ${profile?.customer_last_name || user?.last_name || ''}`.trim() || '—'}</span></div>
-              <div><span className="text-gray-500">Email:</span> <span className="font-medium">{profile?.customer_email || profile?.email || '—'}</span></div>
-              <div><span className="text-gray-500">Phone:</span> <span className="font-medium">{profile?.customer_phone || '—'}</span></div>
-              <div><span className="text-gray-500">Address:</span> <span className="font-medium">{profile?.address || '—'}</span></div>
-              <div><span className="text-gray-500">City:</span> <span className="font-medium">{profile?.city || '—'}</span></div>
-              <div><span className="text-gray-500">State:</span> <span className="font-medium">{profile?.state || '—'}</span></div>
-              <div><span className="text-gray-500">ZIP Code:</span> <span className="font-medium">{profile?.zip_code || '—'}</span></div>
-              <div><span className="text-gray-500">Annual Pass:</span> <span className="font-medium">{membership.status === "Expired" ? "no (expired)" : (profile?.annual_pass || 'no')}</span></div>
-              <div><span className="text-gray-500">Registered:</span> <span className="font-medium">{formatDate(profile?.registration_date)}</span></div>
-              {membership.status === 'Active' && (
-                <div><span className="text-gray-500">Membership Expires:</span> <span className="font-medium">{membershipDates.expiry ? formatDate(membershipDates.expiry) : '—'}</span></div>
-              )}
-            </CardContent>
-          </Card>
+          <div className="space-y-6">
+            {/* Personal Information Card */}
+            <Card className="border-2 border-gray-100 shadow-sm">
+              <CardHeader className="bg-gradient-to-r from-sea_green-50 to-dark_spring_green-50 border-b border-gray-200">
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-xl flex items-center gap-2 text-gray-900">
+                    <div className="p-2 rounded-lg bg-sea_green-100">
+                      <User className="h-5 w-5 text-sea_green-700" />
+                    </div>
+                    Personal Information
+                  </CardTitle>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={() => router.push('/customer/profile')}
+                    className="flex items-center gap-2"
+                  >
+                    <Edit className="h-4 w-4" />
+                    Edit Profile
+                  </Button>
+                </div>
+              </CardHeader>
+              <CardContent className="pt-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2 text-sm text-gray-500 mb-1">
+                      <User className="h-4 w-4" />
+                      <span>Full Name</span>
+                    </div>
+                    <p className="text-base font-semibold text-gray-900">
+                      {`${profile?.customer_first_name || user?.first_name || ''} ${profile?.customer_last_name || user?.last_name || ''}`.trim() || '—'}
+                    </p>
+                  </div>
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2 text-sm text-gray-500 mb-1">
+                      <Mail className="h-4 w-4" />
+                      <span>Email Address</span>
+                    </div>
+                    <p className="text-base font-semibold text-gray-900">
+                      {profile?.customer_email || profile?.email || '—'}
+                    </p>
+                  </div>
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2 text-sm text-gray-500 mb-1">
+                      <Phone className="h-4 w-4" />
+                      <span>Phone Number</span>
+                    </div>
+                    <p className="text-base font-semibold text-gray-900">
+                      {profile?.customer_phone || '—'}
+                    </p>
+                  </div>
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2 text-sm text-gray-500 mb-1">
+                      <Calendar className="h-4 w-4" />
+                      <span>Registered</span>
+                    </div>
+                    <p className="text-base font-semibold text-gray-900">
+                      {formatDate(profile?.registration_date)}
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Address Information Card */}
+            <Card className="border-2 border-gray-100 shadow-sm">
+              <CardHeader className="bg-gradient-to-r from-sea_green-50 to-dark_spring_green-50 border-b border-gray-200">
+                <CardTitle className="text-xl flex items-center gap-2 text-gray-900">
+                  <div className="p-2 rounded-lg bg-sea_green-100">
+                    <MapPin className="h-5 w-5 text-sea_green-700" />
+                  </div>
+                  Address Information
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="pt-6">
+                <div className="space-y-4">
+                  {profile?.address || profile?.city || profile?.state || profile?.zip_code ? (
+                    <>
+                      {profile?.address && (
+                        <div className="space-y-1">
+                          <p className="text-sm text-gray-500">Street Address</p>
+                          <p className="text-base font-semibold text-gray-900">{profile.address}</p>
+                        </div>
+                      )}
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        {profile?.city && (
+                          <div className="space-y-1">
+                            <p className="text-sm text-gray-500">City</p>
+                            <p className="text-base font-semibold text-gray-900">{profile.city}</p>
+                          </div>
+                        )}
+                        {profile?.state && (
+                          <div className="space-y-1">
+                            <p className="text-sm text-gray-500">State</p>
+                            <p className="text-base font-semibold text-gray-900">{profile.state}</p>
+                          </div>
+                        )}
+                        {profile?.zip_code && (
+                          <div className="space-y-1">
+                            <p className="text-sm text-gray-500">ZIP Code</p>
+                            <p className="text-base font-semibold text-gray-900">{profile.zip_code}</p>
+                          </div>
+                        )}
+                      </div>
+                    </>
+                  ) : (
+                    <p className="text-gray-500 italic">No address information on file</p>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
         )}
       </div>
 

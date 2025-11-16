@@ -1,11 +1,13 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
+import { LogIn, Lock } from 'lucide-react';
 import apiClient from '@/lib/api';
+import { useAuth } from '@/context/AuthContext';
 
 const MEMBERSHIP_PLANS = {
   individual: {
@@ -24,18 +26,51 @@ const MEMBERSHIP_PLANS = {
 
 const DONATION_AMOUNTS = [10, 25, 50, 100];
 
-export default function MembershipPage() {
+function MembershipPageContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const { isAuthenticated, user } = useAuth();
   const [selectedPlan, setSelectedPlan] = useState<'individual'>('individual');
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
-  const [startDate, setStartDate] = useState('');
+  const [phoneError, setPhoneError] = useState('');
   const [includeDonation, setIncludeDonation] = useState(false);
   const [donationAmount, setDonationAmount] = useState(25);
   const [customDonation, setCustomDonation] = useState('');
   const [loadingProfile, setLoadingProfile] = useState(false);
+  const [showLoginModal, setShowLoginModal] = useState(false);
+  const [showRestoreMessage, setShowRestoreMessage] = useState(false);
+
+  // Check for restore purchase flag
+  useEffect(() => {
+    const restorePurchase = searchParams.get('restorePurchase');
+    if (restorePurchase === 'true') {
+      const pendingData = localStorage.getItem('pendingMembershipPurchase');
+      if (pendingData) {
+        try {
+          const data = JSON.parse(pendingData);
+          setFirstName(data.firstName || '');
+          setLastName(data.lastName || '');
+          setEmail(data.email || '');
+          setPhone(data.phone || '');
+          setIncludeDonation(data.includeDonation || false);
+          setDonationAmount(data.donationAmount || 25);
+          setCustomDonation(data.customDonation || '');
+          
+          setShowRestoreMessage(true);
+          setTimeout(() => setShowRestoreMessage(false), 5000);
+          
+          // Clear localStorage and URL param
+          localStorage.removeItem('pendingMembershipPurchase');
+          router.replace('/membership');
+        } catch (error) {
+          console.error('Error restoring membership data:', error);
+        }
+      }
+    }
+  }, [searchParams, router]);
 
   // Auto-populate form with user's profile data if logged in
   useEffect(() => {
@@ -74,17 +109,47 @@ export default function MembershipPage() {
     : donationAmount;
   const grandTotal = membershipPrice + (includeDonation ? finalDonation : 0);
 
+  const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value.replace(/\D/g, ''); // Remove non-digits
+    if (value.length <= 10) {
+      setPhone(value);
+      if (value.length > 0 && value.length !== 10) {
+        setPhoneError('Phone number must be exactly 10 digits');
+      } else {
+        setPhoneError('');
+      }
+    }
+  };
+
   const handleCheckout = () => {
     if (!firstName || !lastName || !email) {
       alert('Please fill in all required fields');
       return;
     }
 
+    // Validate phone number if provided
+    if (phone && phone.length !== 10) {
+      setPhoneError('Phone number must be exactly 10 digits');
+      alert('Please enter a valid 10-digit phone number');
+      return;
+    }
+
     // Check if user is logged in
-    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
-    if (!token) {
-      alert('Please log in to purchase a membership');
-      router.push('/login');
+    if (!isAuthenticated || user?.role !== 'customer') {
+      // Save form data to localStorage
+      const membershipData = {
+        firstName,
+        lastName,
+        email,
+        phone,
+        includeDonation,
+        donationAmount,
+        customDonation,
+      };
+      localStorage.setItem('pendingMembershipPurchase', JSON.stringify(membershipData));
+      
+      // Show login modal
+      setShowLoginModal(true);
       return;
     }
 
@@ -94,7 +159,6 @@ export default function MembershipPage() {
       firstName,
       lastName,
       email,
-      startDate: startDate || '',
       donation: finalDonation.toString(),
     });
 
@@ -104,6 +168,64 @@ export default function MembershipPage() {
 
   return (
     <div className="min-h-[calc(100vh-6rem)] py-10">
+      {/* Restore message */}
+      {showRestoreMessage && (
+        <div className="mb-6 rounded-xl bg-sea_green-50 border-2 border-sea_green-200 p-4 flex items-center gap-3 animate-in fade-in slide-in-from-top">
+          <div className="flex-shrink-0">
+            <svg className="h-5 w-5 text-sea_green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
+          <p className="text-sm font-medium text-sea_green-800">
+            Your membership information has been restored! Please review and proceed to checkout.
+          </p>
+        </div>
+      )}
+
+      {/* Login Modal - Simple & Cute */}
+      {showLoginModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          {/* Backdrop */}
+          <div
+            className="absolute inset-0 bg-black/40"
+            onClick={() => setShowLoginModal(false)}
+          />
+          
+          {/* Modal */}
+          <div className="relative bg-white rounded-2xl shadow-xl w-full max-w-sm overflow-hidden">
+            <div className="p-6 space-y-4">
+              <div className="text-center">
+                <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-sea_green-100 mb-3">
+                  <Lock className="h-8 w-8 text-sea_green-600" />
+                </div>
+                <h2 className="text-2xl font-bold text-gray-900 mb-2">Please Login</h2>
+                <p className="text-gray-600 text-sm">
+                  You need to sign in first before you purchase. It will only take a moment!
+                </p>
+              </div>
+              
+              <div className="flex gap-3 pt-2">
+                <Button
+                  variant="outline"
+                  onClick={() => setShowLoginModal(false)}
+                  className="flex-1"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={() => {
+                    setShowLoginModal(false);
+                    router.push('/login?returnTo=membership');
+                  }}
+                  className="flex-1 bg-sea_green-500 hover:bg-sea_green-600 text-white"
+                >
+                  Go to Sign In
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
       {/* Top Banner */}
       <section className="relative overflow-hidden rounded-2xl border">
         <div className="absolute inset-0 -z-10 bg-gradient-to-br from-dark_spring_green-500 via-sea_green-400 to-dark_spring_green-600" />
@@ -236,28 +358,21 @@ export default function MembershipPage() {
                     type="tel"
                     id="phone"
                     value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
-                    className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-sea_green-500 focus:border-sea_green-500 transition-all"
-                    placeholder="(555) 123-4567"
+                    onChange={handlePhoneChange}
+                    maxLength={10}
+                    className={`w-full px-4 py-3 border-2 rounded-xl focus:outline-none focus:ring-2 transition-all ${
+                      phoneError
+                        ? 'border-red-300 focus:ring-red-500 focus:border-red-500'
+                        : 'border-gray-200 focus:ring-sea_green-500 focus:border-sea_green-500'
+                    }`}
+                    placeholder="1234567890"
                   />
-                </div>
-
-                {/* Start Date */}
-                <div>
-                  <label htmlFor="start-date" className="block text-sm font-semibold text-gray-700 mb-2">
-                    Membership Start Date
-                  </label>
-                  <input
-                    type="date"
-                    id="start-date"
-                    value={startDate}
-                    onChange={(e) => setStartDate(e.target.value)}
-                    min={new Date().toISOString().split('T')[0]}
-                    className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-sea_green-500 focus:border-sea_green-500 transition-all"
-                  />
-                  <p className="mt-2 text-xs text-gray-600">
-                    Leave blank to start immediately
-                  </p>
+                  {phoneError && (
+                    <p className="mt-1 text-sm text-red-600">{phoneError}</p>
+                  )}
+                  {phone && !phoneError && (
+                    <p className="mt-1 text-xs text-gray-500">Format: 10 digits (e.g., 1234567890)</p>
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -417,5 +532,17 @@ export default function MembershipPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function MembershipPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-[calc(100vh-6rem)] py-10 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-sea_green-600"></div>
+      </div>
+    }>
+      <MembershipPageContent />
+    </Suspense>
   );
 }

@@ -9,7 +9,7 @@ import { ticketService } from '@/services/ticket.service';
 import { authService } from '@/services/auth.service';
 import { useCart } from '@/context/CartContext';
 import { useAuth } from '@/context/AuthContext';
-import { Loader2, ChevronDown, ChevronUp } from 'lucide-react';
+import { Loader2, ChevronDown, ChevronUp, Lock } from 'lucide-react';
 
 const TICKET_PRICES = {
   adult: 29.95,
@@ -36,6 +36,37 @@ function TicketsPageContent() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [ticketSectionsCollapsed, setTicketSectionsCollapsed] = useState(isDonationMode);
+  const [showLoginModal, setShowLoginModal] = useState(false);
+  const [showRestoreMessage, setShowRestoreMessage] = useState(false);
+
+  // Check for restore purchase flag
+  useEffect(() => {
+    const restorePurchase = searchParams.get('restorePurchase');
+    if (restorePurchase === 'true') {
+      const pendingData = localStorage.getItem('pendingTicketPurchase');
+      if (pendingData) {
+        try {
+          const data = JSON.parse(pendingData);
+          setVisitDate(data.visitDate || '');
+          setAdults(data.adults || 0);
+          setChildren(data.children || 0);
+          setSeniors(data.seniors || 0);
+          setIncludeDonation(data.includeDonation || false);
+          setDonationAmount(data.donationAmount || 25);
+          setCustomDonation(data.customDonation || '');
+          
+          setShowRestoreMessage(true);
+          setTimeout(() => setShowRestoreMessage(false), 5000);
+          
+          // Clear localStorage and URL param
+          localStorage.removeItem('pendingTicketPurchase');
+          router.replace('/tickets');
+        } catch (error) {
+          console.error('Error restoring ticket data:', error);
+        }
+      }
+    }
+  }, [searchParams, router]);
 
   const ticketsTotal = 
     adults * TICKET_PRICES.adult + 
@@ -53,8 +84,20 @@ function TicketsPageContent() {
   const handleCheckout = () => {
     // Check if user is logged in
     if (!isAuthenticated || user?.role !== 'customer') {
-      alert('Please log in to purchase tickets');
-      router.push('/login');
+      // Save ticket data to localStorage
+      const ticketData = {
+        visitDate,
+        adults,
+        children,
+        seniors,
+        includeDonation,
+        donationAmount,
+        customDonation,
+      };
+      localStorage.setItem('pendingTicketPurchase', JSON.stringify(ticketData));
+      
+      // Show login modal
+      setShowLoginModal(true);
       return;
     }
 
@@ -143,6 +186,64 @@ function TicketsPageContent() {
 
   return (
     <div className="min-h-[calc(100vh-6rem)] py-10">
+      {/* Restore message */}
+      {showRestoreMessage && (
+        <div className="mb-6 rounded-xl bg-sea_green-50 border-2 border-sea_green-200 p-4 flex items-center gap-3 animate-in fade-in slide-in-from-top">
+          <div className="flex-shrink-0">
+            <svg className="h-5 w-5 text-sea_green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
+          <p className="text-sm font-medium text-sea_green-800">
+            Your ticket selections have been restored! Please review and proceed to checkout.
+          </p>
+        </div>
+      )}
+
+      {/* Login Modal - Simple & Cute */}
+      {showLoginModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          {/* Backdrop */}
+          <div
+            className="absolute inset-0 bg-black/40"
+            onClick={() => setShowLoginModal(false)}
+          />
+          
+          {/* Modal */}
+          <div className="relative bg-white rounded-2xl shadow-xl w-full max-w-sm overflow-hidden">
+            <div className="p-6 space-y-4">
+              <div className="text-center">
+                <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-sea_green-100 mb-3">
+                  <Lock className="h-8 w-8 text-sea_green-600" />
+                </div>
+                <h2 className="text-2xl font-bold text-gray-900 mb-2">Please Login</h2>
+                <p className="text-gray-600 text-sm">
+                  You need to sign in first before you purchase. It will only take a moment!
+                </p>
+              </div>
+              
+              <div className="flex gap-3 pt-2">
+                <Button
+                  variant="outline"
+                  onClick={() => setShowLoginModal(false)}
+                  className="flex-1"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={() => {
+                    setShowLoginModal(false);
+                    router.push('/login?returnTo=tickets');
+                  }}
+                  className="flex-1 bg-sea_green-500 hover:bg-sea_green-600 text-white"
+                >
+                  Go to Sign In
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
       {/* Top Banner */}
       <section className="relative overflow-hidden rounded-2xl border">
         <div className="absolute inset-0 -z-10 bg-gradient-to-br from-dark_spring_green-500 via-sea_green-400 to-dark_spring_green-600" />
