@@ -95,7 +95,24 @@ export default function EventsPage() {
                 setLoading(true); // Set loading true at the start
                 setError(null);
                 const data = await eventService.getAll();
-                setEvents(data);
+                
+                // Sort events by date (soonest first), then by start time
+                const sortedEvents = [...data].sort((a, b) => {
+                    // First compare dates
+                    const dateA = a.event_date ? new Date(a.event_date).getTime() : Infinity;
+                    const dateB = b.event_date ? new Date(b.event_date).getTime() : Infinity;
+                    
+                    if (dateA !== dateB) {
+                        return dateA - dateB; // Ascending order (soonest first)
+                    }
+                    
+                    // If dates are the same, sort by start time
+                    const timeA = a.start_time || '';
+                    const timeB = b.start_time || '';
+                    return timeA.localeCompare(timeB);
+                });
+                
+                setEvents(sortedEvents);
             } catch (err) {
                 console.error("Failed to fetch events:", err);
                 setError('Failed to load events. Displaying sample data.');
