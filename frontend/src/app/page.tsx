@@ -8,6 +8,33 @@ import { habitatService } from "@/services/habitat.service";
 import { eventService } from "@/services/event.service";
 import { dashboardService, PublicStats } from "@/services/dashboard.service";
 import { Habitat, Event } from "@/types";
+import { parse, format, parseISO } from 'date-fns';
+
+// Helper function to format time string (e.g., "14:00:00" -> "2:00 PM")
+const formatTime = (timeStr: string | null | undefined): string => {
+  if (!timeStr) return 'N/A';
+  try {
+    // Parse the time string (HH:mm:ss) using a dummy date
+    const dummyDate = parse(timeStr, 'HH:mm:ss', new Date());
+    // Format to h:mm a (e.g., "2:00 PM")
+    return format(dummyDate, 'h:mm a');
+  } catch (e) {
+    return timeStr; // Fallback to original string if parsing fails
+  }
+};
+
+// Helper function to format date string (e.g., "2025-12-05" -> "Dec 5, 2025")
+const formatEventDate = (dateStr: string | null | undefined): string => {
+  if (!dateStr) return 'N/A';
+  try {
+    // Parse ISO date string (YYYY-MM-DD)
+    const dateObj = parseISO(dateStr);
+    // Format to MMM d, yyyy (e.g., "Dec 5, 2025")
+    return format(dateObj, 'MMM d, yyyy');
+  } catch (e) {
+    return dateStr; // Fallback for "Daily" or other non-date strings
+  }
+};
 
 export default function HomePage() {
   const [habitats, setHabitats] = useState<Habitat[]>([]);
@@ -24,7 +51,24 @@ export default function HomePage() {
           dashboardService.getPublicStats(),
         ]);
         setHabitats(habitatsData);
-        setEvents(eventsData);
+        
+        // Sort events by date (soonest first), then by start time
+        const sortedEvents = [...eventsData].sort((a, b) => {
+          // First compare dates
+          const dateA = a.event_date ? new Date(a.event_date).getTime() : Infinity;
+          const dateB = b.event_date ? new Date(b.event_date).getTime() : Infinity;
+          
+          if (dateA !== dateB) {
+            return dateA - dateB; // Ascending order (soonest first)
+          }
+          
+          // If dates are the same, sort by start time
+          const timeA = a.start_time || '';
+          const timeB = b.start_time || '';
+          return timeA.localeCompare(timeB);
+        });
+        
+        setEvents(sortedEvents);
         setStats(statsData);
       } catch (error) {
         console.error("Error fetching data:", error);
@@ -123,7 +167,20 @@ export default function HomePage() {
           {loading ? (
             <p>Loading exhibits...</p>
           ) : (
-            habitats.slice(0, 3).map((habitat) => (
+            habitats.slice(0, 3).map((habitat) => {
+              // Get image based on habitat name
+              const getHabitatImage = (habitatName: string) => {
+                if (habitatName === 'Elephant Plains') {
+                  return '/images/pexels-hsapir-1054666.jpg';
+                }
+                if (habitatName === 'Gorilla Forest') {
+                  return '/images/pexels-francesco-ungaro-1238272.jpg';
+                }
+                // Default image for other habitats
+                return '/images/pexels-gary-whyte-228069-730537.jpg';
+              };
+
+              return (
               <Card
                 key={habitat.habitat_id}
                 className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
@@ -131,7 +188,7 @@ export default function HomePage() {
                 <CardHeader className="px-0 pt-0 pb-3">
                   <div className="w-full overflow-hidden rounded-t-lg">
                     <img
-                      src={`/images/pexels-gary-whyte-228069-730537.jpg`}
+                      src={getHabitatImage(habitat.habitat_name)}
                       alt={habitat.habitat_name}
                       loading="lazy"
                       className="h-44 w-full object-cover"
@@ -146,7 +203,8 @@ export default function HomePage() {
                   <p className="leading-relaxed">Size: {habitat.size} • Capacity: {habitat.animal_capacity} animals</p>
                 </CardContent>
               </Card>
-            ))
+              );
+            })
           )}
         </div>
       </section>
@@ -226,19 +284,12 @@ export default function HomePage() {
                 key={event.event_id}
                 className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
               >
-                <CardHeader className="px-0 pt-0 pb-3">
-                  <div className="w-full overflow-hidden rounded-t-lg">
-                    <img
-                      src={`/images/events/giraffe-feeding.jpg`}
-                      alt={event.event_name}
-                      loading="lazy"
-                      className="h-44 w-full object-cover"
-                    />
-                  </div>
-                  <div className="px-6 pt-4">
-                    <CardTitle className="text-lg text-dark_spring_green-700">{event.event_name}</CardTitle>
-                    <p className="text-xs text-sea_green-600 font-medium mt-1">{event.start_time} • {event.location}</p>
-                  </div>
+                <CardHeader className="px-6 pt-6 pb-3">
+                  <CardTitle className="text-lg text-dark_spring_green-700">{event.event_name}</CardTitle>
+                  <p className="text-xs text-sea_green-600 font-medium mt-1">
+                    {formatEventDate(event.event_date)} • {formatTime(event.start_time)}
+                    {event.location && ` • ${event.location}`}
+                  </p>
                 </CardHeader>
                 <CardContent className="px-6 pb-6 text-sm text-gray-700">
                   <p className="leading-relaxed">{event.description}</p>

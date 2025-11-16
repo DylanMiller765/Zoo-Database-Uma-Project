@@ -1,12 +1,13 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { useCart } from '@/context/CartContext';
 import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
-import { ShoppingCart } from 'lucide-react';
+import { ShoppingCart, Sparkles, Heart, Package, Loader2, Check, Search } from 'lucide-react';
 import apiClient from '@/lib/api';
 
 type ShopItem = {
@@ -14,13 +15,17 @@ type ShopItem = {
   name: string;
   price: number | string; // DECIMAL may arrive as string
   description?: string;
+  category?: string;
 };
 
 export default function GiftShopPage() {
   const [items, setItems] = useState<ShopItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const { addItem, openCart } = useCart();
+  const [addedItems, setAddedItems] = useState<Set<number>>(new Set());
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState<string>('All');
+  const { addItem } = useCart();
   const { isAuthenticated, user } = useAuth();
   const router = useRouter();
 
@@ -40,7 +45,16 @@ export default function GiftShopPage() {
       unit_price: typeof item.price === 'number' ? item.price : Number(item.price),
       metadata: { gift_shop_id: 1 }
     });
-    openCart();
+
+    // Show success feedback
+    setAddedItems((prev) => new Set(prev).add(item.item_id));
+    setTimeout(() => {
+      setAddedItems((prev) => {
+        const newSet = new Set(prev);
+        newSet.delete(item.item_id);
+        return newSet;
+      });
+    }, 2000);
   };
 
   useEffect(() => {
@@ -56,6 +70,33 @@ export default function GiftShopPage() {
     };
     load();
   }, []);
+
+  // Get unique categories
+  const categories = useMemo(() => {
+    const cats = new Set<string>();
+    items.forEach(item => {
+      if (item.category) {
+        cats.add(item.category);
+      }
+    });
+    return ['All', ...Array.from(cats).sort()];
+  }, [items]);
+
+  // Filter items based on search and category
+  const filteredItems = useMemo(() => {
+    return items.filter(item => {
+      // Search filter
+      const matchesSearch = !searchQuery || 
+        item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (item.description && item.description.toLowerCase().includes(searchQuery.toLowerCase()));
+      
+      // Category filter
+      const matchesCategory = selectedCategory === 'All' || item.category === selectedCategory;
+      
+      return matchesSearch && matchesCategory;
+    });
+  }, [items, searchQuery, selectedCategory]);
+
   return (
     <div className="min-h-[calc(100vh-6rem)] py-10">
       {/* Banner */}
@@ -83,39 +124,204 @@ export default function GiftShopPage() {
         </div>
       </section>
 
-      <section className="mt-8 rounded-2xl bg-gray-50 p-6">
-        <h2 className="text-2xl font-bold mb-4">Featured Items</h2>
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-          {loading && <p className="text-sm text-gray-600">Loading items…</p>}
-          {error && <p className="text-sm text-red-600">{error}</p>}
-          {!loading && !error && items.length === 0 && (
-            <p className="text-sm text-gray-600">No items available.</p>
-          )}
-          {items.map((item) => (
-            <Card key={item.item_id} className="rounded-xl border border-gray-200 bg-white shadow-sm hover:shadow-md transition flex flex-col">
-              <CardHeader className="px-5 pt-5 pb-2">
-                <CardTitle className="text-sm font-semibold text-dark_spring_green-700 truncate">{item.name}</CardTitle>
-              </CardHeader>
-              <CardContent className="px-5 pb-5 text-sm text-gray-700 flex-1 flex flex-col">
-                <div className="font-bold text-sea_green-600 mb-1">${typeof item.price === 'number' ? item.price.toFixed(2) : Number(item.price).toFixed(2)}</div>
-                {item.description && (
-                  <p className="text-xs text-gray-600 mb-3">{item.description}</p>
-                )}
-                {isAuthenticated && user?.role === 'customer' && (
-                  <Button
-                    onClick={() => handleAddToCart(item)}
-                    className="w-full mt-auto bg-sea_green-600 hover:bg-sea_green-700 text-white"
-                    size="sm"
-                  >
-                    <ShoppingCart className="h-4 w-4 mr-2" />
-                    Add to Cart
-                  </Button>
-                )}
-              </CardContent>
-            </Card>
-          ))}
+      <section className="mt-8">
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h2 className="text-3xl font-bold text-gray-900 mb-2">Featured Items</h2>
+            <p className="text-gray-600">Discover unique souvenirs and gifts</p>
+          </div>
+          <div className="hidden md:flex items-center gap-2 px-4 py-2 bg-sea_green-50 rounded-full border border-sea_green-200">
+            <Heart className="h-4 w-4 text-sea_green-600" />
+            <span className="text-sm font-medium text-sea_green-700">Supports Conservation</span>
+          </div>
         </div>
-        <p className="mt-6 text-xs text-gray-600 text-center">More products coming soon. All purchases help fund animal care.</p>
+
+        {/* Search and Filter Bar */}
+        <div className="mb-6 flex flex-col sm:flex-row gap-4">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+            <Input
+              type="text"
+              placeholder="Search items..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10 w-full"
+            />
+          </div>
+          <select
+            value={selectedCategory}
+            onChange={(e) => setSelectedCategory(e.target.value)}
+            className="px-4 py-2 border border-gray-300 rounded-md bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-sea_green-500 focus:border-transparent"
+          >
+            {categories.map(cat => (
+              <option key={cat} value={cat}>Category: {cat}</option>
+            ))}
+          </select>
+        </div>
+
+        {loading && (
+          <div className="flex items-center justify-center py-20">
+            <Loader2 className="h-8 w-8 animate-spin text-sea_green-600" />
+            <span className="ml-3 text-gray-600">Loading items...</span>
+          </div>
+        )}
+
+        {error && (
+          <div className="rounded-xl bg-red-50 border border-red-200 p-6 text-center">
+            <p className="text-red-700 font-medium">{error}</p>
+          </div>
+        )}
+
+        {!loading && !error && items.length === 0 && (
+          <div className="rounded-xl bg-gray-50 border border-gray-200 p-12 text-center">
+            <Package className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+            <p className="text-gray-600 font-medium">No items available at this time.</p>
+            <p className="text-sm text-gray-500 mt-2">Check back soon for new arrivals!</p>
+          </div>
+        )}
+
+        {!loading && !error && filteredItems.length > 0 && (() => {
+          // Group filtered items by category
+          const groupedItems = filteredItems.reduce((acc, item) => {
+            const category = item.category || 'Other';
+            if (!acc[category]) {
+              acc[category] = [];
+            }
+            acc[category].push(item);
+            return acc;
+          }, {} as Record<string, ShopItem[]>);
+
+          const displayCategories = Object.keys(groupedItems).sort();
+
+          return (
+            <div className="space-y-8">
+              {displayCategories.map((category) => (
+                <div key={category} className="space-y-4">
+                  <div className="flex items-center gap-3">
+                    <div className="h-px flex-1 bg-gradient-to-r from-transparent via-sea_green-200 to-transparent"></div>
+                    <h3 className="text-xl font-bold text-dark_spring_green-800 px-4">
+                      {category}
+                    </h3>
+                    <div className="h-px flex-1 bg-gradient-to-r from-transparent via-sea_green-200 to-transparent"></div>
+                  </div>
+                  
+                  <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5">
+                    {groupedItems[category].map((item) => {
+                      const isAdded = addedItems.has(item.item_id);
+                      const price = typeof item.price === 'number' ? item.price : Number(item.price);
+                      
+                      return (
+                        <Card 
+                          key={item.item_id} 
+                          className="group relative overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm hover:shadow-lg hover:border-sea_green-300 transition-all duration-300 flex flex-col transform hover:-translate-y-0.5"
+                        >
+                          {/* Decorative gradient overlay on hover */}
+                          <div className="absolute inset-0 bg-gradient-to-br from-sea_green-50/0 to-dark_spring_green-50/0 group-hover:from-sea_green-50/40 group-hover:to-dark_spring_green-50/20 transition-all duration-300 pointer-events-none" />
+                          
+                          {/* Success indicator */}
+                          {isAdded && (
+                            <div className="absolute top-2 right-2 z-10 bg-sea_green-500 text-white rounded-full p-1.5 shadow-lg">
+                              <Check className="h-3 w-3" />
+                            </div>
+                          )}
+
+                          <CardHeader className="px-4 pt-4 pb-2 relative z-10">
+                            <div className="flex items-start justify-between gap-2">
+                              <CardTitle className="text-sm font-bold text-dark_spring_green-800 leading-tight line-clamp-2">
+                                {item.name}
+                              </CardTitle>
+                              <Sparkles className="h-4 w-4 text-light_yellow-400 flex-shrink-0 opacity-50" />
+                            </div>
+                          </CardHeader>
+
+                          <CardContent className="px-4 pb-4 flex-1 flex flex-col relative z-10">
+                            {/* Price */}
+                            <div className="mb-2">
+                              <span className="text-xl font-extrabold text-sea_green-600">
+                                ${price.toFixed(2)}
+                              </span>
+                            </div>
+
+                            {/* Description */}
+                            {item.description && (
+                              <p className="text-xs text-gray-600 mb-3 line-clamp-2 leading-relaxed flex-1">
+                                {item.description}
+                              </p>
+                            )}
+
+                            {/* Add to Cart Button */}
+                            {isAuthenticated && user?.role === 'customer' && (
+                              <Button
+                                onClick={() => handleAddToCart(item)}
+                                disabled={isAdded}
+                                className={`w-full mt-auto text-xs font-semibold transition-all duration-200 ${
+                                  isAdded
+                                    ? 'bg-sea_green-500 text-white cursor-default'
+                                    : 'bg-gradient-to-r from-sea_green-600 to-dark_spring_green-600 hover:from-sea_green-700 hover:to-dark_spring_green-700 text-white shadow-sm hover:shadow-md'
+                                }`}
+                                size="sm"
+                              >
+                                {isAdded ? (
+                                  <>
+                                    <Check className="h-3 w-3 mr-1.5" />
+                                    Added!
+                                  </>
+                                ) : (
+                                  <>
+                                    <ShoppingCart className="h-3 w-3 mr-1.5" />
+                                    Add to Cart
+                                  </>
+                                )}
+                              </Button>
+                            )}
+
+                            {(!isAuthenticated || user?.role !== 'customer') && (
+                              <div className="mt-auto pt-3 border-t border-gray-100">
+                                <p className="text-xs text-center text-gray-500">
+                                  <a 
+                                    href="/login" 
+                                    className="text-sea_green-600 hover:text-sea_green-700 font-medium underline"
+                                  >
+                                    Sign in
+                                  </a>
+                                  {' '}to purchase
+                                </p>
+                              </div>
+                            )}
+                          </CardContent>
+                        </Card>
+                      );
+                    })}
+                  </div>
+                </div>
+              ))}
+            </div>
+          );
+        })()}
+
+        {/* No results message */}
+        {!loading && !error && items.length > 0 && filteredItems.length === 0 && (
+          <div className="rounded-xl bg-gray-50 border border-gray-200 p-12 text-center">
+            <Search className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+            <p className="text-gray-600 font-medium">No items found</p>
+            <p className="text-sm text-gray-500 mt-2">Try adjusting your search or category filter</p>
+          </div>
+        )}
+
+        {/* Footer message */}
+        {!loading && !error && filteredItems.length > 0 && (
+          <div className="mt-8 rounded-xl bg-gradient-to-r from-sea_green-50 to-dark_spring_green-50 border border-sea_green-200 p-6 text-center">
+            <div className="flex items-center justify-center gap-2 mb-2">
+              <Heart className="h-5 w-5 text-sea_green-600" />
+              <p className="text-sm font-semibold text-dark_spring_green-800">
+                Every Purchase Supports Conservation
+              </p>
+            </div>
+            <p className="text-xs text-gray-600">
+              All proceeds help fund animal care, habitat maintenance, and education programs.
+            </p>
+          </div>
+        )}
       </section>
     </div>
   );

@@ -105,10 +105,10 @@ class AuthService {
     );
     const customerId = customerResult.insertId;
 
-    // Step 2: Create a user account
+    // Step 2: Create a user account (use email as username)
     const userAccountResult = await query<any>(
-      'INSERT INTO user_accounts (email, role, customer_id) VALUES (?, ?, ?)',
-      [email, 'customer', customerId]
+      'INSERT INTO user_accounts (username, email, role, customer_id) VALUES (?, ?, ?, ?)',
+      [email, email, 'customer', customerId]
     );
     const accountId = userAccountResult.insertId;
 
