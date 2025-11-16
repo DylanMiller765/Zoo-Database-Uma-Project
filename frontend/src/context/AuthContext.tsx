@@ -8,7 +8,8 @@ import { useRouter } from 'next/navigation';
 interface AuthContextType {
   user: User | null;
   loading: boolean;
-  login: (credentials: LoginCredentials) => Promise<void>;
+  login: (credentials: LoginCredentials, returnTo?: string | null) => Promise<void>;
+  register: (userData: any) => Promise<void>;
   logout: () => void;
   isAuthenticated: boolean;
   hasRole: (roles: string | string[]) => boolean;
@@ -30,12 +31,34 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setLoading(false);
   }, []);
 
-  const login = async (credentials: LoginCredentials) => {
+  const login = async (credentials: LoginCredentials, returnTo?: string | null) => {
     try {
       const response = await authService.login(credentials);
       if (response.success && response.data.user) {
         setUser(response.data.user);
-        // Redirect based on role
+        
+        // Handle returnTo for specific pages
+        if (returnTo === 'membership') {
+          const pendingMembershipPurchase = typeof window !== 'undefined' 
+            ? localStorage.getItem('pendingMembershipPurchase') 
+            : null;
+          if (pendingMembershipPurchase) {
+            router.push('/membership?restorePurchase=true');
+            return;
+          }
+        }
+        
+        if (returnTo === 'tickets') {
+          const pendingTicketPurchase = typeof window !== 'undefined' 
+            ? localStorage.getItem('pendingTicketPurchase') 
+            : null;
+          if (pendingTicketPurchase) {
+            router.push('/tickets?restorePurchase=true');
+            return;
+          }
+        }
+        
+        // Default redirect based on role
         if (response.data.user.role === 'employee') {
           router.push('/admin');
         } else {
@@ -46,6 +69,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     } catch (error: any) {
       throw new Error(error.response?.data?.message || 'Login failed');
+    }
+  };
+
+  const register = async (userData: any) => {
+    try {
+      const response = await authService.register(userData);
+      if (response.success && response.data?.user) {
+        // authService.register already stores token and user in localStorage
+        // Update the context state
+        setUser(response.data.user);
+        
+        // Redirect to customer page
+        router.push('/customer');
+      } else {
+        throw new Error(response.message || 'Registration failed');
+      }
+    } catch (error: any) {
+      throw new Error(error.response?.data?.message || 'Registration failed');
     }
   };
 
@@ -83,6 +124,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     user,
     loading,
     login,
+    register,
     logout,
     isAuthenticated: !!user,
     hasRole,
