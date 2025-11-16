@@ -315,6 +315,31 @@ CREATE TABLE `notifications` (
     INDEX `idx_created_at` (`created_at`)
 );
 
+CREATE TABLE `animals_alert_queue` (
+    ---What animal needs attention?
+    `animal_alert_id` INT PRIMARY KEY AUTO_INCREMENT,
+    ---Why does it need attention?
+    `alert_reason` ENUM(`health_status`,`active_status`),
+    `health_status` ENUM('excellent', 'good', 'fair', 'poor', 'critical') IS NOT NULL,
+    `active_status` ENUM('active', 'transferred', 'deceased') DEFAULT 'active',
+    `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
+    `processed_at` DATETIME DEFAULT NULL,
+    `animal_id` INT NOT NULL,
+    FOREIGN KEY (`animal_id`) REFERENCES `animals`(`animal_id`) ON DELETE CASCADE,
+    INDEX `idx_processed_at` (`processed_at`),
+);
+
+-- Trigger to create animal alert queue
+-- On each update, check each animal's health
+-- if it falls below a certain threshold, create an alert in the queue
+/*
+On update to the animal table
+creat variable named health_threshold
+Check each animal row and determine if it's < health_threshold
+If it is below health_threshold, create row in animlas_alert table with the animal_id, concatenate a message to send to zookeepers. Set the created at and the animal id.
+
+*/
+
 -- Indexes for soft delete columns (performance optimization)
 CREATE INDEX `idx_employees_deleted` ON `employees`(`deleted_at`);
 CREATE INDEX `idx_customers_deleted` ON `customers`(`deleted_at`);
