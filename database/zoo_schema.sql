@@ -336,26 +336,79 @@ Check each animal row and determine if it's < health_threshold
 If it is below health_threshold, create row in animlas_alert table with the animal_id, concatenate a message to send to zookeepers. Set the created at and the animal id.
 
 */
-DELIMITER//
+DELIMITER //
 
 CREATE TRIGGER alert_animal_health_and_active_status_upon_threshold
 AFTER UPDATE ON animals
 FOR EACH ROW
-BEGIN 
-    IF NEW.health_status < health_threshold and NEW.health_status != OLD.health_status THEN
-    IF NOT EXISTS (
-        SELECT 1 FROM animals_alert_queue alert
-        WHERE alert.animal_id = NEW.animal_id
-        AND alert.alert_value = NEW.health_status
-        AND alert.alert_reason = "health_status"
-    ) THEN
-        INSERT INTO animals_alert_queue(alert_reason, alert_value, created_at, processed_at, animal_id)
-        VALUES ("health_status", NEW.health_status, NOW(), NULL, NEW.animal_id);
-    END IF;
-    IF NEW.alert_
-END
+BEGIN
+    -- Declare a reusable variable
+    DECLARE existing_alert_id INT;
 
-DELIMITER//
+    
+    -- === LOGIC BLOCK 1: HEALTH STATUS ===
+    -- Check if the new status is 'poor' or 'critical' AND it's a new change
+    IF NEW.health_status IN ('poor', 'critical') AND NEW.health_status != OLD.health_status THEN
+        
+        SET existing_alert_id = NULL; -- Reset variable
+
+        -- Check if an *unprocessed* 'health_status' alert already exists
+        SELECT alert.animal_alert_id INTO existing_alert_id
+        FROM animals_alert_queue alert
+        WHERE alert.animal_id = NEW.animal_id
+          AND alert.alert_reason = 'health_status'
+          AND alert.processed_at IS NULL
+        LIMIT 1;
+
+        IF existing_alert_id IS NULL THEN
+            -- No open alert found, so INSERT a new one
+            INSERT INTO animals_alert_queue(alert_reason, alert_value, animal_id)
+            VALUES ('health_status', NEW.health_status, NEW.animal_id);
+        ELSE
+            -- An open alert *does* exist, so UPDATE it
+            UPDATE animals_alert_queue
+            SET 
+                alert_value = NEW.health_status, -- Update to 'poor' or 'critical'
+                created_at = NOW()               -- Refresh the timestamp
+            WHERE 
+                animal_alert_id = existing_alert_id;
+        END IF;
+    
+    END IF; -- End of health status logic
+
+    
+    -- === LOGIC BLOCK 2: ACTIVE STATUS ===
+    -- This logic was already correct for your ENUM
+    IF NEW.active_status = 'deceased' AND NEW.active_status != OLD.active_status THEN
+        
+        SET existing_alert_id = NULL; -- Reset variable
+
+        -- Check if an *unprocessed* 'active_status' alert already exists
+        SELECT alert.animal_alert_id INTO existing_alert_id
+        FROM animals_alert_queue alert
+        WHERE alert.animal_id = NEW.animal_id
+          AND alert.alert_reason = 'active_status'
+          AND alert.processed_at IS NULL
+        LIMIT 1;
+
+        IF existing_alert_id IS NULL THEN
+            -- No 'deceased' alert exists, so INSERT a new one
+            INSERT INTO animals_alert_queue(alert_reason, alert_value, animal_id)
+            VALUES ('active_status', NEW.active_status, NEW.animal_id);
+        ELSE
+            -- An alert already exists. Just update its timestamp.
+            UPDATE animals_alert_queue
+            SET 
+                created_at = NOW()
+            WHERE 
+                animal_alert_id = existing_alert_id;
+        END IF;
+
+    END IF; -- End of active status logic
+
+END; //
+
+DELIMITER ;
 
 -- Indexes for soft delete columns (performance optimization)
 CREATE INDEX `idx_employees_deleted` ON `employees`(`deleted_at`);
