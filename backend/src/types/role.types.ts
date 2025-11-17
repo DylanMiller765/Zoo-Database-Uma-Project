@@ -22,6 +22,7 @@ export const PERMISSIONS: RolePermissions = {
   [UserRole.MANAGER]: ['*'], // Full access
   [UserRole.KEEPER]: [
     'animals:read',
+    'animals:create',
     'animals:update',
     'feeding_logs:*',
     'habitats:read',
