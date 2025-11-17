@@ -5,13 +5,11 @@ import { AnimalAlertService } from '../services/animal-alert.service';
  * Start the notification email job
  */
 export function startAnimalAlertEmailJob(): void {
-  // Run every 1 minutes: */1 * * * *
-  // For testing, you can change to every minute: * * * * *
-  // How can I change it to like 10 seconds?
-  const schedule = '*/20 * * * * *'; // Note: This runs every 10 seconds
-  const batchSize = 5;  
+  // For demo: checking every 30 seconds for real-time feel
+  const schedule = '*/30 * * * * *'; // Runs every 30 seconds
+  const batchSize = 5;
   console.log('[Notification Email Job] Scheduling email processing job...');
-  console.log(`[Notification Email Job] Schedule: Every 1 minutes`);
+  console.log(`[Notification Email Job] Schedule: Every 30 seconds (demo mode)`);
 
   cron.schedule(schedule, async () => {
     console.log(`\n[${new Date().toISOString()}] Running notification email job...`);
