@@ -7,7 +7,8 @@ import { AnimalAlertService } from '../services/animal-alert.service';
 export function startAnimalAlertEmailJob(): void {
   // Run every 1 minutes: */1 * * * *
   // For testing, you can change to every minute: * * * * *
-  const schedule = '*/5 * * * *';
+  // How can I change it to like 10 seconds?
+  const schedule = '*/20 * * * * *'; // Note: This runs every 10 seconds
   const batchSize = 5;  
   console.log('[Notification Email Job] Scheduling email processing job...');
   console.log(`[Notification Email Job] Schedule: Every 1 minutes`);
