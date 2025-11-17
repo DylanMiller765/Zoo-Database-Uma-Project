@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { NotificationService } from '../services/notification.service';
 import { AuthUser } from '../types/user.types';
+import { UserRole } from '../types/role.types';
 
 interface AuthRequest extends Request {
   user?: AuthUser;
@@ -9,6 +10,20 @@ interface AuthRequest extends Request {
 export class NotificationController {
   // Get notifications for the authenticated customer
   static async getNotifications(req: AuthRequest, res: Response): Promise<void> {
+    //Get notifications for customer and also notifications for employee if needed
+    const allowedEmployeeRoles = [
+      UserRole.EMPLOYEE,
+      UserRole.KEEPER,
+      UserRole.MANAGER,
+      UserRole.COORDINATOR,
+      UserRole.CASHIER,
+      UserRole.GUIDE,
+      UserRole.VETERINARIAN,
+      UserRole.MAINTENANCE,
+      UserRole.SECURITY,
+      UserRole.OTHER,
+    ]
+    if (req.user?.role === UserRole.CUSTOMER) {
     try {
       const customerId = req.user?.customer_id;
       console.log('[NOTIFICATIONS] getNotifications called for customer:', customerId);
@@ -31,6 +46,29 @@ export class NotificationController {
       console.error('[NOTIFICATIONS] Error fetching notifications:', error);
       res.status(500).json({ message: 'Error fetching notifications', error });
     }
+  } else if (req.user?.role && req.user?.role in allowedEmployeeRoles) {
+    // Get employee id
+      try {
+        const employeeId = req.user?.employee_id;
+        console.log('[NOTIFICATIONS] getNotifications called for employee:', employeeId);
+
+        if (!employeeId) {
+          console.log('[NOTIFICATIONS] No employee_id found in request');
+          res.status(403).json({ message: 'Employee authentication required' });
+          return;
+        }
+
+        const unreadOnly = req.query.unread === 'true';
+        console.log('[NOTIFICATIONS] Fetching notifications - unreadOnly:', unreadOnly);
+
+        const notifications = await NotificationService.getNotificationsForEmployee(employeeId, unreadOnly);
+        console.log('[NOTIFICATIONS] Found', notifications.length, 'notifications for employee', employeeId);
+        console.log('[NOTIFICATIONS] Notifications:', JSON.stringify(notifications, null, 2));
+      } catch (error) {
+      console.error('[NOTIFICATIONS] Error fetching notifications:', error);
+      res.status(500).json({ message: 'Error fetching notifications', error });
+    }
+  }
   }
 
   // Get unread notification count
