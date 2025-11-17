@@ -84,17 +84,3 @@ export const deleteEvent = async (req: Request, res: Response) => {
     res.status(500).json({ message: 'Error deleting event', error });
   }
 };
-
-export const restoreEvent = async (req: Request, res: Response) => {
-  try {
-    const eventId = parseInt(req.params.id, 10);
-    const restoredEvent = await eventService.restoreEvent(eventId);
-    if (restoredEvent) {
-      res.json(restoredEvent);
-    } else {
-      res.status(404).json({ message: 'Event not found' });
-    }
-  } catch (error) {
-    res.status(500).json({ message: 'Error restoring event', error });
-  }
-};

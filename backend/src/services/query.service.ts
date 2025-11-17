@@ -289,14 +289,33 @@ export class QueryService {
       ORDER BY revenue DESC
     `, params);
 
-    const total = byEvent.reduce((sum, row) => sum + parseFloat(row.revenue || 0), 0);
+    // Calculate refunds
+    const refundDateFilter = startDate && endDate ? 'er.registration_date BETWEEN ? AND ?' : '1=1';
+    const refundParams = startDate && endDate ? [startDate, endDate] : [];
+
+    const refundQuery = await query<any[]>(`
+      SELECT
+        COALESCE(SUM(CASE WHEN er.refunded_at IS NOT NULL THEN er.total_amount END), 0) as total_refunds,
+        COUNT(CASE WHEN er.refunded_at IS NOT NULL THEN 1 END) as refund_count
+      FROM event_registrations er
+      WHERE ${refundDateFilter}
+        AND er.deleted_at IS NULL
+    `, refundParams);
+
+    const grossRevenue = byEvent.reduce((sum, row) => sum + parseFloat(row.revenue || 0), 0);
     const registrations = byEvent.reduce((sum, row) => sum + parseInt(row.registrations || 0), 0);
     const participants = byEvent.reduce((sum, row) => sum + parseInt(row.participants || 0), 0);
+    const totalRefunds = parseFloat(refundQuery[0]?.total_refunds || 0);
+    const refundCount = parseInt(refundQuery[0]?.refund_count || 0);
 
     return {
-      total,
+      gross_revenue: grossRevenue,
+      total_refunds: totalRefunds,
+      net_revenue: grossRevenue - totalRefunds,
+      total: grossRevenue - totalRefunds, // For backwards compatibility
       registrations,
       participants,
+      refund_count: refundCount,
       byEvent
     };
   }

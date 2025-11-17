@@ -58,6 +58,19 @@ export class EventModel {
     const sql = 'UPDATE events SET deleted_at = NOW() WHERE event_id = ?';
     const result = await query<any>(sql, [eventId]);
 
+    // Automatically refund all event registrations for this cancelled event
+    if (result.affectedRows > 0) {
+      const employeeName = employeeInfo?.name || 'System';
+      const refundSql = `
+        UPDATE event_registrations
+        SET refunded_at = NOW(),
+            refund_reason = ?
+        WHERE event_id = ?
+          AND refunded_at IS NULL
+      `;
+      await query(refundSql, [`Event cancelled by ${employeeName}`, eventId]);
+    }
+
     // Clear session variables
     if (employeeInfo) {
       await query('SET @cancelled_by_employee_id = NULL, @cancelled_by_employee_name = NULL');

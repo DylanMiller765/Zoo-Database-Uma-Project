@@ -170,9 +170,23 @@ CREATE TABLE `tickets` (
     `ticket_type` ENUM('adult', 'child', 'senior', 'student') NOT NULL,
     `price` DECIMAL(8, 2) NOT NULL,
     `payment_method` ENUM('cash', 'credit', 'debit', 'online'),
+    `sold_by` INT,
     `deleted_at` DATETIME DEFAULT NULL,
     FOREIGN KEY (`customer_id`) REFERENCES `customers`(`customer_id`) ON DELETE SET NULL,
+    FOREIGN KEY (`sold_by`) REFERENCES `employees`(`employee_id`) ON DELETE SET NULL,
     INDEX `idx_ticket_date` (`visit_date`)
+);
+
+CREATE TABLE `donations` (
+    `donation_id` INT PRIMARY KEY AUTO_INCREMENT,
+    `customer_id` INT,
+    `amount` DECIMAL(10, 2) NOT NULL,
+    `donation_date` DATETIME DEFAULT CURRENT_TIMESTAMP,
+    `message` TEXT,
+    `donation_type` ENUM('general', 'conservation', 'research', 'animal_care') DEFAULT 'general',
+    `payment_method` ENUM('cash', 'credit', 'debit', 'online'),
+    `deleted_at` DATETIME DEFAULT NULL,
+    FOREIGN KEY (`customer_id`) REFERENCES `customers`(`customer_id`) ON DELETE SET NULL
 );
 
 CREATE TABLE `membership_purchases` (
@@ -219,6 +233,8 @@ CREATE TABLE `event_registrations` (
     `number_of_participants` INT DEFAULT 1,
     `total_amount` DECIMAL(10, 2),
     `payment_status` ENUM('pending', 'paid', 'cancelled') DEFAULT 'pending',
+    `refunded_at` DATETIME DEFAULT NULL,
+    `refund_reason` VARCHAR(255) DEFAULT NULL,
     `deleted_at` DATETIME DEFAULT NULL,
     FOREIGN KEY (`event_id`) REFERENCES `events`(`event_id`) ON DELETE CASCADE,
     FOREIGN KEY (`customer_id`) REFERENCES `customers`(`customer_id`) ON DELETE SET NULL
