@@ -52,6 +52,8 @@ export class TransactionService {
         er.registration_date,
         er.number_of_participants,
         er.total_amount,
+        er.refunded_at,
+        er.refund_reason,
         c.first_name,
         c.last_name
       FROM event_registrations er
@@ -65,6 +67,8 @@ export class TransactionService {
       date: row.registration_date,
       total: parseFloat(row.total_amount),
       customerName: row.first_name ? `${row.first_name} ${row.last_name}` : 'Walk-in Customer',
+      refunded_at: row.refunded_at || null,
+      refund_reason: row.refund_reason || null,
       details: {
         participants: row.number_of_participants,
       },

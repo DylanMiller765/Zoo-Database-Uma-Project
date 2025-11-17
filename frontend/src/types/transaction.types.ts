@@ -5,6 +5,8 @@ export interface UnifiedTransaction {
   total: number;
   customerName: string;
   employeeName?: string;
+  refunded_at?: string | null;
+  refund_reason?: string | null;
   details: {
     [key: string]: any;
   };
