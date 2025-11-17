@@ -11,10 +11,9 @@ interface AnimalHealthCareParams {
 }
 
 interface EventPerformanceParams {
-  startDate: string;
-  endDate: string;
+  startDate?: string;
+  endDate?: string;
   eventStatus?: string;
-  minCapacity?: number;
   includeCanceled?: boolean;
   includeDeleted?: boolean;
 }
@@ -154,10 +153,11 @@ export class QueryService {
       startDate,
       endDate,
       eventStatus = 'all',
-      minCapacity = 0,
       includeCanceled = false,
       includeDeleted = false
     } = params;
+
+    const dateFilter = startDate && endDate ? 'e.event_date BETWEEN ? AND ?' : '1=1';
 
     const sql = `
       SELECT
@@ -192,7 +192,7 @@ export class QueryService {
       LEFT JOIN employees emp ON e.coordinator_id = emp.employee_id
 
       WHERE
-        e.event_date BETWEEN ? AND ?
+        ${dateFilter}
         AND (? = 'all'
              OR (? = 'upcoming' AND e.event_date >= CURDATE())
              OR (? = 'past' AND e.event_date < CURDATE()))
@@ -201,17 +201,14 @@ export class QueryService {
       GROUP BY e.event_id, e.name, e.event_date, e.start_time, e.end_time,
                e.location, e.max_participants, e.ticket_price, coordinator_name, e.description
 
-      HAVING (? = 0 OR capacity_percentage IS NULL OR capacity_percentage >= ?)
-
       ORDER BY e.event_date, e.start_time
     `;
 
-    const queryParams = [
-      startDate,
-      endDate,
-      eventStatus, eventStatus, eventStatus,
-      minCapacity, minCapacity
-    ];
+    const queryParams = [];
+    if (startDate && endDate) {
+        queryParams.push(startDate, endDate);
+    }
+    queryParams.push(eventStatus, eventStatus, eventStatus);
 
     return await query<any[]>(sql, queryParams);
   }
