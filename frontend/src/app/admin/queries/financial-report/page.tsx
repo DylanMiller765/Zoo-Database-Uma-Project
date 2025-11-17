@@ -160,37 +160,20 @@ export default function FinancialReportPage() {
           <DollarSign className="h-8 w-8 text-sea_green-600" />
           Financial Report
         </h1>
-        <p className="text-gray-600 mt-2">
-          Database-driven revenue analysis with transparent data aggregation
-        </p>
       </div>
 
       {/* Parameters Form */}
-      <ReportParametersCard>
+      <Card>
+        <CardContent className="space-y-4 pt-6">
         <div>
-          <div className="flex items-center justify-between mb-2">
-            <Label className="text-sm font-medium text-gray-700">
-              Transaction Date Range
-            </Label>
-            <button
-              type="button"
-              onClick={setAllTime}
-              className="text-xs text-sea_green-600 hover:text-sea_green-700 font-medium"
-            >
-              All Time
-            </button>
-          </div>
           <DateRangePicker
             startDate={params.startDate || ''}
             endDate={params.endDate || ''}
             onRangeChange={(startDate, endDate) => setParams({ ...params, startDate, endDate })}
-            label=""
+            label="Transaction Date Range"
             required={false}
             showQuickSelect={true}
           />
-          <p className="text-xs text-gray-500 mt-1">
-            Leave empty for all-time report
-          </p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -257,14 +240,13 @@ export default function FinancialReportPage() {
           disabled={!isFormValid}
           hasGenerated={hasGenerated}
         />
-      </ReportParametersCard>
+        </CardContent>
+      </Card>
 
       {/* Empty State or Results */}
       {!hasGenerated && (
         <ReportEmptyState
           icon={<DollarSign className="h-16 w-16 text-sea_green-400" />}
-          title="No Report Generated"
-          description="Select revenue sources and click Generate Report. Dates are optional - leave empty for all-time data."
         />
       )}
 
