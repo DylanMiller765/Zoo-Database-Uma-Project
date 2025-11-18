@@ -26,6 +26,7 @@ export interface FinancialReportParams {
   sources?: string[];
   grouping?: string;
   includeReturns?: boolean;
+  includeCanceled?: boolean;
 }
 
 export const queryService = {
@@ -90,6 +91,7 @@ export const queryService = {
     }
     if (params.grouping) searchParams.append('grouping', params.grouping);
     if (params.includeReturns !== undefined) searchParams.append('includeReturns', String(params.includeReturns));
+    if (params.includeCanceled !== undefined) searchParams.append('includeCanceled', String(params.includeCanceled));
 
     const response = await apiClient.get<any>(
       `/queries/financial-report?${searchParams.toString()}`

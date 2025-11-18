@@ -39,6 +39,7 @@ type EventRow = {
   capacity_percentage: number | null;
   coordinator_name: string | null;
   description: string | null;
+  is_past?: boolean;
 };
 
 export default function EventPerformancePage() {
@@ -54,7 +55,8 @@ export default function EventPerformancePage() {
   const [params, setParams] = useState<EventPerformanceParams>({
     startDate: '',
     endDate: '',
-    eventStatus: 'all'
+    eventStatus: 'all',
+    includeCanceled: false
   });
 
   // Summary metrics
@@ -89,7 +91,8 @@ export default function EventPerformancePage() {
     setParams({
       startDate: '',
       endDate: '',
-      eventStatus: 'all'
+      eventStatus: 'all',
+      includeCanceled: false
     });
     setHasGenerated(false);
     setData([]);
@@ -116,6 +119,22 @@ export default function EventPerformancePage() {
     if (percentage >= 70) return "warning";
     if (percentage >= 50) return "secondary";
     return "success";
+  };
+
+  const getEventStatusBadge = (eventDate: string) => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const eventDateObj = new Date(eventDate);
+    eventDateObj.setHours(0, 0, 0, 0);
+    return eventDateObj < today ? "default" : "success";
+  };
+
+  const getEventStatusLabel = (eventDate: string) => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const eventDateObj = new Date(eventDate);
+    eventDateObj.setHours(0, 0, 0, 0);
+    return eventDateObj < today ? "Past" : "Upcoming";
   };
 
   // Auth check
@@ -169,6 +188,19 @@ export default function EventPerformancePage() {
             <option value="upcoming">Upcoming Only</option>
             <option value="past">Past Only</option>
           </select>
+        </div>
+
+        <div className="flex items-center gap-3">
+          <input
+            type="checkbox"
+            id="includeCanceled"
+            checked={params.includeCanceled}
+            onChange={(e) => setParams({ ...params, includeCanceled: e.target.checked })}
+            className="rounded border-gray-300"
+          />
+          <Label htmlFor="includeCanceled" className="text-sm font-medium text-gray-700 mb-0 cursor-pointer">
+            Show Cancelled Events
+          </Label>
         </div>
 
         {/* Generate Button */}
@@ -255,7 +287,9 @@ export default function EventPerformancePage() {
                     <TableRow>
                       <TableHead>Event Name</TableHead>
                       <TableHead>Date & Time</TableHead>
+                      <TableHead>Status</TableHead>
                       <TableHead>Location</TableHead>
+                      <TableHead className="text-right">Ticket Price</TableHead>
                       <TableHead className="text-right">Attendees</TableHead>
                       <TableHead className="text-right">Capacity</TableHead>
                       <TableHead className="text-center">Capacity %</TableHead>
@@ -287,9 +321,21 @@ export default function EventPerformancePage() {
                           </div>
                         </TableCell>
 
+                        {/* Status */}
+                        <TableCell>
+                          <Badge variant={getEventStatusBadge(event.event_date)}>
+                            {getEventStatusLabel(event.event_date)}
+                          </Badge>
+                        </TableCell>
+
                         {/* Location */}
                         <TableCell className="text-sm text-gray-600">
                           {event.location || "N/A"}
+                        </TableCell>
+
+                        {/* Ticket Price */}
+                        <TableCell className="text-right font-semibold">
+                          ${formatMoney(event.ticket_price || 0)}
                         </TableCell>
 
                         {/* Attendees */}
