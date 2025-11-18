@@ -50,7 +50,8 @@ export default function FinancialReportPage() {
   const [params, setParams] = useState<FinancialReportParams>({
     startDate: '',
     endDate: '',
-    sources: ['ticket', 'event', 'gift_shop', 'cafe', 'membership', 'donation']
+    sources: ['ticket', 'event', 'gift_shop', 'cafe', 'membership', 'donation'],
+    includeCanceled: true
   });
 
   // Generate report handler
@@ -79,7 +80,8 @@ export default function FinancialReportPage() {
     setParams({
       startDate: '',
       endDate: '',
-      sources: ['ticket', 'event', 'gift_shop', 'cafe', 'membership', 'donation']
+      sources: ['ticket', 'event', 'gift_shop', 'cafe', 'membership', 'donation'],
+      includeCanceled: true
     });
     setHasGenerated(false);
     setReportData(null);
@@ -212,7 +214,24 @@ export default function FinancialReportPage() {
             </div>
           </div>
 
-          {/* Group By */}
+          {/* Event Settings */}
+          <div>
+            <Label className="text-sm font-medium text-gray-700 mb-3 block">
+              Event Options
+            </Label>
+            <div className="flex items-center gap-3">
+              <input
+                type="checkbox"
+                id="includeCanceled"
+                checked={params.includeCanceled}
+                onChange={(e) => setParams({ ...params, includeCanceled: e.target.checked })}
+                className="rounded border-gray-300"
+              />
+              <Label htmlFor="includeCanceled" className="text-sm font-medium text-gray-700 mb-0 cursor-pointer">
+                Include Cancelled Events
+              </Label>
+            </div>
+          </div>
         </div>
 
         {/* Generate Button */}
