@@ -33,6 +33,7 @@ export interface CheckoutResponse {
     cafe_items: number;
     gift_shop_items: number;
     donations: number;
+    memberships: number;
   };
   total_amount: number;
   message: string;
