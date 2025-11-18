@@ -55,15 +55,14 @@ export default function EventPerformancePage() {
     startDate: '',
     endDate: '',
     eventStatus: 'all',
-    includeCanceled: false,
-    includeDeleted: false
+    includeCanceled: false
   });
 
   // Summary metrics
   const summary = useMemo(() => {
     return {
       totalEvents: data.length,
-      totalAttendees: data.reduce((sum, e) => sum + (e.total_registered || 0), 0),
+      totalAttendees: data.reduce((sum, e) => sum + (e.registration_count || 0), 0),
       totalRevenue: data.reduce((sum, e) => sum + parseFloat(String(e.total_revenue || 0)), 0),
       avgCapacity: data.length > 0
         ? data.reduce((sum, e) => sum + parseFloat(String(e.capacity_percentage || 0)), 0) / data.filter(e => e.capacity_percentage !== null).length
@@ -92,8 +91,7 @@ export default function EventPerformancePage() {
       startDate: '',
       endDate: '',
       eventStatus: 'all',
-      includeCanceled: false,
-      includeDeleted: false
+      includeCanceled: false
     });
     setHasGenerated(false);
     setData([]);
@@ -178,32 +176,17 @@ export default function EventPerformancePage() {
         </div>
 
         {/* Checkboxes */}
-        <div className="flex flex-col sm:flex-row gap-4">
-          <div className="flex items-center gap-2">
-            <input
-              type="checkbox"
-              id="includeCanceled"
-              checked={params.includeCanceled}
-              onChange={(e) => setParams({ ...params, includeCanceled: e.target.checked })}
-              className="rounded border-gray-300 text-sea_green-600 focus:ring-sea_green-500"
-            />
-            <Label htmlFor="includeCanceled" className="text-sm text-gray-700 cursor-pointer">
-              Include canceled events
-            </Label>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <input
-              type="checkbox"
-              id="includeDeleted"
-              checked={params.includeDeleted}
-              onChange={(e) => setParams({ ...params, includeDeleted: e.target.checked })}
-              className="rounded border-gray-300 text-sea_green-600 focus:ring-sea_green-500"
-            />
-            <Label htmlFor="includeDeleted" className="text-sm text-gray-700 cursor-pointer">
-              Include deleted events
-            </Label>
-          </div>
+        <div className="flex items-center gap-2">
+          <input
+            type="checkbox"
+            id="includeCanceled"
+            checked={params.includeCanceled}
+            onChange={(e) => setParams({ ...params, includeCanceled: e.target.checked })}
+            className="rounded border-gray-300 text-sea_green-600 focus:ring-sea_green-500"
+          />
+          <Label htmlFor="includeCanceled" className="text-sm text-gray-700 cursor-pointer">
+            Include cancelled events
+          </Label>
         </div>
 
         {/* Generate Button */}
@@ -293,8 +276,8 @@ export default function EventPerformancePage() {
                       <TableHead>Location</TableHead>
                       <TableHead className="text-right">Attendees</TableHead>
                       <TableHead className="text-right">Capacity</TableHead>
+                      <TableHead className="text-center">Capacity %</TableHead>
                       <TableHead className="text-right">Revenue</TableHead>
-                      <TableHead className="text-center">Utilization</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -344,12 +327,7 @@ export default function EventPerformancePage() {
                           </Badge>
                         </TableCell>
 
-                        {/* Revenue */}
-                        <TableCell className="text-right font-semibold text-persian_orange-600">
-                          ${formatMoney(event.total_revenue)}
-                        </TableCell>
-
-                        {/* Utilization */}
+                        {/* Capacity % */}
                         <TableCell className="text-center">
                           {event.capacity_percentage !== null ? (
                             <Badge variant={getCapacityBadge(parseFloat(String(event.capacity_percentage)))}>
@@ -358,6 +336,11 @@ export default function EventPerformancePage() {
                           ) : (
                             <span className="text-sm text-gray-500">N/A</span>
                           )}
+                        </TableCell>
+
+                        {/* Revenue */}
+                        <TableCell className="text-right font-semibold text-persian_orange-600">
+                          ${formatMoney(event.total_revenue)}
                         </TableCell>
                       </TableRow>
                     ))}
