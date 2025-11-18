@@ -96,16 +96,39 @@ export default function EventsPage() {
             try {
                 setLoading(true); // Set loading true at the start
                 setError(null);
-                const data = await eventService.getAll();
+                const data = await eventService.getAll(true); // Include deleted (cancelled) events
                 
-                // Sort events by date (soonest first), then by start time
+                // Sort events: upcoming (scheduled) first, then completed, then cancelled at bottom
                 const sortedEvents = [...data].sort((a, b) => {
-                    // First compare dates
+                    // Status priority: scheduled (0) > completed (1) > cancelled (2)
+                    const statusPriority: Record<string, number> = {
+                        'scheduled': 0,
+                        'ongoing': 0,
+                        'completed': 1,
+                        'cancelled': 2,
+                    };
+                    const priorityA = statusPriority[a.status || 'scheduled'] ?? 1;
+                    const priorityB = statusPriority[b.status || 'scheduled'] ?? 1;
+                    
+                    // First sort by status priority
+                    if (priorityA !== priorityB) {
+                        return priorityA - priorityB;
+                    }
+                    
+                    // Within same status, sort by date (soonest first for upcoming, most recent first for past)
                     const dateA = a.event_date ? new Date(a.event_date).getTime() : Infinity;
                     const dateB = b.event_date ? new Date(b.event_date).getTime() : Infinity;
                     
-                    if (dateA !== dateB) {
-                        return dateA - dateB; // Ascending order (soonest first)
+                    if (priorityA === 0) {
+                        // For upcoming events, ascending (soonest first)
+                        if (dateA !== dateB) {
+                            return dateA - dateB;
+                        }
+                    } else {
+                        // For completed/cancelled, descending (most recent first)
+                        if (dateA !== dateB) {
+                            return dateB - dateA;
+                        }
                     }
                     
                     // If dates are the same, sort by start time
@@ -233,14 +256,46 @@ export default function EventsPage() {
                         <section className="mt-8 rounded-2xl bg-gray-50 p-4 sm:p-6">
                             <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
                                 {/* Map over the correctly filtered list: filteredEvents */}
-                                {filteredEvents.map((ev) => (
+                                {filteredEvents.map((ev) => {
+                                    // Status badge styling
+                                    const getStatusBadge = (status?: string) => {
+                                        switch (status) {
+                                            case 'cancelled':
+                                                return (
+                                                    <span className="inline-flex items-center rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-medium text-red-800">
+                                                        Cancelled
+                                                    </span>
+                                                );
+                                            case 'completed':
+                                                return (
+                                                    <span className="inline-flex items-center rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-medium text-gray-800">
+                                                        Completed
+                                                    </span>
+                                                );
+                                            case 'scheduled':
+                                            case 'ongoing':
+                                            default:
+                                                return (
+                                                    <span className="inline-flex items-center rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-800">
+                                                        Upcoming
+                                                    </span>
+                                                );
+                                        }
+                                    };
+
+                                    return (
                                     <Card
                                         key={ev.event_id} // Use event_id from Event type
-                                        className="group overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md flex flex-col"
+                                        className={`group overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md flex flex-col ${
+                                            ev.status === 'cancelled' ? 'opacity-75' : ''
+                                        }`}
                                     >
                                         <CardHeader className="px-6 pt-6 pb-3">
-                                            {/* Use event_name from Event type */}
-                                            <CardTitle className="text-lg text-dark_spring_green-700">{ev.event_name}</CardTitle>
+                                            <div className="flex items-start justify-between gap-2">
+                                                {/* Use event_name from Event type */}
+                                                <CardTitle className="text-lg text-dark_spring_green-700 flex-1">{ev.event_name}</CardTitle>
+                                                {getStatusBadge(ev.status)}
+                                            </div>
                                             <div className="mt-1 text-xs text-sea_green-700">
                                                 {/* Use location from Event type */}
                                                 <span className="font-medium">{ev.location || 'N/A'}</span>
@@ -286,7 +341,8 @@ export default function EventsPage() {
                                             ) : null}
                                         </CardFooter>
                                     </Card>
-                                ))}
+                                    );
+                                })}
 
                                 {/* No results message */}
                                 {filteredEvents.length === 0 && !error && (
