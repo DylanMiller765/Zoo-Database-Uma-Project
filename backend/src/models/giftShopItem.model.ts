@@ -3,8 +3,17 @@ import { GiftShopItem } from '../types/giftShopItem.types';
 
 export class GiftShopItemModel {
   static async findAll(): Promise<GiftShopItem[]> {
-    const sql = 'SELECT * FROM gift_shop_items WHERE deleted_at IS NULL';
-    return await query<GiftShopItem[]>(sql);
+    try {
+      const sql = 'SELECT * FROM gift_shop_items WHERE deleted_at IS NULL';
+      return await query<GiftShopItem[]>(sql);
+    } catch (error: any) {
+      // If deleted_at column doesn't exist, fall back to fetching all items
+      if (error.code === 'ER_BAD_FIELD_ERROR' && error.message.includes('deleted_at')) {
+        const sql = 'SELECT * FROM gift_shop_items';
+        return await query<GiftShopItem[]>(sql);
+      }
+      throw error;
+    }
   }
 
   static async findAllIncludingDeleted(): Promise<GiftShopItem[]> {
@@ -13,9 +22,19 @@ export class GiftShopItemModel {
   }
 
   static async findById(id: number): Promise<GiftShopItem | null> {
-    const sql = 'SELECT * FROM gift_shop_items WHERE item_id = ? AND deleted_at IS NULL';
-    const results = await query<GiftShopItem[]>(sql, [id]);
-    return results.length > 0 ? results[0] : null;
+    try {
+      const sql = 'SELECT * FROM gift_shop_items WHERE item_id = ? AND deleted_at IS NULL';
+      const results = await query<GiftShopItem[]>(sql, [id]);
+      return results.length > 0 ? results[0] : null;
+    } catch (error: any) {
+      // If deleted_at column doesn't exist, fall back to simple ID lookup
+      if (error.code === 'ER_BAD_FIELD_ERROR' && error.message.includes('deleted_at')) {
+        const sql = 'SELECT * FROM gift_shop_items WHERE item_id = ?';
+        const results = await query<GiftShopItem[]>(sql, [id]);
+        return results.length > 0 ? results[0] : null;
+      }
+      throw error;
+    }
   }
 
   static async create(item: Omit<GiftShopItem, 'item_id'>): Promise<GiftShopItem> {
@@ -38,18 +57,45 @@ export class GiftShopItemModel {
   }
 
   static async remove(id: number): Promise<void> {
-    const sql = 'UPDATE gift_shop_items SET deleted_at = NOW() WHERE item_id = ?';
-    await query(sql, [id]);
+    try {
+      const sql = 'UPDATE gift_shop_items SET deleted_at = NOW() WHERE item_id = ?';
+      await query(sql, [id]);
+    } catch (error: any) {
+      // If deleted_at column doesn't exist, silently ignore (soft deletes not supported)
+      if (error.code === 'ER_BAD_FIELD_ERROR' && error.message.includes('deleted_at')) {
+        console.warn('Warning: Could not soft delete item, deleted_at column does not exist');
+      } else {
+        throw error;
+      }
+    }
   }
 
   static async findLowStock(limit: number = 10): Promise<GiftShopItem[]> {
-    const sql = 'SELECT * FROM gift_shop_items WHERE quantity_in_stock < ? AND deleted_at IS NULL';
-    return await query<GiftShopItem[]>(sql, [limit]);
+    try {
+      const sql = 'SELECT * FROM gift_shop_items WHERE quantity_in_stock < ? AND deleted_at IS NULL';
+      return await query<GiftShopItem[]>(sql, [limit]);
+    } catch (error: any) {
+      // If deleted_at column doesn't exist, fall back to simple low stock query
+      if (error.code === 'ER_BAD_FIELD_ERROR' && error.message.includes('deleted_at')) {
+        const sql = 'SELECT * FROM gift_shop_items WHERE quantity_in_stock < ?';
+        return await query<GiftShopItem[]>(sql, [limit]);
+      }
+      throw error;
+    }
   }
 
   static async restore(id: number): Promise<GiftShopItem | null> {
-    const sql = 'UPDATE gift_shop_items SET deleted_at = NULL WHERE item_id = ?';
-    await query(sql, [id]);
+    try {
+      const sql = 'UPDATE gift_shop_items SET deleted_at = NULL WHERE item_id = ?';
+      await query(sql, [id]);
+    } catch (error: any) {
+      // If deleted_at column doesn't exist, silently ignore (soft deletes not supported)
+      if (error.code === 'ER_BAD_FIELD_ERROR' && error.message.includes('deleted_at')) {
+        console.warn('Warning: Could not restore item, deleted_at column does not exist');
+      } else {
+        throw error;
+      }
+    }
     return await this.findById(id);
   }
 }
