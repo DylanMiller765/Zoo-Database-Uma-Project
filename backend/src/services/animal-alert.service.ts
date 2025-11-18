@@ -34,7 +34,6 @@ export class AnimalAlertService {
                 
           <h3>🐾 Animal Details</h3>
           <ul>
-            <li><strong>ID:</strong> ${alert.animal?.animal_id ?? alert.animal_id}</li>
             <li><strong>Name:</strong> ${alert.animal?.name ?? "Unknown"}</li>
             <li><strong>Species:</strong> ${alert.animal?.species ?? "Unknown"}</li>
           </ul>
