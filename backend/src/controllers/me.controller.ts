@@ -110,16 +110,22 @@ export class MeController {
       const customerId = (req as any).user?.customer_id;
       if (!customerId) return res.status(400).json({ success: false, message: 'Customer not found' });
       
-      // Get upcoming events only (event_date >= today or NULL)
+      // Get all event registrations (including cancelled events)
+      // Include deleted_at to identify cancelled events
       const rows = await query<any[]>(
         `SELECT er.registration_id, er.number_of_participants, er.registration_date, er.payment_status,
-                e.event_id, e.name as event_name, e.event_date, e.start_time, e.end_time, e.location
+                e.event_id, e.name as event_name, e.event_date, e.start_time, e.end_time, e.location,
+                e.deleted_at as event_deleted_at
          FROM event_registrations er
          JOIN events e ON e.event_id = er.event_id
          WHERE er.customer_id = ? 
            AND er.deleted_at IS NULL
-           AND (e.event_date IS NULL OR e.event_date >= CURDATE())
-         ORDER BY e.event_date ASC, e.start_time ASC, er.registration_date DESC`,
+           AND (e.event_date IS NULL OR e.event_date >= CURDATE() OR e.deleted_at IS NOT NULL)
+         ORDER BY 
+           CASE WHEN e.deleted_at IS NOT NULL THEN 1 ELSE 0 END,
+           e.event_date ASC, 
+           e.start_time ASC, 
+           er.registration_date DESC`,
         [customerId]
       );
       res.json({ success: true, data: rows });
