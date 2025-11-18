@@ -10,7 +10,7 @@ export interface CheckoutRequest {
     unit_price: number;
     metadata?: any;
   }>;
-  payment_method: 'credit' | 'debit' | 'online';
+  payment_method: 'credit' | 'debit';
   save_payment_method?: boolean;
   payment_data?: {
     cardNumber: string;

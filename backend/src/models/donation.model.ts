@@ -7,12 +7,13 @@ export class DonationModel {
    */
   static async create(donation: Omit<Donation, 'donation_id' | 'donation_date'>): Promise<number> {
     const result = await query<any>(
-      `INSERT INTO donations (customer_id, amount, message)
-       VALUES (?, ?, ?)`,
+      `INSERT INTO donations (customer_id, amount, message, payment_method)
+       VALUES (?, ?, ?, ?)`,
       [
         donation.customer_id,
         donation.amount,
         donation.message,
+        donation.payment_method,
       ]
     );
 

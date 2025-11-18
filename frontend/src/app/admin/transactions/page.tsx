@@ -172,21 +172,39 @@ export default function TransactionsPage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filteredTransactions.map((t) => (
-              <TableRow key={t.id}>
-                <TableCell className="font-medium">{t.id}</TableCell>
-                <TableCell>
-                  <Badge>{t.type}</Badge>
-                </TableCell>
-                <TableCell>{formatDate(t.date)}</TableCell>
-                <TableCell>{t.customerName}</TableCell>
-                <TableCell>{t.employeeName || 'N/A'}</TableCell>
-                <TableCell>${t.total.toFixed(2)}</TableCell>
-                <TableCell className="text-right">
-                  {/* Actions buttons here */}
-                </TableCell>
-              </TableRow>
-            ))}
+            {filteredTransactions.map((t) => {
+              const isRefunded = !!t.refunded_at;
+              return (
+                <TableRow
+                  key={t.id}
+                  className={isRefunded ? 'bg-red-50 opacity-75' : ''}
+                >
+                  <TableCell className="font-medium">{t.id}</TableCell>
+                  <TableCell>
+                    <div className="flex items-center gap-2">
+                      <Badge>{t.type}</Badge>
+                      {isRefunded && (
+                        <Badge variant="danger">REFUNDED</Badge>
+                      )}
+                    </div>
+                  </TableCell>
+                  <TableCell>{formatDate(t.date)}</TableCell>
+                  <TableCell>{t.customerName}</TableCell>
+                  <TableCell>{t.employeeName || 'N/A'}</TableCell>
+                  <TableCell className={isRefunded ? 'line-through text-red-600' : ''}>
+                    ${t.total.toFixed(2)}
+                    {isRefunded && t.refund_reason && (
+                      <div className="text-xs text-gray-600 mt-1 italic">
+                        {t.refund_reason}
+                      </div>
+                    )}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    {/* Actions buttons here */}
+                  </TableCell>
+                </TableRow>
+              );
+            })}
           </TableBody>
         </Table>
       </div>

@@ -55,7 +55,6 @@ export default function EventPerformancePage() {
     startDate: '',
     endDate: '',
     eventStatus: 'all',
-    minCapacity: 0,
     includeCanceled: false,
     includeDeleted: false
   });
@@ -74,12 +73,6 @@ export default function EventPerformancePage() {
 
   // Generate report handler
   const handleGenerate = async () => {
-    // Validate required fields
-    if (!params.startDate || !params.endDate) {
-      alert("Please select both start and end dates");
-      return;
-    }
-
     try {
       setLoading(true);
       const result = await queryService.getEventPerformance(params);
@@ -99,7 +92,6 @@ export default function EventPerformancePage() {
       startDate: '',
       endDate: '',
       eventStatus: 'all',
-      minCapacity: 0,
       includeCanceled: false,
       includeDeleted: false
     });
@@ -135,9 +127,6 @@ export default function EventPerformancePage() {
     alert("Export functionality will be implemented after xlsx dependency is resolved");
   };
 
-  // Form validation
-  const isFormValid = params.startDate && params.endDate;
-
   // Auth check
   if (authLoading) {
     return (
@@ -163,7 +152,8 @@ export default function EventPerformancePage() {
       </div>
 
       {/* Parameters Form */}
-      <ReportParametersCard>
+      <Card>
+        <CardContent className="space-y-4 pt-6">
         <DateRangePicker
           startDate={params.startDate}
           endDate={params.endDate}
@@ -189,28 +179,6 @@ export default function EventPerformancePage() {
               <option value="upcoming">Upcoming Only</option>
               <option value="past">Past Only</option>
             </select>
-          </div>
-
-          {/* Min Capacity Filter */}
-          <div>
-            <Label htmlFor="minCapacity" className="text-sm font-medium text-gray-700">
-              Minimum Capacity: {params.minCapacity}%
-            </Label>
-            <input
-              type="range"
-              id="minCapacity"
-              min="0"
-              max="100"
-              step="5"
-              value={params.minCapacity}
-              onChange={(e) => setParams({ ...params, minCapacity: parseInt(e.target.value) })}
-              className="mt-2 w-full"
-            />
-            <div className="flex justify-between text-xs text-gray-500 mt-1">
-              <span>0%</span>
-              <span>50%</span>
-              <span>100%</span>
-            </div>
           </div>
         </div>
 
@@ -248,17 +216,15 @@ export default function EventPerformancePage() {
           onGenerate={handleGenerate}
           onClear={handleClear}
           loading={loading}
-          disabled={!isFormValid}
           hasGenerated={hasGenerated}
         />
-      </ReportParametersCard>
+        </CardContent>
+      </Card>
 
       {/* Empty State or Results */}
       {!hasGenerated && (
         <ReportEmptyState
           icon={<Calendar className="h-16 w-16 text-persian_orange-400" />}
-          title="No Report Generated"
-          description="Select a date range and click Generate Report to view event performance data."
         />
       )}
 
