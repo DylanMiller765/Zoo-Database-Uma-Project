@@ -23,6 +23,7 @@ import {
   ShoppingBag,
   Coffee,
   Clock,
+  Plus,
 } from "lucide-react";
 
 type ProfileResponse = {
@@ -76,6 +77,7 @@ export default function CustomerDashboard() {
   const [showTicketModal, setShowTicketModal] = React.useState(false);
   const [autoRenew, setAutoRenew] = React.useState<boolean>(false);
   const [loadingAutoRenew, setLoadingAutoRenew] = React.useState(false);
+  const [paymentMethod, setPaymentMethod] = React.useState<any>(null);
 
   React.useEffect(() => {
     if (!loading) {
@@ -91,13 +93,14 @@ export default function CustomerDashboard() {
   const load = async () => {
     try {
       setFetching(true);
-      const [profileRes, summaryRes, ticketsRes, visitsRes, eventsRes, purchaseRes] = await Promise.all([
+      const [profileRes, summaryRes, ticketsRes, visitsRes, eventsRes, purchaseRes, paymentRes] = await Promise.all([
         apiClient.get<ProfileResponse>("/auth/profile"),
         apiClient.get<SummaryResponse>("/me/summary"),
         apiClient.get<{ success: boolean; data: any[] }>("/me/tickets"),
         apiClient.get<{ success: boolean; data: any[] }>("/me/visits"),
         apiClient.get<{ success: boolean; data: any[] }>("/me/event-registrations"),
         apiClient.get<{ success: boolean; data: any[] }>("/me/purchase-history"),
+        apiClient.get("/me/payment-method").catch(() => ({ data: { success: true, data: null } })), // Silently fail if no payment method
       ]);
 
       setProfile(profileRes.data.data);
@@ -112,6 +115,9 @@ export default function CustomerDashboard() {
       if (profileRes.data.data?.membership_auto_renew !== undefined) {
         setAutoRenew(profileRes.data.data.membership_auto_renew);
       }
+      
+      // Load payment method
+      setPaymentMethod(paymentRes.data.data);
     } catch (e: any) {
       console.error("Failed to load profile", e);
     } finally {
@@ -750,6 +756,61 @@ export default function CustomerDashboard() {
                     <p className="text-gray-500 italic">No address information on file</p>
                   )}
                 </div>
+              </CardContent>
+            </Card>
+
+            {/* Credit Information Card */}
+            <Card className="border-2 border-gray-100 shadow-sm">
+              <CardHeader className="bg-gradient-to-r from-sea_green-50 to-dark_spring_green-50 border-b border-gray-200">
+                <CardTitle className="text-xl flex items-center gap-2 text-gray-900">
+                  <div className="p-2 rounded-lg bg-sea_green-100">
+                    <CreditCard className="h-5 w-5 text-sea_green-700" />
+                  </div>
+                  Credit Information
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="pt-6">
+                {paymentMethod ? (
+                  <>
+                    <div className="flex items-center gap-4 p-4 bg-gray-50 rounded-lg">
+                      <div className="p-3 bg-white rounded-lg shadow-sm">
+                        <CreditCard className="h-6 w-6 text-gray-600" />
+                      </div>
+                      <div className="flex-1">
+                        <p className="text-sm font-medium text-gray-700">Saved Card</p>
+                        <p className="text-lg font-semibold text-gray-900 mt-1">
+                          {paymentMethod.card_number || '**** **** **** ****'}
+                        </p>
+                        <p className="text-xs text-gray-500 mt-1">
+                          {paymentMethod.cardholder_name} • Expires {String(paymentMethod.expiry_month).padStart(2, '0')}/{paymentMethod.expiry_year}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="mt-4">
+                      <Button 
+                        type="button"
+                        variant="outline" 
+                        size="sm"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          router.push('/customer/profile');
+                        }}
+                        className="flex items-center gap-2"
+                      >
+                        <Edit className="h-4 w-4" />
+                        Manage Payment Method
+                      </Button>
+                    </div>
+                  </>
+                ) : (
+                  <div className="text-center py-8">
+                    <div className="p-4 bg-gray-50 rounded-lg inline-block mb-4">
+                      <CreditCard className="h-8 w-8 text-gray-400" />
+                    </div>
+                    <p className="text-gray-600">No credit card on file</p>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </div>

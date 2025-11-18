@@ -452,13 +452,14 @@ export class MeController {
         return res.json({ success: true, data: null });
       }
 
-      // Only return last 4 digits for security
+      // Return both masked (for display) and full (for autofill) card numbers
       const lastFour = paymentMethod.card_number.slice(-4);
       res.json({
         success: true,
         data: {
           ...paymentMethod,
-          card_number: `**** **** **** ${lastFour}`,
+          card_number: `**** **** **** ${lastFour}`, // Masked for display
+          card_number_full: paymentMethod.card_number, // Full number for autofill only
         }
       });
     } catch (e: any) {
