@@ -156,13 +156,13 @@ export class NotificationEmailService {
         We sincerely apologize for any inconvenience this may cause.
       </p>
 
-      <h3>📅 Event Details</h3>
+      <h3>Event Details</h3>
       <ul>
         <li><strong>Event:</strong> ${eventDetails.eventName}</li>
         <li><strong>Originally Scheduled:</strong> ${eventDetails.eventDate}</li>
       </ul>
 
-      <h3>💰 Refund Information</h3>
+      <h3>Refund Information</h3>
       <p>
         A full refund has been automatically processed for your registration.
         Please allow 3-5 business days for the refund to appear in your original payment method.
