@@ -8,9 +8,9 @@ const router = Router();
 router.get('/', AnimalController.getAllAnimals);
 router.get('/:id', AnimalController.getAnimalById);
 
-// Protected write access - managers and vets only
-router.post('/', protect, restrictTo('manager', 'veterinarian'), AnimalController.createAnimal);
-router.put('/:id', protect, restrictTo('manager', 'veterinarian'), AnimalController.updateAnimal);
+// Protected write access - managers, vets, and keepers
+router.post('/', protect, restrictTo('manager', 'veterinarian', 'keeper'), AnimalController.createAnimal);
+router.put('/:id', protect, restrictTo('manager', 'veterinarian', 'keeper'), AnimalController.updateAnimal);
 router.delete('/:id', protect, restrictTo('manager', 'veterinarian'), AnimalController.deleteAnimal);
 
 // Manager-only restore access

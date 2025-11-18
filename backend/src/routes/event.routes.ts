@@ -37,20 +37,13 @@ router.put(
 );
 
 // @route   DELETE /api/events/:id
-// @desc    Delete an event
+// @desc    Delete an event (soft delete - cannot be restored as refunds are processed)
 // @access  Private (Event Coordinator, General Manager)
 router.delete(
   '/:id',
   protect,
   restrictTo('coordinator', 'manager'),
   eventController.deleteEvent
-);
-
-router.put(
-  '/:id/restore',
-  protect,
-  restrictTo('manager'),
-  eventController.restoreEvent
 );
 
 export default router;

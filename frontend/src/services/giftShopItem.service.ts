@@ -35,4 +35,12 @@ export const giftShopItemService = {
     const res = await apiClient.put<GiftShopItem>(`/gift-shop-items/${id}/restore`);
     return res.data;
   },
+
+  // Stock update for cashiers (only updates quantity_in_stock)
+  async updateStock(id: number, quantity_in_stock: number): Promise<GiftShopItem> {
+    const res = await apiClient.put<GiftShopItem>(`/gift-shop-items/${id}/stock`, {
+      quantity_in_stock,
+    });
+    return res.data;
+  },
 };

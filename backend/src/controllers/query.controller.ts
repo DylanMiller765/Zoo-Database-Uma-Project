@@ -59,24 +59,14 @@ export class QueryController {
         startDate,
         endDate,
         eventStatus,
-        minCapacity,
         includeCanceled,
         includeDeleted
       } = req.query;
-
-      // Validate required parameters
-      if (!startDate || !endDate) {
-        res.status(400).json({
-          message: 'Start date and end date are required for Event Performance Report'
-        });
-        return;
-      }
 
       const data = await QueryService.getEventPerformance({
         startDate: startDate as string,
         endDate: endDate as string,
         eventStatus: eventStatus as string,
-        minCapacity: minCapacity ? parseInt(minCapacity as string) : 0,
         includeCanceled: includeCanceled === 'true',
         includeDeleted: includeDeleted === 'true'
       });

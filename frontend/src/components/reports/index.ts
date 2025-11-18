@@ -7,4 +7,5 @@ export { EventRevenueSection } from './EventRevenueSection';
 export { GiftShopRevenueSection } from './GiftShopRevenueSection';
 export { CafeRevenueSection } from './CafeRevenueSection';
 export { MembershipRevenueSection } from './MembershipRevenueSection';
+export { DonationRevenueSection } from './DonationRevenueSection';
 export { GrandSummarySection } from './GrandSummarySection';
