@@ -54,8 +54,7 @@ export default function EventPerformancePage() {
   const [params, setParams] = useState<EventPerformanceParams>({
     startDate: '',
     endDate: '',
-    eventStatus: 'all',
-    includeCanceled: false
+    eventStatus: 'all'
   });
 
   // Summary metrics
@@ -90,8 +89,7 @@ export default function EventPerformancePage() {
     setParams({
       startDate: '',
       endDate: '',
-      eventStatus: 'all',
-      includeCanceled: false
+      eventStatus: 'all'
     });
     setHasGenerated(false);
     setData([]);
@@ -156,37 +154,21 @@ export default function EventPerformancePage() {
           showQuickSelect={true}
         />
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
           {/* Event Status Filter */}
-          <div>
-            <Label htmlFor="eventStatus" className="text-sm font-medium text-gray-700">
-              Event Status
-            </Label>
-            <select
-              id="eventStatus"
-              value={params.eventStatus}
-              onChange={(e) => setParams({ ...params, eventStatus: e.target.value })}
-              className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
-            >
-              <option value="all">All Events</option>
-              <option value="upcoming">Upcoming Only</option>
-              <option value="past">Past Only</option>
-            </select>
-          </div>
-        </div>
-
-        {/* Checkboxes */}
-        <div className="flex items-center gap-2">
-          <input
-            type="checkbox"
-            id="includeCanceled"
-            checked={params.includeCanceled}
-            onChange={(e) => setParams({ ...params, includeCanceled: e.target.checked })}
-            className="rounded border-gray-300 text-sea_green-600 focus:ring-sea_green-500"
-          />
-          <Label htmlFor="includeCanceled" className="text-sm text-gray-700 cursor-pointer">
-            Include cancelled events
+          <Label htmlFor="eventStatus" className="text-sm font-medium text-gray-700">
+            Event Status
           </Label>
+          <select
+            id="eventStatus"
+            value={params.eventStatus}
+            onChange={(e) => setParams({ ...params, eventStatus: e.target.value })}
+            className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
+          >
+            <option value="all">All Events</option>
+            <option value="upcoming">Upcoming Only</option>
+            <option value="past">Past Only</option>
+          </select>
         </div>
 
         {/* Generate Button */}

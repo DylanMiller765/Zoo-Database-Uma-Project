@@ -24,6 +24,19 @@ import { EntityDetailModal } from '@/components/ui/EntityDetailModal';
 import { ShowDeletedToggle } from '@/components/admin/ShowDeletedToggle';
 import { RestoreConfirmationModal } from '@/components/admin/RestoreConfirmationModal';
 
+// Format phone number to (XXX) XXX-XXXX format
+const formatPhoneNumber = (phone: string | null | undefined): string => {
+  if (!phone) return 'N/A';
+  // Remove all non-digits
+  const cleaned = phone.replace(/\D/g, '');
+  // Format as (XXX) XXX-XXXX if it's 10 digits
+  if (cleaned.length === 10) {
+    return `(${cleaned.slice(0, 3)}) ${cleaned.slice(3, 6)}-${cleaned.slice(6)}`;
+  }
+  // Return original if not 10 digits
+  return phone;
+};
+
 export default function EmployeesPage() {
   const { isAuthenticated, loading: authLoading, hasRole } = useAuth();
   const router = useRouter();
@@ -301,7 +314,7 @@ export default function EmployeesPage() {
                   {employee.first_name} {employee.last_name}
                 </TableCell>
                 <TableCell>{employee.email || 'N/A'}</TableCell>
-                <TableCell>{employee.phone || 'N/A'}</TableCell>
+                <TableCell>{formatPhoneNumber(employee.phone)}</TableCell>
                 <TableCell>
                   <Badge variant={getRoleBadgeColor(employee.job_role)} className="capitalize">
                     {employee.job_role}
