@@ -11,10 +11,9 @@ interface AnimalHealthCareParams {
 }
 
 interface EventPerformanceParams {
-  startDate: string;
-  endDate: string;
+  startDate?: string;
+  endDate?: string;
   eventStatus?: string;
-  minCapacity?: number;
   includeCanceled?: boolean;
   includeDeleted?: boolean;
 }
@@ -154,10 +153,11 @@ export class QueryService {
       startDate,
       endDate,
       eventStatus = 'all',
-      minCapacity = 0,
       includeCanceled = false,
       includeDeleted = false
     } = params;
+
+    const dateFilter = startDate && endDate ? 'e.event_date BETWEEN ? AND ?' : '1=1';
 
     const sql = `
       SELECT
@@ -192,7 +192,7 @@ export class QueryService {
       LEFT JOIN employees emp ON e.coordinator_id = emp.employee_id
 
       WHERE
-        e.event_date BETWEEN ? AND ?
+        ${dateFilter}
         AND (? = 'all'
              OR (? = 'upcoming' AND e.event_date >= CURDATE())
              OR (? = 'past' AND e.event_date < CURDATE()))
@@ -201,17 +201,14 @@ export class QueryService {
       GROUP BY e.event_id, e.name, e.event_date, e.start_time, e.end_time,
                e.location, e.max_participants, e.ticket_price, coordinator_name, e.description
 
-      HAVING (? = 0 OR capacity_percentage IS NULL OR capacity_percentage >= ?)
-
       ORDER BY e.event_date, e.start_time
     `;
 
-    const queryParams = [
-      startDate,
-      endDate,
-      eventStatus, eventStatus, eventStatus,
-      minCapacity, minCapacity
-    ];
+    const queryParams = [];
+    if (startDate && endDate) {
+        queryParams.push(startDate, endDate);
+    }
+    queryParams.push(eventStatus, eventStatus, eventStatus);
 
     return await query<any[]>(sql, queryParams);
   }
@@ -292,14 +289,33 @@ export class QueryService {
       ORDER BY revenue DESC
     `, params);
 
-    const total = byEvent.reduce((sum, row) => sum + parseFloat(row.revenue || 0), 0);
+    // Calculate refunds
+    const refundDateFilter = startDate && endDate ? 'er.registration_date BETWEEN ? AND ?' : '1=1';
+    const refundParams = startDate && endDate ? [startDate, endDate] : [];
+
+    const refundQuery = await query<any[]>(`
+      SELECT
+        COALESCE(SUM(CASE WHEN er.refunded_at IS NOT NULL THEN er.total_amount END), 0) as total_refunds,
+        COUNT(CASE WHEN er.refunded_at IS NOT NULL THEN 1 END) as refund_count
+      FROM event_registrations er
+      WHERE ${refundDateFilter}
+        AND er.deleted_at IS NULL
+    `, refundParams);
+
+    const grossRevenue = byEvent.reduce((sum, row) => sum + parseFloat(row.revenue || 0), 0);
     const registrations = byEvent.reduce((sum, row) => sum + parseInt(row.registrations || 0), 0);
     const participants = byEvent.reduce((sum, row) => sum + parseInt(row.participants || 0), 0);
+    const totalRefunds = parseFloat(refundQuery[0]?.total_refunds || 0);
+    const refundCount = parseInt(refundQuery[0]?.refund_count || 0);
 
     return {
-      total,
+      gross_revenue: grossRevenue,
+      total_refunds: totalRefunds,
+      net_revenue: grossRevenue - totalRefunds,
+      total: grossRevenue - totalRefunds, // For backwards compatibility
       registrations,
       participants,
+      refund_count: refundCount,
       byEvent
     };
   }
@@ -342,6 +358,24 @@ export class QueryService {
       ORDER BY revenue DESC
     `, params);
 
+    // Query 3: Items sold breakdown
+    const byItem = await query<any[]>(`
+      SELECT
+        gsi.item_id,
+        gi.name as item_name,
+        gi.category,
+        SUM(gsi.quantity) as total_quantity,
+        gsi.unit_price,
+        SUM(gsi.quantity * gsi.unit_price) as total_revenue
+      FROM gift_shop_sales_transactions gst
+      JOIN gift_shop_sale_items gsi ON gst.transaction_id = gsi.transaction_id
+      JOIN gift_shop_items gi ON gsi.item_id = gi.item_id
+      ${dateFilter}
+        ${includeReturns ? '' : "AND gst.status = 'completed'"}
+      GROUP BY gsi.item_id, gi.name, gi.category, gsi.unit_price
+      ORDER BY total_revenue DESC
+    `, params);
+
     const total = byShop.reduce((sum, row) => sum + parseFloat(row.revenue || 0), 0);
     const transactions = byShop.reduce((sum, row) => sum + parseInt(row.transactions || 0), 0);
     const returns = byShop.reduce((sum, row) => sum + parseInt(row.returns || 0), 0);
@@ -351,7 +385,8 @@ export class QueryService {
       transactions,
       returns,
       byShop,
-      byPaymentMethod
+      byPaymentMethod,
+      byItem
     };
   }
 
@@ -380,6 +415,23 @@ export class QueryService {
       ORDER BY revenue DESC
     `, params);
 
+    // Query 2: Items sold breakdown
+    const byItem = await query<any[]>(`
+      SELECT
+        cs.item_id,
+        ci.name as item_name,
+        ci.category,
+        ci.price as unit_price,
+        SUM(cs.quantity) as total_quantity,
+        SUM(cs.line_total) as total_revenue
+      FROM cafe_sales cs
+      JOIN cafe_items ci ON cs.item_id = ci.item_id
+      ${dateFilter}
+        ${includeReturns ? '' : "AND cs.status = 'completed'"}
+      GROUP BY cs.item_id, ci.name, ci.category, ci.price
+      ORDER BY total_revenue DESC
+    `, params);
+
     const total = byCafe.reduce((sum, row) => sum + parseFloat(row.revenue || 0), 0);
     const transactions = byCafe.reduce((sum, row) => sum + parseInt(row.transactions || 0), 0);
     const lineItems = byCafe.reduce((sum, row) => sum + parseInt(row.line_items || 0), 0);
@@ -390,7 +442,8 @@ export class QueryService {
       transactions,
       lineItems,
       returns,
-      byCafe
+      byCafe,
+      byItem
     };
   }
 

@@ -8,4 +8,8 @@ const router = Router();
 router.get('/', protect, restrictTo('keeper', 'veterinarian', 'manager'), ZookeeperAssignmentController.getAllAssignments);
 router.get('/keeper/:keeperId', protect, restrictTo('keeper', 'veterinarian', 'manager'), ZookeeperAssignmentController.getAssignmentsByKeeperId);
 
+// Only managers can create and delete assignments
+router.post('/', protect, restrictTo('manager'), ZookeeperAssignmentController.createAssignment);
+router.delete('/:id', protect, restrictTo('manager'), ZookeeperAssignmentController.deleteAssignment);
+
 export default router;
