@@ -65,7 +65,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
    * Add item to cart
    */
   const addItem = (newItem: Omit<CartItem, 'id'>) => {
-    const id = `${newItem.item_type}_${newItem.item_id || 'donation'}_${Date.now()}`;
+    // Generate unique ID using timestamp + random number to avoid collisions in tight loops
+    const id = `${newItem.item_type}_${newItem.item_id || 'donation'}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
     const item: CartItem = { ...newItem, id };
 
     setItems((prevItems) => [...prevItems, item]);
