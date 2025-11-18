@@ -3,16 +3,16 @@
 import { Request, Response } from 'express';
 import * as eventService from '../services/event.service';
 
-// Placeholder for get_upcoming_events
-export const getUpcomingEvents = async (req: Request, res: Response) => {
+// Get all events (both past and upcoming)
+export const getAllEvents = async (req: Request, res: Response) => {
   try {
     const includeDeleted = req.query.includeDeleted === 'true';
     const events = includeDeleted
       ? await eventService.getAllEventsIncludingDeleted()
-      : await eventService.getUpcomingEvents();
+      : await eventService.getAllActiveEvents();
     res.json(events);
   } catch (error) {
-    res.status(500).json({ message: 'Error fetching upcoming events', error });
+    res.status(500).json({ message: 'Error fetching events', error });
   }
 };
 
