@@ -121,14 +121,24 @@ export const initMailService = async () => {
     console.log('[MAIL SERVICE] VERIFIED_SENDER_EMAIL:', process.env.VERIFIED_SENDER_EMAIL);
 
     //Use Brevo ENV Keys
+    const port = Number(process.env.BREVO_PORT) || 587;
+    const secure = port === 465; // Use SSL for port 465, TLS for port 587
+
+    console.log('[MAIL SERVICE] Secure mode:', secure);
+    console.log('[MAIL SERVICE] Attempting connection...');
+
     transporter = nodemailer.createTransport({
       host: process.env.BREVO_HOST,
-      port: Number(process.env.BREVO_PORT),
-      secure: false, // Port 587 is not secure
+      port: port,
+      secure: secure, // true for 465, false for other ports (use STARTTLS)
       auth: {
         user: process.env.BREVO_USER, // Your Brevo Login
         pass: process.env.BREVO_KEY, // Your Brevo SMTP Key
       },
+      // Add timeout and retry options
+      connectionTimeout: 10000, // 10 seconds
+      greetingTimeout: 10000,
+      socketTimeout: 10000,
     });
   }
 
