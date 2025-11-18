@@ -408,7 +408,7 @@ export class QueryService {
    * Detailed breakdown of cafe sales by cafe
    */
   static async getCafeRevenue(startDate?: string, endDate?: string, includeReturns: boolean = false) {
-    const dateFilter = startDate && endDate ? 'WHERE cs.sale_timestamp BETWEEN ? AND ?' : 'WHERE 1=1';
+    const dateFilter = startDate && endDate ? 'WHERE DATE(cs.sale_timestamp) BETWEEN ? AND ?' : 'WHERE 1=1';
     const params = startDate && endDate ? [startDate, endDate] : [];
 
     const byCafe = await query<any[]>(`
@@ -429,6 +429,7 @@ export class QueryService {
     `, params);
 
     // Query 2: Items sold breakdown
+    const byItemDateFilter = startDate && endDate ? 'WHERE DATE(cs.sale_timestamp) BETWEEN ? AND ?' : 'WHERE 1=1';
     const byItem = await query<any[]>(`
       SELECT
         cs.item_id,
@@ -439,7 +440,7 @@ export class QueryService {
         SUM(cs.line_total) as total_revenue
       FROM cafe_sales cs
       JOIN cafe_items ci ON cs.item_id = ci.item_id
-      ${dateFilter}
+      ${byItemDateFilter}
         ${includeReturns ? '' : "AND cs.status = 'completed'"}
       GROUP BY cs.item_id, ci.name, ci.category, ci.price
       ORDER BY total_revenue DESC
