@@ -25,12 +25,20 @@ export class AnimalAlertModel {
     const vets = await query<{ email: string }[]>(vetsSql);
     const veterinarianEmails = vets.map((vet) => vet.email);
     const results = await query<AnimalAlert[]>(sql);
-    results.forEach((animal_alert) => {
-      let animal:
-      animal_alert.veterinarian_emails = veterinarianEmails;
-    });
+    for (const alert of results) {
+      const animalRows = await query<Animal[]>(animalDataSql, [alert.animal_id]);
+      const animal = animalRows[0] || null;
+    
+      const habitatRows = animal
+        ? await query<Habitat[]>(habitatDataSql, [animal.habitat_id])
+        : [];
+      const habitat = habitatRows[0] || null;
+    
+      alert.animal = animal;
+      alert.habitat = habitat;
+      alert.veterinarian_emails = veterinarianEmails;
+    }
     return results.length > 0 ? results : null;
-    console.log(results);   
   }
 
   static async markAlertAsProcessed(animalAlertId: number): Promise<void> {

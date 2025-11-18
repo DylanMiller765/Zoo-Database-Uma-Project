@@ -341,23 +341,35 @@ Check each animal row and determine if it's < health_threshold
 If it is below health_threshold, create row in animlas_alert table with the animal_id, concatenate a message to send to zookeepers. Set the created at and the animal id.
 
 */
+
 DELIMITER //
 
 CREATE TRIGGER alert_animal_health_and_active_status_upon_threshold
 AFTER UPDATE ON animals
 FOR EACH ROW
 BEGIN
-    -- Declare a reusable variable
+    -- =========================
+    -- Declarations
+    -- =========================
     DECLARE existing_alert_id INT;
-
+    DECLARE done INT DEFAULT FALSE;
+    DECLARE vet_id INT;
     
-    -- === LOGIC BLOCK 1: HEALTH STATUS ===
-    -- Check if the new status is 'poor' or 'critical' AND it's a new change
+    -- Cursor to find all vets
+    DECLARE vet_cursor CURSOR FOR 
+        SELECT employee_id FROM employees WHERE job_role = 'veterinarian';
+        
+    -- Handler: Sets done=TRUE when cursor finishes OR when any SELECT finds nothing
+    DECLARE CONTINUE HANDLER FOR NOT FOUND SET done = TRUE;
+
+    -- =========================
+    -- LOGIC BLOCK 1: HEALTH STATUS
+    -- =========================
     IF NEW.health_status IN ('poor', 'critical') AND NEW.health_status != OLD.health_status THEN
         
-        SET existing_alert_id = NULL; -- Reset variable
+        SET existing_alert_id = NULL;
 
-        -- Check if an *unprocessed* 'health_status' alert already exists
+        -- ⚠️ WARNING: If this finds no rows, the HANDLER fires and sets done = TRUE
         SELECT alert.animal_alert_id INTO existing_alert_id
         FROM animals_alert_queue alert
         WHERE alert.animal_id = NEW.animal_id
@@ -366,29 +378,50 @@ BEGIN
         LIMIT 1;
 
         IF existing_alert_id IS NULL THEN
-            -- No open alert found, so INSERT a new one
             INSERT INTO animals_alert_queue(alert_reason, alert_value, animal_id)
             VALUES ('health_status', NEW.health_status, NEW.animal_id);
         ELSE
-            -- An open alert *does* exist, so UPDATE it
             UPDATE animals_alert_queue
             SET 
-                alert_value = NEW.health_status, -- Update to 'poor' or 'critical'
-                created_at = NOW()               -- Refresh the timestamp
-            WHERE 
-                animal_alert_id = existing_alert_id;
+                alert_value = NEW.health_status,
+                created_at = NOW()
+            WHERE animal_alert_id = existing_alert_id;
         END IF;
     
-    END IF; -- End of health status logic
+        -- =========================
+        -- FIX: RESET DONE FLAG
+        -- =========================
+        -- We must reset this because the SELECT INTO above might have tripped it to TRUE
+        SET done = FALSE; 
 
-    
-    -- === LOGIC BLOCK 2: ACTIVE STATUS ===
-    -- This logic was already correct for your ENUM
+        OPEN vet_cursor;
+        read_loop: LOOP
+            FETCH vet_cursor INTO vet_id;
+            
+            IF done THEN
+                LEAVE read_loop;
+            END IF;
+
+            INSERT INTO notifications (employee_id, message, notification_type, created_at)
+            VALUES (
+                vet_id,
+                CONCAT('Alert: Animal "', NEW.name, ' health status is now "', NEW.health_status, '". Immediate attention required.'),
+                'alert',
+                NOW()
+            );
+        END LOOP;
+        CLOSE vet_cursor;
+
+    END IF;
+
+    -- =========================
+    -- LOGIC BLOCK 2: ACTIVE STATUS
+    -- =========================
     IF NEW.active_status = 'deceased' AND NEW.active_status != OLD.active_status THEN
-        
-        SET existing_alert_id = NULL; -- Reset variable
 
-        -- Check if an *unprocessed* 'active_status' alert already exists
+        SET existing_alert_id = NULL;
+
+        -- It is okay if this triggers the handler here, as there is no cursor loop following it
         SELECT alert.animal_alert_id INTO existing_alert_id
         FROM animals_alert_queue alert
         WHERE alert.animal_id = NEW.animal_id
@@ -397,24 +430,20 @@ BEGIN
         LIMIT 1;
 
         IF existing_alert_id IS NULL THEN
-            -- No 'deceased' alert exists, so INSERT a new one
             INSERT INTO animals_alert_queue(alert_reason, alert_value, animal_id)
             VALUES ('active_status', NEW.active_status, NEW.animal_id);
         ELSE
-            -- An alert already exists. Just update its timestamp.
             UPDATE animals_alert_queue
-            SET 
-                created_at = NOW()
-            WHERE 
-                animal_alert_id = existing_alert_id;
+            SET created_at = NOW()
+            WHERE animal_alert_id = existing_alert_id;
         END IF;
 
-    END IF; -- End of active status logic
+    END IF;
 
-END; //
+END;
+//
 
 DELIMITER ;
-
 -- Indexes for soft delete columns (performance optimization)
 CREATE INDEX `idx_employees_deleted` ON `employees`(`deleted_at`);
 CREATE INDEX `idx_customers_deleted` ON `customers`(`deleted_at`);
