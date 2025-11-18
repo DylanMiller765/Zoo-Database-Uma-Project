@@ -345,10 +345,25 @@ export default function EventsPage() {
                                                             });
                                                         }, 2000);
                                                     }}
-                                                    className="w-full bg-sea_green-600 hover:bg-sea_green-700 text-white"
+                                                    disabled={addedItems.has(ev.event_id)}
+                                                    className={`w-full text-xs font-semibold transition-all duration-200 ${
+                                                      addedItems.has(ev.event_id)
+                                                        ? 'bg-sea_green-500 text-white cursor-default'
+                                                        : 'bg-gradient-to-r from-sea_green-600 to-dark_spring_green-600 hover:from-sea_green-700 hover:to-dark_spring_green-700 text-white shadow-sm hover:shadow-md'
+                                                    }`}
+                                                    size="sm"
                                                 >
-                                                    <ShoppingCart className="h-4 w-4 mr-2" />
-                                                    Add to Cart (${ev.ticket_price.toFixed(2)})
+                                                    {addedItems.has(ev.event_id) ? (
+                                                        <>
+                                                            <Check className="h-3 w-3 mr-1.5" />
+                                                            Added!
+                                                        </>
+                                                    ) : (
+                                                        <>
+                                                            <ShoppingCart className="h-3 w-3 mr-1.5" />
+                                                            Add to Cart (${ev.ticket_price.toFixed(2)})
+                                                        </>
+                                                    )}
                                                 </Button>
                                             ) : ev.status !== 'scheduled' ? (
                                                 <Button
