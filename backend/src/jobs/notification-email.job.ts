@@ -14,12 +14,11 @@ import { NotificationEmailService } from '../services/notification-email.service
  * Start the notification email job
  */
 export function startNotificationEmailJob(): void {
-  // Run every 5 minutes: */5 * * * *
-  // For testing, you can change to every minute: * * * * *
-  const schedule = '*/5 * * * *';
+  // Run every 8 seconds
+  const schedule = '*/8 * * * * *';
 
   console.log('[Notification Email Job] Scheduling email processing job...');
-  console.log(`[Notification Email Job] Schedule: Every 5 minutes`);
+  console.log(`[Notification Email Job] Schedule: Every 8 seconds`);
 
   cron.schedule(schedule, async () => {
     console.log(`\n[${new Date().toISOString()}] Running notification email job...`);
