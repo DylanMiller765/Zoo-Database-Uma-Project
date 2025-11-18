@@ -23,13 +23,54 @@ export class AnimalAlertService {
           .replace("_", " ")
           .toUpperCase()}`;
         const body = `
-        <p>Dear Veterinarian,</p>
-        <p>An alert has been generated for Animal ID: ${alert.animal_id}.</p>
-        <p>Reason: ${alert.alert_reason.replace("_", " ")}</p>
-        <p>Value: ${alert.alert_value}</p>
-        <p>Please take the necessary actions.</p>
-        <p>Regards,<br/>Zoo Management System</p>
-      `;
+          <p>Dear Veterinarian,</p>
+                
+          <p>
+            I hope you're doing well. We wanted to bring your attention to a new alert
+            that has been automatically generated for one of the animals under your care.
+          </p>
+                
+          <p>Here are the details:</p>
+                
+          <h3>🐾 Animal Details</h3>
+          <ul>
+            <li><strong>ID:</strong> ${alert.animal?.animal_id ?? alert.animal_id}</li>
+            <li><strong>Name:</strong> ${alert.animal?.name ?? "Unknown"}</li>
+            <li><strong>Species:</strong> ${alert.animal?.species ?? "Unknown"}</li>
+          </ul>
+                
+          <h3>🌿 Habitat Information</h3>
+          <ul>
+            <li><strong>Habitat:</strong> ${alert.habitat?.habitat_name ?? "Unknown"}</li>
+          </ul>
+                
+          <h3>⚠️ What Triggered the Alert</h3>
+          <p>
+            The system detected an event related to the animal’s
+            <strong>${alert.alert_reason.replace("_", " ")}</strong>
+            with a reported value of:
+            <strong>${alert.alert_value}</strong>.
+          </p>
+                
+          ${
+            alert.medical_notes
+              ? `
+          <h3>📝 Additional Notes</h3>
+          <p>${alert.medical_notes}</p>
+          `
+              : ""
+          }
+        
+          <p>
+            We kindly ask that you review this situation at your earliest convenience
+            and take the appropriate next steps. If there’s anything the Zoo Management
+            System team can assist with, feel free to reach out.
+          </p>
+        
+          <p>Thank you for your continued dedication and care.</p>
+        
+          <p>Warm regards,<br/>Zoo Management System</p>
+        `;
 
         // Send email to each veterinarian
         for (const email of alert.veterinarian_emails || []) {
