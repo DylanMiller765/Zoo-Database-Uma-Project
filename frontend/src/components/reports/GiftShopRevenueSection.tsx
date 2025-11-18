@@ -23,10 +23,13 @@ interface GiftShopRevenueData {
     avg_transaction: number;
     returns: number;
   }>;
-  byPaymentMethod: Array<{
-    payment_method: string;
-    count: number;
-    revenue: number;
+  byItem?: Array<{
+    item_id: number;
+    item_name: string;
+    category: string | null;
+    unit_price: number;
+    total_quantity: number;
+    total_revenue: number;
   }>;
 }
 
@@ -38,10 +41,6 @@ export function GiftShopRevenueSection({ data }: Props) {
   const formatMoney = (amount: number | string) => {
     const num = parseFloat(String(amount || 0));
     return num.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-  };
-
-  const formatPaymentMethod = (method: string) => {
-    return method.charAt(0).toUpperCase() + method.slice(1);
   };
 
   return (
@@ -66,7 +65,7 @@ export function GiftShopRevenueSection({ data }: Props) {
       <CardContent className="space-y-6">
         {/* Revenue by Gift Shop */}
         <div>
-          <h3 className="text-sm font-semibold text-gray-700 mb-3">
+          <h3 className="text-sm font-semibold text-gray-700 mb-3 pl-2">
             Revenue by Gift Shop
           </h3>
           <div className="overflow-x-auto">
@@ -121,42 +120,52 @@ export function GiftShopRevenueSection({ data }: Props) {
           </div>
         </div>
 
-        {/* Revenue by Payment Method */}
-        <div>
-          <h3 className="text-sm font-semibold text-gray-700 mb-3">
-            Revenue by Payment Method
-          </h3>
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Payment Method</TableHead>
-                  <TableHead className="text-right">Transactions</TableHead>
-                  <TableHead className="text-right">Revenue</TableHead>
-                  <TableHead className="text-right">% of Total</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {data.byPaymentMethod.map((row) => (
-                  <TableRow key={row.payment_method}>
-                    <TableCell className="font-medium">
-                      {formatPaymentMethod(row.payment_method)}
-                    </TableCell>
-                    <TableCell className="text-right">{row.count}</TableCell>
-                    <TableCell className="text-right font-semibold text-pink-600">
-                      ${formatMoney(row.revenue)}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <Badge className="bg-pink-100 text-pink-800">
-                        {((parseFloat(String(row.revenue)) / data.total) * 100).toFixed(1)}%
-                      </Badge>
-                    </TableCell>
+        {/* Items Sold Section */}
+        {data.byItem && data.byItem.length > 0 && (
+          <div>
+            <h3 className="text-sm font-semibold text-gray-700 mb-3 pl-2">
+              Items Sold
+            </h3>
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Item Name</TableHead>
+                    <TableHead>Category</TableHead>
+                    <TableHead className="text-right">Unit Price</TableHead>
+                    <TableHead className="text-right">Quantity Sold</TableHead>
+                    <TableHead className="text-right">Total Revenue</TableHead>
+                    <TableHead className="text-right">% of Total</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {data.byItem.map((item) => (
+                    <TableRow key={item.item_id}>
+                      <TableCell className="font-medium">{item.item_name}</TableCell>
+                      <TableCell className="text-sm text-gray-600">
+                        {item.category || 'N/A'}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        ${formatMoney(item.unit_price)}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        {item.total_quantity}
+                      </TableCell>
+                      <TableCell className="text-right font-semibold text-pink-600">
+                        ${formatMoney(item.total_revenue)}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <Badge className="bg-pink-100 text-pink-800">
+                          {((parseFloat(String(item.total_revenue)) / data.total) * 100).toFixed(1)}%
+                        </Badge>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
           </div>
-        </div>
+        )}
       </CardContent>
     </Card>
   );

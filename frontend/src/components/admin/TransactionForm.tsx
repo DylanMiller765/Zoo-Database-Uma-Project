@@ -36,7 +36,7 @@ export function TransactionForm({ initialType, onSuccess, onCancel }: Transactio
   const [visitDate, setVisitDate] = useState('');
   const [ticketType, setTicketType] = useState<'adult' | 'child' | 'senior' | 'student'>('adult');
   const [ticketPrice, setTicketPrice] = useState('45.00');
-  const [paymentMethod, setPaymentMethod] = useState<'cash' | 'credit' | 'debit' | 'online'>('cash');
+  const [paymentMethod, setPaymentMethod] = useState<'cash' | 'credit' | 'debit'>('cash');
 
   // Event registration fields
   const [events, setEvents] = useState<any[]>([]);
@@ -296,7 +296,6 @@ export function TransactionForm({ initialType, onSuccess, onCancel }: Transactio
                 <option value="cash">Cash</option>
                 <option value="credit">Credit Card</option>
                 <option value="debit">Debit Card</option>
-                <option value="online">Online</option>
               </Select>
             </div>
           </div>

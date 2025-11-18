@@ -65,7 +65,7 @@ export function GrandSummarySection({ data }: Props) {
     : 0;
 
   return (
-    <Card className="border-2 border-sea_green-500">
+    <Card className="border border-gray-200">
       <CardHeader>
         <CardTitle className="text-2xl flex items-center gap-2">
           <Award className="h-6 w-6 text-sea_green-600" />
@@ -104,44 +104,41 @@ export function GrandSummarySection({ data }: Props) {
           <h3 className="text-sm font-semibold text-gray-700 mb-3">
             Key Insights
           </h3>
-          <div className="space-y-3">
+          <div className="space-y-4">
             {/* Total Revenue */}
-            <div className="flex items-start gap-3 p-4 bg-sea_green-50 rounded-lg border border-sea_green-200">
+            <div className="flex items-start gap-3 p-6 rounded-lg border border-gray-200">
               <DollarSign className="h-5 w-5 text-sea_green-600 mt-0.5" />
               <div>
                 <div className="font-semibold text-gray-900">
                   Total Revenue: ${formatMoney(data.totalRevenue)}
                 </div>
                 <div className="text-sm text-gray-600">
-                  From {data.totalTransactions.toLocaleString()} transactions across {data.sources.length} revenue source{data.sources.length !== 1 ? 's' : ''}
+                  {data.totalTransactions.toLocaleString()} transaction{data.totalTransactions !== 1 ? 's' : ''}
                 </div>
               </div>
             </div>
 
             {/* Largest Revenue Source */}
             {data.largestRevenueSource && data.largestRevenueAmount && (
-              <div className="flex items-start gap-3 p-4 bg-purple-50 rounded-lg border border-purple-200">
+              <div className="flex items-start gap-3 p-6 rounded-lg border border-gray-200">
                 <Award className="h-5 w-5 text-purple-600 mt-0.5" />
                 <div>
                   <div className="font-semibold text-gray-900">
                     Largest Revenue Source: {getSourceLabel(data.largestRevenueSource)}
                   </div>
                   <div className="text-sm text-gray-600">
-                    Generated ${formatMoney(data.largestRevenueAmount)} ({((data.largestRevenueAmount / data.totalRevenue) * 100).toFixed(1)}% of total revenue)
+                    ${formatMoney(data.largestRevenueAmount)}
                   </div>
                 </div>
               </div>
             )}
 
             {/* Average Transaction */}
-            <div className="flex items-start gap-3 p-4 bg-blue-50 rounded-lg border border-blue-200">
+            <div className="flex items-start gap-3 p-6 rounded-lg border border-gray-200">
               <TrendingUp className="h-5 w-5 text-blue-600 mt-0.5" />
               <div>
                 <div className="font-semibold text-gray-900">
                   Average Transaction Value: ${formatMoney(avgTransactionValue)}
-                </div>
-                <div className="text-sm text-gray-600">
-                  Across all revenue sources in the selected period
                 </div>
               </div>
             </div>

@@ -20,11 +20,6 @@ interface MembershipRevenueData {
     count: number;
     revenue: number;
   }>;
-  byPaymentMethod: Array<{
-    payment_method: string;
-    count: number;
-    revenue: number;
-  }>;
 }
 
 interface Props {
@@ -35,10 +30,6 @@ export function MembershipRevenueSection({ data }: Props) {
   const formatMoney = (amount: number | string) => {
     const num = parseFloat(String(amount || 0));
     return num.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-  };
-
-  const formatPaymentMethod = (method: string) => {
-    return method.charAt(0).toUpperCase() + method.slice(1);
   };
 
   return (
@@ -100,43 +91,6 @@ export function MembershipRevenueSection({ data }: Props) {
                     </TableRow>
                   ))
                 )}
-              </TableBody>
-            </Table>
-          </div>
-        </div>
-
-        {/* Revenue by Payment Method */}
-        <div>
-          <h3 className="text-sm font-semibold text-gray-700 mb-3">
-            Revenue by Payment Method
-          </h3>
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Payment Method</TableHead>
-                  <TableHead className="text-right">Memberships</TableHead>
-                  <TableHead className="text-right">Revenue</TableHead>
-                  <TableHead className="text-right">% of Total</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {data.byPaymentMethod.map((row) => (
-                  <TableRow key={row.payment_method}>
-                    <TableCell className="font-medium">
-                      {formatPaymentMethod(row.payment_method)}
-                    </TableCell>
-                    <TableCell className="text-right">{row.count}</TableCell>
-                    <TableCell className="text-right font-semibold text-green-600">
-                      ${formatMoney(row.revenue)}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <Badge className="bg-green-100 text-green-800">
-                        {((parseFloat(String(row.revenue)) / data.total) * 100).toFixed(1)}%
-                      </Badge>
-                    </TableCell>
-                  </TableRow>
-                ))}
               </TableBody>
             </Table>
           </div>

@@ -59,19 +59,12 @@ export class DashboardService {
     );
     const todaysVisitors = visitorsResult.count;
 
-    // Get monthly revenue (tickets from current month)
-    const [revenueResult] = await query<any[]>(
-      'SELECT COALESCE(SUM(price), 0) as total FROM tickets WHERE MONTH(purchase_date) = MONTH(CURDATE()) AND YEAR(purchase_date) = YEAR(CURDATE())'
-    );
-    const monthlyRevenue = parseFloat(revenueResult.total) || 0;
-
     return {
       totalAnimals,
       totalEmployees,
       upcomingEvents,
       activeHabitats,
       todaysVisitors,
-      monthlyRevenue,
     };
   }
 

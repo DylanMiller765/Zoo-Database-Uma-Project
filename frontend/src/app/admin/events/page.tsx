@@ -17,12 +17,11 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { Plus, Search, Edit, Trash2, Calendar, RotateCcw } from 'lucide-react';
+import { Plus, Search, Edit, Trash2, Calendar, Info } from 'lucide-react';
 import { Modal } from '@/components/ui/modal';
 import { EventForm } from '@/components/admin/EventForm';
 import { EntityDetailModal } from '@/components/ui/EntityDetailModal';
 import { ShowDeletedToggle } from '@/components/admin/ShowDeletedToggle';
-import { RestoreConfirmationModal } from '@/components/admin/RestoreConfirmationModal';
 
 export default function EventsPage() {
   const { isAuthenticated, loading: authLoading, hasRole } = useAuth();
@@ -40,8 +39,6 @@ export default function EventsPage() {
   const [eventToDelete, setEventToDelete] = useState<Event | null>(null);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
   const [detailEvent, setDetailEvent] = useState<Event | null>(null);
-  const [isRestoreModalOpen, setIsRestoreModalOpen] = useState(false);
-  const [eventToRestore, setEventToRestore] = useState<Event | null>(null);
   const isManager = hasRole('manager');
 
   const hasOpenedModal = useRef(false);
@@ -93,25 +90,6 @@ export default function EventsPage() {
   const handleRowClick = (event: Event) => {
     setDetailEvent(event);
     setIsDetailModalOpen(true);
-  };
-
-  const handleRestoreClick = (event: Event, e: React.MouseEvent) => {
-    e.stopPropagation();
-    setEventToRestore(event);
-    setIsRestoreModalOpen(true);
-  };
-
-  const handleRestore = async () => {
-    if (!eventToRestore?.event_id) return;
-
-    try {
-      await eventService.restore(eventToRestore.event_id);
-      await loadEvents();
-      setIsRestoreModalOpen(false);
-      setEventToRestore(null);
-    } catch (error) {
-      console.error('Failed to restore event:', error);
-    }
   };
 
   const handleDeleteClick = (event: Event, e: React.MouseEvent) => {
@@ -302,7 +280,7 @@ export default function EventsPage() {
                 </TableCell>
                 <TableCell>{event.location || 'N/A'}</TableCell>
                 <TableCell>
-                  {event.current_registrations || 0} / {event.max_capacity || 'Unlimited'}
+                  {event.max_capacity || 'Unlimited'}
                 </TableCell>
                 <TableCell>
                   {isDeleted(event) ? (
@@ -330,16 +308,7 @@ export default function EventsPage() {
                         </Button>
                       </>
                     ) : (
-                      isManager && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={(e) => handleRestoreClick(event, e)}
-                          className="text-green-600 hover:text-green-700 hover:bg-green-50"
-                        >
-                          <RotateCcw className="h-4 w-4" />
-                        </Button>
-                      )
+                      <span className="text-sm text-gray-500 italic">Cancelled</span>
                     )}
                   </div>
                 </TableCell>
@@ -401,6 +370,20 @@ export default function EventsPage() {
         </div>
       </Modal>
 
+      {/* Info banner for deleted events */}
+      {showDeleted && filteredEvents.some(e => isDeleted(e)) && (
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 flex items-start gap-3">
+          <Info className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
+          <div className="text-sm text-blue-900">
+            <p className="font-semibold">Cancelled events cannot be restored</p>
+            <p className="text-blue-800 mt-1">
+              Once an event is cancelled, refunds are automatically processed for all registered customers.
+              To reschedule a cancelled event, please create a new event instead.
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* Detail Modal */}
       <EntityDetailModal
         open={isDetailModalOpen}
@@ -446,15 +429,6 @@ export default function EventsPage() {
           setIsModalOpen(true);
         } : undefined}
         canEdit={detailEvent ? !isDeleted(detailEvent) : false}
-      />
-
-      {/* Restore Confirmation Modal */}
-      <RestoreConfirmationModal
-        open={isRestoreModalOpen}
-        onClose={() => setIsRestoreModalOpen(false)}
-        onConfirm={handleRestore}
-        itemName={eventToRestore?.event_name || ''}
-        itemType="event"
       />
     </div>
   );

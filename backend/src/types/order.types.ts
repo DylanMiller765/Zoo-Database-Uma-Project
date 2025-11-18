@@ -1,5 +1,5 @@
 export type OrderStatus = 'pending' | 'completed' | 'cancelled';
-export type PaymentMethodType = 'credit' | 'debit' | 'online';
+export type PaymentMethodType = 'credit' | 'debit';
 
 export interface CustomerOrder {
   order_id: number;

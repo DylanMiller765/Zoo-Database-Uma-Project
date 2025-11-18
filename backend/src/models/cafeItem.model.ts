@@ -3,8 +3,17 @@ import { CafeItem } from '../types/cafeItem.types';
 
 export class CafeItemModel {
   static async findAll(): Promise<CafeItem[]> {
-    const sql = 'SELECT * FROM cafe_items WHERE deleted_at IS NULL';
-    return await query<CafeItem[]>(sql);
+    try {
+      const sql = 'SELECT * FROM cafe_items WHERE deleted_at IS NULL';
+      return await query<CafeItem[]>(sql);
+    } catch (error: any) {
+      // If deleted_at column doesn't exist, fall back to fetching all items
+      if (error.code === 'ER_BAD_FIELD_ERROR' && error.message.includes('deleted_at')) {
+        const sql = 'SELECT * FROM cafe_items';
+        return await query<CafeItem[]>(sql);
+      }
+      throw error;
+    }
   }
 
   static async findAllIncludingDeleted(): Promise<CafeItem[]> {
@@ -13,9 +22,19 @@ export class CafeItemModel {
   }
 
   static async findById(id: number): Promise<CafeItem | null> {
-    const sql = 'SELECT * FROM cafe_items WHERE item_id = ? AND deleted_at IS NULL';
-    const results = await query<CafeItem[]>(sql, [id]);
-    return results.length > 0 ? results[0] : null;
+    try {
+      const sql = 'SELECT * FROM cafe_items WHERE item_id = ? AND deleted_at IS NULL';
+      const results = await query<CafeItem[]>(sql, [id]);
+      return results.length > 0 ? results[0] : null;
+    } catch (error: any) {
+      // If deleted_at column doesn't exist, fall back to simple ID lookup
+      if (error.code === 'ER_BAD_FIELD_ERROR' && error.message.includes('deleted_at')) {
+        const sql = 'SELECT * FROM cafe_items WHERE item_id = ?';
+        const results = await query<CafeItem[]>(sql, [id]);
+        return results.length > 0 ? results[0] : null;
+      }
+      throw error;
+    }
   }
 
   static async create(item: Omit<CafeItem, 'item_id'>): Promise<CafeItem> {
@@ -38,18 +57,45 @@ export class CafeItemModel {
   }
 
   static async remove(id: number): Promise<void> {
-    const sql = 'UPDATE cafe_items SET deleted_at = NOW() WHERE item_id = ?';
-    await query(sql, [id]);
+    try {
+      const sql = 'UPDATE cafe_items SET deleted_at = NOW() WHERE item_id = ?';
+      await query(sql, [id]);
+    } catch (error: any) {
+      // If deleted_at column doesn't exist, silently ignore (soft deletes not supported)
+      if (error.code === 'ER_BAD_FIELD_ERROR' && error.message.includes('deleted_at')) {
+        console.warn('Warning: Could not soft delete item, deleted_at column does not exist');
+      } else {
+        throw error;
+      }
+    }
   }
 
   static async findByCafe(cafeId: number): Promise<CafeItem[]> {
-    const sql = 'SELECT * FROM cafe_items WHERE cafe_id = ? AND deleted_at IS NULL';
-    return await query<CafeItem[]>(sql, [cafeId]);
+    try {
+      const sql = 'SELECT * FROM cafe_items WHERE cafe_id = ? AND deleted_at IS NULL';
+      return await query<CafeItem[]>(sql, [cafeId]);
+    } catch (error: any) {
+      // If deleted_at column doesn't exist, fall back to simple cafe ID lookup
+      if (error.code === 'ER_BAD_FIELD_ERROR' && error.message.includes('deleted_at')) {
+        const sql = 'SELECT * FROM cafe_items WHERE cafe_id = ?';
+        return await query<CafeItem[]>(sql, [cafeId]);
+      }
+      throw error;
+    }
   }
 
   static async restore(id: number): Promise<CafeItem | null> {
-    const sql = 'UPDATE cafe_items SET deleted_at = NULL WHERE item_id = ?';
-    await query(sql, [id]);
+    try {
+      const sql = 'UPDATE cafe_items SET deleted_at = NULL WHERE item_id = ?';
+      await query(sql, [id]);
+    } catch (error: any) {
+      // If deleted_at column doesn't exist, silently ignore (soft deletes not supported)
+      if (error.code === 'ER_BAD_FIELD_ERROR' && error.message.includes('deleted_at')) {
+        console.warn('Warning: Could not restore item, deleted_at column does not exist');
+      } else {
+        throw error;
+      }
+    }
     return await this.findById(id);
   }
 }

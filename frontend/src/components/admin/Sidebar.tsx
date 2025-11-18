@@ -17,6 +17,7 @@ import {
   Activity,
   TrendingUp,
   DollarSign,
+  UserCog
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useState } from 'react';
@@ -36,6 +37,7 @@ interface MenuItem {
 const menuItems: MenuItem[] = [
   { href: '/admin', icon: LayoutDashboard, label: 'Dashboard', roles: ['manager', 'keeper', 'veterinarian', 'coordinator', 'cashier', 'guide', 'maintenance', 'security', 'other'] },
   { href: '/admin/animals', icon: Leaf, label: 'Animals', roles: ['manager', 'veterinarian', 'keeper'] },
+  { href: '/admin/assignments', icon: UserCog, label: 'Assignments', roles: ['manager'] },
   { href: '/admin/habitats', icon: Home, label: 'Habitats', roles: ['manager', 'veterinarian', 'keeper'] },
   { href: '/admin/employees', icon: Users, label: 'Employees', roles: ['manager'] },
   { href: '/admin/events', icon: Calendar, label: 'Events', roles: ['manager', 'coordinator', 'guide'] },

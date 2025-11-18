@@ -25,6 +25,14 @@ interface CafeRevenueData {
     avg_transaction: number;
     returns: number;
   }>;
+  byItem?: Array<{
+    item_id: number;
+    item_name: string;
+    category: string | null;
+    unit_price: number;
+    total_quantity: number;
+    total_revenue: number;
+  }>;
 }
 
 interface Props {
@@ -70,7 +78,6 @@ export function CafeRevenueSection({ data }: Props) {
                   <TableHead className="text-right">Transactions</TableHead>
                   <TableHead className="text-right">Line Items</TableHead>
                   <TableHead className="text-right">Revenue</TableHead>
-                  <TableHead className="text-right">Avg Transaction</TableHead>
                   {data.returns > 0 && <TableHead className="text-right">Returns</TableHead>}
                   <TableHead className="text-right">% of Total</TableHead>
                 </TableRow>
@@ -96,9 +103,6 @@ export function CafeRevenueSection({ data }: Props) {
                       <TableCell className="text-right font-semibold text-orange-600">
                         ${formatMoney(row.revenue)}
                       </TableCell>
-                      <TableCell className="text-right">
-                        ${formatMoney(row.avg_transaction)}
-                      </TableCell>
                       {data.returns > 0 && (
                         <TableCell className="text-right text-red-600">
                           {row.returns}
@@ -116,6 +120,53 @@ export function CafeRevenueSection({ data }: Props) {
             </Table>
           </div>
         </div>
+
+        {/* Items Sold Section */}
+        {data.byItem && data.byItem.length > 0 && (
+          <div className="mt-6">
+            <h3 className="text-sm font-semibold text-gray-700 mb-3">
+              Items Sold
+            </h3>
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Item Name</TableHead>
+                    <TableHead>Category</TableHead>
+                    <TableHead className="text-right">Unit Price</TableHead>
+                    <TableHead className="text-right">Quantity Sold</TableHead>
+                    <TableHead className="text-right">Total Revenue</TableHead>
+                    <TableHead className="text-right">% of Total</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {data.byItem.map((item) => (
+                    <TableRow key={item.item_id}>
+                      <TableCell className="font-medium">{item.item_name}</TableCell>
+                      <TableCell className="text-sm text-gray-600">
+                        {item.category || 'N/A'}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        ${formatMoney(item.unit_price)}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        {item.total_quantity}
+                      </TableCell>
+                      <TableCell className="text-right font-semibold text-orange-600">
+                        ${formatMoney(item.total_revenue)}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <Badge className="bg-orange-100 text-orange-800">
+                          {((parseFloat(String(item.total_revenue)) / data.total) * 100).toFixed(1)}%
+                        </Badge>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          </div>
+        )}
       </CardContent>
     </Card>
   );

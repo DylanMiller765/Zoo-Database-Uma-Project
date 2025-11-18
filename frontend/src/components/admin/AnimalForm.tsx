@@ -1,8 +1,9 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import { Animal, CreateAnimalData } from '@/types';
+import { Animal, CreateAnimalData, Habitat } from '@/types';
 import { animalService } from '@/services/animal.service';
+import { habitatService } from '@/services/habitat.service';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -19,6 +20,7 @@ interface AnimalFormProps {
 export function AnimalForm({ animal, onSuccess, onCancel }: AnimalFormProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [habitats, setHabitats] = useState<Habitat[]>([]);
 
   const [formData, setFormData] = useState<CreateAnimalData>({
     name: '',
@@ -35,6 +37,19 @@ export function AnimalForm({ animal, onSuccess, onCancel }: AnimalFormProps) {
     endangerment_status: 'least_concern',
     weight: undefined,
   });
+
+  // Load habitats on component mount
+  useEffect(() => {
+    const loadHabitats = async () => {
+      try {
+        const data = await habitatService.getAll();
+        setHabitats(data);
+      } catch (err) {
+        console.error('Failed to load habitats:', err);
+      }
+    };
+    loadHabitats();
+  }, []);
 
   useEffect(() => {
     if (animal) {
@@ -228,17 +243,22 @@ export function AnimalForm({ animal, onSuccess, onCancel }: AnimalFormProps) {
           </Select>
         </div>
 
-        {/* Habitat ID */}
+        {/* Habitat */}
         <div className="space-y-2">
-          <Label htmlFor="habitat_id">Habitat ID</Label>
-          <Input
-            type="number"
+          <Label htmlFor="habitat_id">Habitat</Label>
+          <Select
             id="habitat_id"
             name="habitat_id"
-            value={formData.habitat_id || ''}
+            value={formData.habitat_id?.toString() || ''}
             onChange={handleChange}
-            placeholder="Optional"
-          />
+          >
+            <option value="">Select a habitat (Optional)</option>
+            {habitats.map(habitat => (
+              <option key={habitat.habitat_id} value={habitat.habitat_id.toString()}>
+                {habitat.habitat_name}
+              </option>
+            ))}
+          </Select>
         </div>
       </div>
 
