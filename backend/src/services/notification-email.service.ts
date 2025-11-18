@@ -209,7 +209,7 @@ export class NotificationEmailService {
   }): Promise<void> {
     try {
       await sendMail({
-        from: '"Zoo Notifications" <noreply@zoo.com>',
+        from: `"Zoo Notifications" <${process.env.VERIFIED_SENDER_EMAIL || 'noreply@zoo.com'}>`,
         to: params.to,
         subject: params.subject,
         html: params.body,
