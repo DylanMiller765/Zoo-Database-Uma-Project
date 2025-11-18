@@ -1,6 +1,6 @@
 // Client-side cart types (no database backing)
 
-export type CartItemType = 'ticket' | 'event' | 'cafe_item' | 'gift_shop_item' | 'donation';
+export type CartItemType = 'ticket' | 'event' | 'cafe_item' | 'gift_shop_item' | 'donation' | 'membership';
 
 export interface CartItem {
   id: string; // Unique ID for client-side tracking
@@ -30,6 +30,14 @@ export interface CartItem {
 
     // Donation-specific
     donation_message?: string;
+
+    // Membership-specific
+    membership_type?: 'individual';
+    first_name?: string;
+    last_name?: string;
+    email?: string;
+    phone?: string;
+    auto_renew?: boolean;
   };
 }
 

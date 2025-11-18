@@ -17,7 +17,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { Plus, Search, Edit, Trash2, Store, RotateCcw } from 'lucide-react';
+import { Plus, Search, Edit, Trash2, Store, RotateCcw, Save } from 'lucide-react';
 import { Modal } from '@/components/ui/modal';
 import { GiftShopItemForm } from '@/components/admin/GiftShopItemForm';
 import { GiftShopItemDetailModal } from '@/components/admin/GiftShopItemDetailModal';
@@ -45,8 +45,13 @@ export default function GiftShopsPage() {
   const [detailItem, setDetailItem] = useState<GiftShopItem | null>(null);
   const [isRestoreModalOpen, setIsRestoreModalOpen] = useState(false);
   const [itemToRestore, setItemToRestore] = useState<GiftShopItem | null>(null);
+  
+  // Stock editing states
+  const [editingStock, setEditingStock] = useState<Record<number, number>>({});
+  const [savingStock, setSavingStock] = useState<Record<number, boolean>>({});
 
   const isManager = hasRole('manager');
+  const isCashier = hasRole('cashier');
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -150,6 +155,50 @@ export default function GiftShopsPage() {
     await loadItems();
   };
 
+  const handleStockChange = (itemId: number, value: string) => {
+    const numValue = parseInt(value) || 0;
+    if (numValue < 0) return;
+    setEditingStock(prev => ({ ...prev, [itemId]: numValue }));
+  };
+
+  const handleSaveStock = async (item: GiftShopItem) => {
+    const newStock = editingStock[item.item_id];
+    if (newStock === undefined || newStock === item.quantity_in_stock) {
+      return;
+    }
+
+    setSavingStock(prev => ({ ...prev, [item.item_id]: true }));
+
+    try {
+      await giftShopItemService.updateStock(item.item_id, newStock);
+      
+      // Update local state
+      setItems(prev =>
+        prev.map(i =>
+          i.item_id === item.item_id
+            ? { ...i, quantity_in_stock: newStock }
+            : i
+        )
+      );
+      
+      // Clear editing state
+      setEditingStock(prev => {
+        const updated = { ...prev };
+        delete updated[item.item_id];
+        return updated;
+      });
+    } catch (error: any) {
+      console.error('Failed to update stock:', error);
+      alert(error.response?.data?.message || 'Failed to update stock. Please try again.');
+    } finally {
+      setSavingStock(prev => {
+        const updated = { ...prev };
+        delete updated[item.item_id];
+        return updated;
+      });
+    }
+  };
+
   const itemsForShop = items.filter((it) => it.gift_shop_id === selectedShopId);
   const categories = Array.from(new Set(itemsForShop.map((i) => i.category))).sort();
   const suppliers = Array.from(new Set(itemsForShop.map((i) => i.supplier))).sort();
@@ -193,10 +242,12 @@ export default function GiftShopsPage() {
             <p className="text-red-600 mt-1">No gift shop found. Seed at least one shop.</p>
           )}
         </div>
-        <Button onClick={handleAdd} className="flex items-center gap-2 bg-purple-600 hover:bg-purple-700">
-          <Plus className="h-4 w-4" />
-          Add Item
-        </Button>
+        {isManager && (
+          <Button onClick={handleAdd} className="flex items-center gap-2 bg-purple-600 hover:bg-purple-700">
+            <Plus className="h-4 w-4" />
+            Add Item
+          </Button>
+        )}
       </div>
 
       {/* Search and Filters */}
@@ -270,12 +321,47 @@ export default function GiftShopsPage() {
                   <TableCell className="capitalize">{item.category}</TableCell>
                   <TableCell className="font-semibold">${priceNum.toFixed(2)}</TableCell>
                   <TableCell>
-                    <div className="flex items-center gap-2">
-                      {item.quantity_in_stock} units
-                      {item.quantity_in_stock < 10 && !isDeleted(item) && (
-                        <Badge variant="warning" className="text-xs">Low</Badge>
-                      )}
-                    </div>
+                    {isCashier && !isDeleted(item) ? (
+                      <div className="flex items-center gap-2">
+                        <Input
+                          type="number"
+                          min="0"
+                          value={editingStock[item.item_id] ?? item.quantity_in_stock}
+                          onChange={(e) => {
+                            e.stopPropagation();
+                            handleStockChange(item.item_id, e.target.value);
+                          }}
+                          onClick={(e) => e.stopPropagation()}
+                          className="w-20 h-8"
+                          disabled={savingStock[item.item_id]}
+                        />
+                        {editingStock[item.item_id] !== undefined && 
+                         editingStock[item.item_id] !== item.quantity_in_stock && (
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleSaveStock(item);
+                            }}
+                            disabled={savingStock[item.item_id]}
+                            className="h-8 px-2"
+                          >
+                            <Save className="h-3 w-3" />
+                          </Button>
+                        )}
+                        {item.quantity_in_stock < 10 && (
+                          <Badge variant="warning" className="text-xs">Low</Badge>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-2">
+                        {item.quantity_in_stock} units
+                        {item.quantity_in_stock < 10 && !isDeleted(item) && (
+                          <Badge variant="warning" className="text-xs">Low</Badge>
+                        )}
+                      </div>
+                    )}
                   </TableCell>
                   <TableCell>{item.supplier}</TableCell>
                   <TableCell>
@@ -289,21 +375,25 @@ export default function GiftShopsPage() {
                     <div className="flex items-center justify-end gap-2">
                       {!isDeleted(item) ? (
                         <>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={(e) => handleEdit(item, e)}
-                          >
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={(e) => handleDeleteClick(item, e)}
-                            className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
+                          {isManager && (
+                            <>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={(e) => handleEdit(item, e)}
+                              >
+                                <Edit className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={(e) => handleDeleteClick(item, e)}
+                                className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </>
+                          )}
                         </>
                       ) : (
                         isManager && (
@@ -385,7 +475,7 @@ export default function GiftShopsPage() {
           setSelectedItem(detailItem);
           setIsModalOpen(true);
         }}
-        canEdit={detailItem ? !isDeleted(detailItem) : false}
+        canEdit={detailItem ? (!isDeleted(detailItem) && isManager) : false}
       />
 
       {/* Restore Confirmation Modal */}
