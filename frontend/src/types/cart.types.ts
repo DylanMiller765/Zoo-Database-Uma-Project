@@ -13,7 +13,7 @@ export interface CartItem {
   metadata?: {
     // Ticket-specific
     visit_date?: string;
-    ticket_type?: 'adult' | 'child' | 'senior';
+    ticket_type?: 'adult' | 'child' | 'senior' | 'student';
 
     // Event-specific
     event_id?: number;

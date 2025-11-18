@@ -78,7 +78,8 @@ INSERT INTO user_accounts (account_id, username, email, role, employee_id) VALUE
 (12, 'chris.green', 'chris.green@zoo.com', 'employee', 9),
 (13, 'jessica.blue', 'jessica.blue@zoo.com', 'employee', 10),
 (14, 'mark.white', 'mark.white@zoo.com', 'employee', 11),
-(15, 'laura.black', 'laura.black@zoo.com', 'employee', 12);
+(15, 'laura.black', 'laura.black@zoo.com', 'employee', 12),
+(18, 'sky.jones', 'skyjones.vet@gmail.com', 'employee', 13);
 
 -- Customers
 INSERT INTO user_accounts (account_id, username, email, role, customer_id) VALUES
@@ -86,8 +87,7 @@ INSERT INTO user_accounts (account_id, username, email, role, customer_id) VALUE
 (10, 'maria.garcia', 'maria.garcia@email.com', 'customer', 2),
 (11, 'robert.davis', 'robert.davis@email.com', 'customer', 3),
 (16, 'sarah.wilson', 'sarah.wilson@email.com', 'customer', 4),
-(17, 'michael.johnson', 'michael.johnson@email.com', 'customer', 5),
-(18, 'sky.jones', 'skyjones.vet@gmail.com', 'employee', 13);
+(17, 'michael.johnson', 'michael.johnson@email.com', 'customer', 5);
 
 -- =======================================
 -- PASSWORDS
@@ -346,7 +346,46 @@ INSERT INTO event_registrations (event_id, customer_id, number_of_participants, 
 (2, 2, 2, 20.00, 'paid', '2024-12-05 13:30:00'),
 (3, 1, 3, 60.00, 'paid', '2024-12-10 09:00:00'),
 (4, NULL, 1, 250.00, 'cancelled', '2024-12-15 10:45:00'),
-(5, 3, 2, 70.00, 'paid', '2024-12-20 12:15:00');
+(5, 3, 2, 70.00, 'paid', '2024-12-20 12:15:00'),
+-- Event 6: Aquatic Creature Talk (2025-11-12) - $10.00 per person
+(6, 1, 2, 20.00, 'paid', '2025-10-25 10:00:00'),
+(6, 2, 1, 10.00, 'paid', '2025-10-28 14:30:00'),
+(6, 3, 3, 30.00, 'paid', '2025-11-01 09:15:00'),
+(6, NULL, 2, 20.00, 'paid', '2025-11-03 11:00:00'),
+(6, 1, 4, 40.00, 'pending', '2025-11-05 13:45:00'),
+(6, 2, 1, 10.00, 'paid', '2025-11-08 10:30:00'),
+-- Event 7: Dolphin Show (2025-11-21) - $15.00 per person
+(7, 1, 2, 30.00, 'paid', '2025-11-10 10:00:00'),
+(7, 2, 1, 15.00, 'paid', '2025-11-12 14:00:00'),
+(7, 3, 3, 45.00, 'paid', '2025-11-13 09:30:00'),
+(7, NULL, 2, 30.00, 'pending', '2025-11-14 11:15:00'),
+(7, 1, 4, 60.00, 'paid', '2025-11-15 13:00:00'),
+(7, NULL, 1, 15.00, 'paid', '2025-11-16 10:45:00'),
+-- Event 8: Penguin Feeding Time (2025-11-28) - $10.00 per person
+(8, 2, 2, 20.00, 'paid', '2025-11-12 10:00:00'),
+(8, 3, 1, 10.00, 'paid', '2025-11-14 13:30:00'),
+(8, 1, 3, 30.00, 'paid', '2025-11-15 09:45:00'),
+(8, NULL, 2, 20.00, 'pending', '2025-11-16 12:00:00'),
+(8, 2, 1, 10.00, 'paid', '2025-11-17 14:15:00'),
+-- Event 9: Lion Encounter (2025-12-05) - $20.00 per person
+(9, 1, 2, 40.00, 'paid', '2025-11-15 10:00:00'),
+(9, 2, 2, 40.00, 'paid', '2025-11-16 14:30:00'),
+(9, 3, 1, 20.00, 'paid', '2025-11-17 09:15:00'),
+(9, NULL, 3, 60.00, 'pending', '2025-11-18 11:00:00'),
+(9, 1, 1, 20.00, 'paid', '2025-11-18 13:45:00'),
+(9, NULL, 2, 40.00, 'paid', '2025-11-19 10:30:00'),
+-- Event 10: Kids Zoo Camp (2025-12-15) - $250.00 per person
+(10, 1, 1, 250.00, 'paid', '2025-10-20 10:00:00'),
+(10, 2, 2, 500.00, 'paid', '2025-11-01 14:30:00'),
+(10, NULL, 1, 250.00, 'paid', '2025-11-10 09:45:00'),
+(10, 3, 1, 250.00, 'pending', '2025-11-15 11:15:00'),
+-- Event 11: Night at the Zoo (2025-12-22) - $35.00 per person
+(11, 1, 2, 70.00, 'paid', '2025-11-10 10:00:00'),
+(11, 2, 1, 35.00, 'paid', '2025-11-13 14:00:00'),
+(11, 3, 3, 105.00, 'paid', '2025-11-14 09:30:00'),
+(11, NULL, 2, 70.00, 'pending', '2025-11-15 12:00:00'),
+(11, 1, 4, 140.00, 'paid', '2025-11-16 13:45:00'),
+(11, NULL, 1, 35.00, 'paid', '2025-11-17 10:30:00');
 
 
 -- =======================================
