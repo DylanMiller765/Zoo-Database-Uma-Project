@@ -50,9 +50,7 @@ export default function FinancialReportPage() {
   const [params, setParams] = useState<FinancialReportParams>({
     startDate: '',
     endDate: '',
-    sources: ['ticket', 'event', 'gift_shop', 'cafe', 'membership', 'donation'],
-    grouping: 'day',
-    includeReturns: false
+    sources: ['ticket', 'event', 'gift_shop', 'cafe', 'membership', 'donation']
   });
 
   // Generate report handler
@@ -81,9 +79,7 @@ export default function FinancialReportPage() {
     setParams({
       startDate: '',
       endDate: '',
-      sources: ['ticket', 'event', 'gift_shop', 'cafe', 'membership', 'donation'],
-      grouping: 'day',
-      includeReturns: false
+      sources: ['ticket', 'event', 'gift_shop', 'cafe', 'membership', 'donation']
     });
     setHasGenerated(false);
     setReportData(null);
@@ -217,35 +213,6 @@ export default function FinancialReportPage() {
           </div>
 
           {/* Group By */}
-          <div>
-            <Label htmlFor="grouping" className="text-sm font-medium text-gray-700">
-              Group Transactions By
-            </Label>
-            <select
-              id="grouping"
-              value={params.grouping}
-              onChange={(e) => setParams({ ...params, grouping: e.target.value })}
-              className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
-            >
-              <option value="day">Daily</option>
-              <option value="week">Weekly</option>
-              <option value="month">Monthly</option>
-            </select>
-          </div>
-        </div>
-
-        {/* Include Returns Checkbox */}
-        <div className="flex items-center gap-2">
-          <input
-            type="checkbox"
-            id="includeReturns"
-            checked={params.includeReturns}
-            onChange={(e) => setParams({ ...params, includeReturns: e.target.checked })}
-            className="rounded border-gray-300 text-sea_green-600 focus:ring-sea_green-500"
-          />
-          <Label htmlFor="includeReturns" className="text-sm text-gray-700 cursor-pointer">
-            Include returns and refunds in revenue totals
-          </Label>
         </div>
 
         {/* Generate Button */}
