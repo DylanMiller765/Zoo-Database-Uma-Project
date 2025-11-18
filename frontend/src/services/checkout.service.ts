@@ -44,7 +44,7 @@ export const checkoutService = {
    * Process checkout with cart items
    */
   async processCheckout(checkoutData: CheckoutRequest): Promise<CheckoutResponse> {
-    const response = await api.post('/checkout', checkoutData);
+    const response = await api.post<CheckoutResponse>('/checkout', checkoutData);
     return response.data;
   },
 };
