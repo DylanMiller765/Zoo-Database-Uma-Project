@@ -364,9 +364,7 @@ CREATE TRIGGER alert_animal_health_and_active_status_upon_threshold
 AFTER UPDATE ON animals
 FOR EACH ROW
 BEGIN
-    -- =========================
     -- Declarations
-    -- =========================
     DECLARE existing_alert_id INT;
     DECLARE done INT DEFAULT FALSE;
     DECLARE vet_id INT;
@@ -378,14 +376,12 @@ BEGIN
     -- Handler: Sets done=TRUE when cursor finishes OR when any SELECT finds nothing
     DECLARE CONTINUE HANDLER FOR NOT FOUND SET done = TRUE;
 
-    -- =========================
-    -- LOGIC BLOCK 1: HEALTH STATUS
-    -- =========================
+    -- HEALTH STATUS
     IF NEW.health_status IN ('poor', 'critical') AND NEW.health_status != OLD.health_status THEN
         
         SET existing_alert_id = NULL;
 
-        -- ⚠️ WARNING: If this finds no rows, the HANDLER fires and sets done = TRUE
+        -- If this finds no rows, the HANDLER fires and sets done = TRUE
         SELECT alert.animal_alert_id INTO existing_alert_id
         FROM animals_alert_queue alert
         WHERE alert.animal_id = NEW.animal_id
@@ -404,9 +400,6 @@ BEGIN
             WHERE animal_alert_id = existing_alert_id;
         END IF;
     
-        -- =========================
-        -- FIX: RESET DONE FLAG
-        -- =========================
         -- We must reset this because the SELECT INTO above might have tripped it to TRUE
         SET done = FALSE; 
 
@@ -430,9 +423,7 @@ BEGIN
 
     END IF;
 
-    -- =========================
-    -- LOGIC BLOCK 2: ACTIVE STATUS
-    -- =========================
+    --  ACTIVE STATUS
     IF NEW.active_status = 'deceased' AND NEW.active_status != OLD.active_status THEN
 
         SET existing_alert_id = NULL;
