@@ -31,12 +31,14 @@ export class AnimalAlertService {
           </p>
                 
           <p>Here are the details:</p>
-                
+          Lately ${alert.animal?.name ?? "Unknown"} was noted with the following medical alert.
+          ${alert.animal?.medical_notes ?? "No medical alerts on file."}
+          
           <h3>Animal Details</h3>
           <ul>
             <li><strong>Name:</strong> ${alert.animal?.name ?? "Unknown"}</li>
             <li><strong>Species:</strong> ${alert.animal?.species ?? "Unknown"}</li>
-          </ul>
+          </ul>          
 
           <h3>Habitat Information</h3>
           <ul>
