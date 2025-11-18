@@ -628,6 +628,86 @@ STARTS (CURRENT_DATE + INTERVAL 1 DAY)  -- Start tomorrow at midnight
 DO
     CALL auto_renew_memberships();
 
+-- =======================================
+-- TRIGGER: Event Cancellation
+-- =======================================
+-- When an event is cancelled (deleted_at is set), automatically:
+-- 1. Create notifications for all registered customers
+-- 2. Mark all event registrations as refunded
+
+DELIMITER //
+
+CREATE TRIGGER trigger_event_cancellation
+AFTER UPDATE ON events
+FOR EACH ROW
+BEGIN
+    DECLARE done INT DEFAULT FALSE;
+    DECLARE customer_id_var INT;
+    DECLARE event_name_var VARCHAR(100);
+    DECLARE event_date_var DATE;
+    DECLARE event_time_var TIME;
+    DECLARE formatted_datetime VARCHAR(100);
+    DECLARE cancellation_message VARCHAR(500);
+
+    -- Cursor to fetch all distinct customers registered for this event
+    DECLARE customer_cursor CURSOR FOR
+        SELECT DISTINCT er.customer_id
+        FROM event_registrations er
+        WHERE er.event_id = NEW.event_id
+          AND er.customer_id IS NOT NULL;
+
+    -- Handler: Sets done=TRUE when cursor finishes
+    DECLARE CONTINUE HANDLER FOR NOT FOUND SET done = TRUE;
+
+    -- Only proceed if event was just cancelled (deleted_at changed from NULL to NOT NULL)
+    IF OLD.deleted_at IS NULL AND NEW.deleted_at IS NOT NULL THEN
+
+        -- Prepare event information for notification message
+        SET event_name_var = NEW.name;
+        SET event_date_var = NEW.event_date;
+        SET event_time_var = NEW.start_time;
+
+        -- Format datetime string for the message
+        SET formatted_datetime = DATE_FORMAT(event_date_var, '%M %d, %Y');
+        IF event_time_var IS NOT NULL THEN
+            SET formatted_datetime = CONCAT(formatted_datetime, ' at ', DATE_FORMAT(event_time_var, '%h:%i %p'));
+        END IF;
+
+        -- Create cancellation message
+        SET cancellation_message = CONCAT(
+            'CANCELLATION: The event "', event_name_var, '" scheduled for ', formatted_datetime,
+            ' has been cancelled. We sincerely apologize for any inconvenience this may cause. ',
+            'A full refund has been automatically processed for your registration.'
+        );
+
+        -- Create notifications for all registered customers
+        OPEN customer_cursor;
+
+        notification_loop: LOOP
+            FETCH customer_cursor INTO customer_id_var;
+
+            IF done THEN
+                LEAVE notification_loop;
+            END IF;
+
+            -- Insert notification for this customer
+            INSERT INTO notifications (customer_id, message, notification_type, is_read, created_at)
+            VALUES (customer_id_var, cancellation_message, 'alert', FALSE, NOW());
+        END LOOP;
+
+        CLOSE customer_cursor;
+
+        -- Mark all event registrations as refunded
+        UPDATE event_registrations
+        SET refunded_at = NOW(),
+            refund_reason = 'Event cancelled'
+        WHERE event_id = NEW.event_id
+          AND refunded_at IS NULL;
+    END IF;
+END//
+
+DELIMITER ;
+
 -- Verification queries (commented out, run manually if needed):
 -- SELECT 'Auto-renewal job created successfully!' as status;
 -- SHOW EVENTS LIKE 'daily_auto_renewal_check';

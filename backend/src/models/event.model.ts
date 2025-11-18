@@ -1,7 +1,5 @@
 import { query } from '../config/database';
 import { Event, EventWithDetails } from '../types/event.types';
-import { NotificationModel } from './notification.model';
-import { RowDataPacket } from 'mysql2';
 
 export class EventModel {
   static async findAll(): Promise<EventWithDetails[]> {
@@ -48,93 +46,19 @@ export class EventModel {
     return await this.findById(eventId);
   }
 
-  static async remove(eventId: number, employeeInfo?: { employee_id: number; name: string }): Promise<boolean> {
-    // Get event details before deletion (needed for notification message)
-    const events = await query<(Event & RowDataPacket)[]>(
-      'SELECT * FROM events WHERE event_id = ? AND deleted_at IS NULL',
-      [eventId]
-    );
+  static async remove(eventId: number): Promise<boolean> {
+    // Soft delete the event by setting deleted_at timestamp
+    // The database trigger 'trigger_event_cancellation' will automatically:
+    // 1. Create notifications for all registered customers
+    // 2. Mark all event registrations as refunded
 
-    if (events.length === 0) {
-      console.warn(`Event ${eventId} not found or already deleted`);
-      return false;
-    }
-
-    const event = events[0];
-    const eventName = event.name;
-    const eventDate = new Date(event.event_date).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    });
-    const startTime = event.start_time?.toString().substring(0, 5) || '';
-    const eventDateTime = `${eventDate}${startTime ? ` at ${startTime}` : ''}`;
-
-    // Get all customers registered for this event
-    const registrations = await query<(RowDataPacket & { customer_id: number })[]>(
-      `SELECT DISTINCT customer_id
-       FROM event_registrations
-       WHERE event_id = ? AND customer_id IS NOT NULL`,
-      [eventId]
-    );
-
-    // Create notification message
-    const employeeName = employeeInfo?.name || 'Zoo Management';
-    const cancellationMessage = `CANCELLATION: The event "${eventName}" scheduled for ${eventDateTime} has been cancelled. We sincerely apologize for any inconvenience this may cause. ${employeeName} has initiated a full refund for your registration.`;
-
-    // Create notifications for all registered customers
-    const notificationPromises = registrations.map(reg =>
-      NotificationModel.create({
-        customer_id: reg.customer_id,
-        message: cancellationMessage,
-        notification_type: 'alert',
-        is_read: false
-      }).catch(error => {
-        console.error(`Failed to create notification for customer ${reg.customer_id}:`, error);
-        // Continue with other notifications even if one fails
-      })
-    );
-
-    try {
-      await Promise.all(notificationPromises);
-      console.log(`[Event Cancellation] Created ${registrations.length} notifications for event ${eventId}`);
-    } catch (error) {
-      console.error(`[Event Cancellation] Error creating notifications:`, error);
-      // Don't fail the event deletion if notifications fail
-    }
-
-    // Set session variable for trigger to read (who cancelled the event)
-    if (employeeInfo) {
-      await query('SET @cancelled_by_employee_id = ?, @cancelled_by_employee_name = ?', [
-        employeeInfo.employee_id,
-        employeeInfo.name
-      ]);
-    }
-
-    const sql = 'UPDATE events SET deleted_at = NOW() WHERE event_id = ?';
+    const sql = 'UPDATE events SET deleted_at = NOW() WHERE event_id = ? AND deleted_at IS NULL';
     const result = await query<any>(sql, [eventId]);
 
-    // Automatically refund all event registrations for this cancelled event
-    // Wrapped in try-catch since refunded_at and refund_reason may not exist in all database versions
     if (result.affectedRows > 0) {
-      try {
-        const refundSql = `
-          UPDATE event_registrations
-          SET refunded_at = NOW(),
-              refund_reason = ?
-          WHERE event_id = ?
-            AND refunded_at IS NULL
-        `;
-        await query(refundSql, [`Event cancelled by ${employeeName}`, eventId]);
-      } catch (error) {
-        // If refund columns don't exist, continue anyway - event is already deleted
-        console.error('Warning: Could not update refund information for event registrations:', error);
-      }
-    }
-
-    // Clear session variables
-    if (employeeInfo) {
-      await query('SET @cancelled_by_employee_id = NULL, @cancelled_by_employee_name = NULL');
+      console.log(`[Event Cancellation] Event ${eventId} cancelled. Trigger will create notifications and process refunds.`);
+    } else {
+      console.warn(`Event ${eventId} not found or already deleted`);
     }
 
     return result.affectedRows > 0;
