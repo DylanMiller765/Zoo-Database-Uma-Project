@@ -85,6 +85,6 @@ export const updateEvent = async (eventId: number, eventData: any): Promise<any 
   return updated ? transformEvent(updated) : null;
 };
 
-export const deleteEvent = async (eventId: number, employeeInfo?: { employee_id: number; name: string }): Promise<boolean> => {
-  return await EventModel.remove(eventId, employeeInfo);
+export const deleteEvent = async (eventId: number): Promise<boolean> => {
+  return await EventModel.remove(eventId);
 };
