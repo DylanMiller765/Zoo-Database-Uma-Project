@@ -169,7 +169,7 @@ CREATE TABLE `tickets` (
     `visit_date` DATE,
     `ticket_type` ENUM('adult', 'child', 'senior', 'student') NOT NULL,
     `price` DECIMAL(8, 2) NOT NULL,
-    `payment_method` ENUM('cash', 'credit', 'debit', 'online'),
+    `payment_method` ENUM('cash', 'credit', 'debit'),
     `sold_by` INT,
     `deleted_at` DATETIME DEFAULT NULL,
     FOREIGN KEY (`customer_id`) REFERENCES `customers`(`customer_id`) ON DELETE SET NULL,
@@ -184,7 +184,7 @@ CREATE TABLE `donations` (
     `donation_date` DATETIME DEFAULT CURRENT_TIMESTAMP,
     `message` TEXT,
     `donation_type` ENUM('general', 'conservation', 'research', 'animal_care') DEFAULT 'general',
-    `payment_method` ENUM('cash', 'credit', 'debit', 'online'),
+    `payment_method` ENUM('cash', 'credit', 'debit'),
     `deleted_at` DATETIME DEFAULT NULL,
     FOREIGN KEY (`customer_id`) REFERENCES `customers`(`customer_id`) ON DELETE SET NULL
 );
@@ -196,7 +196,7 @@ CREATE TABLE `membership_purchases` (
     `start_date` DATE NOT NULL,
     `end_date` DATE NOT NULL,
     `price` DECIMAL(8, 2) NOT NULL,
-    `payment_method` ENUM('cash', 'credit', 'debit', 'online') DEFAULT 'online',
+    `payment_method` ENUM('cash', 'credit', 'debit'),
     FOREIGN KEY (`customer_id`) REFERENCES `customers`(`customer_id`) ON DELETE CASCADE,
     INDEX `idx_customer_purchases` (`customer_id`, `purchase_date`)
 );
@@ -583,10 +583,10 @@ BEGIN
         WHERE customer_id = v_customer_id;
         
         -- Record the auto-renewal purchase
-        INSERT INTO membership_purchases 
+        INSERT INTO membership_purchases
         (customer_id, purchase_date, start_date, end_date, price, payment_method, auto_renewed, payment_method_id)
-        VALUES 
-        (v_customer_id, NOW(), v_old_end_date, v_new_end_date, v_membership_price, 'online', TRUE, v_payment_method_id);
+        VALUES
+        (v_customer_id, NOW(), v_old_end_date, v_new_end_date, v_membership_price, 'credit', TRUE, v_payment_method_id);
         
     END LOOP;
     

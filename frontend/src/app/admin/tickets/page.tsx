@@ -65,7 +65,6 @@ export default function TicketsPage() {
       cash: 'default',
       credit: 'success',
       debit: 'secondary',
-      online: 'warning',
     };
     return variants[method || 'cash'] as any || 'default';
   };
