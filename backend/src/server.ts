@@ -32,6 +32,7 @@ import eventCancellationLogRoutes from './routes/event-cancellation-log.routes';
 import testEmailRoutes from './routes/test-email.routes';
 import { initMailService, sendMail } from './services/mailService';
 import { startAnimalAlertEmailJob } from './jobs/animal-alert.job';
+import { startNotificationEmailJob } from './jobs/notification-email.job';
 
 dotenv.config();
 
@@ -99,6 +100,7 @@ const startServer = async () => {
       process.exit(1);
     }
     startAnimalAlertEmailJob();
+    startNotificationEmailJob();
     app.listen(PORT, () => {
       console.log(`✅ Server running on port ${PORT}`);
       console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
