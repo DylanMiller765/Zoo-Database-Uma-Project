@@ -287,6 +287,59 @@ export default function AdminDashboard() {
         )}
       </div>
 
+      {/* Keeper Assignments Section - Appears near top for keepers */}
+      {user?.job_role === 'keeper' && (
+        <Card className="mt-6">
+          <CardHeader>
+            <CardTitle className="flex items-center space-x-2">
+              <Briefcase className="h-5 w-5 text-dark_spring_green-600" />
+              <span>My Animal Assignments</span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {assignmentsLoading ? (
+              <div className="flex items-center justify-center py-8">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-dark_spring_green-600"></div>
+              </div>
+            ) : keeperAssignments.length === 0 ? (
+              <div className="text-center py-8">
+                <p className="text-gray-500">You have no animal assignments yet</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {keeperAssignments.map((assignment) => (
+                  <div
+                    key={assignment.animal_id}
+                    className="border-2 border-gray-200 rounded-lg p-4 hover:border-dark_spring_green-400 transition-colors cursor-pointer"
+                    onClick={() => router.push(`/admin/animals?animalId=${assignment.animal_id}&autoOpen=true`)}
+                  >
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <h3 className="font-semibold text-gray-900">{assignment.name}</h3>
+                        <p className="text-sm text-gray-600">{assignment.species}</p>
+                        <p className="text-xs text-gray-500 mt-1">{assignment.habitat_name || 'No habitat assigned'}</p>
+                        {assignment.shift && (
+                          <p className="text-xs text-dark_spring_green-600 mt-1 font-medium">Shift: {assignment.shift}</p>
+                        )}
+                      </div>
+                      <div className={`px-2 py-1 rounded text-xs font-medium ${
+                        assignment.health_status === 'excellent' ? 'bg-green-100 text-green-800' :
+                        assignment.health_status === 'good' ? 'bg-blue-100 text-blue-800' :
+                        assignment.health_status === 'fair' ? 'bg-yellow-100 text-yellow-800' :
+                        assignment.health_status === 'poor' ? 'bg-orange-100 text-orange-800' :
+                        'bg-red-100 text-red-800'
+                      }`}>
+                        {assignment.health_status}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
       {/* Main Content Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Recent Activity */}
@@ -382,58 +435,6 @@ export default function AdminDashboard() {
         </Card>
       </div>
 
-      {/* Keeper Assignments Section */}
-      {user?.job_role === 'keeper' && (
-        <Card className="mt-6">
-          <CardHeader>
-            <CardTitle className="flex items-center space-x-2">
-              <Briefcase className="h-5 w-5 text-dark_spring_green-600" />
-              <span>My Animal Assignments</span>
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {assignmentsLoading ? (
-              <div className="flex items-center justify-center py-8">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-dark_spring_green-600"></div>
-              </div>
-            ) : keeperAssignments.length === 0 ? (
-              <div className="text-center py-8">
-                <p className="text-gray-500">You have no animal assignments yet</p>
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {keeperAssignments.map((assignment) => (
-                  <div
-                    key={assignment.animal_id}
-                    className="border-2 border-gray-200 rounded-lg p-4 hover:border-dark_spring_green-400 transition-colors cursor-pointer"
-                    onClick={() => router.push(`/admin/animals?animalId=${assignment.animal_id}&autoOpen=true`)}
-                  >
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <h3 className="font-semibold text-gray-900">{assignment.name}</h3>
-                        <p className="text-sm text-gray-600">{assignment.species}</p>
-                        <p className="text-xs text-gray-500 mt-1">{assignment.habitat_name || 'No habitat assigned'}</p>
-                        {assignment.shift && (
-                          <p className="text-xs text-dark_spring_green-600 mt-1 font-medium">Shift: {assignment.shift}</p>
-                        )}
-                      </div>
-                      <div className={`px-2 py-1 rounded text-xs font-medium ${
-                        assignment.health_status === 'excellent' ? 'bg-green-100 text-green-800' :
-                        assignment.health_status === 'good' ? 'bg-blue-100 text-blue-800' :
-                        assignment.health_status === 'fair' ? 'bg-yellow-100 text-yellow-800' :
-                        assignment.health_status === 'poor' ? 'bg-orange-100 text-orange-800' :
-                        'bg-red-100 text-red-800'
-                      }`}>
-                        {assignment.health_status}
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      )}
 
       {/* Veterinarian Animals Section */}
       {user?.job_role === 'veterinarian' && (

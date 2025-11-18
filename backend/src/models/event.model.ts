@@ -59,16 +59,22 @@ export class EventModel {
     const result = await query<any>(sql, [eventId]);
 
     // Automatically refund all event registrations for this cancelled event
+    // Wrapped in try-catch since refunded_at and refund_reason may not exist in all database versions
     if (result.affectedRows > 0) {
-      const employeeName = employeeInfo?.name || 'System';
-      const refundSql = `
-        UPDATE event_registrations
-        SET refunded_at = NOW(),
-            refund_reason = ?
-        WHERE event_id = ?
-          AND refunded_at IS NULL
-      `;
-      await query(refundSql, [`Event cancelled by ${employeeName}`, eventId]);
+      try {
+        const employeeName = employeeInfo?.name || 'System';
+        const refundSql = `
+          UPDATE event_registrations
+          SET refunded_at = NOW(),
+              refund_reason = ?
+          WHERE event_id = ?
+            AND refunded_at IS NULL
+        `;
+        await query(refundSql, [`Event cancelled by ${employeeName}`, eventId]);
+      } catch (error) {
+        // If refund columns don't exist, continue anyway - event is already deleted
+        console.error('Warning: Could not update refund information for event registrations:', error);
+      }
     }
 
     // Clear session variables

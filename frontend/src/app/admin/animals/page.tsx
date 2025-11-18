@@ -157,9 +157,13 @@ export default function AnimalsPage() {
     if (!animalToRestore?.animal_id) return;
 
     try {
+      // First restore the animal (set deleted_at = NULL), then update active_status
+      // Must restore first because update's findById filters out deleted animals
       await animalService.restore(animalToRestore.animal_id);
+      await animalService.update(animalToRestore.animal_id, { active_status: 'active' });
       await loadAnimals();
       setAnimalToRestore(null);
+      setIsRestoreModalOpen(false);
     } catch (error) {
       console.error('Failed to restore animal:', error);
     }
@@ -308,16 +312,17 @@ export default function AnimalsPage() {
                   </Badge>
                 </TableCell>
                 <TableCell>
-                  {isDeleted(animal) ? (
-                    <Badge variant="danger">Deleted</Badge>
-                  ) : (
-                    <Badge
-                      variant={animal.active_status === 'active' ? 'success' : 'outline'}
-                      className="capitalize"
-                    >
-                      {animal.active_status || 'Active'}
-                    </Badge>
-                  )}
+                  <Badge
+                    variant={
+                      animal.active_status === 'active' ? 'success' :
+                      animal.active_status === 'transferred' ? 'secondary' :
+                      animal.active_status === 'deceased' ? 'danger' :
+                      'default'
+                    }
+                    className="capitalize"
+                  >
+                    {animal.active_status || 'Active'}
+                  </Badge>
                 </TableCell>
                 <TableCell className="text-xs capitalize">
                   {animal.endangerment_status?.replace('_', ' ') || 'N/A'}
