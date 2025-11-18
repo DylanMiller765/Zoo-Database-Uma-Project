@@ -26,6 +26,7 @@ export class CheckoutService {
       cafe_items: 0,
       gift_shop_items: 0,
       donations: 0,
+      memberships: 0,
     };
 
     // Process each cart item
@@ -54,6 +55,11 @@ export class CheckoutService {
         case 'donation':
           await this.createDonation(item, customerId, checkoutData.payment_method);
           summary.donations++;
+          break;
+
+        case 'membership':
+          await this.createMembership(item, customerId, checkoutData.payment_method, checkoutData.payment_data);
+          summary.memberships++;
           break;
 
         default:
@@ -175,6 +181,102 @@ export class CheckoutService {
       message: metadata.donation_message,
       payment_method: paymentMethod,
     });
+  }
+
+  /**
+   * Create membership purchase record
+   */
+  private static async createMembership(
+    item: CheckoutCartItem,
+    customerId: number,
+    paymentMethod: 'credit' | 'debit',
+    paymentData?: any
+  ): Promise<void> {
+    const metadata = item.metadata || {};
+    const membershipPrice = 149.00; // Individual membership price
+    let paymentMethodId: number | null = null;
+
+    // Save payment method if provided
+    if (paymentData) {
+      const [existing] = await query<any[]>(
+        'SELECT payment_method_id FROM customer_payment_methods WHERE customer_id = ?',
+        [customerId]
+      );
+
+      if (existing) {
+        // Update existing payment method
+        await query(
+          `UPDATE customer_payment_methods 
+           SET card_number = ?, cardholder_name = ?, expiry_month = ?, expiry_year = ?, 
+               cvv = ?, billing_address = ?, billing_city = ?, billing_state = ?, billing_zip = ?,
+               updated_at = NOW()
+           WHERE customer_id = ?`,
+          [
+            paymentData.cardNumber,
+            paymentData.cardholderName,
+            paymentData.expiryMonth,
+            paymentData.expiryYear,
+            paymentData.cvv || null,
+            paymentData.billingAddress,
+            paymentData.billingCity,
+            paymentData.billingState,
+            paymentData.billingZip,
+            customerId,
+          ]
+        );
+        paymentMethodId = existing.payment_method_id;
+      } else {
+        // Create new payment method
+        const result = await query<any>(
+          `INSERT INTO customer_payment_methods 
+           (customer_id, card_number, cardholder_name, expiry_month, expiry_year, cvv, 
+            billing_address, billing_city, billing_state, billing_zip)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          [
+            customerId,
+            paymentData.cardNumber,
+            paymentData.cardholderName,
+            paymentData.expiryMonth,
+            paymentData.expiryYear,
+            paymentData.cvv || null,
+            paymentData.billingAddress,
+            paymentData.billingCity,
+            paymentData.billingState,
+            paymentData.billingZip,
+          ]
+        );
+        paymentMethodId = result.insertId;
+      }
+    }
+
+    // Calculate membership dates (start today, end 1 year from today)
+    const [dateResult] = await query<any[]>(
+      'SELECT CURDATE() as start_date, DATE_ADD(CURDATE(), INTERVAL 1 YEAR) as end_date'
+    );
+    const actualStartDate = dateResult?.start_date;
+    const actualEndDate = dateResult?.end_date;
+
+    // Get auto-renewal preference from metadata (default to TRUE if not specified)
+    const autoRenew = metadata.auto_renew !== undefined ? metadata.auto_renew : true;
+
+    // Update customer membership
+    await query(
+      `UPDATE customers 
+       SET annual_pass = 'yes', 
+           membership_start_date = CURDATE(), 
+           membership_end_date = DATE_ADD(CURDATE(), INTERVAL 1 YEAR),
+           membership_auto_renew = ?
+       WHERE customer_id = ?`,
+      [autoRenew, customerId]
+    );
+
+    // Record purchase in history table
+    await query(
+      `INSERT INTO membership_purchases 
+       (customer_id, purchase_date, start_date, end_date, price, payment_method, payment_method_id)
+       VALUES (?, NOW(), ?, ?, ?, ?, ?)`,
+      [customerId, actualStartDate, actualEndDate, membershipPrice, paymentMethod, paymentMethodId]
+    );
   }
 
   /**
