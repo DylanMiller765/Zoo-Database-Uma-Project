@@ -61,7 +61,7 @@ export function AnimalDetailModal({ open, onClose, animal, onEdit, canEdit = tru
   const canManageFeeding = hasRole('keeper') || hasRole('veterinarian') || hasRole('manager');
   const canViewLogs = hasRole('keeper') || hasRole('veterinarian') || hasRole('manager');
   const canDeleteSchedule = hasRole('veterinarian') || hasRole('manager');
-  const canDeleteLog = hasRole('manager');
+  const canDeleteLog = hasRole('keeper') || hasRole('manager');
 
   // Reset tab to default when modal opens
   useEffect(() => {
@@ -174,12 +174,13 @@ export function AnimalDetailModal({ open, onClose, animal, onEdit, canEdit = tru
   if (!animal) return null;
 
   return (
-    <Modal
-      open={open}
-      onClose={onClose}
-      title={`Animal: ${animal.name}`}
-      size="xl"
-    >
+    <>
+      <Modal
+        open={open}
+        onClose={onClose}
+        title={`Animal: ${animal.name}`}
+        size="xl"
+      >
       <div className="space-y-4">
         {/* Tabs */}
         <div className="border-b border-gray-200">
@@ -712,7 +713,8 @@ export function AnimalDetailModal({ open, onClose, animal, onEdit, canEdit = tru
         {scheduleToDelete && (
           <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
             <p className="text-sm text-gray-900">
-              <span className="font-semibold">{scheduleToDelete.food_type}</span> at {scheduleToDelete.feeding_time}
+              <span className="font-semibold">{scheduleToDelete.food_description}</span>
+              {scheduleToDelete.scheduled_time && ` at ${scheduleToDelete.scheduled_time}`}
             </p>
           </div>
         )}
@@ -738,11 +740,13 @@ export function AnimalDetailModal({ open, onClose, animal, onEdit, canEdit = tru
         {logToDelete && (
           <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
             <p className="text-sm text-gray-900">
-              <span className="font-semibold">{logToDelete.food_type}</span> - {new Date(logToDelete.feeding_time).toLocaleString()}
+              <span className="font-semibold">{logToDelete.food_given}</span> - {new Date(logToDelete.feeding_time).toLocaleString()}
             </p>
-            <p className="text-sm text-gray-600 mt-1">
-              Fed by: {logToDelete.keeper_name}
-            </p>
+            {logToDelete.keeper_name && (
+              <p className="text-sm text-gray-600 mt-1">
+                Fed by: {logToDelete.keeper_name}
+              </p>
+            )}
           </div>
         )}
         <div className="flex items-center gap-3 justify-end">
@@ -755,5 +759,6 @@ export function AnimalDetailModal({ open, onClose, animal, onEdit, canEdit = tru
         </div>
       </div>
     </Modal>
+  </>
   );
 }
