@@ -220,7 +220,7 @@ export class QueryService {
    * Detailed breakdown of ticket sales by type
    */
   static async getTicketRevenue(startDate?: string, endDate?: string, includeReturns: boolean = false) {
-    const dateFilter = startDate && endDate ? 'WHERE purchase_date BETWEEN ? AND ?' : 'WHERE 1=1';
+    const dateFilter = startDate && endDate ? 'WHERE DATE(purchase_date) BETWEEN ? AND ?' : 'WHERE 1=1';
     const params = startDate && endDate ? [startDate, endDate] : [];
 
     // Query 1: Revenue by ticket type
@@ -352,7 +352,7 @@ export class QueryService {
    * Detailed breakdown of gift shop sales by shop
    */
   static async getGiftShopRevenue(startDate?: string, endDate?: string, includeReturns: boolean = false) {
-    const dateFilter = startDate && endDate ? 'WHERE gst.sale_date BETWEEN ? AND ?' : 'WHERE 1=1';
+    const dateFilter = startDate && endDate ? 'WHERE DATE(gst.sale_date) BETWEEN ? AND ?' : 'WHERE 1=1';
     const params = startDate && endDate ? [startDate, endDate] : [];
 
     // Query 1: Revenue by gift shop
@@ -373,6 +373,7 @@ export class QueryService {
     `, params);
 
     // Query 2: Items sold breakdown
+    const byItemDateFilter = startDate && endDate ? 'WHERE DATE(gst.sale_date) BETWEEN ? AND ?' : 'WHERE 1=1';
     const byItem = await query<any[]>(`
       SELECT
         gsi.item_id,
@@ -384,7 +385,7 @@ export class QueryService {
       FROM gift_shop_sales_transactions gst
       JOIN gift_shop_sale_items gsi ON gst.transaction_id = gsi.transaction_id
       JOIN gift_shop_items gi ON gsi.item_id = gi.item_id
-      ${dateFilter}
+      ${byItemDateFilter}
         ${includeReturns ? '' : "AND gst.status = 'completed'"}
       GROUP BY gsi.item_id, gi.name, gi.category, gsi.unit_price
       ORDER BY total_revenue DESC
@@ -466,7 +467,7 @@ export class QueryService {
    * Detailed breakdown of membership purchases
    */
   static async getMembershipRevenue(startDate?: string, endDate?: string) {
-    const dateFilter = startDate && endDate ? 'WHERE purchase_date BETWEEN ? AND ?' : 'WHERE 1=1';
+    const dateFilter = startDate && endDate ? 'WHERE DATE(purchase_date) BETWEEN ? AND ?' : 'WHERE 1=1';
     const params = startDate && endDate ? [startDate, endDate] : [];
 
     // Query 1: Revenue by purchase type (manual vs auto-renewal)
@@ -500,7 +501,7 @@ export class QueryService {
    * Detailed breakdown of donations
    */
   static async getDonationRevenue(startDate?: string, endDate?: string) {
-    const dateFilter = startDate && endDate ? 'WHERE donation_date BETWEEN ? AND ?' : 'WHERE 1=1';
+    const dateFilter = startDate && endDate ? 'WHERE DATE(donation_date) BETWEEN ? AND ?' : 'WHERE 1=1';
     const params = startDate && endDate ? [startDate, endDate] : [];
 
     // Query 1: Total donations
