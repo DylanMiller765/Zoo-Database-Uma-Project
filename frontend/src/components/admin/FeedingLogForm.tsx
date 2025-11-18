@@ -23,21 +23,43 @@ export function FeedingLogForm({ animalId, log, schedules = [], onSuccess, onCan
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
+  // Get current local time in datetime-local format (YYYY-MM-DDTHH:mm)
+  const getLocalDateTimeString = () => {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+    const hours = String(now.getHours()).padStart(2, '0');
+    const minutes = String(now.getMinutes()).padStart(2, '0');
+    return `${year}-${month}-${day}T${hours}:${minutes}`;
+  };
+
   const [formData, setFormData] = useState<CreateFeedingLogData>({
     animal_id: animalId,
     keeper_id: user?.employee_id || undefined,
-    feeding_time: new Date().toISOString().slice(0, 16), // YYYY-MM-DDTHH:mm format
+    feeding_time: getLocalDateTimeString(), // YYYY-MM-DDTHH:mm format in local time
     food_given: '',
     quantity_given: '',
     notes: '',
   });
+
+  // Convert UTC datetime to local datetime-local format
+  const convertToLocalDateTime = (utcDateString: string) => {
+    const date = new Date(utcDateString);
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    return `${year}-${month}-${day}T${hours}:${minutes}`;
+  };
 
   useEffect(() => {
     if (log) {
       setFormData({
         animal_id: log.animal_id,
         keeper_id: log.keeper_id || undefined,
-        feeding_time: log.feeding_time ? new Date(log.feeding_time).toISOString().slice(0, 16) : '',
+        feeding_time: log.feeding_time ? convertToLocalDateTime(log.feeding_time) : '',
         food_given: log.food_given,
         quantity_given: log.quantity_given || '',
         notes: log.notes || '',
