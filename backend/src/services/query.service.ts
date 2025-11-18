@@ -60,10 +60,6 @@ export class QueryService {
       ? `a.endangerment_status IN (${endangermentStatuses.map(() => '?').join(',')})`
       : '1=1';
 
-    // Only apply date filter if dates are different (to filter by arrival date range)
-    // If same date, show all animals regardless of arrival date
-    const applyDateFilter = startDate && endDate && startDate !== endDate;
-
     const sql = `
       SELECT
         -- Habitat data
@@ -128,8 +124,8 @@ export class QueryService {
         (${habitatWhere})
         AND (a.animal_id IS NULL OR ${healthWhere})
         AND (a.animal_id IS NULL OR ${endangermentWhere})
-        ${applyDateFilter ? 'AND (a.animal_id IS NULL OR a.arrival_date >= ?)' : ''}
-        ${applyDateFilter ? 'AND (a.animal_id IS NULL OR a.arrival_date <= ?)' : ''}
+        ${startDate ? 'AND (a.animal_id IS NULL OR a.arrival_date >= ?)' : ''}
+        ${endDate ? 'AND (a.animal_id IS NULL OR a.arrival_date <= ?)' : ''}
         AND (h.deleted_at IS NULL ${includeDeleted ? 'OR 1=1' : ''})
 
       ORDER BY h.habitat_name, a.name
@@ -142,11 +138,9 @@ export class QueryService {
     queryParams.push(...healthStatuses);
     queryParams.push(...endangermentStatuses);
 
-    // Only add arrival date filters if they're different (actual range filtering)
-    if (applyDateFilter) {
-      queryParams.push(startDate);
-      queryParams.push(endDate);
-    }
+    // Add arrival date filters if provided
+    if (startDate) queryParams.push(startDate);
+    if (endDate) queryParams.push(endDate);
 
     return await query<any[]>(sql, queryParams);
   }
