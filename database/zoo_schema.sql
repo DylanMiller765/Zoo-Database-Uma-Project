@@ -169,7 +169,7 @@ CREATE TABLE `tickets` (
     `visit_date` DATE,
     `ticket_type` ENUM('adult', 'child', 'senior', 'student') NOT NULL,
     `price` DECIMAL(8, 2) NOT NULL,
-    `payment_method` ENUM('cash', 'credit', 'debit'),
+    `payment_method` ENUM('cash', 'credit', 'debit'), -- NOTE: payment_method is not currently displayed in financial reports and is kept for historical tracking
     `sold_by` INT,
     `deleted_at` DATETIME DEFAULT NULL,
     FOREIGN KEY (`customer_id`) REFERENCES `customers`(`customer_id`) ON DELETE SET NULL,
@@ -183,8 +183,8 @@ CREATE TABLE `donations` (
     `amount` DECIMAL(10, 2) NOT NULL,
     `donation_date` DATETIME DEFAULT CURRENT_TIMESTAMP,
     `message` TEXT,
-    `donation_type` ENUM('general', 'conservation', 'research', 'animal_care') DEFAULT 'general',
-    `payment_method` ENUM('cash', 'credit', 'debit'),
+    `donation_type` ENUM('general', 'conservation', 'research', 'animal_care') DEFAULT 'general', -- NOTE: donation_type is not currently used in the application and is kept for future expansion
+    `payment_method` ENUM('cash', 'credit', 'debit'), -- NOTE: payment_method is not currently displayed in the UI and is kept for historical tracking purposes
     `deleted_at` DATETIME DEFAULT NULL,
     FOREIGN KEY (`customer_id`) REFERENCES `customers`(`customer_id`) ON DELETE SET NULL
 );
@@ -196,7 +196,7 @@ CREATE TABLE `membership_purchases` (
     `start_date` DATE NOT NULL,
     `end_date` DATE NOT NULL,
     `price` DECIMAL(8, 2) NOT NULL,
-    `payment_method` ENUM('cash', 'credit', 'debit'),
+    `payment_method` ENUM('cash', 'credit', 'debit'), -- NOTE: payment_method is not currently displayed in financial reports and is kept for historical tracking
     FOREIGN KEY (`customer_id`) REFERENCES `customers`(`customer_id`) ON DELETE CASCADE,
     INDEX `idx_customer_purchases` (`customer_id`, `purchase_date`)
 );
@@ -283,7 +283,7 @@ CREATE TABLE `gift_shop_sales_transactions` (
     `employee_id` INT,
     `sale_date` DATETIME DEFAULT CURRENT_TIMESTAMP,
     `total_amount` DECIMAL(10, 2) NOT NULL,
-    `payment_method` ENUM('cash', 'credit', 'debit'),
+    `payment_method` ENUM('cash', 'credit', 'debit'), -- NOTE: payment_method is not currently displayed in financial reports and is kept for historical tracking
     `status` ENUM('completed', 'returned') DEFAULT 'completed',
     FOREIGN KEY (`gift_shop_id`) REFERENCES `gift_shops`(`gift_shop_id`),
     FOREIGN KEY (`customer_id`) REFERENCES `customers`(`customer_id`) ON DELETE SET NULL,

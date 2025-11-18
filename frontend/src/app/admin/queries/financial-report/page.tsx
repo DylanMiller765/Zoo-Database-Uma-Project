@@ -17,6 +17,7 @@ import {
   GiftShopRevenueSection,
   CafeRevenueSection,
   MembershipRevenueSection,
+  DonationRevenueSection,
 } from "@/components/reports";
 
 type FinancialReportData = {
@@ -25,6 +26,7 @@ type FinancialReportData = {
   giftShopRevenue?: any;
   cafeRevenue?: any;
   membershipRevenue?: any;
+  donationRevenue?: any;
   summary: {
     totalRevenue: number;
     totalTransactions: number;
@@ -48,7 +50,7 @@ export default function FinancialReportPage() {
   const [params, setParams] = useState<FinancialReportParams>({
     startDate: '',
     endDate: '',
-    sources: ['ticket', 'event', 'gift_shop', 'cafe', 'membership'],
+    sources: ['ticket', 'event', 'gift_shop', 'cafe', 'membership', 'donation'],
     grouping: 'day',
     includeReturns: false
   });
@@ -79,7 +81,7 @@ export default function FinancialReportPage() {
     setParams({
       startDate: '',
       endDate: '',
-      sources: ['ticket', 'event', 'gift_shop', 'cafe', 'membership'],
+      sources: ['ticket', 'event', 'gift_shop', 'cafe', 'membership', 'donation'],
       grouping: 'day',
       includeReturns: false
     });
@@ -105,6 +107,7 @@ export default function FinancialReportPage() {
       case 'gift_shop': return 'Gift Shop Sales';
       case 'cafe': return 'Cafe Sales';
       case 'membership': return 'Membership Purchases';
+      case 'donation': return 'Donations';
       default: return source;
     }
   };
@@ -116,6 +119,7 @@ export default function FinancialReportPage() {
       case 'gift_shop': return 'border-pink-200 bg-pink-50';
       case 'cafe': return 'border-orange-200 bg-orange-50';
       case 'membership': return 'border-green-200 bg-green-50';
+      case 'donation': return 'border-red-200 bg-red-50';
       default: return 'border-gray-200 bg-gray-50';
     }
   };
@@ -183,7 +187,7 @@ export default function FinancialReportPage() {
               Revenue Sources <span className="text-red-500">*</span>
             </Label>
             <div className="grid grid-cols-2 gap-2">
-              {['ticket', 'event', 'gift_shop', 'cafe', 'membership'].map((source) => (
+              {['ticket', 'event', 'gift_shop', 'cafe', 'membership', 'donation'].map((source) => (
                 <button
                   key={source}
                   type="button"
@@ -350,6 +354,10 @@ export default function FinancialReportPage() {
 
             {reportData.membershipRevenue && (
               <MembershipRevenueSection data={reportData.membershipRevenue} />
+            )}
+
+            {reportData.donationRevenue && (
+              <DonationRevenueSection data={reportData.donationRevenue} />
             )}
           </div>
         </>
