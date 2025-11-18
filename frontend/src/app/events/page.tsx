@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/componen
 import { Button } from '@/components/ui/button';
 import { useCart } from '@/context/CartContext';
 import { useAuth } from '@/context/AuthContext';
-import { ShoppingCart } from 'lucide-react';
+import { ShoppingCart, Check } from 'lucide-react';
 // Import the service and type
 import { eventService } from '@/services/event.service';
 import { Event } from '@/types'; // Import the Event type from the centralized types file [cite: dylanmiller765/zoo-database-uma-project/Zoo-Database-Uma-Project-ecc1d164d13de8e703063347a8cd967fa2ddaede/frontend/src/types/index.ts]
@@ -87,6 +87,8 @@ export default function EventsPage() {
     const [q, setQ] = useState('');
     // Use the StatusFilter type for status state
     const [statusFilter, setStatusFilter] = useState<StatusFilter>('All');
+    // State to track recently added events for the checkmark animation
+    const [addedItems, setAddedItems] = useState<Set<number>>(new Set());
     const { addItem } = useCart();
     const { isAuthenticated, user } = useAuth();
     
@@ -283,13 +285,21 @@ export default function EventsPage() {
                                         }
                                     };
 
+                                    const isAdded = addedItems.has(ev.event_id);
                                     return (
                                     <Card
                                         key={ev.event_id} // Use event_id from Event type
-                                        className={`group overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md flex flex-col ${
+                                        className={`group relative overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md flex flex-col ${
                                             ev.status === 'cancelled' ? 'opacity-75' : ''
                                         }`}
                                     >
+                                        {/* Success indicator checkmark */}
+                                        {isAdded && (
+                                            <div className="absolute top-2 right-2 z-10 bg-sea_green-500 text-white rounded-full p-1.5 shadow-lg">
+                                                <Check className="h-3 w-3" />
+                                            </div>
+                                        )}
+
                                         <CardHeader className="px-6 pt-6 pb-3">
                                             <div className="flex items-start justify-between gap-2">
                                                 {/* Use event_name from Event type */}
@@ -325,6 +335,15 @@ export default function EventsPage() {
                                                                 event_date: ev.event_date,
                                                             },
                                                         });
+                                                        // Show success feedback with checkmark
+                                                        setAddedItems((prev) => new Set(prev).add(ev.event_id));
+                                                        setTimeout(() => {
+                                                            setAddedItems((prev) => {
+                                                                const newSet = new Set(prev);
+                                                                newSet.delete(ev.event_id);
+                                                                return newSet;
+                                                            });
+                                                        }, 2000);
                                                     }}
                                                     className="w-full bg-sea_green-600 hover:bg-sea_green-700 text-white"
                                                 >
