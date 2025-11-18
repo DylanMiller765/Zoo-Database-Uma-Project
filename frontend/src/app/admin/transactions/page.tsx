@@ -76,7 +76,6 @@ export default function TransactionsPage() {
   const filteredTransactions = transactions
     .filter(t => {
       const matchesSearch = t.customerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (t.employeeName && t.employeeName.toLowerCase().includes(searchTerm.toLowerCase())) ||
         t.id.toLowerCase().includes(searchTerm.toLowerCase());
 
       const matchesType = typeFilter === 'all' || t.type === typeFilter;
@@ -128,7 +127,7 @@ export default function TransactionsPage() {
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
           <Input
             type="text"
-            placeholder="Search by customer, employee, or ID..."
+            placeholder="Search by customer name or transaction ID..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="pl-10"
@@ -166,27 +165,43 @@ export default function TransactionsPage() {
               <TableHead>Type</TableHead>
               <TableHead>Date</TableHead>
               <TableHead>Customer</TableHead>
-              <TableHead>Employee</TableHead>
               <TableHead>Total</TableHead>
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filteredTransactions.map((t) => (
-              <TableRow key={t.id}>
-                <TableCell className="font-medium">{t.id}</TableCell>
-                <TableCell>
-                  <Badge>{t.type}</Badge>
-                </TableCell>
-                <TableCell>{formatDate(t.date)}</TableCell>
-                <TableCell>{t.customerName}</TableCell>
-                <TableCell>{t.employeeName || 'N/A'}</TableCell>
-                <TableCell>${t.total.toFixed(2)}</TableCell>
-                <TableCell className="text-right">
-                  {/* Actions buttons here */}
-                </TableCell>
-              </TableRow>
-            ))}
+            {filteredTransactions.map((t) => {
+              const isRefunded = !!t.refunded_at;
+              return (
+                <TableRow
+                  key={t.id}
+                  className={isRefunded ? 'bg-red-50 opacity-75' : ''}
+                >
+                  <TableCell className="font-medium">{t.id}</TableCell>
+                  <TableCell>
+                    <div className="flex items-center gap-2">
+                      <Badge>{t.type}</Badge>
+                      {isRefunded && (
+                        <Badge variant="danger">REFUNDED</Badge>
+                      )}
+                    </div>
+                  </TableCell>
+                  <TableCell>{formatDate(t.date)}</TableCell>
+                  <TableCell>{t.customerName}</TableCell>
+                  <TableCell className={isRefunded ? 'line-through text-red-600' : ''}>
+                    ${t.total.toFixed(2)}
+                    {isRefunded && t.refund_reason && (
+                      <div className="text-xs text-gray-600 mt-1 italic">
+                        {t.refund_reason}
+                      </div>
+                    )}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    {/* Actions buttons here */}
+                  </TableCell>
+                </TableRow>
+              );
+            })}
           </TableBody>
         </Table>
       </div>

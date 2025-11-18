@@ -14,6 +14,11 @@ export default function CartSidebar() {
     router.push('/checkout');
   };
 
+  const handleContinueShopping = () => {
+    closeCart();
+    router.push('/');
+  };
+
   if (!isCartOpen) return null;
 
   return (
@@ -82,29 +87,32 @@ export default function CartSidebar() {
                         ${item.unit_price.toFixed(2)}
                       </span>
 
-                      {/* Quantity Controls (except for events) */}
-                      {item.item_type !== 'event' && item.item_type !== 'donation' && (
-                        <div className="flex items-center gap-2">
-                          <button
-                            onClick={() => updateQuantity(item.id, item.quantity - 1)}
-                            className="p-1 hover:bg-gray-200 rounded transition-colors"
-                            disabled={item.quantity <= 1}
-                          >
-                            <Minus className="h-4 w-4 text-gray-600" />
-                          </button>
-                          <span className="w-8 text-center font-medium">{item.quantity}</span>
-                          <button
-                            onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                            className="p-1 hover:bg-gray-200 rounded transition-colors"
-                          >
-                            <Plus className="h-4 w-4 text-gray-600" />
-                          </button>
-                        </div>
-                      )}
-
-                      {(item.item_type === 'event' || item.item_type === 'donation') && (
-                        <span className="text-sm text-gray-600">Qty: {item.quantity}</span>
-                      )}
+                      {/* Quantity Controls for all items */}
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                          className="p-1 hover:bg-gray-200 rounded transition-colors"
+                          disabled={item.quantity <= 1}
+                        >
+                          <Minus className="h-4 w-4 text-gray-600" />
+                        </button>
+                        <input
+                          type="number"
+                          min="1"
+                          value={item.quantity}
+                          onChange={(e) => {
+                            const val = parseInt(e.target.value) || 1;
+                            updateQuantity(item.id, val);
+                          }}
+                          className="w-16 text-center text-sm font-semibold border border-gray-300 rounded-md px-2 py-1 focus:outline-none focus:ring-2 focus:ring-sea_green-500"
+                        />
+                        <button
+                          onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                          className="p-1 hover:bg-gray-200 rounded transition-colors"
+                        >
+                          <Plus className="h-4 w-4 text-gray-600" />
+                        </button>
+                      </div>
                     </div>
                   </div>
 
@@ -148,7 +156,7 @@ export default function CartSidebar() {
 
             {/* Continue Shopping */}
             <Button
-              onClick={closeCart}
+              onClick={handleContinueShopping}
               variant="outline"
               className="w-full border-gray-300 text-gray-700 hover:bg-gray-50"
             >

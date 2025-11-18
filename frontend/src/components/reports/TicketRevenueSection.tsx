@@ -8,7 +8,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Ticket, Database } from "lucide-react";
+import { Ticket } from "lucide-react";
 
 interface TicketRevenueData {
   total: number;
@@ -18,11 +18,6 @@ interface TicketRevenueData {
     count: number;
     revenue: number;
     unit_price: number;
-  }>;
-  byPaymentMethod: Array<{
-    payment_method: string;
-    count: number;
-    revenue: number;
   }>;
 }
 
@@ -40,13 +35,8 @@ export function TicketRevenueSection({ data }: Props) {
     return type.charAt(0).toUpperCase() + type.slice(1);
   };
 
-  const formatPaymentMethod = (method: string) => {
-    return method.charAt(0).toUpperCase() + method.slice(1);
-  };
-
   // Calculate totals for verification
   const typeTotal = data.byType.reduce((sum, row) => sum + parseFloat(String(row.revenue || 0)), 0);
-  const paymentTotal = data.byPaymentMethod.reduce((sum, row) => sum + parseFloat(String(row.revenue || 0)), 0);
 
   return (
     <Card className="border-l-6 border-blue-300 bg-blue-50/30">
@@ -56,10 +46,6 @@ export function TicketRevenueSection({ data }: Props) {
             <Ticket className="h-6 w-6 text-blue-600" />
             <div>
               <CardTitle className="text-xl text-gray-900">Ticket Revenue</CardTitle>
-              <div className="text-xs text-gray-600 flex items-center gap-1 mt-1">
-                <Database className="h-3 w-3" />
-                Source: tickets table | Aggregation: SUM(price) GROUP BY ticket_type
-              </div>
             </div>
           </div>
           <div className="text-right">
@@ -75,7 +61,7 @@ export function TicketRevenueSection({ data }: Props) {
       <CardContent className="space-y-6 pl-6 pr-6">
         {/* Revenue by Ticket Type */}
         <div>
-          <h3 className="text-sm font-semibold text-gray-700 mb-3">
+          <h3 className="text-sm font-semibold text-gray-700 mb-3 pl-2">
             Revenue by Ticket Type
           </h3>
           <div className="overflow-x-auto">
@@ -121,56 +107,6 @@ export function TicketRevenueSection({ data }: Props) {
               </TableBody>
             </Table>
           </div>
-        </div>
-
-        {/* Revenue by Payment Method */}
-        <div>
-          <h3 className="text-sm font-semibold text-gray-700 mb-3">
-            Revenue by Payment Method
-          </h3>
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Payment Method</TableHead>
-                  <TableHead className="text-right">Transactions</TableHead>
-                  <TableHead className="text-right">Total Revenue</TableHead>
-                  <TableHead className="text-right">% of Ticket Revenue</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {data.byPaymentMethod.map((row) => (
-                  <TableRow key={row.payment_method}>
-                    <TableCell className="font-medium">
-                      {formatPaymentMethod(row.payment_method)}
-                    </TableCell>
-                    <TableCell className="text-right">{row.count}</TableCell>
-                    <TableCell className="text-right font-semibold text-blue-700">
-                      ${formatMoney(row.revenue)}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <Badge className="bg-blue-100 text-blue-800">
-                        {((parseFloat(String(row.revenue)) / data.total) * 100).toFixed(1)}%
-                      </Badge>
-                    </TableCell>
-                  </TableRow>
-                ))}
-                <TableRow className="bg-blue-50 font-semibold border-t-2">
-                  <TableCell>Subtotal</TableCell>
-                  <TableCell className="text-right">{data.transactions}</TableCell>
-                  <TableCell className="text-right text-blue-700">
-                    ${formatMoney(paymentTotal)}
-                  </TableCell>
-                  <TableCell className="text-right">100%</TableCell>
-                </TableRow>
-              </TableBody>
-            </Table>
-          </div>
-          {Math.abs(typeTotal - paymentTotal) < 0.01 && (
-            <div className="mt-2 text-xs text-green-700 flex items-center gap-1">
-              ✓ Subtotals match (${formatMoney(typeTotal)}), data integrity confirmed
-            </div>
-          )}
         </div>
       </CardContent>
     </Card>

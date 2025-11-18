@@ -38,6 +38,7 @@ export default function AnimalsPage() {
   const [selectedAnimal, setSelectedAnimal] = useState<Animal | null>(null);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [animalToDelete, setAnimalToDelete] = useState<Animal | null>(null);
+  const [deleteActiveStatus, setDeleteActiveStatus] = useState<'transferred' | 'deceased'>('deceased');
 
   // New state for soft delete features
   const [showDeleted, setShowDeleted] = useState(false);
@@ -128,6 +129,7 @@ export default function AnimalsPage() {
   const handleDeleteClick = (animal: Animal, e: React.MouseEvent) => {
     e.stopPropagation();
     setAnimalToDelete(animal);
+    setDeleteActiveStatus('deceased'); // Reset to default
     setIsDeleteModalOpen(true);
   };
 
@@ -135,10 +137,11 @@ export default function AnimalsPage() {
     if (!animalToDelete?.animal_id) return;
 
     try {
-      await animalService.delete(animalToDelete.animal_id);
+      await animalService.delete(animalToDelete.animal_id, deleteActiveStatus);
       await loadAnimals();
       setIsDeleteModalOpen(false);
       setAnimalToDelete(null);
+      setDeleteActiveStatus('deceased');
     } catch (error) {
       console.error('Failed to delete animal:', error);
     }
@@ -154,9 +157,13 @@ export default function AnimalsPage() {
     if (!animalToRestore?.animal_id) return;
 
     try {
+      // First restore the animal (set deleted_at = NULL), then update active_status
+      // Must restore first because update's findById filters out deleted animals
       await animalService.restore(animalToRestore.animal_id);
+      await animalService.update(animalToRestore.animal_id, { active_status: 'active' });
       await loadAnimals();
       setAnimalToRestore(null);
+      setIsRestoreModalOpen(false);
     } catch (error) {
       console.error('Failed to restore animal:', error);
     }
@@ -305,16 +312,17 @@ export default function AnimalsPage() {
                   </Badge>
                 </TableCell>
                 <TableCell>
-                  {isDeleted(animal) ? (
-                    <Badge variant="danger">Deleted</Badge>
-                  ) : (
-                    <Badge
-                      variant={animal.active_status === 'active' ? 'success' : 'outline'}
-                      className="capitalize"
-                    >
-                      {animal.active_status || 'Active'}
-                    </Badge>
-                  )}
+                  <Badge
+                    variant={
+                      animal.active_status === 'active' ? 'success' :
+                      animal.active_status === 'transferred' ? 'secondary' :
+                      animal.active_status === 'deceased' ? 'danger' :
+                      'default'
+                    }
+                    className="capitalize"
+                  >
+                    {animal.active_status || 'Active'}
+                  </Badge>
                 </TableCell>
                 <TableCell className="text-xs capitalize">
                   {animal.endangerment_status?.replace('_', ' ') || 'N/A'}
@@ -382,7 +390,7 @@ export default function AnimalsPage() {
         open={isDeleteModalOpen}
         onClose={() => setIsDeleteModalOpen(false)}
         title="Delete Animal"
-        description="Are you sure you want to delete this animal? This action can be undone by a manager."
+        description="Please indicate the reason for deleting this animal."
       >
         <div className="space-y-4">
           {animalToDelete && (
@@ -392,12 +400,48 @@ export default function AnimalsPage() {
               </p>
             </div>
           )}
-          <div className="flex items-center gap-3 justify-end">
+
+          {/* Radio buttons for status selection */}
+          <div className="space-y-3">
+            <p className="text-sm font-medium text-gray-700">What happened to this animal?</p>
+            <div className="space-y-2">
+              <label className="flex items-center gap-3 p-3 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50">
+                <input
+                  type="radio"
+                  name="animalStatus"
+                  value="transferred"
+                  checked={deleteActiveStatus === 'transferred'}
+                  onChange={(e) => setDeleteActiveStatus(e.target.value as 'transferred' | 'deceased')}
+                  className="w-4 h-4"
+                />
+                <div>
+                  <p className="font-medium text-gray-900">Transferred</p>
+                  <p className="text-xs text-gray-600">Animal was transferred to another facility</p>
+                </div>
+              </label>
+              <label className="flex items-center gap-3 p-3 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50">
+                <input
+                  type="radio"
+                  name="animalStatus"
+                  value="deceased"
+                  checked={deleteActiveStatus === 'deceased'}
+                  onChange={(e) => setDeleteActiveStatus(e.target.value as 'transferred' | 'deceased')}
+                  className="w-4 h-4"
+                />
+                <div>
+                  <p className="font-medium text-gray-900">Deceased</p>
+                  <p className="text-xs text-gray-600">Animal has passed away</p>
+                </div>
+              </label>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-3 justify-end pt-4 border-t">
             <Button variant="outline" onClick={() => setIsDeleteModalOpen(false)}>
               Cancel
             </Button>
             <Button variant="destructive" onClick={handleDelete}>
-              Delete
+              Delete Animal
             </Button>
           </div>
         </div>

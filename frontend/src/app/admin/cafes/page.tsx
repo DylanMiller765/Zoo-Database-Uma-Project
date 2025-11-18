@@ -47,6 +47,7 @@ export default function CafesPage() {
   const [itemToRestore, setItemToRestore] = useState<CafeItem | null>(null);
 
   const isManager = hasRole('manager');
+  const isCashier = hasRole('cashier');
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -192,10 +193,12 @@ export default function CafesPage() {
             <p className="text-red-600 mt-1">No café found. Seed at least one café.</p>
           )}
         </div>
-        <Button onClick={handleAdd} className="flex items-center gap-2 bg-amber-600 hover:bg-amber-700">
-          <Plus className="h-4 w-4" />
-          Add Item
-        </Button>
+        {isManager && (
+          <Button onClick={handleAdd} className="flex items-center gap-2 bg-amber-600 hover:bg-amber-700">
+            <Plus className="h-4 w-4" />
+            Add Item
+          </Button>
+        )}
       </div>
 
       {/* Search and Filters */}
@@ -276,21 +279,25 @@ export default function CafesPage() {
                     <div className="flex items-center justify-end gap-2">
                       {!isDeleted(item) ? (
                         <>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={(e) => handleEdit(item, e)}
-                          >
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={(e) => handleDeleteClick(item, e)}
-                            className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
+                          {isManager && (
+                            <>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={(e) => handleEdit(item, e)}
+                              >
+                                <Edit className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={(e) => handleDeleteClick(item, e)}
+                                className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </>
+                          )}
                         </>
                       ) : (
                         isManager && (
@@ -372,7 +379,7 @@ export default function CafesPage() {
           setSelectedItem(detailItem);
           setIsModalOpen(true);
         }}
-        canEdit={detailItem ? !isDeleted(detailItem) : false}
+        canEdit={detailItem ? (!isDeleted(detailItem) && isManager) : false}
       />
 
       {/* Restore Confirmation Modal */}

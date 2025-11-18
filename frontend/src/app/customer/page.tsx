@@ -20,6 +20,9 @@ import {
   Phone,
   Calendar,
   Edit,
+  ShoppingBag,
+  Coffee,
+  Clock,
 } from "lucide-react";
 
 type ProfileResponse = {
@@ -67,6 +70,8 @@ export default function CustomerDashboard() {
   const [tickets, setTickets] = React.useState<any[]>([]);
   const [upcomingTickets, setUpcomingTickets] = React.useState<any[]>([]);
   const [visits, setVisits] = React.useState<any[]>([]);
+  const [upcomingEvents, setUpcomingEvents] = React.useState<any[]>([]);
+  const [purchaseHistory, setPurchaseHistory] = React.useState<any[]>([]);
   const [selectedTicket, setSelectedTicket] = React.useState<any | null>(null);
   const [showTicketModal, setShowTicketModal] = React.useState(false);
   const [autoRenew, setAutoRenew] = React.useState<boolean>(false);
@@ -86,11 +91,13 @@ export default function CustomerDashboard() {
   const load = async () => {
     try {
       setFetching(true);
-      const [profileRes, summaryRes, ticketsRes, visitsRes] = await Promise.all([
+      const [profileRes, summaryRes, ticketsRes, visitsRes, eventsRes, purchaseRes] = await Promise.all([
         apiClient.get<ProfileResponse>("/auth/profile"),
         apiClient.get<SummaryResponse>("/me/summary"),
         apiClient.get<{ success: boolean; data: any[] }>("/me/tickets"),
         apiClient.get<{ success: boolean; data: any[] }>("/me/visits"),
+        apiClient.get<{ success: boolean; data: any[] }>("/me/event-registrations"),
+        apiClient.get<{ success: boolean; data: any[] }>("/me/purchase-history"),
       ]);
 
       setProfile(profileRes.data.data);
@@ -98,6 +105,8 @@ export default function CustomerDashboard() {
       setUpcomingTickets(summaryRes.data.data.ticketsUpcoming || []);
       setVisits(visitsRes.data.data || []);
       setTickets(ticketsRes.data.data || []);
+      setUpcomingEvents(eventsRes.data.data || []);
+      setPurchaseHistory(purchaseRes.data.data || []);
       
       // Load auto-renew status
       if (profileRes.data.data?.membership_auto_renew !== undefined) {
@@ -206,6 +215,9 @@ export default function CustomerDashboard() {
               <button onClick={() => setActive("visits")} className={`w-full flex items-center gap-2 rounded-lg px-3 py-2 text-left ${active === "visits" ? "bg-dark_spring_green-100 text-dark_spring_green-800" : "hover:bg-gray-50"}`}>
                 <MapPin className="h-4 w-4" /> Visit History
               </button>
+              <button onClick={() => setActive("purchase-history")} className={`w-full flex items-center gap-2 rounded-lg px-3 py-2 text-left ${active === "purchase-history" ? "bg-dark_spring_green-100 text-dark_spring_green-800" : "hover:bg-gray-50"}`}>
+                <ShoppingBag className="h-4 w-4" /> Purchase History
+              </button>
               <button onClick={() => setActive("membership")} className={`w-full flex items-center gap-2 rounded-lg px-3 py-2 text-left ${active === "membership" ? "bg-dark_spring_green-100 text-dark_spring_green-800" : "hover:bg-gray-50"}`}>
                 <Award className="h-4 w-4" /> Membership
               </button>
@@ -265,7 +277,7 @@ export default function CustomerDashboard() {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2"><Ticket className="h-5 w-5 text-sea_green-600" /> Tickets</CardTitle>
@@ -298,8 +310,122 @@ export default function CustomerDashboard() {
                   )}
                 </CardContent>
               </Card>
+
+              {/* Upcoming Events */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2"><Clock className="h-5 w-5 text-sea_green-600" /> Upcoming Events</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  {upcomingEvents.length === 0 ? (
+                    <p className="text-gray-600">No upcoming events registered.</p>
+                  ) : (
+                    upcomingEvents.map((event: any, i: number) => (
+                      <div key={i} className="rounded-xl border border-gray-200 bg-sea_green-50 p-4">
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1">
+                            <p className="font-semibold text-gray-900">{event.event_name}</p>
+                            <div className="mt-2 space-y-1 text-sm text-gray-600">
+                              {event.event_date && (
+                                <p className="flex items-center gap-2">
+                                  <Calendar className="h-4 w-4" />
+                                  {new Date(event.event_date).toLocaleDateString('en-US', { 
+                                    weekday: 'short', 
+                                    year: 'numeric', 
+                                    month: 'short', 
+                                    day: 'numeric' 
+                                  })}
+                                </p>
+                              )}
+                              {event.start_time && (
+                                <p className="flex items-center gap-2">
+                                  <Clock className="h-4 w-4" />
+                                  {new Date(`2000-01-01T${event.start_time}`).toLocaleTimeString('en-US', { 
+                                    hour: 'numeric', 
+                                    minute: '2-digit',
+                                    hour12: true 
+                                  })}
+                                  {event.end_time && ` - ${new Date(`2000-01-01T${event.end_time}`).toLocaleTimeString('en-US', { 
+                                    hour: 'numeric', 
+                                    minute: '2-digit',
+                                    hour12: true 
+                                  })}`}
+                                </p>
+                              )}
+                              {event.location && (
+                                <p className="flex items-center gap-2">
+                                  <MapPin className="h-4 w-4" />
+                                  {event.location}
+                                </p>
+                              )}
+                              <p className="text-xs text-gray-500 mt-1">
+                                Participants: {event.number_of_participants} • Registered: {new Date(event.registration_date).toLocaleDateString()}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </CardContent>
+              </Card>
+
             </div>
           </>
+        )}
+
+        {/* Purchase History Tab */}
+        {active === 'purchase-history' && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2"><ShoppingBag className="h-5 w-5 text-sea_green-600" /> Purchase History</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {purchaseHistory.length === 0 ? (
+                <p className="text-gray-600">No purchase history found.</p>
+              ) : (
+                purchaseHistory.map((purchase: any, i: number) => (
+                  <div key={i} className="rounded-xl border border-gray-200 bg-gray-50 p-4">
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-1">
+                          {purchase.purchase_type === 'gift_shop' ? (
+                            <ShoppingBag className="h-4 w-4 text-amber-600" />
+                          ) : (
+                            <Coffee className="h-4 w-4 text-amber-600" />
+                          )}
+                          <p className="font-semibold text-gray-900">{purchase.item_name}</p>
+                          <span className="text-xs px-2 py-0.5 rounded-full bg-gray-200 text-gray-700">
+                            {purchase.purchase_type === 'gift_shop' ? 'Gift Shop' : 'Cafe'}
+                          </span>
+                        </div>
+                        {purchase.item_description && (
+                          <p className="text-sm text-gray-600 mb-2">{purchase.item_description}</p>
+                        )}
+                        <div className="flex items-center gap-4 text-sm text-gray-600">
+                          <span>Quantity: {purchase.quantity}</span>
+                          <span>•</span>
+                          <span>${Number(purchase.unit_price).toFixed(2)} each</span>
+                          <span>•</span>
+                          <span className="font-semibold text-gray-900">Total: ${Number(purchase.line_total).toFixed(2)}</span>
+                        </div>
+                        <p className="text-xs text-gray-500 mt-2">
+                          Purchased: {new Date(purchase.purchase_date).toLocaleDateString('en-US', { 
+                            year: 'numeric', 
+                            month: 'short', 
+                            day: 'numeric',
+                            hour: 'numeric',
+                            minute: '2-digit',
+                            hour12: true
+                          })}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                ))
+              )}
+            </CardContent>
+          </Card>
         )}
 
         {/* Removed My Tickets tab content */}
@@ -369,10 +495,6 @@ export default function CustomerDashboard() {
                       <li className="flex items-start gap-2">
                         <span className="text-sea_green-600 mt-0.5">✓</span>
                         <span>Unlimited access for 1 adult for one year</span>
-                      </li>
-                      <li className="flex items-start gap-2">
-                        <span className="text-sea_green-600 mt-0.5">✓</span>
-                        <span>10% discount at gift shop and cafés</span>
                       </li>
                       <li className="flex items-start gap-2">
                         <span className="text-sea_green-600 mt-0.5">✓</span>
@@ -447,10 +569,6 @@ export default function CustomerDashboard() {
                       <li className="flex items-start gap-2">
                         <span className="text-sea_green-600 mt-0.5">✓</span>
                         <span>Unlimited access for 1 adult for one year</span>
-                      </li>
-                      <li className="flex items-start gap-2">
-                        <span className="text-sea_green-600 mt-0.5">✓</span>
-                        <span>10% discount at gift shop and cafés</span>
                       </li>
                       <li className="flex items-start gap-2">
                         <span className="text-sea_green-600 mt-0.5">✓</span>

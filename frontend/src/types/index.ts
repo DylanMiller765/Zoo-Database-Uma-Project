@@ -155,7 +155,6 @@ export interface DashboardStats {
   upcomingEvents: number;
   activeHabitats: number;
   todaysVisitors: number;
-  monthlyRevenue: number;
 }
 
 // Ticket Types
@@ -166,7 +165,7 @@ export interface Ticket {
   visit_date: string;
   ticket_type: 'adult' | 'child' | 'senior' | 'student';
   price: number;
-  payment_method?: 'cash' | 'credit' | 'debit' | 'online';
+  payment_method?: 'cash' | 'credit' | 'debit';
 }
 
 export interface CreateTicketData extends Omit<Ticket, 'ticket_id' | 'purchase_date'> {}

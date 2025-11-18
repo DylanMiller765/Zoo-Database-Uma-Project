@@ -29,6 +29,8 @@ import checkoutRoutes from './routes/checkout.routes';
 import donationRoutes from './routes/donation.routes';
 import transactionRoutes from './routes/transaction.routes';
 import eventCancellationLogRoutes from './routes/event-cancellation-log.routes';
+import { initMailService, sendMail } from './services/mailService';
+import { startAnimalAlertEmailJob } from './jobs/animal-alert.job';
 
 dotenv.config();
 
@@ -88,12 +90,13 @@ app.use(errorHandler);
 const startServer = async () => {
   try {
     const dbConnected = await testConnection();
+    await initMailService();
 
     if (!dbConnected) {
       console.error('❌ Failed to connect to database. Exiting...');
       process.exit(1);
     }
-
+    startAnimalAlertEmailJob();
     app.listen(PORT, () => {
       console.log(`✅ Server running on port ${PORT}`);
       console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);

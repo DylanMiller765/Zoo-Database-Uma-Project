@@ -5,6 +5,7 @@ import { useMemo, useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useCart } from '@/context/CartContext';
+import { useAuth } from '@/context/AuthContext';
 import { ShoppingCart } from 'lucide-react';
 // Import the service and type
 import { eventService } from '@/services/event.service';
@@ -87,6 +88,7 @@ export default function EventsPage() {
     // Use the StatusFilter type for status state
     const [statusFilter, setStatusFilter] = useState<StatusFilter>('All');
     const { addItem } = useCart();
+    const { isAuthenticated, user } = useAuth();
     
     // Fetch data on component mount
     useEffect( () => {
@@ -147,7 +149,6 @@ export default function EventsPage() {
             return textMatch && statusMatch;
         });
     }, [q, statusFilter, dataToDisplay]); // Depend on filters and the data source
-    
 
     return (
         <>
@@ -255,7 +256,7 @@ export default function EventsPage() {
                                             <p className="leading-relaxed">{ev.description || 'No description available.'}</p>
                                         </CardContent>
                                         <CardFooter className="px-6 pb-6 mt-auto">
-                                            {ev.status === 'scheduled' && ev.ticket_price != null ? (
+                                            {isAuthenticated && user?.role === 'customer' && ev.status === 'scheduled' && ev.ticket_price != null ? (
                                                 <Button
                                                     onClick={() => {
                                                         addItem({
@@ -275,14 +276,14 @@ export default function EventsPage() {
                                                     <ShoppingCart className="h-4 w-4 mr-2" />
                                                     Add to Cart (${ev.ticket_price.toFixed(2)})
                                                 </Button>
-                                            ) : (
+                                            ) : ev.status !== 'scheduled' ? (
                                                 <Button
                                                     disabled
                                                     className="w-full"
                                                 >
-                                                    {ev.status !== 'scheduled' ? `Event ${ev.status}` : 'Registration Unavailable'}
+                                                    Event {ev.status}
                                                 </Button>
-                                            )}
+                                            ) : null}
                                         </CardFooter>
                                     </Card>
                                 ))}

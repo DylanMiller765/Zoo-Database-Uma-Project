@@ -145,10 +145,6 @@ export default function VisitPage() {
                     </li>
                     <li className="flex items-start gap-2">
                       <span className="text-sea_green-500 mt-0.5">✓</span>
-                      <span>10% discount at gift shop and cafés</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <span className="text-sea_green-500 mt-0.5">✓</span>
                       <span>Free parking</span>
                     </li>
                     <li className="flex items-start gap-2">

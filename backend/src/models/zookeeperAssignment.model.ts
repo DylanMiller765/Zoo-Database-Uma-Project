@@ -43,4 +43,28 @@ export class ZookeeperAssignmentModel {
     `;
     return await query<ZookeeperAssignmentWithDetails[]>(sql);
   }
+
+  static async create(keeperId: number, animalId: number, shift?: string): Promise<number> {
+    const sql = `
+      INSERT INTO zookeeper_assignments (keeper_id, animal_id, shift)
+      VALUES (?, ?, ?)
+    `;
+    const result = await query<any>(sql, [keeperId, animalId, shift || null]);
+    return result.insertId;
+  }
+
+  static async remove(assignmentId: number): Promise<void> {
+    const sql = 'DELETE FROM zookeeper_assignments WHERE assignment_id = ?';
+    await query(sql, [assignmentId]);
+  }
+
+  static async checkDuplicateAssignment(keeperId: number, animalId: number): Promise<boolean> {
+    const sql = `
+      SELECT COUNT(*) as count
+      FROM zookeeper_assignments
+      WHERE keeper_id = ? AND animal_id = ?
+    `;
+    const result = await query<any[]>(sql, [keeperId, animalId]);
+    return result[0].count > 0;
+  }
 }
