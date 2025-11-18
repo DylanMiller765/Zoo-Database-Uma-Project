@@ -320,52 +320,76 @@ export default function CustomerDashboard() {
                   {upcomingEvents.length === 0 ? (
                     <p className="text-gray-600">No upcoming events registered.</p>
                   ) : (
-                    upcomingEvents.map((event: any, i: number) => (
-                      <div key={i} className="rounded-xl border border-gray-200 bg-sea_green-50 p-4">
-                        <div className="flex items-start justify-between">
-                          <div className="flex-1">
-                            <p className="font-semibold text-gray-900">{event.event_name}</p>
-                            <div className="mt-2 space-y-1 text-sm text-gray-600">
-                              {event.event_date && (
-                                <p className="flex items-center gap-2">
-                                  <Calendar className="h-4 w-4" />
-                                  {new Date(event.event_date).toLocaleDateString('en-US', { 
-                                    weekday: 'short', 
-                                    year: 'numeric', 
-                                    month: 'short', 
-                                    day: 'numeric' 
-                                  })}
+                    upcomingEvents.map((event: any, i: number) => {
+                      const isCancelled = event.event_deleted_at !== null && event.event_deleted_at !== undefined;
+                      return (
+                        <div 
+                          key={i} 
+                          className={`rounded-xl border-2 p-4 ${
+                            isCancelled 
+                              ? 'border-red-400 bg-red-50' 
+                              : 'border-gray-200 bg-sea_green-50'
+                          }`}
+                        >
+                          <div className="flex items-start justify-between">
+                            <div className="flex-1">
+                              <div className="flex items-center gap-2 mb-1">
+                                <p className={`font-semibold ${isCancelled ? 'text-red-800 line-through' : 'text-gray-900'}`}>
+                                  {event.event_name}
                                 </p>
-                              )}
-                              {event.start_time && (
-                                <p className="flex items-center gap-2">
-                                  <Clock className="h-4 w-4" />
-                                  {new Date(`2000-01-01T${event.start_time}`).toLocaleTimeString('en-US', { 
-                                    hour: 'numeric', 
-                                    minute: '2-digit',
-                                    hour12: true 
-                                  })}
-                                  {event.end_time && ` - ${new Date(`2000-01-01T${event.end_time}`).toLocaleTimeString('en-US', { 
-                                    hour: 'numeric', 
-                                    minute: '2-digit',
-                                    hour12: true 
-                                  })}`}
+                                {isCancelled && (
+                                  <span className="px-2 py-0.5 text-xs font-semibold rounded-full bg-red-200 text-red-800">
+                                    Cancelled
+                                  </span>
+                                )}
+                              </div>
+                              <div className="mt-2 space-y-1 text-sm text-gray-600">
+                                {event.event_date && (
+                                  <p className="flex items-center gap-2">
+                                    <Calendar className="h-4 w-4" />
+                                    {new Date(event.event_date).toLocaleDateString('en-US', { 
+                                      weekday: 'short', 
+                                      year: 'numeric', 
+                                      month: 'short', 
+                                      day: 'numeric' 
+                                    })}
+                                  </p>
+                                )}
+                                {event.start_time && (
+                                  <p className="flex items-center gap-2">
+                                    <Clock className="h-4 w-4" />
+                                    {new Date(`2000-01-01T${event.start_time}`).toLocaleTimeString('en-US', { 
+                                      hour: 'numeric', 
+                                      minute: '2-digit',
+                                      hour12: true 
+                                    })}
+                                    {event.end_time && ` - ${new Date(`2000-01-01T${event.end_time}`).toLocaleTimeString('en-US', { 
+                                      hour: 'numeric', 
+                                      minute: '2-digit',
+                                      hour12: true 
+                                    })}`}
+                                  </p>
+                                )}
+                                {event.location && (
+                                  <p className="flex items-center gap-2">
+                                    <MapPin className="h-4 w-4" />
+                                    {event.location}
+                                  </p>
+                                )}
+                                <p className="text-xs text-gray-500 mt-1">
+                                  Participants: {event.number_of_participants} • Registered: {new Date(event.registration_date).toLocaleDateString()}
                                 </p>
-                              )}
-                              {event.location && (
-                                <p className="flex items-center gap-2">
-                                  <MapPin className="h-4 w-4" />
-                                  {event.location}
-                                </p>
-                              )}
-                              <p className="text-xs text-gray-500 mt-1">
-                                Participants: {event.number_of_participants} • Registered: {new Date(event.registration_date).toLocaleDateString()}
-                              </p>
+                                {isCancelled && (
+                                  <p className="text-sm text-red-700 font-medium mt-2 bg-red-100 rounded-md px-3 py-2 border border-red-300">
+                                    This event has been cancelled. You will receive a refund.
+                                  </p>
+                                )}
+                              </div>
                             </div>
                           </div>
                         </div>
-                      </div>
-                    ))
+                      );
+                    })
                   )}
                 </CardContent>
               </Card>
