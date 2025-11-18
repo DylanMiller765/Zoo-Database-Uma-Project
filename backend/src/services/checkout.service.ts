@@ -58,7 +58,7 @@ export class CheckoutService {
           break;
 
         case 'membership':
-          await this.createMembership(item, customerId, checkoutData.payment_data);
+          await this.createMembership(item, customerId, checkoutData.payment_method, checkoutData.payment_data);
           summary.memberships++;
           break;
 
@@ -189,6 +189,7 @@ export class CheckoutService {
   private static async createMembership(
     item: CheckoutCartItem,
     customerId: number,
+    paymentMethod: 'credit' | 'debit',
     paymentData?: any
   ): Promise<void> {
     const metadata = item.metadata || {};
@@ -273,8 +274,8 @@ export class CheckoutService {
     await query(
       `INSERT INTO membership_purchases 
        (customer_id, purchase_date, start_date, end_date, price, payment_method, payment_method_id)
-       VALUES (?, NOW(), ?, ?, ?, 'online', ?)`,
-      [customerId, actualStartDate, actualEndDate, membershipPrice, paymentMethodId]
+       VALUES (?, NOW(), ?, ?, ?, ?, ?)`,
+      [customerId, actualStartDate, actualEndDate, membershipPrice, paymentMethod, paymentMethodId]
     );
   }
 
