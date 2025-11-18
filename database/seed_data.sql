@@ -41,7 +41,8 @@ INSERT INTO employees (employee_id, first_name, last_name, email, phone, ssn, jo
 (9, 'Chris', 'Green', 'chris.green@zoo.com', '5550101109', '987-65-4321', 'keeper', 'full_time', 45000.00, 'active', '2023-08-01', 'male'),
 (10, 'Jessica', 'Blue', 'jessica.blue@zoo.com', '5550101110', '876-54-3210', 'keeper', 'full_time', 45500.00, 'active', '2023-09-01', 'female'),
 (11, 'Mark', 'White', 'mark.white@zoo.com', '5550101111', '765-43-2109', 'veterinarian', 'full_time', 86000.00, 'active', '2023-07-15', 'male'),
-(12, 'Laura', 'Black', 'laura.black@zoo.com', '5550101112', '654-32-1098', 'keeper', 'part_time', NULL, 'active', '2024-01-10', 'female');
+(12, 'Laura', 'Black', 'laura.black@zoo.com', '5550101112', '999-32-1098', 'keeper', 'part_time', NULL, 'active', '2024-01-10', 'female'),
+(13, 'Sky', 'Jones', 'skyjones.vet@gmail.com', '5550101113', '654-32-1098', 'veterinarian', 'full_time', 86000.00, 'active', '2023-07-15', 'female');
 
 -- =======================================
 -- CUSTOMERS
@@ -85,7 +86,8 @@ INSERT INTO user_accounts (account_id, username, email, role, customer_id) VALUE
 (10, 'maria.garcia', 'maria.garcia@email.com', 'customer', 2),
 (11, 'robert.davis', 'robert.davis@email.com', 'customer', 3),
 (16, 'sarah.wilson', 'sarah.wilson@email.com', 'customer', 4),
-(17, 'michael.johnson', 'michael.johnson@email.com', 'customer', 5);
+(17, 'michael.johnson', 'michael.johnson@email.com', 'customer', 5),
+(18, 'sky.jones', 'skyjones.vet@gmail.com', 'employee', 13);
 
 -- =======================================
 -- PASSWORDS
@@ -107,7 +109,8 @@ INSERT INTO passwords (account_id, password_hash) VALUES
 (14, 'password'),
 (15, 'password'),
 (16, 'password'), -- Sarah Wilson (Customer)
-(17, 'password'); -- Michael Johnson (Customer)
+(17, 'password'), -- Michael Johnson (Customer)
+(18, 'password'); -- Sky Jones (veterinarian)
 
 -- =======================================
 -- ATTRACTIONS
