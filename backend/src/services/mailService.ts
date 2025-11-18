@@ -1,9 +1,11 @@
 import * as nodemailer from "nodemailer";
+import * as brevo from "@getbrevo/brevo";
 import dotenv from "dotenv";
 
 dotenv.config();
 
-let transporter: nodemailer.Transporter;
+let transporter: nodemailer.Transporter | null = null;
+let brevoApiClient: brevo.TransactionalEmailsApi | null = null;
 
 // ============================================================
 // EMAIL TRACKING SYSTEM
@@ -92,12 +94,12 @@ export function getEmailStats() {
 }
 
 export const initMailService = async () => {
-  console.log('[MAIL SERVICE] Initializing mail service...');
-  console.log('[MAIL SERVICE] MAIL_SERVICE:', process.env.MAIL_SERVICE);
+  const mode = process.env.MAIL_SERVICE || "ethereal";
 
-  if (process.env.MAIL_SERVICE === "ethereal") {
-    // Create a test account for Ethereal
-    console.log('[MAIL SERVICE] Using Ethereal test email service');
+  if (mode === "ethereal") {
+    // ============================================================
+    // TEST MODE: Ethereal (fake inbox for testing)
+    // ============================================================
     const testAccount = await nodemailer.createTestAccount();
     transporter = nodemailer.createTransport({
       host: testAccount.smtp.host,
@@ -109,45 +111,60 @@ export const initMailService = async () => {
       },
     });
     console.log(
-      "Ethereal test account created. You can view sent emails at https://ethereal.email/"
+      "✅ [ETHEREAL] Test mode enabled. View emails at: https://ethereal.email/"
     );
-  } else {
-    // Use real email service
-    console.log('[MAIL SERVICE] Using Brevo SMTP service');
-    console.log('[MAIL SERVICE] BREVO_HOST:', process.env.BREVO_HOST);
-    console.log('[MAIL SERVICE] BREVO_PORT:', process.env.BREVO_PORT);
-    console.log('[MAIL SERVICE] BREVO_USER:', process.env.BREVO_USER);
-    console.log('[MAIL SERVICE] BREVO_KEY:', process.env.BREVO_KEY ? '***SET***' : 'NOT SET');
-    console.log('[MAIL SERVICE] VERIFIED_SENDER_EMAIL:', process.env.VERIFIED_SENDER_EMAIL);
+  } else if (mode === "api") {
+    // ============================================================
+    // API MODE: Brevo API (works on Railway - no SMTP ports needed!)
+    // ============================================================
+    const apiKey = process.env.BREVO_API_KEY;
+    if (!apiKey) {
+      throw new Error(
+        "BREVO_API_KEY is required when MAIL_SERVICE=api. " +
+          "Get your API key from: https://app.brevo.com/settings/keys/api"
+      );
+    }
 
-    //Use Brevo ENV Keys
-    const port = Number(process.env.BREVO_PORT) || 587;
-    const secure = port === 465; // Use SSL for port 465, TLS for port 587
+    const apiInstance = new brevo.TransactionalEmailsApi();
+    apiInstance.setApiKey(brevo.TransactionalEmailsApiApiKeys.apiKey, apiKey);
+    brevoApiClient = apiInstance;
 
-    console.log('[MAIL SERVICE] Secure mode:', secure);
-    console.log('[MAIL SERVICE] Attempting connection...');
-
+    console.log(
+      "✅ [BREVO API] Email service ready (uses HTTPS - works on Railway!)"
+    );
+  } else if (mode === "smtp") {
+    // ============================================================
+    // SMTP MODE: Brevo SMTP (may not work on Railway free tier!)
+    // ============================================================
     transporter = nodemailer.createTransport({
       host: process.env.BREVO_HOST,
-      port: port,
-      secure: secure, // true for 465, false for other ports (use STARTTLS)
+      port: Number(process.env.BREVO_PORT),
+      secure: false, // Port 587 uses STARTTLS
       auth: {
         user: process.env.BREVO_USER, // Your Brevo Login
         pass: process.env.BREVO_KEY, // Your Brevo SMTP Key
       },
-      // Add timeout and retry options
-      connectionTimeout: 10000, // 10 seconds
-      greetingTimeout: 10000,
-      socketTimeout: 10000,
     });
-  }
 
-  try {
-    console.log('[MAIL SERVICE] Verifying mail transporter...');
-    await transporter.verify();
-    console.log("✅ Mail transporter is ready to send emails");
-  } catch (error) {
-    console.error("❌ Error verifying mail transporter:", error);
+    try {
+      await transporter.verify();
+      console.log(
+        "✅ [BREVO SMTP] Mail transporter ready (may be blocked on Railway free tier)"
+      );
+    } catch (error) {
+      console.error("❌ [BREVO SMTP] Error verifying mail transporter:", error);
+      console.error(
+        "💡 TIP: If on Railway, try MAIL_SERVICE=api instead of smtp"
+      );
+    }
+  } else {
+    // ============================================================
+    // INVALID MODE
+    // ============================================================
+    throw new Error(
+      `Invalid MAIL_SERVICE="${mode}". Valid options: "ethereal", "api", "smtp". ` +
+        `For Railway, use MAIL_SERVICE=api`
+    );
   }
 };
 
@@ -161,28 +178,77 @@ type MailOptions = {
 };
 
 export const sendMail = async (inputs: MailOptions) => {
-  if (!transporter) {
-    console.error(
-      "Mail service not initialized! Call initMailService() first."
-    );
-    return; // Return undefined if not initialized
-  }
+  const mode = process.env.MAIL_SERVICE || "ethereal";
 
-  try {
-    const info = await transporter.sendMail(inputs);
-
-    // Track email after successful send
-    const isTestMode = process.env.MAIL_SERVICE === "ethereal";
-    trackEmail(inputs.to, inputs.subject, isTestMode);
-
-    console.log("Email sent: " + info.response);
-    if (isTestMode) {
-      console.log("Preview URL: " + nodemailer.getTestMessageUrl(info));
+  if (mode === "api") {
+    // ============================================================
+    // Send via Brevo API
+    // ============================================================
+    if (!brevoApiClient) {
+      console.error(
+        "Mail service not initialized! Call initMailService() first."
+      );
+      return;
     }
 
-    return info;
-  } catch (error) {
-    console.error("Error sending email:", error);
-    throw error;
+    try {
+      // Parse email addresses
+      const fromMatch = inputs.from.match(/<(.+)>/) || [null, inputs.from];
+      const fromEmail = fromMatch[1] || inputs.from;
+      const fromName = inputs.from.replace(/<.+>/, "").replace(/"/g, "").trim();
+
+      // Create Brevo email object
+      const sendSmtpEmail = new brevo.SendSmtpEmail();
+      sendSmtpEmail.sender = { email: fromEmail, name: fromName };
+      sendSmtpEmail.to = [{ email: inputs.to }];
+      sendSmtpEmail.subject = inputs.subject;
+      sendSmtpEmail.textContent = inputs.text;
+      if (inputs.html) {
+        sendSmtpEmail.htmlContent = inputs.html;
+      }
+
+      const response = await brevoApiClient.sendTransacEmail(sendSmtpEmail);
+
+      // Track email after successful send
+      trackEmail(inputs.to, inputs.subject, false);
+
+      console.log("Email sent via API: " + response.body.messageId);
+      return response;
+    } catch (error) {
+      console.error("Error sending email via API:", error);
+      throw error;
+    }
+  } else if (mode === "ethereal" || mode === "smtp") {
+    // ============================================================
+    // Send via SMTP (Ethereal or Brevo SMTP)
+    // ============================================================
+    if (!transporter) {
+      console.error(
+        "Mail service not initialized! Call initMailService() first."
+      );
+      return;
+    }
+
+    try {
+      const info = await transporter.sendMail(inputs);
+
+      // Track email after successful send
+      const isTestMode = mode === "ethereal";
+      trackEmail(inputs.to, inputs.subject, isTestMode);
+
+      console.log("Email sent: " + info.response);
+      if (isTestMode) {
+        console.log("Preview URL: " + nodemailer.getTestMessageUrl(info));
+      }
+
+      return info;
+    } catch (error) {
+      console.error("Error sending email:", error);
+      throw error;
+    }
+  } else {
+    throw new Error(
+      `Invalid MAIL_SERVICE="${mode}". Valid options: "ethereal", "api", "smtp".`
+    );
   }
 };
