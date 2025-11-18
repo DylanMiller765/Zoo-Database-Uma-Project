@@ -16,7 +16,7 @@ import {
   Home,
   Activity,
   TrendingUp,
-  DollarSign
+  DollarSign,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useState } from 'react';

@@ -63,12 +63,74 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   /**
    * Add item to cart
+   * If the same item already exists, increase its quantity instead of adding a duplicate
    */
   const addItem = (newItem: Omit<CartItem, 'id'>) => {
-    const id = `${newItem.item_type}_${newItem.item_id || 'donation'}_${Date.now()}`;
-    const item: CartItem = { ...newItem, id };
+    setItems((prevItems) => {
+      // Check if an identical item already exists
+      // For tickets: match on item_type, item_id, visit_date, and ticket_type
+      // For events: match on item_type and item_id
+      // For other items: match on item_type and item_id
+      // For donations/membership: match on item_type and name (since they might not have item_id)
+      const existingItemIndex = prevItems.findIndex((item) => {
+        // Basic type and ID match
+        if (item.item_type !== newItem.item_type) return false;
+        
+        // For items with item_id, match on that
+        if (newItem.item_id !== undefined && item.item_id !== undefined) {
+          if (item.item_id !== newItem.item_id) return false;
+          
+          // For tickets, also check visit_date and ticket_type to keep different tickets separate
+          if (newItem.item_type === 'ticket') {
+            const sameVisitDate = 
+              (item.metadata?.visit_date || null) === (newItem.metadata?.visit_date || null);
+            const sameTicketType = 
+              (item.metadata?.ticket_type || null) === (newItem.metadata?.ticket_type || null);
+            return sameVisitDate && sameTicketType;
+          }
+          
+          // For events, just match on item_id
+          if (newItem.item_type === 'event') {
+            return true;
+          }
+          
+          // For gift shop and cafe items, match on item_id
+          if (newItem.item_type === 'gift_shop_item' || newItem.item_type === 'cafe_item') {
+            return true;
+          }
+        }
+        
+        // For items without item_id (donations, membership), match on name and unit_price
+        if (newItem.item_id === undefined && item.item_id === undefined) {
+          // For membership, only allow one
+          if (newItem.item_type === 'membership') {
+            return item.item_type === 'membership';
+          }
+          // For donations, match on name and price (same donation amount)
+          if (newItem.item_type === 'donation') {
+            return item.item_type === 'donation' && 
+                   item.name === newItem.name && 
+                   item.unit_price === newItem.unit_price;
+          }
+        }
+        
+        return false;
+      });
 
-    setItems((prevItems) => [...prevItems, item]);
+      if (existingItemIndex !== -1) {
+        // Item exists, increase quantity
+        return prevItems.map((item, index) =>
+          index === existingItemIndex
+            ? { ...item, quantity: item.quantity + newItem.quantity }
+            : item
+        );
+      } else {
+        // New item, add it
+        const id = `${newItem.item_type}_${newItem.item_id || 'donation'}_${Date.now()}`;
+        const item: CartItem = { ...newItem, id };
+        return [...prevItems, item];
+      }
+    });
   };
 
   /**

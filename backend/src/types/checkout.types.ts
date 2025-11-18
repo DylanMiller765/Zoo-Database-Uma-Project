@@ -1,7 +1,7 @@
 // Simplified checkout types - processes client-side cart items
 
 export interface CheckoutCartItem {
-  item_type: 'ticket' | 'event' | 'cafe_item' | 'gift_shop_item' | 'donation';
+  item_type: 'ticket' | 'event' | 'cafe_item' | 'gift_shop_item' | 'donation' | 'membership';
   item_id?: number;
   name: string;
   quantity: number;
@@ -14,6 +14,12 @@ export interface CheckoutCartItem {
     cafe_id?: number;
     gift_shop_id?: number;
     donation_message?: string;
+    membership_type?: 'individual';
+    first_name?: string;
+    last_name?: string;
+    email?: string;
+    phone?: string;
+    auto_renew?: boolean;
   };
 }
 
@@ -42,6 +48,7 @@ export interface CheckoutResponse {
     cafe_items: number;
     gift_shop_items: number;
     donations: number;
+    memberships: number;
   };
   total_amount: number;
   message: string;

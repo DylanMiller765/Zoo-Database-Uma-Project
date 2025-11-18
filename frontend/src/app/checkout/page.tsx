@@ -98,6 +98,7 @@ export default function CheckoutPage() {
           cafe_items: result.summary.cafe_items.toString(),
           gift_shop_items: result.summary.gift_shop_items.toString(),
           donations: result.summary.donations.toString(),
+          memberships: result.summary.memberships?.toString() || '0',
         });
 
         router.push(`/order-confirmation?${params.toString()}`);

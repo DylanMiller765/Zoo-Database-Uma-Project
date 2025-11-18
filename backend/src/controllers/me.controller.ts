@@ -109,18 +109,83 @@ export class MeController {
     try {
       const customerId = (req as any).user?.customer_id;
       if (!customerId) return res.status(400).json({ success: false, message: 'Customer not found' });
+      
+      // Get upcoming events only (event_date >= today or NULL)
       const rows = await query<any[]>(
         `SELECT er.registration_id, er.number_of_participants, er.registration_date, er.payment_status,
                 e.event_id, e.name as event_name, e.event_date, e.start_time, e.end_time, e.location
          FROM event_registrations er
          JOIN events e ON e.event_id = er.event_id
-         WHERE er.customer_id = ?
-         ORDER BY e.event_date DESC, er.registration_date DESC`,
+         WHERE er.customer_id = ? 
+           AND er.deleted_at IS NULL
+           AND (e.event_date IS NULL OR e.event_date >= CURDATE())
+         ORDER BY e.event_date ASC, e.start_time ASC, er.registration_date DESC`,
         [customerId]
       );
       res.json({ success: true, data: rows });
     } catch (e: any) {
       res.status(500).json({ success: false, message: e?.message || 'Failed to fetch registrations' });
+    }
+  }
+
+  static async purchaseHistory(req: Request, res: Response) {
+    try {
+      const customerId = (req as any).user?.customer_id;
+      if (!customerId) return res.status(400).json({ success: false, message: 'Customer not found' });
+
+      // Get gift shop purchases
+      const giftShopPurchases = await query<any[]>(
+        `SELECT 
+           gst.transaction_id,
+           gst.sale_date as purchase_date,
+           gst.total_amount,
+           gsi.item_id,
+           gsi.quantity,
+           gsi.unit_price,
+           gsi.unit_price * gsi.quantity as line_total,
+           gsit.name as item_name,
+           gsit.description as item_description,
+           gsit.category,
+           'gift_shop' as purchase_type
+         FROM gift_shop_sales_transactions gst
+         JOIN gift_shop_sale_items gsi ON gst.transaction_id = gsi.transaction_id
+         JOIN gift_shop_items gsit ON gsi.item_id = gsit.item_id
+         WHERE gst.customer_id = ? 
+           AND gst.status = 'completed'
+         ORDER BY gst.sale_date DESC`,
+        [customerId]
+      );
+
+      // Get cafe purchases
+      const cafePurchases = await query<any[]>(
+        `SELECT 
+           cs.sale_id as transaction_id,
+           cs.sale_timestamp as purchase_date,
+           cs.line_total as total_amount,
+           cs.item_id,
+           cs.quantity,
+           cs.line_total / cs.quantity as unit_price,
+           cs.line_total,
+           ci.name as item_name,
+           ci.description as item_description,
+           ci.category,
+           'cafe' as purchase_type
+         FROM cafe_sales cs
+         JOIN cafe_items ci ON cs.item_id = ci.item_id
+         WHERE cs.customer_id = ?
+           AND cs.status = 'completed'
+         ORDER BY cs.sale_timestamp DESC`,
+        [customerId]
+      );
+
+      // Combine and sort by purchase date
+      const allPurchases = [...giftShopPurchases, ...cafePurchases].sort(
+        (a, b) => new Date(b.purchase_date).getTime() - new Date(a.purchase_date).getTime()
+      );
+
+      res.json({ success: true, data: allPurchases });
+    } catch (e: any) {
+      res.status(500).json({ success: false, message: e?.message || 'Failed to fetch purchase history' });
     }
   }
 
