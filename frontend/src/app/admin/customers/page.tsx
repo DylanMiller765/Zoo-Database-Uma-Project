@@ -222,7 +222,13 @@ export default function CustomersPage() {
                   )}
                 </TableCell>
                 <TableCell className="text-sm text-gray-600">
-                  {customer.registration_date || 'N/A'}
+                  {customer.registration_date
+                    ? new Date(customer.registration_date).toLocaleDateString('en-US', {
+                        month: 'numeric',
+                        day: 'numeric',
+                        year: 'numeric'
+                      })
+                    : 'N/A'}
                 </TableCell>
                 <TableCell className="text-right">
                   <div className="flex items-center justify-end gap-2">

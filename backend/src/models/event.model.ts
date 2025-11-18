@@ -46,21 +46,19 @@ export class EventModel {
     return await this.findById(eventId);
   }
 
-  static async remove(eventId: number, employeeInfo?: { employee_id: number; name: string }): Promise<boolean> {
-    // Set session variable for trigger to read (who cancelled the event)
-    if (employeeInfo) {
-      await query('SET @cancelled_by_employee_id = ?, @cancelled_by_employee_name = ?', [
-        employeeInfo.employee_id,
-        employeeInfo.name
-      ]);
-    }
+  static async remove(eventId: number): Promise<boolean> {
+    // Soft delete the event by setting deleted_at timestamp
+    // The database trigger 'trigger_event_cancellation' will automatically:
+    // 1. Create notifications for all registered customers
+    // 2. Mark all event registrations as refunded
 
-    const sql = 'UPDATE events SET deleted_at = NOW() WHERE event_id = ?';
+    const sql = 'UPDATE events SET deleted_at = NOW() WHERE event_id = ? AND deleted_at IS NULL';
     const result = await query<any>(sql, [eventId]);
 
-    // Clear session variables
-    if (employeeInfo) {
-      await query('SET @cancelled_by_employee_id = NULL, @cancelled_by_employee_name = NULL');
+    if (result.affectedRows > 0) {
+      console.log(`[Event Cancellation] Event ${eventId} cancelled. Trigger will create notifications and process refunds.`);
+    } else {
+      console.warn(`Event ${eventId} not found or already deleted`);
     }
 
     return result.affectedRows > 0;

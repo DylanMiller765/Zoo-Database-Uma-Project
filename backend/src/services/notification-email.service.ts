@@ -11,6 +11,8 @@
 
 import { query } from '../config/database';
 import { ResultSetHeader, RowDataPacket } from 'mysql2';
+import { sendMail } from './mailService';
+import { NotificationModel } from '../models/notification.model';
 
 interface Notification extends RowDataPacket {
   notification_id: number;
@@ -90,6 +92,12 @@ export class NotificationEmailService {
         return;
       }
 
+      // Skip test emails ending with "@email" to avoid wasting API credits
+      if (customer.email.endsWith('@email')) {
+        console.log(`[Email Service] Skipping test email ${customer.email} (ends with @email). Not wasting API credits.`);
+        return;
+      }
+
       // Extract event details from notification message
       const eventDetails = this.parseEventCancellationMessage(notification.message);
 
@@ -100,6 +108,9 @@ export class NotificationEmailService {
         subject: eventDetails.subject,
         body: this.formatEmailBody(customer, notification.message, eventDetails),
       });
+
+      // Mark notification as read so it's not sent again
+      await NotificationModel.markAsRead(notification.notification_id);
 
       console.log(`[Email Service] ✅ Email sent to ${customer.email} for notification #${notification.notification_id}`);
     } catch (error) {
@@ -130,7 +141,7 @@ export class NotificationEmailService {
   }
 
   /**
-   * Format email body with HTML template
+   * Format email body with HTML template - matches animal alert style
    */
   private static formatEmailBody(
     customer: Customer,
@@ -138,64 +149,38 @@ export class NotificationEmailService {
     eventDetails: { eventName: string; eventDate: string }
   ): string {
     return `
-<!DOCTYPE html>
-<html>
-<head>
-  <style>
-    body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-    .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-    .header { background-color: #dc2626; color: white; padding: 20px; text-align: center; }
-    .content { background-color: #f9f9f9; padding: 30px; border: 1px solid #ddd; }
-    .event-details { background-color: white; padding: 15px; margin: 20px 0; border-left: 4px solid #dc2626; }
-    .footer { text-align: center; padding: 20px; color: #666; font-size: 12px; }
-    .alert-box { background-color: #fef2f2; border: 1px solid #dc2626; padding: 15px; margin: 15px 0; border-radius: 4px; }
-  </style>
-</head>
-<body>
-  <div class="container">
-    <div class="header">
-      <h1>⚠️ Event Cancellation Notice</h1>
-    </div>
-
-    <div class="content">
       <p>Dear ${customer.first_name} ${customer.last_name},</p>
 
-      <p>We regret to inform you that an event you registered for has been cancelled.</p>
+      <p>
+        We regret to inform you that an event you registered for has been cancelled.
+        We sincerely apologize for any inconvenience this may cause.
+      </p>
 
-      <div class="event-details">
-        <h3>${eventDetails.eventName}</h3>
-        <p><strong>Originally Scheduled:</strong> ${eventDetails.eventDate}</p>
-      </div>
+      <h3>Event Details</h3>
+      <ul>
+        <li><strong>Event:</strong> ${eventDetails.eventName}</li>
+        <li><strong>Originally Scheduled:</strong> ${eventDetails.eventDate}</li>
+      </ul>
 
-      <div class="alert-box">
-        ${notificationMessage.replace(/CANCELLATION: The event[^.]+\.\s*/, '')}
-      </div>
+      <h3>Refund Information</h3>
+      <p>
+        A full refund has been automatically processed for your registration.
+        Please allow 3-5 business days for the refund to appear in your original payment method.
+      </p>
 
-      <p>We sincerely apologize for any inconvenience this may cause. Our team is working to ensure this doesn't happen again.</p>
+      <p>
+        If you have any questions about this cancellation or your refund,
+        please don't hesitate to contact our customer service team.
+      </p>
 
-      <p>If you have any questions or concerns, please don't hesitate to contact our customer service team.</p>
+      <p>Thank you for your understanding and continued support.</p>
 
-      <p>Thank you for your understanding.</p>
-
-      <p>Sincerely,<br>
-      <strong>Zoo Management Team</strong></p>
-    </div>
-
-    <div class="footer">
-      <p>This is an automated notification. Please do not reply to this email.</p>
-      <p>&copy; 2025 Zoo Management System. All rights reserved.</p>
-    </div>
-  </div>
-</body>
-</html>
+      <p>Warm regards,<br/>Zoo Management Team</p>
     `.trim();
   }
 
   /**
-   * Send email using email provider
-   *
-   * DEMO MODE: Currently logs to console
-   * PRODUCTION: Replace with actual email provider (SendGrid, AWS SES, Nodemailer)
+   * Send email using mailService
    */
   private static async sendEmail(params: {
     to: string;
@@ -203,60 +188,18 @@ export class NotificationEmailService {
     subject: string;
     body: string;
   }): Promise<void> {
-    // ============================================================
-    // DEMO MODE: Log email to console
-    // ============================================================
-    console.log('\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-    console.log('📧 EMAIL NOTIFICATION (DEMO MODE)');
-    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-    console.log(`To: ${params.toName} <${params.to}>`);
-    console.log(`Subject: ${params.subject}`);
-    console.log(`Timestamp: ${new Date().toISOString()}`);
-    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-    console.log('Body (HTML):');
-    console.log(params.body.substring(0, 500) + '...\n');
-
-    // ============================================================
-    // PRODUCTION MODE: Uncomment and configure email provider
-    // ============================================================
-
-    /*
-    // Example with Nodemailer (SMTP)
-    const nodemailer = require('nodemailer');
-
-    const transporter = nodemailer.createTransport({
-      host: process.env.SMTP_HOST,
-      port: parseInt(process.env.SMTP_PORT || '587'),
-      secure: false,
-      auth: {
-        user: process.env.SMTP_USER,
-        pass: process.env.SMTP_PASSWORD,
-      },
-    });
-
-    await transporter.sendMail({
-      from: '"Zoo Notifications" <notifications@zoo.com>',
-      to: params.to,
-      subject: params.subject,
-      html: params.body,
-    });
-    */
-
-    /*
-    // Example with SendGrid
-    const sgMail = require('@sendgrid/mail');
-    sgMail.setApiKey(process.env.SENDGRID_API_KEY);
-
-    await sgMail.send({
-      to: params.to,
-      from: 'notifications@zoo.com',
-      subject: params.subject,
-      html: params.body,
-    });
-    */
-
-    // Simulate email sending delay
-    await new Promise(resolve => setTimeout(resolve, 100));
+    try {
+      await sendMail({
+        from: `"Zoo Notifications" <${process.env.VERIFIED_SENDER_EMAIL || 'noreply@zoo.com'}>`,
+        to: params.to,
+        subject: params.subject,
+        html: params.body,
+        text: `Event Cancellation Notification for ${params.toName}`, // Plain text fallback
+      });
+    } catch (error) {
+      console.error(`[Email Service] Error sending email via mailService:`, error);
+      throw error;
+    }
   }
 
   /**

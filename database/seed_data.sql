@@ -30,29 +30,30 @@ SET FOREIGN_KEY_CHECKS = 1;
 -- EMPLOYEES
 -- =======================================
 INSERT INTO employees (employee_id, first_name, last_name, email, phone, ssn, job_role, employment_type, salary, status, hire_date, gender) VALUES
-(1, 'Sarah', 'Johnson', 'sarah.johnson@zoo.com', '555-0101', '123-45-6789', 'manager', 'full_time', 75000.00, 'active', '2020-01-15', 'female'),
-(2, 'Mike', 'Chen', 'mike.chen@zoo.com', '555-0102', '234-56-7890', 'keeper', 'full_time', 45000.00, 'active', '2021-03-20', 'male'),
-(3, 'Emily', 'Rodriguez', 'emily.rodriguez@zoo.com', '555-0103', '345-67-8901', 'veterinarian', 'full_time', 85000.00, 'active', '2019-06-10', 'female'),
-(4, 'David', 'Kim', 'david.kim@zoo.com', '555-0104', '456-78-9012', 'coordinator', 'full_time', 55000.00, 'active', '2022-02-01', 'male'),
-(5, 'Lisa', 'Thompson', 'lisa.thompson@zoo.com', '555-0105', '567-89-0123', 'cashier', 'part_time', NULL, 'active', '2023-05-15', 'female'),
-(6, 'James', 'Wilson', 'james.wilson@zoo.com', '555-0106', '678-90-1234', 'guide', 'part_time', NULL, 'active', '2023-07-01', 'male'),
-(7, 'Anna', 'Martinez', 'anna.martinez@zoo.com', '555-0107', '789-01-2345', 'keeper', 'full_time', 46000.00, 'active', '2021-09-12', 'female'),
-(8, 'Tom', 'Brown', 'tom.brown@zoo.com', '555-0108', '890-12-3456', 'maintenance', 'full_time', 42000.00, 'active', '2020-11-05', 'male'),
-(9, 'Chris', 'Green', 'chris.green@zoo.com', '555-0109', '987-65-4321', 'keeper', 'full_time', 45000.00, 'active', '2023-08-01', 'male'),
-(10, 'Jessica', 'Blue', 'jessica.blue@zoo.com', '555-0110', '876-54-3210', 'keeper', 'full_time', 45500.00, 'active', '2023-09-01', 'female'),
-(11, 'Mark', 'White', 'mark.white@zoo.com', '555-0111', '765-43-2109', 'veterinarian', 'full_time', 86000.00, 'active', '2023-07-15', 'male'),
-(12, 'Laura', 'Black', 'laura.black@zoo.com', '555-0112', '654-32-1098', 'keeper', 'part_time', NULL, 'active', '2024-01-10', 'female');
+(1, 'Sarah', 'Johnson', 'sarah.johnson@zoo.com', '5550101101', '123-45-6789', 'manager', 'full_time', 75000.00, 'active', '2020-01-15', 'female'),
+(2, 'Mike', 'Chen', 'mike.chen@zoo.com', '5550101102', '234-56-7890', 'keeper', 'full_time', 45000.00, 'active', '2021-03-20', 'male'),
+(3, 'Emily', 'Rodriguez', 'emily.rodriguez@zoo.com', '5550101103', '345-67-8901', 'veterinarian', 'full_time', 85000.00, 'active', '2019-06-10', 'female'),
+(4, 'David', 'Kim', 'david.kim@zoo.com', '5550101104', '456-78-9012', 'coordinator', 'full_time', 55000.00, 'active', '2022-02-01', 'male'),
+(5, 'Lisa', 'Thompson', 'lisa.thompson@zoo.com', '5550101105', '567-89-0123', 'cashier', 'part_time', NULL, 'active', '2023-05-15', 'female'),
+(6, 'James', 'Wilson', 'james.wilson@zoo.com', '5550101106', '678-90-1234', 'guide', 'part_time', NULL, 'active', '2023-07-01', 'male'),
+(7, 'Anna', 'Martinez', 'anna.martinez@zoo.com', '5550101107', '789-01-2345', 'keeper', 'full_time', 46000.00, 'active', '2021-09-12', 'female'),
+(8, 'Tom', 'Brown', 'tom.brown@zoo.com', '5550101108', '890-12-3456', 'maintenance', 'full_time', 42000.00, 'active', '2020-11-05', 'male'),
+(9, 'Chris', 'Green', 'chris.green@zoo.com', '5550101109', '987-65-4321', 'keeper', 'full_time', 45000.00, 'active', '2023-08-01', 'male'),
+(10, 'Jessica', 'Blue', 'jessica.blue@zoo.com', '5550101110', '876-54-3210', 'keeper', 'full_time', 45500.00, 'active', '2023-09-01', 'female'),
+(11, 'Mark', 'White', 'mark.white@zoo.com', '5550101111', '765-43-2109', 'veterinarian', 'full_time', 86000.00, 'active', '2023-07-15', 'male'),
+(12, 'Laura', 'Black', 'laura.black@zoo.com', '5550101112', '999-32-1098', 'keeper', 'part_time', NULL, 'active', '2024-01-10', 'female'),
+(13, 'Sky', 'Jones', 'skyjones.vet@gmail.com', '5550101113', '654-32-1098', 'veterinarian', 'full_time', 86000.00, 'active', '2023-07-15', 'female');
 
 -- =======================================
 -- CUSTOMERS
 -- =======================================
 -- Maria Garcia has membership expiring in 20 days (for notification testing)
 INSERT INTO customers (customer_id, first_name, last_name, email, phone, address, city, state, zip_code, annual_pass, membership_start_date, membership_end_date, registration_date) VALUES
-(1, 'John', 'Smith', 'john.smith@email.com', '555-1001', '123 Main St', 'Springfield', 'IL', '62701', 'no', NULL, NULL, '2024-01-10'),
-(2, 'Maria', 'Garcia', 'maria.garcia@email.com', '555-1002', '456 Oak Ave', 'Springfield', 'IL', '62702', 'yes', '2024-01-01', '2025-01-01', '2023-11-15'),
-(3, 'Robert', 'Davis', 'robert.davis@email.com', '555-1003', '789 Pine Rd', 'Springfield', 'IL', '62703', 'no', NULL, NULL, '2024-02-20'),
-(4, 'Sarah', 'Wilson', 'sarah.wilson@email.com', '555-1004', '321 Elm St', 'Springfield', 'IL', '62704', 'yes', '2024-06-01', '2025-06-01', '2024-05-15'),
-(5, 'Michael', 'Johnson', 'michael.johnson@email.com', '555-1005', '654 Maple Dr', 'Springfield', 'IL', '62705', 'yes', '2024-03-15', '2025-03-15', '2024-03-01');
+(1, 'John', 'Smith', 'john.smith@email.com', '5551001101', '123 Main St', 'Springfield', 'IL', '62701', 'no', NULL, NULL, '2024-01-10'),
+(2, 'Maria', 'Garcia', 'maria.garcia@email.com', '5551001102', '456 Oak Ave', 'Springfield', 'IL', '62702', 'yes', '2024-01-01', '2025-01-01', '2023-11-15'),
+(3, 'Robert', 'Davis', 'robert.davis@email.com', '5551001103', '789 Pine Rd', 'Springfield', 'IL', '62703', 'no', NULL, NULL, '2024-02-20'),
+(4, 'Sarah', 'Wilson', 'sarah.wilson@email.com', '5551001104', '321 Elm St', 'Springfield', 'IL', '62704', 'yes', '2024-06-01', '2025-06-01', '2024-05-15'),
+(5, 'Michael', 'Johnson', 'michael.johnson@email.com', '5551001105', '654 Maple Dr', 'Springfield', 'IL', '62705', 'yes', '2024-03-15', '2025-03-15', '2024-03-01');
 
 -- Update Maria Garcia's membership to expire in 20 days (dynamic date calculation)
 UPDATE customers
@@ -77,7 +78,8 @@ INSERT INTO user_accounts (account_id, username, email, role, employee_id) VALUE
 (12, 'chris.green', 'chris.green@zoo.com', 'employee', 9),
 (13, 'jessica.blue', 'jessica.blue@zoo.com', 'employee', 10),
 (14, 'mark.white', 'mark.white@zoo.com', 'employee', 11),
-(15, 'laura.black', 'laura.black@zoo.com', 'employee', 12);
+(15, 'laura.black', 'laura.black@zoo.com', 'employee', 12),
+(18, 'sky.jones', 'skyjones.vet@gmail.com', 'employee', 13);
 
 -- Customers
 INSERT INTO user_accounts (account_id, username, email, role, customer_id) VALUES
@@ -107,7 +109,8 @@ INSERT INTO passwords (account_id, password_hash) VALUES
 (14, 'password'),
 (15, 'password'),
 (16, 'password'), -- Sarah Wilson (Customer)
-(17, 'password'); -- Michael Johnson (Customer)
+(17, 'password'), -- Michael Johnson (Customer)
+(18, 'password'); -- Sky Jones (veterinarian)
 
 -- =======================================
 -- ATTRACTIONS
@@ -179,11 +182,20 @@ INSERT INTO animals (name, scientific_name, species, date_of_birth, arrival_date
 -- EVENTS
 -- =======================================
 INSERT INTO events (name, description, event_date, start_time, end_time, location, max_participants, ticket_price, coordinator_id) VALUES
-('Dolphin Show', 'Watch our amazing dolphins perform tricks and learn about marine conservation', '2025-11-15', '14:00:00', '15:00:00', 'Aquatic Center Amphitheater', 400, 15.00, 4),
-('Penguin Feeding Time', 'Help our keepers feed the penguins and learn about their diet', '2025-11-10', '11:00:00', '11:30:00', 'Penguin Cove', 50, 10.00, 4),
-('Lion Encounter', 'Get up close with our lions through the safe viewing area', '2025-11-20', '13:00:00', '14:00:00', 'African Savanna', 100, 20.00, 4),
+-- Past Events
+('Tiger Feeding Demonstration', 'Watch our experts safely feed the tigers with specialized techniques', '2025-09-15', '10:00:00', '11:00:00', 'Big Cat Arena', 200, 12.00, 4),
+('Reptile Exhibition', 'Explore the world of snakes, lizards, and other reptiles up close', '2025-09-28', '14:00:00', '15:30:00', 'Reptile House', 100, 8.00, 4),
+('Primate Discovery Walk', 'Guided tour through our primate exhibits with interactive experiences', '2025-10-10', '11:00:00', '12:30:00', 'Primate Territory', 75, 10.00, 4),
+('Butterfly Garden Workshop', 'Learn about monarch butterflies and pollination in our gardens', '2025-10-22', '13:00:00', '14:00:00', 'Botanical Garden', 60, 7.00, 4),
+('Avian Training Show', 'See our trained birds perform impressive aerial displays', '2025-11-05', '15:00:00', '16:00:00', 'Bird Sanctuary Theater', 150, 15.00, 4),
+('Aquatic Creature Talk', 'Educational presentation about marine conservation and aquatic life', '2025-11-12', '10:30:00', '11:30:00', 'Aquatic Center Amphitheater', 250, 10.00, 4),
+
+-- Upcoming Events
+('Dolphin Show', 'Watch our amazing dolphins perform tricks and learn about marine conservation', '2025-11-21', '14:00:00', '15:00:00', 'Aquatic Center Amphitheater', 400, 15.00, 4),
+('Penguin Feeding Time', 'Help our keepers feed the penguins and learn about their diet', '2025-11-28', '11:00:00', '11:30:00', 'Penguin Cove', 50, 10.00, 4),
+('Lion Encounter', 'Get up close with our lions through the safe viewing area', '2025-12-05', '13:00:00', '14:00:00', 'African Savanna', 100, 20.00, 4),
 ('Kids Zoo Camp', 'Week-long summer camp for children ages 8-12', '2025-12-15', '09:00:00', '15:00:00', 'Education Center', 30, 250.00, 4),
-('Night at the Zoo', 'Special after-hours tour experience with nocturnal animals', '2025-12-01', '19:00:00', '22:00:00', 'Various Locations', 150, 35.00, 4);
+('Night at the Zoo', 'Special after-hours tour experience with nocturnal animals', '2025-12-22', '19:00:00', '22:00:00', 'Various Locations', 150, 35.00, 4);
 
 -- =======================================
 -- GIFT SHOPS
@@ -334,7 +346,46 @@ INSERT INTO event_registrations (event_id, customer_id, number_of_participants, 
 (2, 2, 2, 20.00, 'paid', '2024-12-05 13:30:00'),
 (3, 1, 3, 60.00, 'paid', '2024-12-10 09:00:00'),
 (4, NULL, 1, 250.00, 'cancelled', '2024-12-15 10:45:00'),
-(5, 3, 2, 70.00, 'paid', '2024-12-20 12:15:00');
+(5, 3, 2, 70.00, 'paid', '2024-12-20 12:15:00'),
+-- Event 6: Aquatic Creature Talk (2025-11-12) - $10.00 per person
+(6, 1, 2, 20.00, 'paid', '2025-10-25 10:00:00'),
+(6, 2, 1, 10.00, 'paid', '2025-10-28 14:30:00'),
+(6, 3, 3, 30.00, 'paid', '2025-11-01 09:15:00'),
+(6, NULL, 2, 20.00, 'paid', '2025-11-03 11:00:00'),
+(6, 1, 4, 40.00, 'pending', '2025-11-05 13:45:00'),
+(6, 2, 1, 10.00, 'paid', '2025-11-08 10:30:00'),
+-- Event 7: Dolphin Show (2025-11-21) - $15.00 per person
+(7, 1, 2, 30.00, 'paid', '2025-11-10 10:00:00'),
+(7, 2, 1, 15.00, 'paid', '2025-11-12 14:00:00'),
+(7, 3, 3, 45.00, 'paid', '2025-11-13 09:30:00'),
+(7, NULL, 2, 30.00, 'pending', '2025-11-14 11:15:00'),
+(7, 1, 4, 60.00, 'paid', '2025-11-15 13:00:00'),
+(7, NULL, 1, 15.00, 'paid', '2025-11-16 10:45:00'),
+-- Event 8: Penguin Feeding Time (2025-11-28) - $10.00 per person
+(8, 2, 2, 20.00, 'paid', '2025-11-12 10:00:00'),
+(8, 3, 1, 10.00, 'paid', '2025-11-14 13:30:00'),
+(8, 1, 3, 30.00, 'paid', '2025-11-15 09:45:00'),
+(8, NULL, 2, 20.00, 'pending', '2025-11-16 12:00:00'),
+(8, 2, 1, 10.00, 'paid', '2025-11-17 14:15:00'),
+-- Event 9: Lion Encounter (2025-12-05) - $20.00 per person
+(9, 1, 2, 40.00, 'paid', '2025-11-15 10:00:00'),
+(9, 2, 2, 40.00, 'paid', '2025-11-16 14:30:00'),
+(9, 3, 1, 20.00, 'paid', '2025-11-17 09:15:00'),
+(9, NULL, 3, 60.00, 'pending', '2025-11-18 11:00:00'),
+(9, 1, 1, 20.00, 'paid', '2025-11-18 13:45:00'),
+(9, NULL, 2, 40.00, 'paid', '2025-11-19 10:30:00'),
+-- Event 10: Kids Zoo Camp (2025-12-15) - $250.00 per person
+(10, 1, 1, 250.00, 'paid', '2025-10-20 10:00:00'),
+(10, 2, 2, 500.00, 'paid', '2025-11-01 14:30:00'),
+(10, NULL, 1, 250.00, 'paid', '2025-11-10 09:45:00'),
+(10, 3, 1, 250.00, 'pending', '2025-11-15 11:15:00'),
+-- Event 11: Night at the Zoo (2025-12-22) - $35.00 per person
+(11, 1, 2, 70.00, 'paid', '2025-11-10 10:00:00'),
+(11, 2, 1, 35.00, 'paid', '2025-11-13 14:00:00'),
+(11, 3, 3, 105.00, 'paid', '2025-11-14 09:30:00'),
+(11, NULL, 2, 70.00, 'pending', '2025-11-15 12:00:00'),
+(11, 1, 4, 140.00, 'paid', '2025-11-16 13:45:00'),
+(11, NULL, 1, 35.00, 'paid', '2025-11-17 10:30:00');
 
 
 -- =======================================
@@ -616,11 +667,11 @@ INSERT INTO customer_payment_methods (payment_method_id, customer_id, card_numbe
 -- MEMBERSHIP PURCHASES
 -- =======================================
 INSERT INTO membership_purchases (customer_id, purchase_date, start_date, end_date, price, payment_method, auto_renewed, payment_method_id) VALUES
-(2, '2023-11-15 10:00:00', '2023-11-15', '2024-11-15', 149.00, 'online', 0, 1),
-(2, '2024-11-15 09:30:00', '2024-11-15', '2025-11-15', 149.00, 'online', 1, 1),
+(2, '2023-11-15 10:00:00', '2023-11-15', '2024-11-15', 149.00, 'credit', 0, 1),
+(2, '2024-11-15 09:30:00', '2024-11-15', '2025-11-15', 149.00, 'credit', 1, 1),
 (4, '2024-05-15 14:20:00', '2024-06-01', '2025-06-01', 149.00, 'credit', 0, 2),
-(5, '2024-02-15 11:45:00', '2024-03-15', '2025-03-15', 149.00, 'online', 0, 3),
-(5, '2024-03-10 10:00:00', '2024-03-15', '2025-03-15', 149.00, 'online', 1, 3);
+(5, '2024-02-15 11:45:00', '2024-03-15', '2025-03-15', 149.00, 'credit', 0, 3),
+(5, '2024-03-10 10:00:00', '2024-03-15', '2025-03-15', 149.00, 'credit', 1, 3);
 
 -- =======================================
 -- Display Summary

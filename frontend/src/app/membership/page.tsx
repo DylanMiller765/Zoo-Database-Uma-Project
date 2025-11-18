@@ -8,6 +8,7 @@ import Link from 'next/link';
 import { LogIn, Lock } from 'lucide-react';
 import apiClient from '@/lib/api';
 import { useAuth } from '@/context/AuthContext';
+import { useCart } from '@/context/CartContext';
 
 const MEMBERSHIP_PLANS = {
   individual: {
@@ -15,7 +16,6 @@ const MEMBERSHIP_PLANS = {
     price: 149,
     benefits: [
       'Unlimited access for 1 adult for one year',
-      '10% discount at gift shop and cafés',
       'Free parking',
       'One free guest pass',
       'Transferable within household',
@@ -30,6 +30,7 @@ function MembershipPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { isAuthenticated, user } = useAuth();
+  const { addItem, openCart } = useCart();
   const [selectedPlan, setSelectedPlan] = useState<'individual'>('individual');
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
@@ -42,6 +43,7 @@ function MembershipPageContent() {
   const [loadingProfile, setLoadingProfile] = useState(false);
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [showRestoreMessage, setShowRestoreMessage] = useState(false);
+  const [autoRenew, setAutoRenew] = useState(true); // Default ON
 
   // Check for restore purchase flag
   useEffect(() => {
@@ -55,9 +57,10 @@ function MembershipPageContent() {
           setLastName(data.lastName || '');
           setEmail(data.email || '');
           setPhone(data.phone || '');
-          setIncludeDonation(data.includeDonation || false);
-          setDonationAmount(data.donationAmount || 25);
-          setCustomDonation(data.customDonation || '');
+        setIncludeDonation(data.includeDonation || false);
+        setDonationAmount(data.donationAmount || 25);
+        setCustomDonation(data.customDonation || '');
+        setAutoRenew(data.autoRenew !== undefined ? data.autoRenew : true);
           
           setShowRestoreMessage(true);
           setTimeout(() => setShowRestoreMessage(false), 5000);
@@ -130,7 +133,6 @@ function MembershipPageContent() {
     // Validate phone number if provided
     if (phone && phone.length !== 10) {
       setPhoneError('Phone number must be exactly 10 digits');
-      alert('Please enter a valid 10-digit phone number');
       return;
     }
 
@@ -145,6 +147,7 @@ function MembershipPageContent() {
         includeDonation,
         donationAmount,
         customDonation,
+        autoRenew,
       };
       localStorage.setItem('pendingMembershipPurchase', JSON.stringify(membershipData));
       
@@ -153,17 +156,48 @@ function MembershipPageContent() {
       return;
     }
 
-    // Build checkout URL with order data
-    const params = new URLSearchParams({
-      type: 'membership',
-      firstName,
-      lastName,
-      email,
-      donation: finalDonation.toString(),
+    // Add membership to cart
+    addItem({
+      item_type: 'membership',
+      name: 'Individual Membership',
+      quantity: 1,
+      unit_price: MEMBERSHIP_PLANS.individual.price,
+      metadata: {
+        membership_type: 'individual',
+        first_name: firstName,
+        last_name: lastName,
+        email: email,
+        phone: phone || undefined,
+        auto_renew: autoRenew,
+      },
     });
 
-    // Redirect to checkout page
-    router.push(`/checkout?${params.toString()}`);
+    // Add donation if selected
+    if (includeDonation && finalDonation > 0) {
+      addItem({
+        item_type: 'donation',
+        name: 'Conservation Donation',
+        quantity: 1,
+        unit_price: finalDonation,
+        metadata: {
+          donation_message: '',
+        },
+      });
+    }
+
+    // Open cart sidebar to show added items
+    openCart();
+
+    // Reset form
+    setFirstName('');
+    setLastName('');
+    setEmail('');
+    setPhone('');
+    setPhoneError('');
+    setIncludeDonation(false);
+    setDonationAmount(25);
+    setCustomDonation('');
+    setAutoRenew(true); // Reset to default ON
   };
 
   return (
@@ -273,10 +307,6 @@ function MembershipPageContent() {
                   </li>
                   <li className="flex items-start gap-2">
                     <span className="text-sea_green-500 mt-0.5">✓</span>
-                    <span>10% discount at gift shop and cafés</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <span className="text-sea_green-500 mt-0.5">✓</span>
                     <span>Free parking</span>
                   </li>
                   <li className="flex items-start gap-2">
@@ -373,6 +403,35 @@ function MembershipPageContent() {
                   {phone && !phoneError && (
                     <p className="mt-1 text-xs text-gray-500">Format: 10 digits (e.g., 1234567890)</p>
                   )}
+                </div>
+
+                {/* Auto-Renewal Toggle */}
+                <div className="rounded-xl border-2 border-gray-200 bg-white p-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex-1">
+                      <label htmlFor="auto-renew" className="block text-sm font-semibold text-gray-900 mb-1">
+                        Auto-Renewal
+                      </label>
+                      <p className="text-xs text-gray-600">
+                        {autoRenew 
+                          ? 'Your membership will automatically renew each year. You can turn this off anytime in your account settings.'
+                          : 'Turn on to automatically renew your membership when it expires. You can change this anytime.'}
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setAutoRenew(!autoRenew)}
+                      className={`relative ml-4 inline-flex h-6 w-11 flex-shrink-0 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-sea_green-500 focus:ring-offset-2 ${
+                        autoRenew ? 'bg-sea_green-600' : 'bg-gray-200'
+                      }`}
+                    >
+                      <span
+                        className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                          autoRenew ? 'translate-x-6' : 'translate-x-1'
+                        }`}
+                      />
+                    </button>
+                  </div>
                 </div>
               </CardContent>
             </Card>

@@ -169,10 +169,24 @@ CREATE TABLE `tickets` (
     `visit_date` DATE,
     `ticket_type` ENUM('adult', 'child', 'senior', 'student') NOT NULL,
     `price` DECIMAL(8, 2) NOT NULL,
-    `payment_method` ENUM('cash', 'credit', 'debit', 'online'),
+    `payment_method` ENUM('cash', 'credit', 'debit'), -- NOTE: payment_method is not currently displayed in financial reports and is kept for historical tracking
+    `sold_by` INT,
     `deleted_at` DATETIME DEFAULT NULL,
     FOREIGN KEY (`customer_id`) REFERENCES `customers`(`customer_id`) ON DELETE SET NULL,
+    FOREIGN KEY (`sold_by`) REFERENCES `employees`(`employee_id`) ON DELETE SET NULL,
     INDEX `idx_ticket_date` (`visit_date`)
+);
+
+CREATE TABLE `donations` (
+    `donation_id` INT PRIMARY KEY AUTO_INCREMENT,
+    `customer_id` INT,
+    `amount` DECIMAL(10, 2) NOT NULL,
+    `donation_date` DATETIME DEFAULT CURRENT_TIMESTAMP,
+    `message` TEXT,
+    `donation_type` ENUM('general', 'conservation', 'research', 'animal_care') DEFAULT 'general', -- NOTE: donation_type is not currently used in the application and is kept for future expansion
+    `payment_method` ENUM('cash', 'credit', 'debit'), -- NOTE: payment_method is not currently displayed in the UI and is kept for historical tracking purposes
+    `deleted_at` DATETIME DEFAULT NULL,
+    FOREIGN KEY (`customer_id`) REFERENCES `customers`(`customer_id`) ON DELETE SET NULL
 );
 
 CREATE TABLE `membership_purchases` (
@@ -182,7 +196,7 @@ CREATE TABLE `membership_purchases` (
     `start_date` DATE NOT NULL,
     `end_date` DATE NOT NULL,
     `price` DECIMAL(8, 2) NOT NULL,
-    `payment_method` ENUM('cash', 'credit', 'debit', 'online') DEFAULT 'online',
+    `payment_method` ENUM('cash', 'credit', 'debit'), -- NOTE: payment_method is not currently displayed in financial reports and is kept for historical tracking
     FOREIGN KEY (`customer_id`) REFERENCES `customers`(`customer_id`) ON DELETE CASCADE,
     INDEX `idx_customer_purchases` (`customer_id`, `purchase_date`)
 );
@@ -220,6 +234,8 @@ CREATE TABLE `event_registrations` (
     `number_of_participants` INT DEFAULT 1,
     `total_amount` DECIMAL(10, 2),
     `payment_status` ENUM('pending', 'paid', 'cancelled') DEFAULT 'pending',
+    `refunded_at` DATETIME DEFAULT NULL,
+    `refund_reason` VARCHAR(255) DEFAULT NULL,
     `deleted_at` DATETIME DEFAULT NULL,
     FOREIGN KEY (`event_id`) REFERENCES `events`(`event_id`) ON DELETE CASCADE,
     FOREIGN KEY (`customer_id`) REFERENCES `customers`(`customer_id`) ON DELETE SET NULL
@@ -268,7 +284,7 @@ CREATE TABLE `gift_shop_sales_transactions` (
     `employee_id` INT,
     `sale_date` DATETIME DEFAULT CURRENT_TIMESTAMP,
     `total_amount` DECIMAL(10, 2) NOT NULL,
-    `payment_method` ENUM('cash', 'credit', 'debit'),
+    `payment_method` ENUM('cash', 'credit', 'debit'), -- NOTE: payment_method is not currently displayed in financial reports and is kept for historical tracking
     `status` ENUM('completed', 'returned') DEFAULT 'completed',
     FOREIGN KEY (`gift_shop_id`) REFERENCES `gift_shops`(`gift_shop_id`),
     FOREIGN KEY (`customer_id`) REFERENCES `customers`(`customer_id`) ON DELETE SET NULL,
@@ -315,6 +331,11 @@ CREATE TABLE `notifications` (
     INDEX `idx_customer_unread` (`customer_id`, `is_read`),
     INDEX `idx_created_at` (`created_at`)
 );
+ALTER TABLE notifications
+    MODIFY COLUMN customer_id INT NULL;
+
+ALTER TABLE notifications
+    ADD COLUMN employee_id INT NULL AFTER customer_id;
 
 CREATE TABLE `animals_alert_queue` (
     `animal_alert_id` INT PRIMARY KEY AUTO_INCREMENT,
@@ -337,23 +358,31 @@ Check each animal row and determine if it's < health_threshold
 If it is below health_threshold, create row in animlas_alert table with the animal_id, concatenate a message to send to zookeepers. Set the created at and the animal id.
 
 */
+
 DELIMITER //
 
 CREATE TRIGGER alert_animal_health_and_active_status_upon_threshold
 AFTER UPDATE ON animals
 FOR EACH ROW
 BEGIN
-    -- Declare a reusable variable
+    -- Declarations
     DECLARE existing_alert_id INT;
-
+    DECLARE done INT DEFAULT FALSE;
+    DECLARE vet_id INT;
     
-    -- === LOGIC BLOCK 1: HEALTH STATUS ===
-    -- Check if the new status is 'poor' or 'critical' AND it's a new change
+    -- Cursor to find all vets
+    DECLARE vet_cursor CURSOR FOR 
+        SELECT employee_id FROM employees WHERE job_role = 'veterinarian';
+        
+    -- Handler: Sets done=TRUE when cursor finishes OR when any SELECT finds nothing
+    DECLARE CONTINUE HANDLER FOR NOT FOUND SET done = TRUE;
+
+    -- HEALTH STATUS
     IF NEW.health_status IN ('poor', 'critical') AND NEW.health_status != OLD.health_status THEN
         
-        SET existing_alert_id = NULL; -- Reset variable
+        SET existing_alert_id = NULL;
 
-        -- Check if an *unprocessed* 'health_status' alert already exists
+        -- If this finds no rows, the HANDLER fires and sets done = TRUE
         SELECT alert.animal_alert_id INTO existing_alert_id
         FROM animals_alert_queue alert
         WHERE alert.animal_id = NEW.animal_id
@@ -362,29 +391,45 @@ BEGIN
         LIMIT 1;
 
         IF existing_alert_id IS NULL THEN
-            -- No open alert found, so INSERT a new one
             INSERT INTO animals_alert_queue(alert_reason, alert_value, animal_id)
             VALUES ('health_status', NEW.health_status, NEW.animal_id);
         ELSE
-            -- An open alert *does* exist, so UPDATE it
             UPDATE animals_alert_queue
             SET 
-                alert_value = NEW.health_status, -- Update to 'poor' or 'critical'
-                created_at = NOW()               -- Refresh the timestamp
-            WHERE 
-                animal_alert_id = existing_alert_id;
+                alert_value = NEW.health_status,
+                created_at = NOW()
+            WHERE animal_alert_id = existing_alert_id;
         END IF;
     
-    END IF; -- End of health status logic
+        -- We must reset this because the SELECT INTO above might have tripped it to TRUE
+        SET done = FALSE; 
 
-    
-    -- === LOGIC BLOCK 2: ACTIVE STATUS ===
-    -- This logic was already correct for your ENUM
+        OPEN vet_cursor;
+        read_loop: LOOP
+            FETCH vet_cursor INTO vet_id;
+            
+            IF done THEN
+                LEAVE read_loop;
+            END IF;
+
+            INSERT INTO notifications (employee_id, message, notification_type, created_at)
+            VALUES (
+                vet_id,
+                CONCAT('Alert: Animal "', NEW.name, ' health status is now "', NEW.health_status, '". Immediate attention required.'),
+                'alert',
+                NOW()
+            );
+        END LOOP;
+        CLOSE vet_cursor;
+
+    END IF;
+
+    --  ACTIVE STATUS
     IF NEW.active_status = 'deceased' AND NEW.active_status != OLD.active_status THEN
-        
-        SET existing_alert_id = NULL; -- Reset variable
 
-        -- Check if an *unprocessed* 'active_status' alert already exists
+        SET existing_alert_id = NULL;
+
+        -- It is okay if this triggers the handler here, as there is no cursor loop following it
         SELECT alert.animal_alert_id INTO existing_alert_id
         FROM animals_alert_queue alert
         WHERE alert.animal_id = NEW.animal_id
@@ -393,24 +438,20 @@ BEGIN
         LIMIT 1;
 
         IF existing_alert_id IS NULL THEN
-            -- No 'deceased' alert exists, so INSERT a new one
             INSERT INTO animals_alert_queue(alert_reason, alert_value, animal_id)
             VALUES ('active_status', NEW.active_status, NEW.animal_id);
         ELSE
-            -- An alert already exists. Just update its timestamp.
             UPDATE animals_alert_queue
-            SET 
-                created_at = NOW()
-            WHERE 
-                animal_alert_id = existing_alert_id;
+            SET created_at = NOW()
+            WHERE animal_alert_id = existing_alert_id;
         END IF;
 
-    END IF; -- End of active status logic
+    END IF;
 
-END; //
+END;
+//
 
 DELIMITER ;
-
 -- Indexes for soft delete columns (performance optimization)
 CREATE INDEX `idx_employees_deleted` ON `employees`(`deleted_at`);
 CREATE INDEX `idx_customers_deleted` ON `customers`(`deleted_at`);
@@ -568,10 +609,10 @@ BEGIN
         WHERE customer_id = v_customer_id;
         
         -- Record the auto-renewal purchase
-        INSERT INTO membership_purchases 
+        INSERT INTO membership_purchases
         (customer_id, purchase_date, start_date, end_date, price, payment_method, auto_renewed, payment_method_id)
-        VALUES 
-        (v_customer_id, NOW(), v_old_end_date, v_new_end_date, v_membership_price, 'online', TRUE, v_payment_method_id);
+        VALUES
+        (v_customer_id, NOW(), v_old_end_date, v_new_end_date, v_membership_price, 'credit', TRUE, v_payment_method_id);
         
     END LOOP;
     
@@ -587,6 +628,86 @@ ON SCHEDULE EVERY 1 DAY
 STARTS (CURRENT_DATE + INTERVAL 1 DAY)  -- Start tomorrow at midnight
 DO
     CALL auto_renew_memberships();
+
+-- =======================================
+-- TRIGGER: Event Cancellation
+-- =======================================
+-- When an event is cancelled (deleted_at is set), automatically:
+-- 1. Create notifications for all registered customers
+-- 2. Mark all event registrations as refunded
+
+DELIMITER //
+
+CREATE TRIGGER trigger_event_cancellation
+AFTER UPDATE ON events
+FOR EACH ROW
+BEGIN
+    DECLARE done INT DEFAULT FALSE;
+    DECLARE customer_id_var INT;
+    DECLARE event_name_var VARCHAR(100);
+    DECLARE event_date_var DATE;
+    DECLARE event_time_var TIME;
+    DECLARE formatted_datetime VARCHAR(100);
+    DECLARE cancellation_message VARCHAR(500);
+
+    -- Cursor to fetch all distinct customers registered for this event
+    DECLARE customer_cursor CURSOR FOR
+        SELECT DISTINCT er.customer_id
+        FROM event_registrations er
+        WHERE er.event_id = NEW.event_id
+          AND er.customer_id IS NOT NULL;
+
+    -- Handler: Sets done=TRUE when cursor finishes
+    DECLARE CONTINUE HANDLER FOR NOT FOUND SET done = TRUE;
+
+    -- Only proceed if event was just cancelled (deleted_at changed from NULL to NOT NULL)
+    IF OLD.deleted_at IS NULL AND NEW.deleted_at IS NOT NULL THEN
+
+        -- Prepare event information for notification message
+        SET event_name_var = NEW.name;
+        SET event_date_var = NEW.event_date;
+        SET event_time_var = NEW.start_time;
+
+        -- Format datetime string for the message
+        SET formatted_datetime = DATE_FORMAT(event_date_var, '%M %d, %Y');
+        IF event_time_var IS NOT NULL THEN
+            SET formatted_datetime = CONCAT(formatted_datetime, ' at ', DATE_FORMAT(event_time_var, '%h:%i %p'));
+        END IF;
+
+        -- Create cancellation message
+        SET cancellation_message = CONCAT(
+            'CANCELLATION: The event "', event_name_var, '" scheduled for ', formatted_datetime,
+            ' has been cancelled. We sincerely apologize for any inconvenience this may cause. ',
+            'A full refund has been automatically processed for your registration.'
+        );
+
+        -- Create notifications for all registered customers
+        OPEN customer_cursor;
+
+        notification_loop: LOOP
+            FETCH customer_cursor INTO customer_id_var;
+
+            IF done THEN
+                LEAVE notification_loop;
+            END IF;
+
+            -- Insert notification for this customer
+            INSERT INTO notifications (customer_id, message, notification_type, is_read, created_at)
+            VALUES (customer_id_var, cancellation_message, 'alert', FALSE, NOW());
+        END LOOP;
+
+        CLOSE customer_cursor;
+
+        -- Mark all event registrations as refunded
+        UPDATE event_registrations
+        SET refunded_at = NOW(),
+            refund_reason = 'Event cancelled'
+        WHERE event_id = NEW.event_id
+          AND refunded_at IS NULL;
+    END IF;
+END//
+
+DELIMITER ;
 
 -- Verification queries (commented out, run manually if needed):
 -- SELECT 'Auto-renewal job created successfully!' as status;
