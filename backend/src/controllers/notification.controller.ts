@@ -25,6 +25,7 @@ export class NotificationController {
 
   // Get notifications for the authenticated user
   static async getNotifications(req: AuthRequest, res: Response): Promise<void> {
+    console.log('Requester role', req.user?.role);
     if (req.user?.role === UserRole.CUSTOMER) {
       try {
         const customerId = req.user?.customer_id;
