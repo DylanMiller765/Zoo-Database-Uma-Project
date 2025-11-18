@@ -58,7 +58,7 @@ const transformToDb = (frontendEvent: any): any => {
   return dbEvent;
 };
 
-export const getUpcomingEvents = async (): Promise<any[]> => {
+export const getAllActiveEvents = async (): Promise<any[]> => {
   const events = await EventModel.findAll();
   return events.map(transformEvent);
 };
