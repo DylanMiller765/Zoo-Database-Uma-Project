@@ -62,15 +62,17 @@ export default function CheckoutPage() {
     setError(null);
 
     try {
+      const checkoutItems = cart.items.map(item => ({
+        item_type: item.item_type,
+        item_id: item.item_id,
+        name: item.name,
+        quantity: item.quantity,
+        unit_price: item.unit_price,
+        metadata: item.metadata,
+      }));
+      console.log('[CheckoutPage] Sending items to checkout:', checkoutItems);
       const result: CheckoutResponse = await checkoutService.processCheckout({
-        items: cart.items.map(item => ({
-          item_type: item.item_type,
-          item_id: item.item_id,
-          name: item.name,
-          quantity: item.quantity,
-          unit_price: item.unit_price,
-          metadata: item.metadata,
-        })),
+        items: checkoutItems,
         payment_method: 'credit',
         save_payment_method: payment.savePaymentMethod,
         payment_data: {

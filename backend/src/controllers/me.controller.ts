@@ -110,18 +110,37 @@ export class MeController {
       const customerId = (req as any).user?.customer_id;
       if (!customerId) return res.status(400).json({ success: false, message: 'Customer not found' });
       
-      // Get upcoming events only (event_date >= today or NULL)
+      // Get all event registrations for this customer (including past and cancelled)
+      // Use LEFT JOIN to show registrations even if event is deleted
       const rows = await query<any[]>(
-        `SELECT er.registration_id, er.number_of_participants, er.registration_date, er.payment_status,
-                e.event_id, e.name as event_name, e.event_date, e.start_time, e.end_time, e.location
+        `SELECT er.registration_id, er.event_id, er.number_of_participants, er.registration_date, er.payment_status,
+                COALESCE(e.event_id, er.event_id) as event_id,
+                COALESCE(e.name, CONCAT('Event #', er.event_id)) as event_name, 
+                e.event_date, e.start_time, e.end_time, e.location,
+                e.status, e.deleted_at,
+                CASE 
+                  WHEN e.deleted_at IS NOT NULL THEN 'cancelled'
+                  WHEN e.status IS NOT NULL THEN e.status
+                  WHEN e.event_date IS NOT NULL AND e.event_date < CURDATE() THEN 'completed'
+                  WHEN e.event_date IS NOT NULL AND e.event_date = CURDATE() THEN 'ongoing'
+                  ELSE 'scheduled'
+                END as event_status
          FROM event_registrations er
-         JOIN events e ON e.event_id = er.event_id
+         LEFT JOIN events e ON e.event_id = er.event_id
          WHERE er.customer_id = ? 
            AND er.deleted_at IS NULL
-           AND (e.event_date IS NULL OR e.event_date >= CURDATE())
-         ORDER BY e.event_date ASC, e.start_time ASC, er.registration_date DESC`,
+         ORDER BY 
+           CASE WHEN e.deleted_at IS NOT NULL THEN 1 ELSE 0 END,
+           CASE WHEN e.event_date IS NULL THEN 0 WHEN e.event_date >= CURDATE() THEN 0 ELSE 1 END,
+           e.event_date ASC, 
+           e.start_time ASC, 
+           er.registration_date DESC`,
         [customerId]
       );
+      console.log(`[MeController] Found ${rows.length} event registrations for customer ${customerId}`);
+      if (rows.length > 0) {
+        console.log('[MeController] Sample registration:', rows[0]);
+      }
       res.json({ success: true, data: rows });
     } catch (e: any) {
       res.status(500).json({ success: false, message: e?.message || 'Failed to fetch registrations' });
@@ -132,6 +151,8 @@ export class MeController {
     try {
       const customerId = (req as any).user?.customer_id;
       if (!customerId) return res.status(400).json({ success: false, message: 'Customer not found' });
+
+      console.log(`[MeController] Fetching purchase history for customer ${customerId}`);
 
       // Get gift shop purchases
       const giftShopPurchases = await query<any[]>(
@@ -156,6 +177,8 @@ export class MeController {
         [customerId]
       );
 
+      console.log(`[MeController] Found ${giftShopPurchases.length} gift shop purchases`);
+
       // Get cafe purchases
       const cafePurchases = await query<any[]>(
         `SELECT 
@@ -178,10 +201,17 @@ export class MeController {
         [customerId]
       );
 
+      console.log(`[MeController] Found ${cafePurchases.length} cafe purchases`);
+
       // Combine and sort by purchase date
       const allPurchases = [...giftShopPurchases, ...cafePurchases].sort(
         (a, b) => new Date(b.purchase_date).getTime() - new Date(a.purchase_date).getTime()
       );
+
+      console.log(`[MeController] Total purchases: ${allPurchases.length}`);
+      if (allPurchases.length > 0) {
+        console.log('[MeController] Sample purchase:', allPurchases[0]);
+      }
 
       res.json({ success: true, data: allPurchases });
     } catch (e: any) {

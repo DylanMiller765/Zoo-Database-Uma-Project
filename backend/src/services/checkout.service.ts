@@ -38,6 +38,7 @@ export class CheckoutService {
           break;
 
         case 'event':
+          console.log('[CheckoutService] Processing event item:', item);
           await this.createEventRegistration(item, customerId);
           summary.events++;
           break;
@@ -108,13 +109,34 @@ export class CheckoutService {
     customerId: number
   ): Promise<void> {
     const metadata = item.metadata || {};
-    const totalAmount = item.unit_price * (metadata.participants || 1);
+    const eventId = metadata.event_id || item.item_id;
+    const participants = metadata.participants || item.quantity || 1;
+    const totalAmount = item.unit_price * participants;
 
-    await query(
+    console.log('[CheckoutService] Creating event registration:', {
+      eventId,
+      customerId,
+      participants,
+      totalAmount,
+      item_id: item.item_id,
+      metadata
+    });
+
+    if (!eventId) {
+      throw new Error('Event ID is required for event registration');
+    }
+
+    const result = await query<any>(
       `INSERT INTO event_registrations (event_id, customer_id, number_of_participants, total_amount, payment_status)
        VALUES (?, ?, ?, ?, 'paid')`,
-      [metadata.event_id || item.item_id, customerId, metadata.participants || 1, totalAmount]
+      [eventId, customerId, participants, totalAmount]
     );
+
+    console.log('[CheckoutService] Event registration created:', {
+      registrationId: result.insertId,
+      eventId,
+      customerId
+    });
   }
 
   /**
@@ -129,11 +151,26 @@ export class CheckoutService {
     const transactionId = `CAFE-WEB-${customerId}-${Date.now()}`;
     const lineTotal = item.unit_price * item.quantity;
 
-    await query(
+    console.log('[CheckoutService] Creating cafe sale:', {
+      cafeId,
+      transactionId,
+      customerId,
+      item_id: item.item_id,
+      quantity: item.quantity,
+      lineTotal,
+    });
+
+    const result = await query<any>(
       `INSERT INTO cafe_sales (cafe_id, transaction_id, customer_id, employee_id, item_id, quantity, line_total, status)
        VALUES (?, ?, ?, NULL, ?, ?, ?, 'completed')`,
       [cafeId, transactionId, customerId, item.item_id, item.quantity, lineTotal]
     );
+
+    console.log('[CheckoutService] Cafe sale created:', {
+      saleId: result.insertId,
+      customerId,
+      item_id: item.item_id,
+    });
   }
 
   /**
@@ -148,6 +185,15 @@ export class CheckoutService {
     const giftShopId = metadata.gift_shop_id || 1;
     const totalAmount = item.unit_price * item.quantity;
 
+    console.log('[CheckoutService] Creating gift shop sale:', {
+      giftShopId,
+      customerId,
+      item_id: item.item_id,
+      quantity: item.quantity,
+      totalAmount,
+      paymentMethod,
+    });
+
     // Create transaction
     const transactionResult = await query<any>(
       `INSERT INTO gift_shop_sales_transactions (gift_shop_id, customer_id, employee_id, total_amount, payment_method, status)
@@ -157,12 +203,23 @@ export class CheckoutService {
 
     const transactionId = transactionResult.insertId;
 
+    console.log('[CheckoutService] Gift shop transaction created:', {
+      transactionId,
+      customerId,
+    });
+
     // Create sale item
     await query(
       `INSERT INTO gift_shop_sale_items (transaction_id, item_id, quantity, unit_price)
        VALUES (?, ?, ?, ?)`,
       [transactionId, item.item_id, item.quantity, item.unit_price]
     );
+
+    console.log('[CheckoutService] Gift shop sale item created:', {
+      transactionId,
+      item_id: item.item_id,
+      quantity: item.quantity,
+    });
   }
 
   /**

@@ -114,7 +114,7 @@ function OrderConfirmationContent() {
 
         {/* Action Buttons */}
         <div className="flex gap-4">
-          <Link href="/customer" className="flex-1">
+          <Link href="/customer?refresh=true" className="flex-1">
             <Button className="w-full bg-sea_green-600 hover:bg-sea_green-700 text-white">
               View My Account
             </Button>

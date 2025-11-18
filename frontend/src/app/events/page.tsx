@@ -267,7 +267,9 @@ export default function EventsPage() {
                                                             unit_price: ev.ticket_price!,
                                                             description: `Event on ${formatEventDate(ev.event_date)}`,
                                                             metadata: {
+                                                                event_id: ev.event_id,
                                                                 event_date: ev.event_date,
+                                                                participants: 1,
                                                             },
                                                         });
                                                     }}

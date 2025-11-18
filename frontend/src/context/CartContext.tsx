@@ -73,21 +73,21 @@ export function CartProvider({ children }: { children: ReactNode }) {
       // For other items: match on item_type and item_id
       // For donations/membership: match on item_type and name (since they might not have item_id)
       const existingItemIndex = prevItems.findIndex((item) => {
-        // Basic type and ID match
+        // Basic type match
         if (item.item_type !== newItem.item_type) return false;
+        
+        // For tickets, match ONLY on visit_date and ticket_type (ignore item_id)
+        if (newItem.item_type === 'ticket') {
+          const sameVisitDate = 
+            (item.metadata?.visit_date || null) === (newItem.metadata?.visit_date || null);
+          const sameTicketType = 
+            (item.metadata?.ticket_type || null) === (newItem.metadata?.ticket_type || null);
+          return sameVisitDate && sameTicketType;
+        }
         
         // For items with item_id, match on that
         if (newItem.item_id !== undefined && item.item_id !== undefined) {
           if (item.item_id !== newItem.item_id) return false;
-          
-          // For tickets, also check visit_date and ticket_type to keep different tickets separate
-          if (newItem.item_type === 'ticket') {
-            const sameVisitDate = 
-              (item.metadata?.visit_date || null) === (newItem.metadata?.visit_date || null);
-            const sameTicketType = 
-              (item.metadata?.ticket_type || null) === (newItem.metadata?.ticket_type || null);
-            return sameVisitDate && sameTicketType;
-          }
           
           // For events, just match on item_id
           if (newItem.item_type === 'event') {

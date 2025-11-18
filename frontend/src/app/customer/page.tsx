@@ -1,7 +1,7 @@
 "use client";
 
-import React from "react";
-import { useRouter } from "next/navigation";
+import React, { Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import apiClient from "@/lib/api";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -60,8 +60,9 @@ const StatsCard = ({ title, value, icon: Icon, iconColor }: { title: string; val
   </Card>
 );
 
-export default function CustomerDashboard() {
+function CustomerDashboardContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { user, isAuthenticated, loading } = useAuth();
   const [fetching, setFetching] = React.useState(true);
   const [profile, setProfile] = React.useState<any>(null);
@@ -88,6 +89,25 @@ export default function CustomerDashboard() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loading, isAuthenticated]);
 
+  // Reload data when navigating to dashboard tab
+  React.useEffect(() => {
+    if (active === 'dashboard' && isAuthenticated) {
+      load();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [active]);
+
+  // Force reload if coming from order confirmation
+  React.useEffect(() => {
+    const refresh = searchParams.get('refresh');
+    if (refresh === 'true' && isAuthenticated) {
+      load();
+      // Remove the refresh parameter from URL
+      router.replace('/customer');
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams, isAuthenticated]);
+
   const load = async () => {
     try {
       setFetching(true);
@@ -105,8 +125,13 @@ export default function CustomerDashboard() {
       setUpcomingTickets(summaryRes.data.data.ticketsUpcoming || []);
       setVisits(visitsRes.data.data || []);
       setTickets(ticketsRes.data.data || []);
-      setUpcomingEvents(eventsRes.data.data || []);
-      setPurchaseHistory(purchaseRes.data.data || []);
+      const eventsData = eventsRes.data.data || [];
+      console.log('[CustomerDashboard] Event registrations from API:', eventsData);
+      setUpcomingEvents(eventsData);
+      const purchaseData = purchaseRes.data.data || [];
+      console.log('[CustomerDashboard] Purchase history from API:', purchaseData);
+      console.log('[CustomerDashboard] Purchase history count:', purchaseData.length);
+      setPurchaseHistory(purchaseData);
       
       // Load auto-renew status
       if (profileRes.data.data?.membership_auto_renew !== undefined) {
@@ -320,11 +345,20 @@ export default function CustomerDashboard() {
                   {upcomingEvents.length === 0 ? (
                     <p className="text-gray-600">No upcoming events registered.</p>
                   ) : (
-                    upcomingEvents.map((event: any, i: number) => (
-                      <div key={i} className="rounded-xl border border-gray-200 bg-sea_green-50 p-4">
+                    upcomingEvents.map((event: any, i: number) => {
+                      const isCancelled = event.event_status === 'cancelled' || event.deleted_at !== null;
+                      return (
+                      <div key={i} className={`rounded-xl border p-4 ${isCancelled ? 'bg-red-50 border-red-200' : 'bg-sea_green-50 border-gray-200'}`}>
                         <div className="flex items-start justify-between">
                           <div className="flex-1">
-                            <p className="font-semibold text-gray-900">{event.event_name}</p>
+                            <div className="flex items-center gap-2 mb-1">
+                              <p className={`font-semibold ${isCancelled ? 'text-red-700 line-through' : 'text-gray-900'}`}>{event.event_name}</p>
+                              {isCancelled && (
+                                <span className="px-2 py-0.5 text-xs font-semibold rounded-full bg-red-200 text-red-800">
+                                  Cancelled
+                                </span>
+                              )}
+                            </div>
                             <div className="mt-2 space-y-1 text-sm text-gray-600">
                               {event.event_date && (
                                 <p className="flex items-center gap-2">
@@ -361,11 +395,17 @@ export default function CustomerDashboard() {
                               <p className="text-xs text-gray-500 mt-1">
                                 Participants: {event.number_of_participants} • Registered: {new Date(event.registration_date).toLocaleDateString()}
                               </p>
+                              {isCancelled && (
+                                <p className="text-xs text-red-600 font-medium mt-2">
+                                  This event has been cancelled. You will receive a refund if applicable.
+                                </p>
+                              )}
                             </div>
                           </div>
                         </div>
                       </div>
-                    ))
+                    );
+                    })
                   )}
                 </CardContent>
               </Card>
@@ -802,5 +842,17 @@ export default function CustomerDashboard() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function CustomerDashboard() {
+  return (
+    <Suspense fallback={
+      <div className="flex items-center justify-center h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-dark_spring_green-600"></div>
+      </div>
+    }>
+      <CustomerDashboardContent />
+    </Suspense>
   );
 }
