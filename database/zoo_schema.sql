@@ -197,6 +197,7 @@ CREATE TABLE `gift_shop_items` (
     `cost` DECIMAL(8, 2),
     `quantity_in_stock` INT DEFAULT 0,
     `supplier` VARCHAR(100),
+    `deleted_at` DATETIME DEFAULT NULL,
     FOREIGN KEY (`gift_shop_id`) REFERENCES `gift_shops`(`gift_shop_id`) ON DELETE CASCADE
 );
 
@@ -207,7 +208,7 @@ CREATE TABLE `cafe_items` (
     `description` TEXT,
     `category` VARCHAR(50),
     `price` DECIMAL(8, 2) NOT NULL,
-    `is_available` BOOLEAN DEFAULT TRUE,
+    `deleted_at` DATETIME DEFAULT NULL,
     FOREIGN KEY (`cafe_id`) REFERENCES `cafes`(`cafe_id`) ON DELETE CASCADE
 );
 
