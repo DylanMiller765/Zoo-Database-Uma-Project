@@ -29,6 +29,26 @@ export class NotificationModel {
     return results;
   }
 
+  static async findByEmployeeId(employeeId: number, unreadOnly: boolean = false): Promise<Notification[]> {
+    // FIXED: Changed 'employ' to 'employee_id'
+    let sql = 'SELECT * FROM notifications WHERE employee_id = ?';
+    const params: any[] = [employeeId];
+
+    if (unreadOnly) {
+      sql += ' AND is_read = FALSE';
+    }
+
+    sql += ' ORDER BY created_at DESC';
+
+    console.log('[NOTIFICATIONS DB] Executing query:', sql);
+    console.log('[NOTIFICATIONS DB] Parameters:', params);
+
+    const results = await query<Notification[]>(sql, params);
+    console.log('[NOTIFICATIONS DB] Query returned', results.length, 'rows');
+
+    return results;
+  }
+
   static async markAsRead(notificationId: number): Promise<void> {
     const sql = 'UPDATE notifications SET is_read = TRUE WHERE notification_id = ?';
     await query(sql, [notificationId]);
@@ -37,6 +57,11 @@ export class NotificationModel {
   static async markAllAsReadForCustomer(customerId: number): Promise<void> {
     const sql = 'UPDATE notifications SET is_read = TRUE WHERE customer_id = ? AND is_read = FALSE';
     await query(sql, [customerId]);
+  }
+
+  static async markAllAsReadForEmployee(employeeId: number): Promise<void> {
+    const sql = 'UPDATE notifications SET is_read = TRUE WHERE employee_id = ? AND is_read = FALSE';
+    await query(sql, [employeeId]);
   }
 
   static async create(notification: Omit<Notification, 'notification_id' | 'created_at'>): Promise<Notification> {
@@ -59,9 +84,20 @@ export class NotificationModel {
     await query(sql, [customerId, type]);
   }
 
+  static async deleteByEmployeeIdAndType(employeeId: number, type: string): Promise<void> {
+    const sql = 'DELETE FROM notifications WHERE employee_id = ? AND notification_type = ?';
+    await query(sql, [employeeId, type]);
+  }
+
   static async getUnreadCount(customerId: number): Promise<number> {
     const sql = 'SELECT COUNT(*) as count FROM notifications WHERE customer_id = ? AND is_read = FALSE';
     const results = await query<any[]>(sql, [customerId]);
+    return results[0]?.count || 0;
+  }
+
+  static async getUnreadCountForEmployee(employeeId: number): Promise<number> {
+    const sql = 'SELECT COUNT(*) as count FROM notifications WHERE employee_id = ? AND is_read = FALSE';
+    const results = await query<any[]>(sql, [employeeId]);
     return results[0]?.count || 0;
   }
 }

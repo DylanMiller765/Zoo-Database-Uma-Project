@@ -63,12 +63,6 @@ export function DateRangePicker({
     onRangeChange(start.toISOString().split('T')[0], end.toISOString().split('T')[0]);
   };
 
-  const handleClear = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    onRangeChange('', '');
-  };
-
   const handleAllTime = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
@@ -169,15 +163,6 @@ export function DateRangePicker({
             className="text-xs"
           >
             All Time
-          </Button>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={handleClear}
-            className="text-xs"
-          >
-            Clear
           </Button>
         </div>
       )}

@@ -354,9 +354,9 @@ export class MeController {
 
       // Record purchase in history table
       await query(
-        `INSERT INTO membership_purchases 
+        `INSERT INTO membership_purchases
          (customer_id, purchase_date, start_date, end_date, price, payment_method, payment_method_id)
-         VALUES (?, NOW(), ?, ?, ?, 'online', ?)`,
+         VALUES (?, NOW(), ?, ?, ?, 'credit', ?)`,
         [customerId, actualStartDate, actualEndDate, membershipPrice, paymentMethodId]
       );
 
