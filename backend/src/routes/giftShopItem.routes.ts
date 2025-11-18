@@ -10,8 +10,8 @@ router.get('/public', GiftShopItemController.getAllItems);
 // Protect all subsequent routes
 router.use(protect);
 
-// Routes for managers
-router.get('/', restrictTo('manager'), GiftShopItemController.getAllItems);
+// Routes for managers and cashiers (cashiers can view items but not deleted ones)
+router.get('/', restrictTo('manager', 'cashier'), GiftShopItemController.getAllItems);
 router.get('/low-stock', restrictTo('manager'), GiftShopItemController.getLowStockItems);
 router.post('/', restrictTo('manager'), GiftShopItemController.createItem);
 router.put('/:id', restrictTo('manager'), GiftShopItemController.updateItem);
@@ -20,5 +20,8 @@ router.put('/:id/restore', restrictTo('manager'), GiftShopItemController.restore
 
 // Routes for sales associates (cashiers) and managers
 router.get('/:id', restrictTo('manager', 'cashier'), GiftShopItemController.getItemById);
+
+// Stock update endpoint for cashiers (can only update quantity_in_stock, not other fields)
+router.put('/:id/stock', restrictTo('manager', 'cashier'), GiftShopItemController.updateStock);
 
 export default router;
