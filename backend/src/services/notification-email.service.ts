@@ -141,7 +141,7 @@ export class NotificationEmailService {
   }
 
   /**
-   * Format email body with HTML template
+   * Format email body with HTML template - matches animal alert style
    */
   private static formatEmailBody(
     customer: Customer,
@@ -149,56 +149,33 @@ export class NotificationEmailService {
     eventDetails: { eventName: string; eventDate: string }
   ): string {
     return `
-<!DOCTYPE html>
-<html>
-<head>
-  <style>
-    body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-    .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-    .header { background-color: #dc2626; color: white; padding: 20px; text-align: center; }
-    .content { background-color: #f9f9f9; padding: 30px; border: 1px solid #ddd; }
-    .event-details { background-color: white; padding: 15px; margin: 20px 0; border-left: 4px solid #dc2626; }
-    .footer { text-align: center; padding: 20px; color: #666; font-size: 12px; }
-    .alert-box { background-color: #fef2f2; border: 1px solid #dc2626; padding: 15px; margin: 15px 0; border-radius: 4px; }
-  </style>
-</head>
-<body>
-  <div class="container">
-    <div class="header">
-      <h1>⚠️ Event Cancellation Notice</h1>
-    </div>
-
-    <div class="content">
       <p>Dear ${customer.first_name} ${customer.last_name},</p>
 
-      <p>We regret to inform you that an event you registered for has been cancelled.</p>
+      <p>
+        We regret to inform you that an event you registered for has been cancelled.
+        We sincerely apologize for any inconvenience this may cause.
+      </p>
 
-      <div class="event-details">
-        <h3>${eventDetails.eventName}</h3>
-        <p><strong>Originally Scheduled:</strong> ${eventDetails.eventDate}</p>
-      </div>
+      <h3>📅 Event Details</h3>
+      <ul>
+        <li><strong>Event:</strong> ${eventDetails.eventName}</li>
+        <li><strong>Originally Scheduled:</strong> ${eventDetails.eventDate}</li>
+      </ul>
 
-      <div class="alert-box">
-        ${notificationMessage.replace(/CANCELLATION: The event[^.]+\.\s*/, '')}
-      </div>
+      <h3>💰 Refund Information</h3>
+      <p>
+        A full refund has been automatically processed for your registration.
+        Please allow 3-5 business days for the refund to appear in your original payment method.
+      </p>
 
-      <p>We sincerely apologize for any inconvenience this may cause. Our team is working to ensure this doesn't happen again.</p>
+      <p>
+        If you have any questions about this cancellation or your refund,
+        please don't hesitate to contact our customer service team.
+      </p>
 
-      <p>If you have any questions or concerns, please don't hesitate to contact our customer service team.</p>
+      <p>Thank you for your understanding and continued support.</p>
 
-      <p>Thank you for your understanding.</p>
-
-      <p>Sincerely,<br>
-      <strong>Zoo Management Team</strong></p>
-    </div>
-
-    <div class="footer">
-      <p>This is an automated notification. Please do not reply to this email.</p>
-      <p>&copy; 2025 Zoo Management System. All rights reserved.</p>
-    </div>
-  </div>
-</body>
-</html>
+      <p>Warm regards,<br/>Zoo Management Team</p>
     `.trim();
   }
 
