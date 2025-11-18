@@ -373,7 +373,6 @@ INSERT INTO event_registrations (event_id, customer_id, number_of_participants, 
 (9, 3, 1, 20.00, 'paid', '2025-11-17 09:15:00'),
 (9, NULL, 3, 60.00, 'pending', '2025-11-18 11:00:00'),
 (9, 1, 1, 20.00, 'paid', '2025-11-18 13:45:00'),
-(9, NULL, 2, 40.00, 'paid', '2025-11-19 10:30:00'),
 -- Event 10: Kids Zoo Camp (2025-12-15) - $250.00 per person
 (10, 1, 1, 250.00, 'paid', '2025-10-20 10:00:00'),
 (10, 2, 2, 500.00, 'paid', '2025-11-01 14:30:00'),
