@@ -1,5 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Heart, Database } from "lucide-react";
+import { Heart } from "lucide-react";
 
 interface DonationRevenueData {
   total: number;
@@ -26,10 +26,6 @@ export function DonationRevenueSection({ data }: Props) {
             <Heart className="h-6 w-6 text-red-600" />
             <div>
               <CardTitle className="text-xl text-gray-900">Donations</CardTitle>
-              <div className="text-xs text-gray-600 flex items-center gap-1 mt-1">
-                <Database className="h-3 w-3" />
-                Source: donations table | Aggregation: SUM(amount)
-              </div>
             </div>
           </div>
           <div className="text-right">
@@ -59,12 +55,6 @@ export function DonationRevenueSection({ data }: Props) {
           </div>
         </div>
 
-        {/* No detailed breakdown for donations - simple aggregate display */}
-        <div className="text-sm text-gray-600 p-4 bg-red-50 rounded-lg border border-red-200">
-          <p>
-            This section displays aggregate donation data. All donations are tracked in the donations table and contribute to the zoo's revenue stream.
-          </p>
-        </div>
       </CardContent>
     </Card>
   );

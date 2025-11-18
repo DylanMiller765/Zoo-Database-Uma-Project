@@ -114,13 +114,25 @@ export default function FinancialReportPage() {
 
   const getSourceColor = (source: string) => {
     switch (source) {
-      case 'ticket': return 'border-blue-200 bg-blue-50';
-      case 'event': return 'border-purple-200 bg-purple-50';
-      case 'gift_shop': return 'border-pink-200 bg-pink-50';
-      case 'cafe': return 'border-orange-200 bg-orange-50';
-      case 'membership': return 'border-green-200 bg-green-50';
-      case 'donation': return 'border-red-200 bg-red-50';
-      default: return 'border-gray-200 bg-gray-50';
+      case 'ticket': return 'border-blue-400';
+      case 'event': return 'border-purple-400';
+      case 'gift_shop': return 'border-pink-400';
+      case 'cafe': return 'border-orange-400';
+      case 'membership': return 'border-green-400';
+      case 'donation': return 'border-red-400';
+      default: return 'border-gray-300';
+    }
+  };
+
+  const getSourceColorValue = (source: string) => {
+    switch (source) {
+      case 'ticket': return '#60a5fa';
+      case 'event': return '#a78bfa';
+      case 'gift_shop': return '#ec4899';
+      case 'cafe': return '#fb923c';
+      case 'membership': return '#4ade80';
+      case 'donation': return '#f87171';
+      default: return '#d1d5db';
     }
   };
 
@@ -257,82 +269,82 @@ export default function FinancialReportPage() {
       {hasGenerated && reportData && (
         <>
           {/* SUMMARY SECTION - MOVED TO TOP */}
-          <Card className="border-2 border-sea_green-300">
-            <CardHeader className="pb-4">
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-2xl flex items-center gap-2">
-                  <Database className="h-6 w-6 text-sea_green-600" />
-                  Summary
-                </CardTitle>
-                <div className="text-right">
-                  <div className="text-xs text-gray-500 flex items-center gap-1 justify-end">
-                    <Calendar className="h-3 w-3" />
-                    Report Period
-                  </div>
-                  <div className="text-sm font-semibold text-gray-700">
-                    {reportData.summary.dateRange.isAllTime ? (
-                      'All Time'
-                    ) : (
-                      <>
-                        {formatDate(reportData.summary.dateRange.start)} - {formatDate(reportData.summary.dateRange.end)}
-                      </>
-                    )}
+          <div className="flex justify-center">
+            <Card className="border border-gray-200 w-3/4">
+              <CardHeader className="pb-4">
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-2xl flex items-center gap-2">
+                    <Database className="h-6 w-6 text-sea_green-600" />
+                    Summary
+                  </CardTitle>
+                  <div className="text-right">
+                    <div className="text-xs text-gray-500 flex items-center gap-1 justify-end">
+                      <Calendar className="h-3 w-3" />
+                      Report Period
+                    </div>
+                    <div className="text-sm font-semibold text-gray-700">
+                      {reportData.summary.dateRange.isAllTime ? (
+                        'All Time'
+                      ) : (
+                        <>
+                          {formatDate(reportData.summary.dateRange.start)} - {formatDate(reportData.summary.dateRange.end)}
+                        </>
+                      )}
+                    </div>
                   </div>
                 </div>
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              {/* Stacked Revenue Sources */}
-              <div>
-                <h3 className="text-sm font-semibold text-gray-700 mb-3">
-                  Revenue by Source (Aggregated from Database Tables)
-                </h3>
-                <div className="space-y-2">
-                  {reportData.summary.sources.map((source, index) => (
-                    <div
-                      key={source.name}
-                      className={`border-l-6 ${getSourceColor(source.name)} p-4 rounded-r-md flex items-center justify-between`}
-                    >
-                      <div className="flex-1">
-                        <div className="font-medium text-gray-900">{getSourceLabel(source.name)}</div>
-                        <div className="text-xs text-gray-500">
-                          Table: {source.name === 'ticket' ? 'tickets' : source.name === 'event' ? 'event_registrations' : source.name === 'gift_shop' ? 'gift_shop_sales_transactions' : source.name === 'cafe' ? 'cafe_sales' : 'membership_purchases'} | Aggregation: SUM(price/total_amount)
+              </CardHeader>
+              <CardContent className="space-y-6">
+                {/* Stacked Revenue Sources */}
+                <div>
+                  <h3 className="text-sm font-semibold text-gray-700 mb-3">
+                    Revenue by Source
+                  </h3>
+                  <div className="space-y-2">
+                    {reportData.summary.sources.map((source, index) => (
+                      <div
+                        key={source.name}
+                        className={`border-l-4 ${getSourceColor(source.name)} pl-4 p-4 rounded flex items-center justify-between border-gray-200`}
+                        style={{ borderLeft: `4px solid ${getSourceColorValue(source.name)}` }}
+                      >
+                        <div className="flex-1">
+                          <div className="font-medium text-gray-900">{getSourceLabel(source.name)}</div>
+                        </div>
+                        <div className="text-right">
+                          <div className="text-xl font-bold text-gray-900">
+                            ${formatMoney(source.revenue)}
+                          </div>
+                          <div className="text-xs text-gray-600">
+                            {((source.revenue / reportData.summary.totalRevenue) * 100).toFixed(1)}% of total
+                          </div>
                         </div>
                       </div>
-                      <div className="text-right">
-                        <div className="text-xl font-bold text-gray-900">
-                          ${formatMoney(source.revenue)}
-                        </div>
-                        <div className="text-xs text-gray-600">
-                          {((source.revenue / reportData.summary.totalRevenue) * 100).toFixed(1)}% of total
-                        </div>
-                      </div>
-                    </div>
-                  ))}
+                    ))}
 
-                  {/* Total Row */}
-                  <div className="border-t-2 border-gray-300 pt-3 mt-3 bg-sea_green-50 p-4 rounded-md">
-                    <div className="flex items-center justify-between">
-                      <div className="flex-1">
-                        <div className="text-lg font-bold text-gray-900">TOTAL REVENUE</div>
-                        <div className="text-xs text-gray-600">
-                          Sum of all revenue sources above
+                    {/* Total Row */}
+                    <div className="border-t-2 border-gray-300 pt-3 mt-3 p-4 rounded-md">
+                      <div className="flex items-center justify-between">
+                        <div className="flex-1">
+                          <div className="text-lg font-bold text-gray-900">TOTAL REVENUE</div>
+                          <div className="text-xs text-gray-600">
+                            Sum of all revenue sources above
+                          </div>
                         </div>
-                      </div>
-                      <div className="text-right">
-                        <div className="text-2xl font-bold text-sea_green-700">
-                          ${formatMoney(reportData.summary.totalRevenue)}
-                        </div>
-                        <div className="text-sm text-gray-600">
-                          {reportData.summary.totalTransactions.toLocaleString()} transactions
+                        <div className="text-right">
+                          <div className="text-2xl font-bold text-gray-900">
+                            ${formatMoney(reportData.summary.totalRevenue)}
+                          </div>
+                          <div className="text-sm text-gray-600">
+                            {reportData.summary.totalTransactions.toLocaleString()} transactions
+                          </div>
                         </div>
                       </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+          </div>
 
           {/* Revenue Source Sections */}
           <div className="space-y-6">
