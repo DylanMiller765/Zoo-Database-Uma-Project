@@ -314,6 +314,11 @@ CREATE TABLE `notifications` (
     INDEX `idx_customer_unread` (`customer_id`, `is_read`),
     INDEX `idx_created_at` (`created_at`)
 );
+ALTER TABLE notifications
+    MODIFY COLUMN customer_id INT NULL;
+
+ALTER TABLE notifications
+    ADD COLUMN employee_id INT NULL AFTER customer_id;
 
 CREATE TABLE `animals_alert_queue` (
     `animal_alert_id` INT PRIMARY KEY AUTO_INCREMENT,
