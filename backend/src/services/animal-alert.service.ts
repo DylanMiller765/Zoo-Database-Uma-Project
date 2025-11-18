@@ -89,25 +89,11 @@ export class AnimalAlertService {
           alert.veterinarian_emails === undefined ||
           alert.veterinarian_emails.length === 0
         ) {
-          try {
-            await sendMail({
-              from: `"Zoo Verse 12" <${process.env.VERIFIED_SENDER_EMAIL}>`,
-              to: "abdullahshittu.work@gmail.com",
-              subject,
-              text: `An alert has been generated for Animal ID: ${
-                alert.animal_id
-              }. Reason: ${alert.alert_reason.replace("_", " ")}. Value: ${
-                alert.alert_value
-              }. Please take the necessary actions.`,
-              html: body,
-            });
-          } catch (error) {
-            console.error(
-              "Failed to send alert email to default address:",
-              error
-            );
-            continue; //skip marking as processed if email fails
-          }
+          console.warn(
+            `⚠️  No veterinarian emails found for animal ${alert.animal_id} alert. ` +
+            `Alert will be marked as processed but no email was sent.`
+          );
+          // Still mark as processed - no point retrying if there are no vets to email
         }
 
         //Mark only if the email was truly sent
