@@ -33,7 +33,6 @@ export default function AdminDashboard() {
     upcomingEvents: 0,
     activeHabitats: 0,
     todaysVisitors: 0,
-    monthlyRevenue: 0,
   });
   const [statsLoading, setStatsLoading] = useState(true);
   const [recentActivities, setRecentActivities] = useState<RecentActivity[]>([]);
@@ -284,14 +283,6 @@ export default function AdminDashboard() {
             value={stats.todaysVisitors}
             icon={UserCircle}
             iconColor="text-dark_spring_green-600"
-          />
-        )}
-        {(user?.job_role === 'manager' || user?.job_role === 'cashier') && (
-          <StatsCard
-            title="Monthly Revenue"
-            value={`$${stats.monthlyRevenue.toLocaleString()}`}
-            icon={DollarSign}
-            iconColor="text-persian_orange-600"
           />
         )}
       </div>

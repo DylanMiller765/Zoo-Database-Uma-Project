@@ -71,7 +71,7 @@ export default function CheckoutPage() {
           unit_price: item.unit_price,
           metadata: item.metadata,
         })),
-        payment_method: 'online',
+        payment_method: 'credit',
         save_payment_method: payment.savePaymentMethod,
         payment_data: {
           cardNumber: payment.cardNumber,

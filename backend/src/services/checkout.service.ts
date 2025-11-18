@@ -32,7 +32,7 @@ export class CheckoutService {
     for (const item of checkoutData.items) {
       switch (item.item_type) {
         case 'ticket':
-          await this.createTicketRecords(item, customerId);
+          await this.createTicketRecords(item, customerId, checkoutData.payment_method);
           summary.tickets += item.quantity;
           break;
 
@@ -47,12 +47,12 @@ export class CheckoutService {
           break;
 
         case 'gift_shop_item':
-          await this.createGiftShopSale(item, customerId);
+          await this.createGiftShopSale(item, customerId, checkoutData.payment_method);
           summary.gift_shop_items += item.quantity;
           break;
 
         case 'donation':
-          await this.createDonation(item, customerId);
+          await this.createDonation(item, customerId, checkoutData.payment_method);
           summary.donations++;
           break;
 
@@ -80,15 +80,16 @@ export class CheckoutService {
    */
   private static async createTicketRecords(
     item: CheckoutCartItem,
-    customerId: number
+    customerId: number,
+    paymentMethod: 'credit' | 'debit'
   ): Promise<void> {
     const metadata = item.metadata || {};
 
     for (let i = 0; i < item.quantity; i++) {
       await query(
         `INSERT INTO tickets (customer_id, visit_date, ticket_type, price, payment_method)
-         VALUES (?, ?, ?, ?, 'online')`,
-        [customerId, metadata.visit_date, metadata.ticket_type, item.unit_price]
+         VALUES (?, ?, ?, ?, ?)`,
+        [customerId, metadata.visit_date, metadata.ticket_type, item.unit_price, paymentMethod]
       );
     }
   }
@@ -119,7 +120,7 @@ export class CheckoutService {
   ): Promise<void> {
     const metadata = item.metadata || {};
     const cafeId = metadata.cafe_id || 1;
-    const transactionId = `CAFE-ONLINE-${customerId}-${Date.now()}`;
+    const transactionId = `CAFE-WEB-${customerId}-${Date.now()}`;
     const lineTotal = item.unit_price * item.quantity;
 
     await query(
@@ -134,7 +135,8 @@ export class CheckoutService {
    */
   private static async createGiftShopSale(
     item: CheckoutCartItem,
-    customerId: number
+    customerId: number,
+    paymentMethod: 'credit' | 'debit'
   ): Promise<void> {
     const metadata = item.metadata || {};
     const giftShopId = metadata.gift_shop_id || 1;
@@ -143,8 +145,8 @@ export class CheckoutService {
     // Create transaction
     const transactionResult = await query<any>(
       `INSERT INTO gift_shop_sales_transactions (gift_shop_id, customer_id, employee_id, total_amount, payment_method, status)
-       VALUES (?, ?, NULL, ?, 'online', 'completed')`,
-      [giftShopId, customerId, totalAmount]
+       VALUES (?, ?, NULL, ?, ?, 'completed')`,
+      [giftShopId, customerId, totalAmount, paymentMethod]
     );
 
     const transactionId = transactionResult.insertId;
@@ -162,7 +164,8 @@ export class CheckoutService {
    */
   private static async createDonation(
     item: CheckoutCartItem,
-    customerId: number
+    customerId: number,
+    paymentMethod: 'credit' | 'debit'
   ): Promise<void> {
     const metadata = item.metadata || {};
 
@@ -170,6 +173,7 @@ export class CheckoutService {
       customer_id: customerId,
       amount: item.unit_price,
       message: metadata.donation_message,
+      payment_method: paymentMethod,
     });
   }
 

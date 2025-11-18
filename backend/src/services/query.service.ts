@@ -358,6 +358,24 @@ export class QueryService {
       ORDER BY revenue DESC
     `, params);
 
+    // Query 3: Items sold breakdown
+    const byItem = await query<any[]>(`
+      SELECT
+        gsi.item_id,
+        gi.name as item_name,
+        gi.category,
+        SUM(gsi.quantity) as total_quantity,
+        gsi.unit_price,
+        SUM(gsi.quantity * gsi.unit_price) as total_revenue
+      FROM gift_shop_sales_transactions gst
+      JOIN gift_shop_sale_items gsi ON gst.transaction_id = gsi.transaction_id
+      JOIN gift_shop_items gi ON gsi.item_id = gi.item_id
+      ${dateFilter}
+        ${includeReturns ? '' : "AND gst.status = 'completed'"}
+      GROUP BY gsi.item_id, gi.name, gi.category, gsi.unit_price
+      ORDER BY total_revenue DESC
+    `, params);
+
     const total = byShop.reduce((sum, row) => sum + parseFloat(row.revenue || 0), 0);
     const transactions = byShop.reduce((sum, row) => sum + parseInt(row.transactions || 0), 0);
     const returns = byShop.reduce((sum, row) => sum + parseInt(row.returns || 0), 0);
@@ -367,7 +385,8 @@ export class QueryService {
       transactions,
       returns,
       byShop,
-      byPaymentMethod
+      byPaymentMethod,
+      byItem
     };
   }
 
@@ -396,6 +415,23 @@ export class QueryService {
       ORDER BY revenue DESC
     `, params);
 
+    // Query 2: Items sold breakdown
+    const byItem = await query<any[]>(`
+      SELECT
+        cs.item_id,
+        ci.name as item_name,
+        ci.category,
+        ci.price as unit_price,
+        SUM(cs.quantity) as total_quantity,
+        SUM(cs.line_total) as total_revenue
+      FROM cafe_sales cs
+      JOIN cafe_items ci ON cs.item_id = ci.item_id
+      ${dateFilter}
+        ${includeReturns ? '' : "AND cs.status = 'completed'"}
+      GROUP BY cs.item_id, ci.name, ci.category, ci.price
+      ORDER BY total_revenue DESC
+    `, params);
+
     const total = byCafe.reduce((sum, row) => sum + parseFloat(row.revenue || 0), 0);
     const transactions = byCafe.reduce((sum, row) => sum + parseInt(row.transactions || 0), 0);
     const lineItems = byCafe.reduce((sum, row) => sum + parseInt(row.line_items || 0), 0);
@@ -406,7 +442,8 @@ export class QueryService {
       transactions,
       lineItems,
       returns,
-      byCafe
+      byCafe,
+      byItem
     };
   }
 
