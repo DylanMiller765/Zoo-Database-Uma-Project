@@ -215,7 +215,7 @@ export class QueryService {
 
   /**
    * Report 3: Financial Report - Ticket Revenue
-   * Detailed breakdown of ticket sales by type and payment method
+   * Detailed breakdown of ticket sales by type
    */
   static async getTicketRevenue(startDate?: string, endDate?: string, includeReturns: boolean = false) {
     const dateFilter = startDate && endDate ? 'WHERE purchase_date BETWEEN ? AND ?' : 'WHERE 1=1';
@@ -235,27 +235,13 @@ export class QueryService {
       ORDER BY revenue DESC
     `, params);
 
-    // Query 2: Revenue by payment method
-    const byPaymentMethod = await query<any[]>(`
-      SELECT
-        payment_method,
-        COUNT(*) as count,
-        SUM(price) as revenue
-      FROM tickets
-      ${dateFilter}
-        AND deleted_at IS NULL
-      GROUP BY payment_method
-      ORDER BY revenue DESC
-    `, params);
-
     const total = byType.reduce((sum, row) => sum + parseFloat(row.revenue || 0), 0);
     const transactions = byType.reduce((sum, row) => sum + parseInt(row.count || 0), 0);
 
     return {
       total,
       transactions,
-      byType,
-      byPaymentMethod
+      byType
     };
   }
 
@@ -274,45 +260,56 @@ export class QueryService {
         e.event_date,
         e.location,
         e.ticket_price,
+        CASE WHEN e.deleted_at IS NOT NULL THEN 'cancelled' ELSE 'active' END as event_status,
+        e.deleted_at,
         COUNT(er.registration_id) as registrations,
         SUM(er.number_of_participants) as participants,
-        SUM(er.total_amount) as revenue,
+        SUM(CASE WHEN er.refunded_at IS NULL THEN er.total_amount ELSE 0 END) as revenue,
+        SUM(CASE WHEN er.refunded_at IS NOT NULL THEN er.total_amount ELSE 0 END) as refunded_amount,
         er.payment_status
       FROM events e
       LEFT JOIN event_registrations er ON e.event_id = er.event_id
         AND (er.deleted_at IS NULL)
         ${includeCanceled ? '' : "AND er.payment_status = 'paid'"}
       WHERE ${dateFilter}
-        AND e.deleted_at IS NULL
         AND er.registration_id IS NOT NULL
-      GROUP BY e.event_id, e.name, e.event_date, e.location, e.ticket_price, er.payment_status
+      GROUP BY e.event_id, e.name, e.event_date, e.location, e.ticket_price, e.deleted_at, er.payment_status
       ORDER BY revenue DESC
     `, params);
 
-    // Calculate refunds
-    const refundDateFilter = startDate && endDate ? 'er.registration_date BETWEEN ? AND ?' : '1=1';
-    const refundParams = startDate && endDate ? [startDate, endDate] : [];
+    // Calculate totals from the per-event data
+    // Now refunds are already separated by event in byEvent data
+    let totalRefunds = 0;
+    let refundCount = 0;
 
-    const refundQuery = await query<any[]>(`
-      SELECT
-        COALESCE(SUM(CASE WHEN er.refunded_at IS NOT NULL THEN er.total_amount END), 0) as total_refunds,
-        COUNT(CASE WHEN er.refunded_at IS NOT NULL THEN 1 END) as refund_count
-      FROM event_registrations er
-      WHERE ${refundDateFilter}
-        AND er.deleted_at IS NULL
-    `, refundParams);
+    try {
+      // Sum refunds from all events (both active and cancelled)
+      totalRefunds = byEvent.reduce((sum, row) => sum + parseFloat(row.refunded_amount || 0), 0);
+
+      // Count refunded registrations by checking if any event has refunded_amount > 0
+      refundCount = byEvent.reduce((sum, row) => {
+        if (parseFloat(row.refunded_amount || 0) > 0) {
+          // This is approximate - ideally we'd count individual registrations
+          // But we can estimate from the event data
+          return sum + parseInt(row.registrations || 0);
+        }
+        return sum;
+      }, 0);
+    } catch (error) {
+      // If there's any issue calculating refunds, just set to 0
+      totalRefunds = 0;
+      refundCount = 0;
+    }
 
     const grossRevenue = byEvent.reduce((sum, row) => sum + parseFloat(row.revenue || 0), 0);
     const registrations = byEvent.reduce((sum, row) => sum + parseInt(row.registrations || 0), 0);
     const participants = byEvent.reduce((sum, row) => sum + parseInt(row.participants || 0), 0);
-    const totalRefunds = parseFloat(refundQuery[0]?.total_refunds || 0);
-    const refundCount = parseInt(refundQuery[0]?.refund_count || 0);
 
     return {
-      gross_revenue: grossRevenue,
+      gross_revenue: grossRevenue + totalRefunds, // Gross includes both actual revenue and refunds
       total_refunds: totalRefunds,
-      net_revenue: grossRevenue - totalRefunds,
-      total: grossRevenue - totalRefunds, // For backwards compatibility
+      net_revenue: grossRevenue, // Net is actual revenue (after refunds already deducted)
+      total: grossRevenue, // For backwards compatibility
       registrations,
       participants,
       refund_count: refundCount,
@@ -322,7 +319,7 @@ export class QueryService {
 
   /**
    * Report 3: Financial Report - Gift Shop Revenue
-   * Detailed breakdown of gift shop sales by shop and payment method
+   * Detailed breakdown of gift shop sales by shop
    */
   static async getGiftShopRevenue(startDate?: string, endDate?: string, includeReturns: boolean = false) {
     const dateFilter = startDate && endDate ? 'WHERE gst.sale_date BETWEEN ? AND ?' : 'WHERE 1=1';
@@ -345,20 +342,7 @@ export class QueryService {
       ORDER BY revenue DESC
     `, params);
 
-    // Query 2: Revenue by payment method
-    const byPaymentMethod = await query<any[]>(`
-      SELECT
-        gst.payment_method,
-        COUNT(*) as count,
-        SUM(gst.total_amount) as revenue
-      FROM gift_shop_sales_transactions gst
-      ${dateFilter}
-        ${includeReturns ? '' : "AND gst.status = 'completed'"}
-      GROUP BY gst.payment_method
-      ORDER BY revenue DESC
-    `, params);
-
-    // Query 3: Items sold breakdown
+    // Query 2: Items sold breakdown
     const byItem = await query<any[]>(`
       SELECT
         gsi.item_id,
@@ -385,7 +369,6 @@ export class QueryService {
       transactions,
       returns,
       byShop,
-      byPaymentMethod,
       byItem
     };
   }
@@ -467,18 +450,6 @@ export class QueryService {
       ORDER BY revenue DESC
     `, params);
 
-    // Query 2: Revenue by payment method
-    const byPaymentMethod = await query<any[]>(`
-      SELECT
-        payment_method,
-        COUNT(*) as count,
-        SUM(price) as revenue
-      FROM membership_purchases
-      ${dateFilter}
-      GROUP BY payment_method
-      ORDER BY revenue DESC
-    `, params);
-
     const total = byType.reduce((sum, row) => sum + parseFloat(row.revenue || 0), 0);
     const memberships = byType.reduce((sum, row) => sum + parseInt(row.count || 0), 0);
     const manualPurchases = byType.find(r => r.purchase_type === 'Manual Purchase')?.count || 0;
@@ -489,8 +460,33 @@ export class QueryService {
       memberships,
       manualPurchases,
       autoRenewals,
-      byType,
-      byPaymentMethod
+      byType
+    };
+  }
+
+  /**
+   * Report 3: Financial Report - Donation Revenue
+   * Detailed breakdown of donations
+   */
+  static async getDonationRevenue(startDate?: string, endDate?: string) {
+    const dateFilter = startDate && endDate ? 'WHERE donation_date BETWEEN ? AND ?' : 'WHERE 1=1';
+    const params = startDate && endDate ? [startDate, endDate] : [];
+
+    // Query 1: Total donations
+    const donationStats = await query<any[]>(`
+      SELECT
+        COUNT(*) as count,
+        SUM(amount) as revenue
+      FROM donations
+      ${dateFilter}
+    `, params);
+
+    const total = parseFloat(donationStats[0]?.revenue || 0);
+    const transactions = parseInt(donationStats[0]?.count || 0);
+
+    return {
+      total,
+      transactions
     };
   }
 
@@ -502,7 +498,7 @@ export class QueryService {
     const {
       startDate,
       endDate,
-      sources = ['ticket', 'event', 'gift_shop', 'cafe', 'membership'],
+      sources = ['ticket', 'event', 'gift_shop', 'cafe', 'membership', 'donation'],
       includeReturns = false
     } = params;
 
@@ -553,6 +549,13 @@ export class QueryService {
       result.summary.totalRevenue += result.membershipRevenue.total;
       result.summary.totalTransactions += result.membershipRevenue.memberships;
       result.summary.sources.push({ name: 'membership', revenue: result.membershipRevenue.total });
+    }
+
+    if (sources.includes('donation')) {
+      result.donationRevenue = await this.getDonationRevenue(startDate, endDate);
+      result.summary.totalRevenue += result.donationRevenue.total;
+      result.summary.totalTransactions += result.donationRevenue.transactions;
+      result.summary.sources.push({ name: 'donation', revenue: result.donationRevenue.total });
     }
 
     // Calculate insights

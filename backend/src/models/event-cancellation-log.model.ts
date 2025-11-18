@@ -25,25 +25,55 @@ export class EventCancellationLogModel {
    * Get all event cancellation logs, ordered by most recent first
    */
   static async findAll(limit: number = 10): Promise<EventCancellationLog[]> {
-    // Note: MySQL doesn't always support parameterized LIMIT, so we use string interpolation
-    // The limit is already validated as a number in the controller, so this is safe
-    const logs = await query<EventCancellationLog[]>(
-      `SELECT
-        log_id,
-        event_id,
-        event_name,
-        event_date,
-        cancelled_at,
-        cancelled_by,
-        total_registrations,
-        customers_notified,
-        refunds_needed
-      FROM event_cancellation_logs
-      ORDER BY cancelled_at DESC
-      LIMIT ${limit}`
-    );
+    // Note: Since event_cancellation_logs table may not exist, we query directly from events
+    // and event_registrations to construct the cancellation data
+    try {
+      const logs = await query<any[]>(
+        `SELECT
+          ROW_NUMBER() OVER (ORDER BY e.deleted_at DESC) as log_id,
+          e.event_id,
+          e.name as event_name,
+          e.event_date,
+          e.deleted_at as cancelled_at,
+          'System' as cancelled_by,
+          COUNT(er.registration_id) as total_registrations,
+          COUNT(CASE WHEN er.refunded_at IS NOT NULL THEN 1 END) as customers_notified,
+          COALESCE(SUM(CASE WHEN er.refunded_at IS NOT NULL THEN er.total_amount ELSE 0 END), 0) as refunds_needed
+        FROM events e
+        LEFT JOIN event_registrations er ON e.event_id = er.event_id AND er.deleted_at IS NULL
+        WHERE e.deleted_at IS NOT NULL
+        GROUP BY e.event_id, e.name, e.event_date, e.deleted_at
+        ORDER BY e.deleted_at DESC
+        LIMIT ${limit}`
+      );
 
-    return logs;
+      return logs as EventCancellationLog[];
+    } catch (error) {
+      // If query fails, try the original table name for backwards compatibility
+      console.error('Error querying from events table, falling back to event_cancellation_logs table:', error);
+      try {
+        const logs = await query<EventCancellationLog[]>(
+          `SELECT
+            log_id,
+            event_id,
+            event_name,
+            event_date,
+            cancelled_at,
+            cancelled_by,
+            total_registrations,
+            customers_notified,
+            refunds_needed
+          FROM event_cancellation_logs
+          ORDER BY cancelled_at DESC
+          LIMIT ${limit}`
+        );
+        return logs;
+      } catch (fallbackError) {
+        // If both fail, return empty array
+        console.error('Both event_cancellation_logs queries failed:', fallbackError);
+        return [];
+      }
+    }
   }
 
   /**

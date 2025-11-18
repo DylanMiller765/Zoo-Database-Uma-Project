@@ -27,6 +27,9 @@ interface EventRevenueData {
     registrations: number;
     participants: number;
     revenue: number;
+    refunded_amount?: number;
+    event_status?: string;
+    deleted_at?: string | null;
     avg_per_registration: number;
     payment_status: string;
   }>;
@@ -53,6 +56,11 @@ export function EventRevenueSection({ data }: Props) {
     return 'bg-gray-100 text-gray-800';
   };
 
+  const getEventStatusBadgeColor = (eventStatus: string | undefined) => {
+    if (eventStatus === 'cancelled') return 'bg-red-100 text-red-800';
+    return 'bg-green-100 text-green-800';
+  };
+
   const formatStatus = (status: string) => {
     return status.charAt(0).toUpperCase() + status.slice(1);
   };
@@ -70,7 +78,7 @@ export function EventRevenueSection({ data }: Props) {
             <p className="text-2xl font-semibold text-gray-900">${formatMoney(data.gross_revenue)}</p>
             <p className="text-xs text-gray-500 mt-1 flex items-center gap-1">
               <Users className="h-3 w-3" />
-              {data.participants} participants ({data.registrations} registrations)
+              {data.registrations} order{data.registrations !== 1 ? 's' : ''} • {data.participants} attendee{data.participants !== 1 ? 's' : ''}
             </p>
           </div>
           <div>
@@ -99,11 +107,11 @@ export function EventRevenueSection({ data }: Props) {
                   <TableHead>Event Name</TableHead>
                   <TableHead>Date</TableHead>
                   <TableHead>Location</TableHead>
-                  <TableHead className="text-right">Registrations</TableHead>
-                  <TableHead className="text-right">Participants</TableHead>
+                  <TableHead className="text-right">Orders</TableHead>
+                  <TableHead className="text-right">Total People</TableHead>
                   <TableHead className="text-right">Revenue</TableHead>
-                  <TableHead className="text-right">Avg/Registration</TableHead>
-                  <TableHead>Status</TableHead>
+                  <TableHead className="text-right">Refunded</TableHead>
+                  <TableHead>Event Status</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -115,7 +123,7 @@ export function EventRevenueSection({ data }: Props) {
                   </TableRow>
                 ) : (
                   data.byEvent.map((row) => (
-                    <TableRow key={`${row.event_id}-${row.payment_status}`}>
+                    <TableRow key={`${row.event_id}-${row.payment_status}`} className={row.event_status === 'cancelled' ? 'bg-red-50' : ''}>
                       <TableCell className="font-medium">{row.event_name}</TableCell>
                       <TableCell>
                         <div className="flex items-center gap-1">
@@ -136,12 +144,12 @@ export function EventRevenueSection({ data }: Props) {
                       <TableCell className="text-right font-semibold text-purple-600">
                         ${formatMoney(row.revenue)}
                       </TableCell>
-                      <TableCell className="text-right">
-                        ${formatMoney(row.avg_per_registration)}
+                      <TableCell className="text-right font-semibold text-red-600">
+                        {row.refunded_amount && row.refunded_amount > 0 ? `-$${formatMoney(row.refunded_amount)}` : '-'}
                       </TableCell>
                       <TableCell>
-                        <Badge className={getStatusBadgeColor(row.payment_status)}>
-                          {formatStatus(row.payment_status)}
+                        <Badge className={getEventStatusBadgeColor(row.event_status)}>
+                          {formatStatus(row.event_status || 'active')}
                         </Badge>
                       </TableCell>
                     </TableRow>

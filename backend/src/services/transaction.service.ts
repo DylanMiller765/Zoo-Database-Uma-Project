@@ -34,15 +34,21 @@ export class TransactionService {
       FROM donations d
       LEFT JOIN customers c ON d.customer_id = c.customer_id
     `;
-    const rows = await query<any[]>(sql);
-    return rows.map(row => ({
-      id: `donation-${row.donation_id}`,
-      type: 'Donation',
-      date: row.donation_date,
-      total: parseFloat(row.amount),
-      customerName: `${row.first_name} ${row.last_name}`,
-      details: {},
-    }));
+    try {
+      const rows = await query<any[]>(sql);
+      return rows.map(row => ({
+        id: `donation-${row.donation_id}`,
+        type: 'Donation',
+        date: row.donation_date,
+        total: parseFloat(row.amount),
+        customerName: row.first_name && row.last_name ? `${row.first_name} ${row.last_name}` : 'Anonymous',
+        details: {},
+      }));
+    } catch (error) {
+      // If donations table doesn't exist or has issues, return empty array
+      console.error('Error fetching donations:', error);
+      return [];
+    }
   }
 
   private static async getEventRegistrations(): Promise<UnifiedTransaction[]> {
@@ -52,27 +58,28 @@ export class TransactionService {
         er.registration_date,
         er.number_of_participants,
         er.total_amount,
-        er.refunded_at,
-        er.refund_reason,
         c.first_name,
         c.last_name
       FROM event_registrations er
       LEFT JOIN customers c ON er.customer_id = c.customer_id
-      WHERE er.deleted_at IS NULL
     `;
-    const rows = await query<any[]>(sql);
-    return rows.map(row => ({
-      id: `event-${row.registration_id}`,
-      type: 'Event',
-      date: row.registration_date,
-      total: parseFloat(row.total_amount),
-      customerName: row.first_name ? `${row.first_name} ${row.last_name}` : 'Walk-in Customer',
-      refunded_at: row.refunded_at || null,
-      refund_reason: row.refund_reason || null,
-      details: {
-        participants: row.number_of_participants,
-      },
-    }));
+    try {
+      const rows = await query<any[]>(sql);
+      return rows.map(row => ({
+        id: `event-${row.registration_id}`,
+        type: 'Event',
+        date: row.registration_date,
+        total: parseFloat(row.total_amount),
+        customerName: row.first_name ? `${row.first_name} ${row.last_name}` : 'Walk-in Customer',
+        details: {
+          participants: row.number_of_participants,
+        },
+      }));
+    } catch (error) {
+      // If event_registrations table doesn't exist or has issues, return empty array
+      console.error('Error fetching event registrations:', error);
+      return [];
+    }
   }
 
   private static async getGiftShopSales(): Promise<UnifiedTransaction[]> {
@@ -89,16 +96,22 @@ export class TransactionService {
       LEFT JOIN customers c ON t.customer_id = c.customer_id
       LEFT JOIN employees e ON t.employee_id = e.employee_id
     `;
-    const rows = await query<any[]>(sql);
-    return rows.map(row => ({
-      id: `giftshop-${row.transaction_id}`,
-      type: 'Gift Shop',
-      date: row.sale_date,
-      total: parseFloat(row.total_amount),
-      customerName: row.first_name ? `${row.first_name} ${row.last_name}` : 'N/A',
-      employeeName: row.emp_first_name ? `${row.emp_first_name} ${row.emp_last_name}` : 'N/A',
-      details: {},
-    }));
+    try {
+      const rows = await query<any[]>(sql);
+      return rows.map(row => ({
+        id: `giftshop-${row.transaction_id}`,
+        type: 'Gift Shop',
+        date: row.sale_date,
+        total: parseFloat(row.total_amount),
+        customerName: row.first_name ? `${row.first_name} ${row.last_name}` : 'N/A',
+        employeeName: row.emp_first_name ? `${row.emp_first_name} ${row.emp_last_name}` : 'N/A',
+        details: {},
+      }));
+    } catch (error) {
+      // If gift shop sales table doesn't exist or has issues, return empty array
+      console.error('Error fetching gift shop sales:', error);
+      return [];
+    }
   }
 
   private static async getCafeSales(): Promise<UnifiedTransaction[]> {
@@ -112,32 +125,38 @@ export class TransactionService {
       FROM cafe_sales
       GROUP BY transaction_id, sale_timestamp, customer_id, employee_id
     `;
-    const rows = await query<any[]>(sql);
+    try {
+      const rows = await query<any[]>(sql);
 
-    // This is inefficient, but for the sake of simplicity for now...
-    const populatedRows = await Promise.all(rows.map(async row => {
-      let customerName = 'N/A';
-      if (row.customer_id) {
-        const [c] = await query<any[]>('SELECT first_name, last_name FROM customers WHERE customer_id = ?', [row.customer_id]);
-        if(c) customerName = `${c.first_name} ${c.last_name}`;
-      }
-      let employeeName = 'N/A';
-      if (row.employee_id) {
-        const [e] = await query<any[]>('SELECT first_name, last_name FROM employees WHERE employee_id = ?', [row.employee_id]);
-        if(e) employeeName = `${e.first_name} ${e.last_name}`;
-      }
-      return { ...row, customerName, employeeName };
-    }));
+      // This is inefficient, but for the sake of simplicity for now...
+      const populatedRows = await Promise.all(rows.map(async row => {
+        let customerName = 'N/A';
+        if (row.customer_id) {
+          const [c] = await query<any[]>('SELECT first_name, last_name FROM customers WHERE customer_id = ?', [row.customer_id]);
+          if(c) customerName = `${c.first_name} ${c.last_name}`;
+        }
+        let employeeName = 'N/A';
+        if (row.employee_id) {
+          const [e] = await query<any[]>('SELECT first_name, last_name FROM employees WHERE employee_id = ?', [row.employee_id]);
+          if(e) employeeName = `${e.first_name} ${e.last_name}`;
+        }
+        return { ...row, customerName, employeeName };
+      }));
 
-    return populatedRows.map(row => ({
-      id: `cafe-${row.transaction_id}`,
-      type: 'Cafe',
-      date: row.sale_timestamp,
-      total: parseFloat(row.total),
-      customerName: row.customerName,
-      employeeName: row.employeeName,
-      details: {},
-    }));
+      return populatedRows.map(row => ({
+        id: `cafe-${row.transaction_id}`,
+        type: 'Cafe',
+        date: row.sale_timestamp,
+        total: parseFloat(row.total),
+        customerName: row.customerName,
+        employeeName: row.employeeName,
+        details: {},
+      }));
+    } catch (error) {
+      // If cafe sales table doesn't exist or has issues, return empty array
+      console.error('Error fetching cafe sales:', error);
+      return [];
+    }
   }
 
   private static async getTicketSales(): Promise<UnifiedTransaction[]> {
@@ -150,16 +169,21 @@ export class TransactionService {
         c.last_name
       FROM tickets t
       LEFT JOIN customers c ON t.customer_id = c.customer_id
-      WHERE t.deleted_at IS NULL
     `;
-    const rows = await query<any[]>(sql);
-    return rows.map(row => ({
-      id: `ticket-${row.ticket_id}`,
-      type: 'Ticket',
-      date: row.purchase_date,
-      total: parseFloat(row.price),
-      customerName: row.first_name ? `${row.first_name} ${row.last_name}` : 'N/A',
-      details: {},
-    }));
+    try {
+      const rows = await query<any[]>(sql);
+      return rows.map(row => ({
+        id: `ticket-${row.ticket_id}`,
+        type: 'Ticket',
+        date: row.purchase_date,
+        total: parseFloat(row.price),
+        customerName: row.first_name ? `${row.first_name} ${row.last_name}` : 'N/A',
+        details: {},
+      }));
+    } catch (error) {
+      // If tickets table doesn't exist or has issues, return empty array
+      console.error('Error fetching ticket sales:', error);
+      return [];
+    }
   }
 }

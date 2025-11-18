@@ -16,7 +16,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { MapPin, Leaf, Heart, Calendar, User, FileDown, AlertTriangle, ArrowUpDown, ArrowUp, ArrowDown, Filter, X, Search } from "lucide-react";
+import { MapPin, Leaf, Heart, Calendar, User, AlertTriangle, ArrowUpDown, ArrowUp, ArrowDown, Filter, X, Search } from "lucide-react";
 import {
   ReportParametersCard,
   DateRangePicker,
@@ -407,11 +407,6 @@ export default function AnimalHealthCarePage() {
     }
   };
 
-  // Export functionality (placeholder for now - we'll add xlsx later)
-  const handleExport = () => {
-    alert("Export functionality will be implemented after xlsx dependency is resolved");
-  };
-
   // Auth check
   if (authLoading) {
     return (
@@ -782,15 +777,6 @@ export default function AnimalHealthCarePage() {
                 </div>
               )}
             </div>
-
-            {/* Export Button */}
-            <Button
-              onClick={handleExport}
-              className="flex items-center gap-2 bg-sea_green-600 hover:bg-sea_green-700 text-white"
-            >
-              <FileDown className="h-4 w-4" />
-              Export to Excel
-            </Button>
           </div>
 
           {/* Data Display - Conditional based on view options */}
