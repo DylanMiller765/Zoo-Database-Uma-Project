@@ -280,7 +280,7 @@ export default function EventsPage() {
                 </TableCell>
                 <TableCell>{event.location || 'N/A'}</TableCell>
                 <TableCell>
-                  {event.current_registrations || 0} / {event.max_capacity || 'Unlimited'}
+                  {event.max_capacity || 'Unlimited'}
                 </TableCell>
                 <TableCell>
                   {isDeleted(event) ? (
