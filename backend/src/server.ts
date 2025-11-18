@@ -29,6 +29,7 @@ import checkoutRoutes from './routes/checkout.routes';
 import donationRoutes from './routes/donation.routes';
 import transactionRoutes from './routes/transaction.routes';
 import eventCancellationLogRoutes from './routes/event-cancellation-log.routes';
+import testEmailRoutes from './routes/test-email.routes';
 import { initMailService, sendMail } from './services/mailService';
 import { startAnimalAlertEmailJob } from './jobs/animal-alert.job';
 
@@ -81,6 +82,7 @@ app.use('/api/checkout', checkoutRoutes);
 app.use('/api/donations', donationRoutes);
 app.use('/api/transactions', transactionRoutes);
 app.use('/api/event-cancellations', eventCancellationLogRoutes);
+app.use('/api/test-email', testEmailRoutes);
 
 // Error handling
 app.use(notFound);
