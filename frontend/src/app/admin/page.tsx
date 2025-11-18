@@ -341,10 +341,10 @@ export default function AdminDashboard() {
       )}
 
       {/* Main Content Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Recent Activity */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Recent Activity - Takes 2 columns */}
         <Card
-          className={recentActivities.length > 5 ? 'cursor-pointer hover:shadow-lg transition-shadow' : ''}
+          className={`lg:col-span-2 ${recentActivities.length > 5 ? 'cursor-pointer hover:shadow-lg transition-shadow' : ''}`}
           onClick={() => recentActivities.length > 5 && setShowActivityModal(true)}
         >
           <CardHeader>
@@ -402,37 +402,41 @@ export default function AdminDashboard() {
           </CardContent>
         </Card>
 
-        {/* Quick Actions */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center space-x-2">
-              <Plus className="h-5 w-5 text-dark_spring_green-600" />
-              <span>Quick Actions</span>
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              {quickActions.map((action) => {
-                const Icon = action.icon;
-                return (
-                  <Link key={action.href} href={action.href}>
-                    <div className="flex items-center space-x-3 p-4 rounded-lg border-2 border-gray-300 hover:border-dark_spring_green-400 hover:bg-dark_spring_green-50 transition-all cursor-pointer group shadow-sm hover:shadow-md">
-                      <div className="p-2 rounded-lg bg-dark_spring_green-100 group-hover:bg-dark_spring_green-200 transition-colors">
-                        <Icon className="h-5 w-5 text-dark_spring_green-600" />
+        {/* Event Cancellation Widget or Quick Actions */}
+        {(user?.job_role === 'manager' || user?.job_role === 'coordinator') ? (
+          <EventCancellationWidget limit={5} />
+        ) : (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center space-x-2">
+                <Plus className="h-5 w-5 text-dark_spring_green-600" />
+                <span>Quick Actions</span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                {quickActions.map((action) => {
+                  const Icon = action.icon;
+                  return (
+                    <Link key={action.href} href={action.href}>
+                      <div className="flex items-center space-x-3 p-4 rounded-lg border-2 border-gray-300 hover:border-dark_spring_green-400 hover:bg-dark_spring_green-50 transition-all cursor-pointer group shadow-sm hover:shadow-md">
+                        <div className="p-2 rounded-lg bg-dark_spring_green-100 group-hover:bg-dark_spring_green-200 transition-colors">
+                          <Icon className="h-5 w-5 text-dark_spring_green-600" />
+                        </div>
+                        <div className="flex-1">
+                          <p className="text-sm font-medium text-gray-900 group-hover:text-dark_spring_green-700">
+                            {action.label}
+                          </p>
+                          <p className="text-xs text-gray-600">{action.description}</p>
+                        </div>
                       </div>
-                      <div className="flex-1">
-                        <p className="text-sm font-medium text-gray-900 group-hover:text-dark_spring_green-700">
-                          {action.label}
-                        </p>
-                        <p className="text-xs text-gray-600">{action.description}</p>
-                      </div>
-                    </div>
-                  </Link>
-                );
-              })}
-            </div>
-          </CardContent>
-        </Card>
+                    </Link>
+                  );
+                })}
+              </div>
+            </CardContent>
+          </Card>
+        )}
       </div>
 
 
@@ -493,12 +497,6 @@ export default function AdminDashboard() {
         </Card>
       )}
 
-      {/* Event Cancellation Widget - Managers and Coordinators Only */}
-      {(user?.job_role === 'manager' || user?.job_role === 'coordinator') && (
-        <div className="mt-6">
-          <EventCancellationWidget limit={5} />
-        </div>
-      )}
 
       {/* Recent Activity Modal */}
       <Modal

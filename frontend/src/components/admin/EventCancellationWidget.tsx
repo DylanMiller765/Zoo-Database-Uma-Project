@@ -136,16 +136,9 @@ export function EventCancellationWidget({ limit = 5 }: EventCancellationWidgetPr
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="flex items-center justify-between">
-          <div className="flex items-center space-x-2">
-            <AlertTriangle className="h-5 w-5 text-red-600" />
-            <span>Recent Event Cancellations</span>
-          </div>
-          {logs.length > 0 && (
-            <span className="text-xs text-gray-500 font-normal">
-              Via Database Trigger
-            </span>
-          )}
+        <CardTitle className="flex items-center space-x-2">
+          <AlertTriangle className="h-5 w-5 text-red-600" />
+          <span>Recent Event Cancellations</span>
         </CardTitle>
       </CardHeader>
       <CardContent>
@@ -180,12 +173,12 @@ export function EventCancellationWidget({ limit = 5 }: EventCancellationWidgetPr
                 </div>
 
                 {/* Statistics Grid */}
-                <div className="grid grid-cols-3 gap-3 mb-3">
+                <div className="grid grid-cols-2 gap-3 mb-3">
                   <div className="bg-white rounded-lg p-2 border border-gray-200">
                     <div className="flex items-center space-x-2">
                       <Users className="h-4 w-4 text-gray-600" />
                       <div>
-                        <p className="text-xs text-gray-500">Notified</p>
+                        <p className="text-xs text-gray-500">Refunded Orders</p>
                         <p className="text-sm font-semibold text-gray-900">
                           {log.customers_notified}
                         </p>
@@ -197,21 +190,9 @@ export function EventCancellationWidget({ limit = 5 }: EventCancellationWidgetPr
                     <div className="flex items-center space-x-2">
                       <DollarSign className="h-4 w-4 text-gray-600" />
                       <div>
-                        <p className="text-xs text-gray-500">Refunds</p>
+                        <p className="text-xs text-gray-500">Refund Amount</p>
                         <p className="text-sm font-semibold text-gray-900">
-                          {log.refunds_needed}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="bg-white rounded-lg p-2 border border-gray-200">
-                    <div className="flex items-center space-x-2">
-                      <Users className="h-4 w-4 text-gray-600" />
-                      <div>
-                        <p className="text-xs text-gray-500">Total</p>
-                        <p className="text-sm font-semibold text-gray-900">
-                          {log.total_registrations}
+                          ${parseFloat(String(log.refunds_needed || 0)).toFixed(2)}
                         </p>
                       </div>
                     </div>

@@ -78,7 +78,6 @@ export function CafeRevenueSection({ data }: Props) {
                   <TableHead className="text-right">Transactions</TableHead>
                   <TableHead className="text-right">Line Items</TableHead>
                   <TableHead className="text-right">Revenue</TableHead>
-                  <TableHead className="text-right">Avg Transaction</TableHead>
                   {data.returns > 0 && <TableHead className="text-right">Returns</TableHead>}
                   <TableHead className="text-right">% of Total</TableHead>
                 </TableRow>
@@ -103,9 +102,6 @@ export function CafeRevenueSection({ data }: Props) {
                       </TableCell>
                       <TableCell className="text-right font-semibold text-orange-600">
                         ${formatMoney(row.revenue)}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        ${formatMoney(row.avg_transaction)}
                       </TableCell>
                       {data.returns > 0 && (
                         <TableCell className="text-right text-red-600">

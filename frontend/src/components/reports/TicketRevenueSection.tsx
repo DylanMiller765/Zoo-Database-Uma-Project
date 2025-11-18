@@ -8,7 +8,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Ticket, Database } from "lucide-react";
+import { Ticket } from "lucide-react";
 
 interface TicketRevenueData {
   total: number;
@@ -46,10 +46,6 @@ export function TicketRevenueSection({ data }: Props) {
             <Ticket className="h-6 w-6 text-blue-600" />
             <div>
               <CardTitle className="text-xl text-gray-900">Ticket Revenue</CardTitle>
-              <div className="text-xs text-gray-600 flex items-center gap-1 mt-1">
-                <Database className="h-3 w-3" />
-                Source: tickets table | Aggregation: SUM(price) GROUP BY ticket_type
-              </div>
             </div>
           </div>
           <div className="text-right">
@@ -65,7 +61,7 @@ export function TicketRevenueSection({ data }: Props) {
       <CardContent className="space-y-6 pl-6 pr-6">
         {/* Revenue by Ticket Type */}
         <div>
-          <h3 className="text-sm font-semibold text-gray-700 mb-3">
+          <h3 className="text-sm font-semibold text-gray-700 mb-3 pl-2">
             Revenue by Ticket Type
           </h3>
           <div className="overflow-x-auto">

@@ -65,7 +65,7 @@ export function GiftShopRevenueSection({ data }: Props) {
       <CardContent className="space-y-6">
         {/* Revenue by Gift Shop */}
         <div>
-          <h3 className="text-sm font-semibold text-gray-700 mb-3">
+          <h3 className="text-sm font-semibold text-gray-700 mb-3 pl-2">
             Revenue by Gift Shop
           </h3>
           <div className="overflow-x-auto">
@@ -123,7 +123,7 @@ export function GiftShopRevenueSection({ data }: Props) {
         {/* Items Sold Section */}
         {data.byItem && data.byItem.length > 0 && (
           <div>
-            <h3 className="text-sm font-semibold text-gray-700 mb-3">
+            <h3 className="text-sm font-semibold text-gray-700 mb-3 pl-2">
               Items Sold
             </h3>
             <div className="overflow-x-auto">
