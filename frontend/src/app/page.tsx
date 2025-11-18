@@ -378,7 +378,7 @@ export default function HomePage() {
           <PlanCard 
             icon={<TicketIcon />}
             title="Admission"
-            content={<>Adults $29.95<br />Children $19.95<br />Seniors $24.95</>}
+            content={<>Adults $45<br />Children $30<br />Seniors $35<br />Students $38<br /></>}
           />
           <PlanCard 
             icon={<LocationIcon />}
