@@ -10,6 +10,7 @@ router.use(protect);
 router.get('/summary', MeController.summary);
 router.get('/tickets', MeController.tickets);
 router.get('/event-registrations', MeController.registrations);
+router.get('/purchase-history', MeController.purchaseHistory);
 router.get('/visits', MeController.visits);
 router.get('/membership', MeController.membership);
 router.post('/membership/purchase', MeController.purchaseMembership);

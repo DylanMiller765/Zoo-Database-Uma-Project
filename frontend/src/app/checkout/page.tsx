@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import PaymentForm, { PaymentData } from '@/components/PaymentForm';
-import { checkoutService } from '@/services/checkout.service';
+import { checkoutService, CheckoutResponse } from '@/services/checkout.service';
 import { useAuth } from '@/context/AuthContext';
 import { useCart } from '@/context/CartContext';
 import { Loader2, ArrowLeft, ShoppingCart } from 'lucide-react';
@@ -62,7 +62,7 @@ export default function CheckoutPage() {
     setError(null);
 
     try {
-      const result = await checkoutService.processCheckout({
+      const result: CheckoutResponse = await checkoutService.processCheckout({
         items: cart.items.map(item => ({
           item_type: item.item_type,
           item_id: item.item_id,
@@ -71,7 +71,7 @@ export default function CheckoutPage() {
           unit_price: item.unit_price,
           metadata: item.metadata,
         })),
-        payment_method: 'online',
+        payment_method: 'credit',
         save_payment_method: payment.savePaymentMethod,
         payment_data: {
           cardNumber: payment.cardNumber,
@@ -98,6 +98,7 @@ export default function CheckoutPage() {
           cafe_items: result.summary.cafe_items.toString(),
           gift_shop_items: result.summary.gift_shop_items.toString(),
           donations: result.summary.donations.toString(),
+          memberships: result.summary.memberships.toString(),
         });
 
         router.push(`/order-confirmation?${params.toString()}`);

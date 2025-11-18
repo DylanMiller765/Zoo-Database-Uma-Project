@@ -4,6 +4,7 @@ export interface Donation {
   amount: number;
   donation_date: Date;
   message?: string;
+  payment_method?: 'cash' | 'credit' | 'debit';
 }
 
 export interface CreateDonationRequest {

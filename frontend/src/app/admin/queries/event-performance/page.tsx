@@ -16,7 +16,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Calendar, Users, DollarSign, TrendingUp, FileDown } from "lucide-react";
+import { Calendar, Users, DollarSign, TrendingUp } from "lucide-react";
 import {
   ReportParametersCard,
   DateRangePicker,
@@ -39,6 +39,7 @@ type EventRow = {
   capacity_percentage: number | null;
   coordinator_name: string | null;
   description: string | null;
+  is_past?: boolean;
 };
 
 export default function EventPerformancePage() {
@@ -55,16 +56,14 @@ export default function EventPerformancePage() {
     startDate: '',
     endDate: '',
     eventStatus: 'all',
-    minCapacity: 0,
-    includeCanceled: false,
-    includeDeleted: false
+    includeCanceled: false
   });
 
   // Summary metrics
   const summary = useMemo(() => {
     return {
       totalEvents: data.length,
-      totalAttendees: data.reduce((sum, e) => sum + (e.total_registered || 0), 0),
+      totalAttendees: data.reduce((sum, e) => sum + (e.registration_count || 0), 0),
       totalRevenue: data.reduce((sum, e) => sum + parseFloat(String(e.total_revenue || 0)), 0),
       avgCapacity: data.length > 0
         ? data.reduce((sum, e) => sum + parseFloat(String(e.capacity_percentage || 0)), 0) / data.filter(e => e.capacity_percentage !== null).length
@@ -74,12 +73,6 @@ export default function EventPerformancePage() {
 
   // Generate report handler
   const handleGenerate = async () => {
-    // Validate required fields
-    if (!params.startDate || !params.endDate) {
-      alert("Please select both start and end dates");
-      return;
-    }
-
     try {
       setLoading(true);
       const result = await queryService.getEventPerformance(params);
@@ -99,9 +92,7 @@ export default function EventPerformancePage() {
       startDate: '',
       endDate: '',
       eventStatus: 'all',
-      minCapacity: 0,
-      includeCanceled: false,
-      includeDeleted: false
+      includeCanceled: false
     });
     setHasGenerated(false);
     setData([]);
@@ -130,13 +121,21 @@ export default function EventPerformancePage() {
     return "success";
   };
 
-  // Export functionality (placeholder)
-  const handleExport = () => {
-    alert("Export functionality will be implemented after xlsx dependency is resolved");
+  const getEventStatusBadge = (eventDate: string) => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const eventDateObj = new Date(eventDate);
+    eventDateObj.setHours(0, 0, 0, 0);
+    return eventDateObj < today ? "default" : "success";
   };
 
-  // Form validation
-  const isFormValid = params.startDate && params.endDate;
+  const getEventStatusLabel = (eventDate: string) => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const eventDateObj = new Date(eventDate);
+    eventDateObj.setHours(0, 0, 0, 0);
+    return eventDateObj < today ? "Past" : "Upcoming";
+  };
 
   // Auth check
   if (authLoading) {
@@ -163,7 +162,8 @@ export default function EventPerformancePage() {
       </div>
 
       {/* Parameters Form */}
-      <ReportParametersCard>
+      <Card>
+        <CardContent className="space-y-4 pt-6">
         <DateRangePicker
           startDate={params.startDate}
           endDate={params.endDate}
@@ -173,74 +173,34 @@ export default function EventPerformancePage() {
           showQuickSelect={true}
         />
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
           {/* Event Status Filter */}
-          <div>
-            <Label htmlFor="eventStatus" className="text-sm font-medium text-gray-700">
-              Event Status
-            </Label>
-            <select
-              id="eventStatus"
-              value={params.eventStatus}
-              onChange={(e) => setParams({ ...params, eventStatus: e.target.value })}
-              className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
-            >
-              <option value="all">All Events</option>
-              <option value="upcoming">Upcoming Only</option>
-              <option value="past">Past Only</option>
-            </select>
-          </div>
-
-          {/* Min Capacity Filter */}
-          <div>
-            <Label htmlFor="minCapacity" className="text-sm font-medium text-gray-700">
-              Minimum Capacity: {params.minCapacity}%
-            </Label>
-            <input
-              type="range"
-              id="minCapacity"
-              min="0"
-              max="100"
-              step="5"
-              value={params.minCapacity}
-              onChange={(e) => setParams({ ...params, minCapacity: parseInt(e.target.value) })}
-              className="mt-2 w-full"
-            />
-            <div className="flex justify-between text-xs text-gray-500 mt-1">
-              <span>0%</span>
-              <span>50%</span>
-              <span>100%</span>
-            </div>
-          </div>
+          <Label htmlFor="eventStatus" className="text-sm font-medium text-gray-700">
+            Event Status
+          </Label>
+          <select
+            id="eventStatus"
+            value={params.eventStatus}
+            onChange={(e) => setParams({ ...params, eventStatus: e.target.value })}
+            className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
+          >
+            <option value="all">All Events</option>
+            <option value="upcoming">Upcoming Only</option>
+            <option value="past">Past Only</option>
+          </select>
         </div>
 
-        {/* Checkboxes */}
-        <div className="flex flex-col sm:flex-row gap-4">
-          <div className="flex items-center gap-2">
-            <input
-              type="checkbox"
-              id="includeCanceled"
-              checked={params.includeCanceled}
-              onChange={(e) => setParams({ ...params, includeCanceled: e.target.checked })}
-              className="rounded border-gray-300 text-sea_green-600 focus:ring-sea_green-500"
-            />
-            <Label htmlFor="includeCanceled" className="text-sm text-gray-700 cursor-pointer">
-              Include canceled events
-            </Label>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <input
-              type="checkbox"
-              id="includeDeleted"
-              checked={params.includeDeleted}
-              onChange={(e) => setParams({ ...params, includeDeleted: e.target.checked })}
-              className="rounded border-gray-300 text-sea_green-600 focus:ring-sea_green-500"
-            />
-            <Label htmlFor="includeDeleted" className="text-sm text-gray-700 cursor-pointer">
-              Include deleted events
-            </Label>
-          </div>
+        <div className="flex items-center gap-3">
+          <input
+            type="checkbox"
+            id="includeCanceled"
+            checked={params.includeCanceled}
+            onChange={(e) => setParams({ ...params, includeCanceled: e.target.checked })}
+            className="rounded border-gray-300"
+          />
+          <Label htmlFor="includeCanceled" className="text-sm font-medium text-gray-700 mb-0 cursor-pointer">
+            Show Cancelled Events
+          </Label>
         </div>
 
         {/* Generate Button */}
@@ -248,17 +208,15 @@ export default function EventPerformancePage() {
           onGenerate={handleGenerate}
           onClear={handleClear}
           loading={loading}
-          disabled={!isFormValid}
           hasGenerated={hasGenerated}
         />
-      </ReportParametersCard>
+        </CardContent>
+      </Card>
 
       {/* Empty State or Results */}
       {!hasGenerated && (
         <ReportEmptyState
           icon={<Calendar className="h-16 w-16 text-persian_orange-400" />}
-          title="No Report Generated"
-          description="Select a date range and click Generate Report to view event performance data."
         />
       )}
 
@@ -320,17 +278,6 @@ export default function EventPerformancePage() {
             </Card>
           </div>
 
-          {/* Export Button */}
-          <div className="flex justify-end">
-            <Button
-              onClick={handleExport}
-              className="flex items-center gap-2 bg-sea_green-600 hover:bg-sea_green-700 text-white"
-            >
-              <FileDown className="h-4 w-4" />
-              Export to Excel
-            </Button>
-          </div>
-
           {/* Events Table */}
           <Card>
             <CardContent className="p-0">
@@ -340,11 +287,13 @@ export default function EventPerformancePage() {
                     <TableRow>
                       <TableHead>Event Name</TableHead>
                       <TableHead>Date & Time</TableHead>
+                      <TableHead>Status</TableHead>
                       <TableHead>Location</TableHead>
+                      <TableHead className="text-right">Ticket Price</TableHead>
                       <TableHead className="text-right">Attendees</TableHead>
                       <TableHead className="text-right">Capacity</TableHead>
+                      <TableHead className="text-center">Capacity %</TableHead>
                       <TableHead className="text-right">Revenue</TableHead>
-                      <TableHead className="text-center">Utilization</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -372,9 +321,21 @@ export default function EventPerformancePage() {
                           </div>
                         </TableCell>
 
+                        {/* Status */}
+                        <TableCell>
+                          <Badge variant={getEventStatusBadge(event.event_date)}>
+                            {getEventStatusLabel(event.event_date)}
+                          </Badge>
+                        </TableCell>
+
                         {/* Location */}
                         <TableCell className="text-sm text-gray-600">
                           {event.location || "N/A"}
+                        </TableCell>
+
+                        {/* Ticket Price */}
+                        <TableCell className="text-right font-semibold">
+                          ${formatMoney(event.ticket_price || 0)}
                         </TableCell>
 
                         {/* Attendees */}
@@ -394,12 +355,7 @@ export default function EventPerformancePage() {
                           </Badge>
                         </TableCell>
 
-                        {/* Revenue */}
-                        <TableCell className="text-right font-semibold text-persian_orange-600">
-                          ${formatMoney(event.total_revenue)}
-                        </TableCell>
-
-                        {/* Utilization */}
+                        {/* Capacity % */}
                         <TableCell className="text-center">
                           {event.capacity_percentage !== null ? (
                             <Badge variant={getCapacityBadge(parseFloat(String(event.capacity_percentage)))}>
@@ -408,6 +364,11 @@ export default function EventPerformancePage() {
                           ) : (
                             <span className="text-sm text-gray-500">N/A</span>
                           )}
+                        </TableCell>
+
+                        {/* Revenue */}
+                        <TableCell className="text-right font-semibold text-persian_orange-600">
+                          ${formatMoney(event.total_revenue)}
                         </TableCell>
                       </TableRow>
                     ))}

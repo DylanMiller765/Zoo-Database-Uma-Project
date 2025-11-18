@@ -16,7 +16,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { MapPin, Leaf, Heart, Calendar, User, FileDown, AlertTriangle, ArrowUpDown, ArrowUp, ArrowDown, Filter, X, Search } from "lucide-react";
+import { MapPin, Leaf, Heart, Calendar, User, AlertTriangle, ArrowUpDown, ArrowUp, ArrowDown, Filter, X, Search } from "lucide-react";
 import {
   ReportParametersCard,
   DateRangePicker,
@@ -74,8 +74,8 @@ export default function AnimalHealthCarePage() {
   const [loading, setLoading] = useState(false);
 
   // View options
-  const [groupBy, setGroupBy] = useState<'habitat' | 'keeper' | 'none'>('habitat');
-  const [viewMode, setViewMode] = useState<'cards' | 'table'>('cards');
+  const [groupBy, setGroupBy] = useState<'habitat' | 'keeper' | 'none'>('keeper');
+  const [viewMode, setViewMode] = useState<'cards' | 'table'>('table');
   const [sortBy, setSortBy] = useState<string>('name');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
   const [viewSize, setViewSize] = useState<3 | 4 | 5>(4);
@@ -407,11 +407,6 @@ export default function AnimalHealthCarePage() {
     }
   };
 
-  // Export functionality (placeholder for now - we'll add xlsx later)
-  const handleExport = () => {
-    alert("Export functionality will be implemented after xlsx dependency is resolved");
-  };
-
   // Auth check
   if (authLoading) {
     return (
@@ -565,8 +560,6 @@ export default function AnimalHealthCarePage() {
       {!hasGenerated && (
         <ReportEmptyState
           icon={<Heart className="h-16 w-16 text-sea_green-400" />}
-          title="No Report Generated"
-          description="Configure the parameters above and click Generate Report to view animal health and care data."
         />
       )}
 
@@ -784,15 +777,6 @@ export default function AnimalHealthCarePage() {
                 </div>
               )}
             </div>
-
-            {/* Export Button */}
-            <Button
-              onClick={handleExport}
-              className="flex items-center gap-2 bg-sea_green-600 hover:bg-sea_green-700 text-white"
-            >
-              <FileDown className="h-4 w-4" />
-              Export to Excel
-            </Button>
           </div>
 
           {/* Data Display - Conditional based on view options */}

@@ -89,13 +89,13 @@ export default function VisitPage() {
           {/* Admission Pricing */}
           <section className="mt-8 rounded-2xl bg-gray-50 p-6">
             <h2 className="text-2xl font-bold mb-4">Admission Pricing</h2>
-            <div className="grid gap-6 sm:grid-cols-3">
+            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
               <Card className="rounded-xl border border-gray-200 bg-white shadow-sm">
                 <CardHeader className="px-6 pt-6 pb-3">
                   <CardTitle className="text-lg text-dark_spring_green-700">Adults</CardTitle>
                 </CardHeader>
                 <CardContent className="px-6 pb-6">
-                  <div className="text-3xl font-bold text-sea_green-600">$29.95</div>
+                  <div className="text-3xl font-bold text-sea_green-600">$45.00</div>
                   <p className="mt-2 text-xs text-gray-600">Ages 13+</p>
                 </CardContent>
               </Card>
@@ -105,7 +105,7 @@ export default function VisitPage() {
                   <CardTitle className="text-lg text-dark_spring_green-700">Children</CardTitle>
                 </CardHeader>
                 <CardContent className="px-6 pb-6">
-                  <div className="text-3xl font-bold text-sea_green-600">$19.95</div>
+                  <div className="text-3xl font-bold text-sea_green-600">$30.00</div>
                   <p className="mt-2 text-xs text-gray-600">Ages 3–12</p>
                 </CardContent>
               </Card>
@@ -115,8 +115,18 @@ export default function VisitPage() {
                   <CardTitle className="text-lg text-dark_spring_green-700">Seniors</CardTitle>
                 </CardHeader>
                 <CardContent className="px-6 pb-6">
-                  <div className="text-3xl font-bold text-sea_green-600">$24.95</div>
+                  <div className="text-3xl font-bold text-sea_green-600">$35.00</div>
                   <p className="mt-2 text-xs text-gray-600">Ages 65+</p>
+                </CardContent>
+              </Card>
+
+              <Card className="rounded-xl border border-gray-200 bg-white shadow-sm">
+                <CardHeader className="px-6 pt-6 pb-3">
+                  <CardTitle className="text-lg text-dark_spring_green-700">Students</CardTitle>
+                </CardHeader>
+                <CardContent className="px-6 pb-6">
+                  <div className="text-3xl font-bold text-sea_green-600">$38.00</div>
+                  <p className="mt-2 text-xs text-gray-600">Valid ID required</p>
                 </CardContent>
               </Card>
             </div>
@@ -142,10 +152,6 @@ export default function VisitPage() {
                     <li className="flex items-start gap-2">
                       <span className="text-sea_green-500 mt-0.5">✓</span>
                       <span>Unlimited access for 1 adult for one year</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <span className="text-sea_green-500 mt-0.5">✓</span>
-                      <span>10% discount at gift shop and cafés</span>
                     </li>
                     <li className="flex items-start gap-2">
                       <span className="text-sea_green-500 mt-0.5">✓</span>

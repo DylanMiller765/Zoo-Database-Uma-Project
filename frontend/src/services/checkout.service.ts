@@ -10,7 +10,7 @@ export interface CheckoutRequest {
     unit_price: number;
     metadata?: any;
   }>;
-  payment_method: 'credit' | 'debit' | 'online';
+  payment_method: 'credit' | 'debit';
   save_payment_method?: boolean;
   payment_data?: {
     cardNumber: string;
@@ -33,6 +33,7 @@ export interface CheckoutResponse {
     cafe_items: number;
     gift_shop_items: number;
     donations: number;
+    memberships: number;
   };
   total_amount: number;
   message: string;
@@ -43,7 +44,7 @@ export const checkoutService = {
    * Process checkout with cart items
    */
   async processCheckout(checkoutData: CheckoutRequest): Promise<CheckoutResponse> {
-    const response = await api.post('/checkout', checkoutData);
+    const response = await api.post<CheckoutResponse>('/checkout', checkoutData);
     return response.data;
   },
 };

@@ -20,6 +20,10 @@ import {
   Phone,
   Calendar,
   Edit,
+  ShoppingBag,
+  Coffee,
+  Clock,
+  Plus,
 } from "lucide-react";
 
 type ProfileResponse = {
@@ -67,10 +71,13 @@ export default function CustomerDashboard() {
   const [tickets, setTickets] = React.useState<any[]>([]);
   const [upcomingTickets, setUpcomingTickets] = React.useState<any[]>([]);
   const [visits, setVisits] = React.useState<any[]>([]);
+  const [upcomingEvents, setUpcomingEvents] = React.useState<any[]>([]);
+  const [purchaseHistory, setPurchaseHistory] = React.useState<any[]>([]);
   const [selectedTicket, setSelectedTicket] = React.useState<any | null>(null);
   const [showTicketModal, setShowTicketModal] = React.useState(false);
   const [autoRenew, setAutoRenew] = React.useState<boolean>(false);
   const [loadingAutoRenew, setLoadingAutoRenew] = React.useState(false);
+  const [paymentMethod, setPaymentMethod] = React.useState<any>(null);
 
   React.useEffect(() => {
     if (!loading) {
@@ -86,11 +93,14 @@ export default function CustomerDashboard() {
   const load = async () => {
     try {
       setFetching(true);
-      const [profileRes, summaryRes, ticketsRes, visitsRes] = await Promise.all([
+      const [profileRes, summaryRes, ticketsRes, visitsRes, eventsRes, purchaseRes, paymentRes] = await Promise.all([
         apiClient.get<ProfileResponse>("/auth/profile"),
         apiClient.get<SummaryResponse>("/me/summary"),
         apiClient.get<{ success: boolean; data: any[] }>("/me/tickets"),
         apiClient.get<{ success: boolean; data: any[] }>("/me/visits"),
+        apiClient.get<{ success: boolean; data: any[] }>("/me/event-registrations"),
+        apiClient.get<{ success: boolean; data: any[] }>("/me/purchase-history"),
+        apiClient.get("/me/payment-method").catch(() => ({ data: { success: true, data: null } })), // Silently fail if no payment method
       ]);
 
       setProfile(profileRes.data.data);
@@ -98,11 +108,16 @@ export default function CustomerDashboard() {
       setUpcomingTickets(summaryRes.data.data.ticketsUpcoming || []);
       setVisits(visitsRes.data.data || []);
       setTickets(ticketsRes.data.data || []);
+      setUpcomingEvents(eventsRes.data.data || []);
+      setPurchaseHistory(purchaseRes.data.data || []);
       
       // Load auto-renew status
       if (profileRes.data.data?.membership_auto_renew !== undefined) {
         setAutoRenew(profileRes.data.data.membership_auto_renew);
       }
+      
+      // Load payment method
+      setPaymentMethod(paymentRes.data.data);
     } catch (e: any) {
       console.error("Failed to load profile", e);
     } finally {
@@ -206,6 +221,9 @@ export default function CustomerDashboard() {
               <button onClick={() => setActive("visits")} className={`w-full flex items-center gap-2 rounded-lg px-3 py-2 text-left ${active === "visits" ? "bg-dark_spring_green-100 text-dark_spring_green-800" : "hover:bg-gray-50"}`}>
                 <MapPin className="h-4 w-4" /> Visit History
               </button>
+              <button onClick={() => setActive("purchase-history")} className={`w-full flex items-center gap-2 rounded-lg px-3 py-2 text-left ${active === "purchase-history" ? "bg-dark_spring_green-100 text-dark_spring_green-800" : "hover:bg-gray-50"}`}>
+                <ShoppingBag className="h-4 w-4" /> Purchase History
+              </button>
               <button onClick={() => setActive("membership")} className={`w-full flex items-center gap-2 rounded-lg px-3 py-2 text-left ${active === "membership" ? "bg-dark_spring_green-100 text-dark_spring_green-800" : "hover:bg-gray-50"}`}>
                 <Award className="h-4 w-4" /> Membership
               </button>
@@ -265,7 +283,7 @@ export default function CustomerDashboard() {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2"><Ticket className="h-5 w-5 text-sea_green-600" /> Tickets</CardTitle>
@@ -298,8 +316,146 @@ export default function CustomerDashboard() {
                   )}
                 </CardContent>
               </Card>
+
+              {/* Upcoming Events */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2"><Clock className="h-5 w-5 text-sea_green-600" /> Upcoming Events</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  {upcomingEvents.length === 0 ? (
+                    <p className="text-gray-600">No upcoming events registered.</p>
+                  ) : (
+                    upcomingEvents.map((event: any, i: number) => {
+                      const isCancelled = event.event_deleted_at !== null && event.event_deleted_at !== undefined;
+                      return (
+                        <div 
+                          key={i} 
+                          className={`rounded-xl border-2 p-4 ${
+                            isCancelled 
+                              ? 'border-red-400 bg-red-50' 
+                              : 'border-gray-200 bg-sea_green-50'
+                          }`}
+                        >
+                          <div className="flex items-start justify-between">
+                            <div className="flex-1">
+                              <div className="flex items-center gap-2 mb-1">
+                                <p className={`font-semibold ${isCancelled ? 'text-red-800 line-through' : 'text-gray-900'}`}>
+                                  {event.event_name}
+                                </p>
+                                {isCancelled && (
+                                  <span className="px-2 py-0.5 text-xs font-semibold rounded-full bg-red-200 text-red-800">
+                                    Cancelled
+                                  </span>
+                                )}
+                              </div>
+                              <div className="mt-2 space-y-1 text-sm text-gray-600">
+                                {event.event_date && (
+                                  <p className="flex items-center gap-2">
+                                    <Calendar className="h-4 w-4" />
+                                    {new Date(event.event_date).toLocaleDateString('en-US', { 
+                                      weekday: 'short', 
+                                      year: 'numeric', 
+                                      month: 'short', 
+                                      day: 'numeric' 
+                                    })}
+                                  </p>
+                                )}
+                                {event.start_time && (
+                                  <p className="flex items-center gap-2">
+                                    <Clock className="h-4 w-4" />
+                                    {new Date(`2000-01-01T${event.start_time}`).toLocaleTimeString('en-US', { 
+                                      hour: 'numeric', 
+                                      minute: '2-digit',
+                                      hour12: true 
+                                    })}
+                                    {event.end_time && ` - ${new Date(`2000-01-01T${event.end_time}`).toLocaleTimeString('en-US', { 
+                                      hour: 'numeric', 
+                                      minute: '2-digit',
+                                      hour12: true 
+                                    })}`}
+                                  </p>
+                                )}
+                                {event.location && (
+                                  <p className="flex items-center gap-2">
+                                    <MapPin className="h-4 w-4" />
+                                    {event.location}
+                                  </p>
+                                )}
+                                <p className="text-xs text-gray-500 mt-1">
+                                  Participants: {event.number_of_participants} • Registered: {new Date(event.registration_date).toLocaleDateString()}
+                                </p>
+                                {isCancelled && (
+                                  <p className="text-sm text-red-700 font-medium mt-2 bg-red-100 rounded-md px-3 py-2 border border-red-300">
+                                    This event has been cancelled. You will receive a refund.
+                                  </p>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })
+                  )}
+                </CardContent>
+              </Card>
+
             </div>
           </>
+        )}
+
+        {/* Purchase History Tab */}
+        {active === 'purchase-history' && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2"><ShoppingBag className="h-5 w-5 text-sea_green-600" /> Purchase History</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {purchaseHistory.length === 0 ? (
+                <p className="text-gray-600">No purchase history found.</p>
+              ) : (
+                purchaseHistory.map((purchase: any, i: number) => (
+                  <div key={i} className="rounded-xl border border-gray-200 bg-gray-50 p-4">
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-1">
+                          {purchase.purchase_type === 'gift_shop' ? (
+                            <ShoppingBag className="h-4 w-4 text-amber-600" />
+                          ) : (
+                            <Coffee className="h-4 w-4 text-amber-600" />
+                          )}
+                          <p className="font-semibold text-gray-900">{purchase.item_name}</p>
+                          <span className="text-xs px-2 py-0.5 rounded-full bg-gray-200 text-gray-700">
+                            {purchase.purchase_type === 'gift_shop' ? 'Gift Shop' : 'Cafe'}
+                          </span>
+                        </div>
+                        {purchase.item_description && (
+                          <p className="text-sm text-gray-600 mb-2">{purchase.item_description}</p>
+                        )}
+                        <div className="flex items-center gap-4 text-sm text-gray-600">
+                          <span>Quantity: {purchase.quantity}</span>
+                          <span>•</span>
+                          <span>${Number(purchase.unit_price).toFixed(2)} each</span>
+                          <span>•</span>
+                          <span className="font-semibold text-gray-900">Total: ${Number(purchase.line_total).toFixed(2)}</span>
+                        </div>
+                        <p className="text-xs text-gray-500 mt-2">
+                          Purchased: {new Date(purchase.purchase_date).toLocaleDateString('en-US', { 
+                            year: 'numeric', 
+                            month: 'short', 
+                            day: 'numeric',
+                            hour: 'numeric',
+                            minute: '2-digit',
+                            hour12: true
+                          })}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                ))
+              )}
+            </CardContent>
+          </Card>
         )}
 
         {/* Removed My Tickets tab content */}
@@ -369,10 +525,6 @@ export default function CustomerDashboard() {
                       <li className="flex items-start gap-2">
                         <span className="text-sea_green-600 mt-0.5">✓</span>
                         <span>Unlimited access for 1 adult for one year</span>
-                      </li>
-                      <li className="flex items-start gap-2">
-                        <span className="text-sea_green-600 mt-0.5">✓</span>
-                        <span>10% discount at gift shop and cafés</span>
                       </li>
                       <li className="flex items-start gap-2">
                         <span className="text-sea_green-600 mt-0.5">✓</span>
@@ -447,10 +599,6 @@ export default function CustomerDashboard() {
                       <li className="flex items-start gap-2">
                         <span className="text-sea_green-600 mt-0.5">✓</span>
                         <span>Unlimited access for 1 adult for one year</span>
-                      </li>
-                      <li className="flex items-start gap-2">
-                        <span className="text-sea_green-600 mt-0.5">✓</span>
-                        <span>10% discount at gift shop and cafés</span>
                       </li>
                       <li className="flex items-start gap-2">
                         <span className="text-sea_green-600 mt-0.5">✓</span>
@@ -608,6 +756,61 @@ export default function CustomerDashboard() {
                     <p className="text-gray-500 italic">No address information on file</p>
                   )}
                 </div>
+              </CardContent>
+            </Card>
+
+            {/* Credit Information Card */}
+            <Card className="border-2 border-gray-100 shadow-sm">
+              <CardHeader className="bg-gradient-to-r from-sea_green-50 to-dark_spring_green-50 border-b border-gray-200">
+                <CardTitle className="text-xl flex items-center gap-2 text-gray-900">
+                  <div className="p-2 rounded-lg bg-sea_green-100">
+                    <CreditCard className="h-5 w-5 text-sea_green-700" />
+                  </div>
+                  Credit Information
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="pt-6">
+                {paymentMethod ? (
+                  <>
+                    <div className="flex items-center gap-4 p-4 bg-gray-50 rounded-lg">
+                      <div className="p-3 bg-white rounded-lg shadow-sm">
+                        <CreditCard className="h-6 w-6 text-gray-600" />
+                      </div>
+                      <div className="flex-1">
+                        <p className="text-sm font-medium text-gray-700">Saved Card</p>
+                        <p className="text-lg font-semibold text-gray-900 mt-1">
+                          {paymentMethod.card_number || '**** **** **** ****'}
+                        </p>
+                        <p className="text-xs text-gray-500 mt-1">
+                          {paymentMethod.cardholder_name} • Expires {String(paymentMethod.expiry_month).padStart(2, '0')}/{paymentMethod.expiry_year}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="mt-4">
+                      <Button 
+                        type="button"
+                        variant="outline" 
+                        size="sm"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          router.push('/customer/profile');
+                        }}
+                        className="flex items-center gap-2"
+                      >
+                        <Edit className="h-4 w-4" />
+                        Manage Payment Method
+                      </Button>
+                    </div>
+                  </>
+                ) : (
+                  <div className="text-center py-8">
+                    <div className="p-4 bg-gray-50 rounded-lg inline-block mb-4">
+                      <CreditCard className="h-8 w-8 text-gray-400" />
+                    </div>
+                    <p className="text-gray-600">No credit card on file</p>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </div>
