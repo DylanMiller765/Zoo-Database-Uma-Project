@@ -25,7 +25,7 @@ export interface CheckoutCartItem {
 
 export interface CheckoutRequest {
   items: CheckoutCartItem[];
-  payment_method: 'credit' | 'debit' | 'online';
+  payment_method: 'credit' | 'debit';
   save_payment_method?: boolean;
   payment_data?: {
     cardNumber: string;
