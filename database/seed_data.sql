@@ -30,29 +30,29 @@ SET FOREIGN_KEY_CHECKS = 1;
 -- EMPLOYEES
 -- =======================================
 INSERT INTO employees (employee_id, first_name, last_name, email, phone, ssn, job_role, employment_type, salary, status, hire_date, gender) VALUES
-(1, 'Sarah', 'Johnson', 'sarah.johnson@zoo.com', '555-0101', '123-45-6789', 'manager', 'full_time', 75000.00, 'active', '2020-01-15', 'female'),
-(2, 'Mike', 'Chen', 'mike.chen@zoo.com', '555-0102', '234-56-7890', 'keeper', 'full_time', 45000.00, 'active', '2021-03-20', 'male'),
-(3, 'Emily', 'Rodriguez', 'emily.rodriguez@zoo.com', '555-0103', '345-67-8901', 'veterinarian', 'full_time', 85000.00, 'active', '2019-06-10', 'female'),
-(4, 'David', 'Kim', 'david.kim@zoo.com', '555-0104', '456-78-9012', 'coordinator', 'full_time', 55000.00, 'active', '2022-02-01', 'male'),
-(5, 'Lisa', 'Thompson', 'lisa.thompson@zoo.com', '555-0105', '567-89-0123', 'cashier', 'part_time', NULL, 'active', '2023-05-15', 'female'),
-(6, 'James', 'Wilson', 'james.wilson@zoo.com', '555-0106', '678-90-1234', 'guide', 'part_time', NULL, 'active', '2023-07-01', 'male'),
-(7, 'Anna', 'Martinez', 'anna.martinez@zoo.com', '555-0107', '789-01-2345', 'keeper', 'full_time', 46000.00, 'active', '2021-09-12', 'female'),
-(8, 'Tom', 'Brown', 'tom.brown@zoo.com', '555-0108', '890-12-3456', 'maintenance', 'full_time', 42000.00, 'active', '2020-11-05', 'male'),
-(9, 'Chris', 'Green', 'chris.green@zoo.com', '555-0109', '987-65-4321', 'keeper', 'full_time', 45000.00, 'active', '2023-08-01', 'male'),
-(10, 'Jessica', 'Blue', 'jessica.blue@zoo.com', '555-0110', '876-54-3210', 'keeper', 'full_time', 45500.00, 'active', '2023-09-01', 'female'),
-(11, 'Mark', 'White', 'mark.white@zoo.com', '555-0111', '765-43-2109', 'veterinarian', 'full_time', 86000.00, 'active', '2023-07-15', 'male'),
-(12, 'Laura', 'Black', 'laura.black@zoo.com', '555-0112', '654-32-1098', 'keeper', 'part_time', NULL, 'active', '2024-01-10', 'female');
+(1, 'Sarah', 'Johnson', 'sarah.johnson@zoo.com', '5550101101', '123-45-6789', 'manager', 'full_time', 75000.00, 'active', '2020-01-15', 'female'),
+(2, 'Mike', 'Chen', 'mike.chen@zoo.com', '5550101102', '234-56-7890', 'keeper', 'full_time', 45000.00, 'active', '2021-03-20', 'male'),
+(3, 'Emily', 'Rodriguez', 'emily.rodriguez@zoo.com', '5550101103', '345-67-8901', 'veterinarian', 'full_time', 85000.00, 'active', '2019-06-10', 'female'),
+(4, 'David', 'Kim', 'david.kim@zoo.com', '5550101104', '456-78-9012', 'coordinator', 'full_time', 55000.00, 'active', '2022-02-01', 'male'),
+(5, 'Lisa', 'Thompson', 'lisa.thompson@zoo.com', '5550101105', '567-89-0123', 'cashier', 'part_time', NULL, 'active', '2023-05-15', 'female'),
+(6, 'James', 'Wilson', 'james.wilson@zoo.com', '5550101106', '678-90-1234', 'guide', 'part_time', NULL, 'active', '2023-07-01', 'male'),
+(7, 'Anna', 'Martinez', 'anna.martinez@zoo.com', '5550101107', '789-01-2345', 'keeper', 'full_time', 46000.00, 'active', '2021-09-12', 'female'),
+(8, 'Tom', 'Brown', 'tom.brown@zoo.com', '5550101108', '890-12-3456', 'maintenance', 'full_time', 42000.00, 'active', '2020-11-05', 'male'),
+(9, 'Chris', 'Green', 'chris.green@zoo.com', '5550101109', '987-65-4321', 'keeper', 'full_time', 45000.00, 'active', '2023-08-01', 'male'),
+(10, 'Jessica', 'Blue', 'jessica.blue@zoo.com', '5550101110', '876-54-3210', 'keeper', 'full_time', 45500.00, 'active', '2023-09-01', 'female'),
+(11, 'Mark', 'White', 'mark.white@zoo.com', '5550101111', '765-43-2109', 'veterinarian', 'full_time', 86000.00, 'active', '2023-07-15', 'male'),
+(12, 'Laura', 'Black', 'laura.black@zoo.com', '5550101112', '654-32-1098', 'keeper', 'part_time', NULL, 'active', '2024-01-10', 'female');
 
 -- =======================================
 -- CUSTOMERS
 -- =======================================
 -- Maria Garcia has membership expiring in 20 days (for notification testing)
 INSERT INTO customers (customer_id, first_name, last_name, email, phone, address, city, state, zip_code, annual_pass, membership_start_date, membership_end_date, registration_date) VALUES
-(1, 'John', 'Smith', 'john.smith@email.com', '555-1001', '123 Main St', 'Springfield', 'IL', '62701', 'no', NULL, NULL, '2024-01-10'),
-(2, 'Maria', 'Garcia', 'maria.garcia@email.com', '555-1002', '456 Oak Ave', 'Springfield', 'IL', '62702', 'yes', '2024-01-01', '2025-01-01', '2023-11-15'),
-(3, 'Robert', 'Davis', 'robert.davis@email.com', '555-1003', '789 Pine Rd', 'Springfield', 'IL', '62703', 'no', NULL, NULL, '2024-02-20'),
-(4, 'Sarah', 'Wilson', 'sarah.wilson@email.com', '555-1004', '321 Elm St', 'Springfield', 'IL', '62704', 'yes', '2024-06-01', '2025-06-01', '2024-05-15'),
-(5, 'Michael', 'Johnson', 'michael.johnson@email.com', '555-1005', '654 Maple Dr', 'Springfield', 'IL', '62705', 'yes', '2024-03-15', '2025-03-15', '2024-03-01');
+(1, 'John', 'Smith', 'john.smith@email.com', '5551001101', '123 Main St', 'Springfield', 'IL', '62701', 'no', NULL, NULL, '2024-01-10'),
+(2, 'Maria', 'Garcia', 'maria.garcia@email.com', '5551001102', '456 Oak Ave', 'Springfield', 'IL', '62702', 'yes', '2024-01-01', '2025-01-01', '2023-11-15'),
+(3, 'Robert', 'Davis', 'robert.davis@email.com', '5551001103', '789 Pine Rd', 'Springfield', 'IL', '62703', 'no', NULL, NULL, '2024-02-20'),
+(4, 'Sarah', 'Wilson', 'sarah.wilson@email.com', '5551001104', '321 Elm St', 'Springfield', 'IL', '62704', 'yes', '2024-06-01', '2025-06-01', '2024-05-15'),
+(5, 'Michael', 'Johnson', 'michael.johnson@email.com', '5551001105', '654 Maple Dr', 'Springfield', 'IL', '62705', 'yes', '2024-03-15', '2025-03-15', '2024-03-01');
 
 -- Update Maria Garcia's membership to expire in 20 days (dynamic date calculation)
 UPDATE customers
@@ -179,11 +179,11 @@ INSERT INTO animals (name, scientific_name, species, date_of_birth, arrival_date
 -- EVENTS
 -- =======================================
 INSERT INTO events (name, description, event_date, start_time, end_time, location, max_participants, ticket_price, coordinator_id) VALUES
-('Dolphin Show', 'Watch our amazing dolphins perform tricks and learn about marine conservation', '2025-11-15', '14:00:00', '15:00:00', 'Aquatic Center Amphitheater', 400, 15.00, 4),
-('Penguin Feeding Time', 'Help our keepers feed the penguins and learn about their diet', '2025-11-10', '11:00:00', '11:30:00', 'Penguin Cove', 50, 10.00, 4),
-('Lion Encounter', 'Get up close with our lions through the safe viewing area', '2025-11-20', '13:00:00', '14:00:00', 'African Savanna', 100, 20.00, 4),
+('Dolphin Show', 'Watch our amazing dolphins perform tricks and learn about marine conservation', '2025-11-21', '14:00:00', '15:00:00', 'Aquatic Center Amphitheater', 400, 15.00, 4),
+('Penguin Feeding Time', 'Help our keepers feed the penguins and learn about their diet', '2025-11-28', '11:00:00', '11:30:00', 'Penguin Cove', 50, 10.00, 4),
+('Lion Encounter', 'Get up close with our lions through the safe viewing area', '2025-12-05', '13:00:00', '14:00:00', 'African Savanna', 100, 20.00, 4),
 ('Kids Zoo Camp', 'Week-long summer camp for children ages 8-12', '2025-12-15', '09:00:00', '15:00:00', 'Education Center', 30, 250.00, 4),
-('Night at the Zoo', 'Special after-hours tour experience with nocturnal animals', '2025-12-01', '19:00:00', '22:00:00', 'Various Locations', 150, 35.00, 4);
+('Night at the Zoo', 'Special after-hours tour experience with nocturnal animals', '2025-12-22', '19:00:00', '22:00:00', 'Various Locations', 150, 35.00, 4);
 
 -- =======================================
 -- GIFT SHOPS

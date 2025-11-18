@@ -69,9 +69,14 @@ export class AnimalModel {
     return await this.findById(id);
   }
 
-  static async remove(id: number): Promise<void> {
-    const sql = 'UPDATE animals SET deleted_at = NOW() WHERE animal_id = ?';
-    await query(sql, [id]);
+  static async remove(id: number, activeStatus?: 'transferred' | 'deceased'): Promise<void> {
+    if (activeStatus && ['transferred', 'deceased'].includes(activeStatus)) {
+      const sql = 'UPDATE animals SET active_status = ?, deleted_at = NOW() WHERE animal_id = ?';
+      await query(sql, [activeStatus, id]);
+    } else {
+      const sql = 'UPDATE animals SET deleted_at = NOW() WHERE animal_id = ?';
+      await query(sql, [id]);
+    }
   }
 
   static async restore(id: number): Promise<Animal | null> {
