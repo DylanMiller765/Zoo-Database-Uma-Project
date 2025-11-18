@@ -11,6 +11,7 @@
 
 import { query } from '../config/database';
 import { ResultSetHeader, RowDataPacket } from 'mysql2';
+import { sendMail } from './mailService';
 
 interface Notification extends RowDataPacket {
   notification_id: number;
@@ -87,6 +88,12 @@ export class NotificationEmailService {
 
       if (!customer.email) {
         console.warn(`[Email Service] Customer ${notification.customer_id} has no email address. Skipping.`);
+        return;
+      }
+
+      // Skip test emails ending with "@email" to avoid wasting API credits
+      if (customer.email.endsWith('@email')) {
+        console.log(`[Email Service] Skipping test email ${customer.email} (ends with @email). Not wasting API credits.`);
         return;
       }
 
@@ -192,10 +199,7 @@ export class NotificationEmailService {
   }
 
   /**
-   * Send email using email provider
-   *
-   * DEMO MODE: Currently logs to console
-   * PRODUCTION: Replace with actual email provider (SendGrid, AWS SES, Nodemailer)
+   * Send email using mailService
    */
   private static async sendEmail(params: {
     to: string;
@@ -203,60 +207,18 @@ export class NotificationEmailService {
     subject: string;
     body: string;
   }): Promise<void> {
-    // ============================================================
-    // DEMO MODE: Log email to console
-    // ============================================================
-    console.log('\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-    console.log('📧 EMAIL NOTIFICATION (DEMO MODE)');
-    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-    console.log(`To: ${params.toName} <${params.to}>`);
-    console.log(`Subject: ${params.subject}`);
-    console.log(`Timestamp: ${new Date().toISOString()}`);
-    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-    console.log('Body (HTML):');
-    console.log(params.body.substring(0, 500) + '...\n');
-
-    // ============================================================
-    // PRODUCTION MODE: Uncomment and configure email provider
-    // ============================================================
-
-    /*
-    // Example with Nodemailer (SMTP)
-    const nodemailer = require('nodemailer');
-
-    const transporter = nodemailer.createTransport({
-      host: process.env.SMTP_HOST,
-      port: parseInt(process.env.SMTP_PORT || '587'),
-      secure: false,
-      auth: {
-        user: process.env.SMTP_USER,
-        pass: process.env.SMTP_PASSWORD,
-      },
-    });
-
-    await transporter.sendMail({
-      from: '"Zoo Notifications" <notifications@zoo.com>',
-      to: params.to,
-      subject: params.subject,
-      html: params.body,
-    });
-    */
-
-    /*
-    // Example with SendGrid
-    const sgMail = require('@sendgrid/mail');
-    sgMail.setApiKey(process.env.SENDGRID_API_KEY);
-
-    await sgMail.send({
-      to: params.to,
-      from: 'notifications@zoo.com',
-      subject: params.subject,
-      html: params.body,
-    });
-    */
-
-    // Simulate email sending delay
-    await new Promise(resolve => setTimeout(resolve, 100));
+    try {
+      await sendMail({
+        from: '"Zoo Notifications" <noreply@zoo.com>',
+        to: params.to,
+        subject: params.subject,
+        html: params.body,
+        text: `Event Cancellation Notification for ${params.toName}`, // Plain text fallback
+      });
+    } catch (error) {
+      console.error(`[Email Service] Error sending email via mailService:`, error);
+      throw error;
+    }
   }
 
   /**
