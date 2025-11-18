@@ -63,11 +63,11 @@ export class QueryService {
     const sql = `
       SELECT
         -- Habitat data
-        h.habitat_id,
-        h.habitat_name,
+        COALESCE(h.habitat_id, 0) as habitat_id,
+        COALESCE(h.habitat_name, 'Unassigned') as habitat_name,
         h.environment_type,
-        h.animal_capacity,
-        h.status as habitat_status,
+        COALESCE(h.animal_capacity, 0) as animal_capacity,
+        COALESCE(h.status, 'N/A') as habitat_status,
         h.size,
         h.last_maintenance,
 
@@ -113,22 +113,22 @@ export class QueryService {
          LIMIT 1
         ) as last_food_given
 
-      FROM habitats h
-      LEFT JOIN animals a ON h.habitat_id = a.habitat_id
-        AND (a.deleted_at IS NULL ${includeDeleted ? 'OR 1=1' : ''})
+      FROM animals a
+      LEFT JOIN habitats h ON a.habitat_id = h.habitat_id
+        AND (h.deleted_at IS NULL ${includeDeleted ? 'OR 1=1' : ''})
       LEFT JOIN zookeeper_assignments za ON a.animal_id = za.animal_id
       LEFT JOIN employees e ON za.keeper_id = e.employee_id AND e.deleted_at IS NULL
       LEFT JOIN feeding_schedules fs ON a.animal_id = fs.animal_id
 
       WHERE
-        (${habitatWhere})
-        AND (a.animal_id IS NULL OR ${healthWhere})
-        AND (a.animal_id IS NULL OR ${endangermentWhere})
-        ${startDate ? 'AND (a.animal_id IS NULL OR a.arrival_date >= ?)' : ''}
-        ${endDate ? 'AND (a.animal_id IS NULL OR a.arrival_date <= ?)' : ''}
-        AND (h.deleted_at IS NULL ${includeDeleted ? 'OR 1=1' : ''})
+        (a.deleted_at IS NULL ${includeDeleted ? 'OR 1=1' : ''})
+        AND (${healthWhere})
+        AND (${endangermentWhere})
+        ${startDate ? 'AND a.arrival_date >= ?' : ''}
+        ${endDate ? 'AND a.arrival_date <= ?' : ''}
+        AND (h.habitat_id IS NULL OR ${habitatWhere})
 
-      ORDER BY h.habitat_name, a.name
+      ORDER BY COALESCE(h.habitat_name, 'Unassigned'), a.name
     `;
 
     const queryParams: any[] = [];

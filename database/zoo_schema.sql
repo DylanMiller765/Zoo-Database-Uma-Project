@@ -348,41 +348,26 @@ CREATE TABLE `animals_alert_queue` (
     INDEX `idx_processed_at` (`processed_at`)
 );
 
--- Trigger to create animal alert queue
--- On each update, check each animal's health
--- if it falls below a certain threshold, create an alert in the queue
-/*
-On update to the animal table
-creat variable named health_threshold
-Check each animal row and determine if it's < health_threshold
-If it is below health_threshold, create row in animlas_alert table with the animal_id, concatenate a message to send to zookeepers. Set the created at and the animal id.
-
-*/
-
+-- Trigger to alert veterinarians when animal health becomes poor/critical or animal status becomes deceased
 DELIMITER //
 
 CREATE TRIGGER alert_animal_health_and_active_status_upon_threshold
 AFTER UPDATE ON animals
 FOR EACH ROW
 BEGIN
-    -- Declarations
     DECLARE existing_alert_id INT;
     DECLARE done INT DEFAULT FALSE;
     DECLARE vet_id INT;
-    
-    -- Cursor to find all vets
-    DECLARE vet_cursor CURSOR FOR 
+
+    DECLARE vet_cursor CURSOR FOR
         SELECT employee_id FROM employees WHERE job_role = 'veterinarian';
-        
-    -- Handler: Sets done=TRUE when cursor finishes OR when any SELECT finds nothing
+
     DECLARE CONTINUE HANDLER FOR NOT FOUND SET done = TRUE;
 
-    -- HEALTH STATUS
     IF NEW.health_status IN ('poor', 'critical') AND NEW.health_status != OLD.health_status THEN
-        
+
         SET existing_alert_id = NULL;
 
-        -- If this finds no rows, the HANDLER fires and sets done = TRUE
         SELECT alert.animal_alert_id INTO existing_alert_id
         FROM animals_alert_queue alert
         WHERE alert.animal_id = NEW.animal_id
@@ -395,19 +380,18 @@ BEGIN
             VALUES ('health_status', NEW.health_status, NEW.animal_id);
         ELSE
             UPDATE animals_alert_queue
-            SET 
+            SET
                 alert_value = NEW.health_status,
                 created_at = NOW()
             WHERE animal_alert_id = existing_alert_id;
         END IF;
-    
-        -- We must reset this because the SELECT INTO above might have tripped it to TRUE
-        SET done = FALSE; 
+
+        SET done = FALSE;
 
         OPEN vet_cursor;
         read_loop: LOOP
             FETCH vet_cursor INTO vet_id;
-            
+
             IF done THEN
                 LEAVE read_loop;
             END IF;
@@ -424,12 +408,10 @@ BEGIN
 
     END IF;
 
-    --  ACTIVE STATUS
     IF NEW.active_status = 'deceased' AND NEW.active_status != OLD.active_status THEN
 
         SET existing_alert_id = NULL;
 
-        -- It is okay if this triggers the handler here, as there is no cursor loop following it
         SELECT alert.animal_alert_id INTO existing_alert_id
         FROM animals_alert_queue alert
         WHERE alert.animal_id = NEW.animal_id
@@ -462,19 +444,14 @@ CREATE INDEX `idx_gift_shops_deleted` ON `gift_shops`(`deleted_at`);
 CREATE INDEX `idx_cafes_deleted` ON `cafes`(`deleted_at`);
 CREATE INDEX `idx_tickets_deleted` ON `tickets`(`deleted_at`);
 
--- Trigger to create expiring membership notifications
--- Business Rule: Customers with memberships expiring within 30 days should receive a warning notification
--- This enforces the semantic constraint that customers must be notified before their membership expires
+-- Trigger to notify customers of expiring memberships (within 30 days) and auto-expire past memberships
 DELIMITER //
 CREATE TRIGGER trg_membership_expiration_notification
 AFTER UPDATE ON customers
 FOR EACH ROW
 BEGIN
-    -- Only proceed if this is a membership-related update
     IF NEW.annual_pass = 'yes' AND NEW.membership_end_date IS NOT NULL THEN
-        -- Check if membership is expiring within 30 days
         IF DATEDIFF(NEW.membership_end_date, CURDATE()) BETWEEN 1 AND 30 THEN
-            -- Only create notification if one doesn't already exist for this expiration date
             IF NOT EXISTS (
                 SELECT 1 FROM notifications n
                 WHERE n.customer_id = NEW.customer_id
@@ -493,12 +470,8 @@ BEGIN
         END IF;
     END IF;
 
-    -- Automatically expire memberships that have passed their end date
-    -- Business Rule: Expired memberships should automatically have annual_pass set to 'no'
     IF NEW.annual_pass = 'yes' AND NEW.membership_end_date IS NOT NULL THEN
         IF NEW.membership_end_date < CURDATE() THEN
-            -- This will trigger another UPDATE, but the trigger won't recurse
-            -- because the condition NEW.annual_pass = 'yes' will be false on the next iteration
             UPDATE customers
             SET annual_pass = 'no'
             WHERE customer_id = NEW.customer_id;
@@ -507,25 +480,18 @@ BEGIN
 END//
 DELIMITER ;
 
--- Start of merged migration: Add Auto-Renewal and Payment Methods Support
--- Migration: Add Auto-Renewal and Payment Methods Support
--- Date: 2025-01-XX
--- Purpose: Add auto-renewal toggle, payment method storage, and link to membership purchases
-
-
--- Step 1: Add auto-renewal flag to customers table
+-- Add auto-renewal toggle, payment method storage, and link to membership purchases
 ALTER TABLE customers
-ADD COLUMN membership_auto_renew BOOLEAN DEFAULT FALSE 
+ADD COLUMN membership_auto_renew BOOLEAN DEFAULT FALSE
 AFTER membership_end_date;
 
--- Step 2: Create customer_payment_methods table (one card per customer)
 CREATE TABLE IF NOT EXISTS `customer_payment_methods` (
     `payment_method_id` INT PRIMARY KEY AUTO_INCREMENT,
-    `customer_id` INT NOT NULL UNIQUE,  -- UNIQUE ensures one card per customer
+    `customer_id` INT NOT NULL UNIQUE,
     `card_number` VARCHAR(19) NOT NULL,
     `cardholder_name` VARCHAR(100) NOT NULL,
-    `expiry_month` TINYINT NOT NULL,  -- 1-12
-    `expiry_year` SMALLINT NOT NULL,  -- e.g., 2025, 2026
+    `expiry_month` TINYINT NOT NULL,
+    `expiry_year` SMALLINT NOT NULL,
     `cvv` VARCHAR(4),
     `billing_address` VARCHAR(200),
     `billing_city` VARCHAR(50),
@@ -537,45 +503,27 @@ CREATE TABLE IF NOT EXISTS `customer_payment_methods` (
     INDEX `idx_customer_payment` (`customer_id`)
 );
 
--- Step 3: Update membership_purchases table to track auto-renewal and payment method
 ALTER TABLE membership_purchases
-ADD COLUMN `auto_renewed` BOOLEAN DEFAULT FALSE 
+ADD COLUMN `auto_renewed` BOOLEAN DEFAULT FALSE
 AFTER `payment_method`,
-ADD COLUMN `payment_method_id` INT NULL 
+ADD COLUMN `payment_method_id` INT NULL
 AFTER `auto_renewed`,
 ADD FOREIGN KEY (`payment_method_id`) REFERENCES `customer_payment_methods`(`payment_method_id`) ON DELETE SET NULL;
 
--- Verification queries (commented out, run manually if needed):
--- SELECT 'Migration completed successfully!' as status;
--- SELECT * FROM customers WHERE membership_auto_renew IS NOT NULL LIMIT 1;
--- SELECT * FROM customer_payment_methods LIMIT 1;
--- DESCRIBE membership_purchases;
-
--- End of merged migration: Add Auto-Renewal and Payment Methods Support
-
--- Start of merged migration: Add Auto-Renewal Scheduled Job
--- Migration: Add Auto-Renewal Scheduled Job
--- Date: 2025-01-XX
--- Purpose: Automatically renew memberships on expiration date if auto-renewal is enabled
-
-
--- Step 1: Create stored procedure to auto-renew memberships
+-- Stored procedure to auto-renew memberships expiring today
 DELIMITER //
 
 CREATE PROCEDURE IF NOT EXISTS auto_renew_memberships()
 BEGIN
-    -- Find memberships expiring today with auto-renewal enabled
-    -- and check if they have a saved payment method
     DECLARE done INT DEFAULT FALSE;
     DECLARE v_customer_id INT;
     DECLARE v_payment_method_id INT;
     DECLARE v_old_end_date DATE;
     DECLARE v_new_end_date DATE;
     DECLARE v_membership_price DECIMAL(8, 2) DEFAULT 149.00;
-    
-    -- Cursor to find expiring memberships with auto-renewal enabled
+
     DECLARE cur_memberships CURSOR FOR
-        SELECT 
+        SELECT
             c.customer_id,
             c.membership_end_date,
             pm.payment_method_id
@@ -585,57 +533,47 @@ BEGIN
         AND c.membership_auto_renew = TRUE
         AND c.membership_end_date = CURDATE()
         AND c.membership_end_date IS NOT NULL;
-    
+
     DECLARE CONTINUE HANDLER FOR NOT FOUND SET done = TRUE;
-    
+
     OPEN cur_memberships;
-    
+
     read_loop: LOOP
         FETCH cur_memberships INTO v_customer_id, v_old_end_date, v_payment_method_id;
-        
+
         IF done THEN
             LEAVE read_loop;
         END IF;
-        
-        -- Calculate new end date (1 year from old end date)
+
         SET v_new_end_date = DATE_ADD(v_old_end_date, INTERVAL 1 YEAR);
-        
-        -- Update customer membership dates
+
         UPDATE customers
-        SET 
+        SET
             membership_start_date = v_old_end_date,
             membership_end_date = v_new_end_date,
             annual_pass = 'yes'
         WHERE customer_id = v_customer_id;
-        
-        -- Record the auto-renewal purchase
+
         INSERT INTO membership_purchases
         (customer_id, purchase_date, start_date, end_date, price, payment_method, auto_renewed, payment_method_id)
         VALUES
         (v_customer_id, NOW(), v_old_end_date, v_new_end_date, v_membership_price, 'credit', TRUE, v_payment_method_id);
-        
+
     END LOOP;
-    
+
     CLOSE cur_memberships;
 END//
 
 DELIMITER ;
 
--- Step 2: Create MySQL event to run the procedure daily at midnight
--- Note: Requires event_scheduler to be ON (SET GLOBAL event_scheduler = ON;)
+-- Create MySQL event to run auto-renewal daily at midnight
 CREATE EVENT IF NOT EXISTS daily_auto_renewal_check
 ON SCHEDULE EVERY 1 DAY
-STARTS (CURRENT_DATE + INTERVAL 1 DAY)  -- Start tomorrow at midnight
+STARTS (CURRENT_DATE + INTERVAL 1 DAY)
 DO
     CALL auto_renew_memberships();
 
--- =======================================
--- TRIGGER: Event Cancellation
--- =======================================
--- When an event is cancelled (deleted_at is set), automatically:
--- 1. Create notifications for all registered customers
--- 2. Mark all event registrations as refunded
-
+-- Trigger to notify customers and refund registrations when event is cancelled
 DELIMITER //
 
 CREATE TRIGGER trigger_event_cancellation
@@ -650,38 +588,31 @@ BEGIN
     DECLARE formatted_datetime VARCHAR(100);
     DECLARE cancellation_message VARCHAR(500);
 
-    -- Cursor to fetch all distinct customers registered for this event
     DECLARE customer_cursor CURSOR FOR
         SELECT DISTINCT er.customer_id
         FROM event_registrations er
         WHERE er.event_id = NEW.event_id
           AND er.customer_id IS NOT NULL;
 
-    -- Handler: Sets done=TRUE when cursor finishes
     DECLARE CONTINUE HANDLER FOR NOT FOUND SET done = TRUE;
 
-    -- Only proceed if event was just cancelled (deleted_at changed from NULL to NOT NULL)
     IF OLD.deleted_at IS NULL AND NEW.deleted_at IS NOT NULL THEN
 
-        -- Prepare event information for notification message
         SET event_name_var = NEW.name;
         SET event_date_var = NEW.event_date;
         SET event_time_var = NEW.start_time;
 
-        -- Format datetime string for the message
         SET formatted_datetime = DATE_FORMAT(event_date_var, '%M %d, %Y');
         IF event_time_var IS NOT NULL THEN
             SET formatted_datetime = CONCAT(formatted_datetime, ' at ', DATE_FORMAT(event_time_var, '%h:%i %p'));
         END IF;
 
-        -- Create cancellation message
         SET cancellation_message = CONCAT(
             'CANCELLATION: The event "', event_name_var, '" scheduled for ', formatted_datetime,
             ' has been cancelled. We sincerely apologize for any inconvenience this may cause. ',
             'A full refund has been automatically processed for your registration.'
         );
 
-        -- Create notifications for all registered customers
         OPEN customer_cursor;
 
         notification_loop: LOOP
@@ -691,14 +622,12 @@ BEGIN
                 LEAVE notification_loop;
             END IF;
 
-            -- Insert notification for this customer
             INSERT INTO notifications (customer_id, message, notification_type, is_read, created_at)
             VALUES (customer_id_var, cancellation_message, 'alert', FALSE, NOW());
         END LOOP;
 
         CLOSE customer_cursor;
 
-        -- Mark all event registrations as refunded
         UPDATE event_registrations
         SET refunded_at = NOW(),
             refund_reason = 'Event cancelled'
@@ -708,10 +637,3 @@ BEGIN
 END//
 
 DELIMITER ;
-
--- Verification queries (commented out, run manually if needed):
--- SELECT 'Auto-renewal job created successfully!' as status;
--- SHOW EVENTS LIKE 'daily_auto_renewal_check';
--- SELECT * FROM customers WHERE membership_auto_renew = TRUE AND membership_end_date = CURDATE();
-
--- End of merged migration: Add Auto-Renewal Scheduled Job
