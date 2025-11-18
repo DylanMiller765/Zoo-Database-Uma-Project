@@ -16,7 +16,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Calendar, Users, DollarSign, TrendingUp, FileDown } from "lucide-react";
+import { Calendar, Users, DollarSign, TrendingUp } from "lucide-react";
 import {
   ReportParametersCard,
   DateRangePicker,
@@ -120,11 +120,6 @@ export default function EventPerformancePage() {
     if (percentage >= 70) return "warning";
     if (percentage >= 50) return "secondary";
     return "success";
-  };
-
-  // Export functionality (placeholder)
-  const handleExport = () => {
-    alert("Export functionality will be implemented after xlsx dependency is resolved");
   };
 
   // Auth check
@@ -284,17 +279,6 @@ export default function EventPerformancePage() {
                 </p>
               </CardContent>
             </Card>
-          </div>
-
-          {/* Export Button */}
-          <div className="flex justify-end">
-            <Button
-              onClick={handleExport}
-              className="flex items-center gap-2 bg-sea_green-600 hover:bg-sea_green-700 text-white"
-            >
-              <FileDown className="h-4 w-4" />
-              Export to Excel
-            </Button>
           </div>
 
           {/* Events Table */}

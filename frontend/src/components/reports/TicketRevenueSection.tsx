@@ -19,11 +19,6 @@ interface TicketRevenueData {
     revenue: number;
     unit_price: number;
   }>;
-  byPaymentMethod: Array<{
-    payment_method: string;
-    count: number;
-    revenue: number;
-  }>;
 }
 
 interface Props {
@@ -40,13 +35,8 @@ export function TicketRevenueSection({ data }: Props) {
     return type.charAt(0).toUpperCase() + type.slice(1);
   };
 
-  const formatPaymentMethod = (method: string) => {
-    return method.charAt(0).toUpperCase() + method.slice(1);
-  };
-
   // Calculate totals for verification
   const typeTotal = data.byType.reduce((sum, row) => sum + parseFloat(String(row.revenue || 0)), 0);
-  const paymentTotal = data.byPaymentMethod.reduce((sum, row) => sum + parseFloat(String(row.revenue || 0)), 0);
 
   return (
     <Card className="border-l-6 border-blue-300 bg-blue-50/30">
@@ -121,56 +111,6 @@ export function TicketRevenueSection({ data }: Props) {
               </TableBody>
             </Table>
           </div>
-        </div>
-
-        {/* Revenue by Payment Method */}
-        <div>
-          <h3 className="text-sm font-semibold text-gray-700 mb-3">
-            Revenue by Payment Method
-          </h3>
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Payment Method</TableHead>
-                  <TableHead className="text-right">Transactions</TableHead>
-                  <TableHead className="text-right">Total Revenue</TableHead>
-                  <TableHead className="text-right">% of Ticket Revenue</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {data.byPaymentMethod.map((row) => (
-                  <TableRow key={row.payment_method}>
-                    <TableCell className="font-medium">
-                      {formatPaymentMethod(row.payment_method)}
-                    </TableCell>
-                    <TableCell className="text-right">{row.count}</TableCell>
-                    <TableCell className="text-right font-semibold text-blue-700">
-                      ${formatMoney(row.revenue)}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <Badge className="bg-blue-100 text-blue-800">
-                        {((parseFloat(String(row.revenue)) / data.total) * 100).toFixed(1)}%
-                      </Badge>
-                    </TableCell>
-                  </TableRow>
-                ))}
-                <TableRow className="bg-blue-50 font-semibold border-t-2">
-                  <TableCell>Subtotal</TableCell>
-                  <TableCell className="text-right">{data.transactions}</TableCell>
-                  <TableCell className="text-right text-blue-700">
-                    ${formatMoney(paymentTotal)}
-                  </TableCell>
-                  <TableCell className="text-right">100%</TableCell>
-                </TableRow>
-              </TableBody>
-            </Table>
-          </div>
-          {Math.abs(typeTotal - paymentTotal) < 0.01 && (
-            <div className="mt-2 text-xs text-green-700 flex items-center gap-1">
-              ✓ Subtotals match (${formatMoney(typeTotal)}), data integrity confirmed
-            </div>
-          )}
         </div>
       </CardContent>
     </Card>
