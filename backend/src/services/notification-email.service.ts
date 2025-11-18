@@ -12,6 +12,7 @@
 import { query } from '../config/database';
 import { ResultSetHeader, RowDataPacket } from 'mysql2';
 import { sendMail } from './mailService';
+import { NotificationModel } from '../models/notification.model';
 
 interface Notification extends RowDataPacket {
   notification_id: number;
@@ -107,6 +108,9 @@ export class NotificationEmailService {
         subject: eventDetails.subject,
         body: this.formatEmailBody(customer, notification.message, eventDetails),
       });
+
+      // Mark notification as read so it's not sent again
+      await NotificationModel.markAsRead(notification.notification_id);
 
       console.log(`[Email Service] ✅ Email sent to ${customer.email} for notification #${notification.notification_id}`);
     } catch (error) {
