@@ -72,8 +72,8 @@ export default function NotificationBanner() {
   }
 
   return (
-    <div className="sticky top-0 z-40 space-y-2 bg-white">
-      <div className="mx-auto max-w-[90rem] 2xl:max-w-[120rem] px-6 sm:px-8 lg:px-12 xl:px-16 pt-4">
+    <div className="sticky top-0 z-[60] space-y-2 pointer-events-none">
+      <div className="mx-auto max-w-[90rem] 2xl:max-w-[120rem] px-6 sm:px-8 lg:px-12 xl:px-16 pt-4 pointer-events-auto">
       {notifications.map((notification) => {
         const bgColor =
           notification.notification_type === 'alert'

@@ -24,6 +24,7 @@ interface FinancialReportParams {
   sources?: string[];
   grouping?: string;
   includeReturns?: boolean;
+  includeCanceled?: boolean;
 }
 
 export class QueryService {
@@ -158,6 +159,7 @@ export class QueryService {
     } = params;
 
     const dateFilter = startDate && endDate ? 'e.event_date BETWEEN ? AND ?' : '1=1';
+    const cancelledFilter = includeCanceled ? '' : 'AND e.deleted_at IS NULL';
 
     const sql = `
       SELECT
@@ -196,7 +198,7 @@ export class QueryService {
         AND (? = 'all'
              OR (? = 'upcoming' AND e.event_date >= CURDATE())
              OR (? = 'past' AND e.event_date < CURDATE()))
-        AND (e.deleted_at IS NULL ${includeDeleted ? 'OR 1=1' : ''})
+        ${cancelledFilter}
 
       GROUP BY e.event_id, e.name, e.event_date, e.start_time, e.end_time,
                e.location, e.max_participants, e.ticket_price, coordinator_name, e.description
@@ -218,7 +220,7 @@ export class QueryService {
    * Detailed breakdown of ticket sales by type
    */
   static async getTicketRevenue(startDate?: string, endDate?: string, includeReturns: boolean = false) {
-    const dateFilter = startDate && endDate ? 'WHERE purchase_date BETWEEN ? AND ?' : 'WHERE 1=1';
+    const dateFilter = startDate && endDate ? 'WHERE DATE(purchase_date) BETWEEN ? AND ?' : 'WHERE 1=1';
     const params = startDate && endDate ? [startDate, endDate] : [];
 
     // Query 1: Revenue by ticket type
@@ -252,6 +254,7 @@ export class QueryService {
   static async getEventRevenue(startDate?: string, endDate?: string, includeCanceled: boolean = false) {
     const dateFilter = startDate && endDate ? 'e.event_date BETWEEN ? AND ?' : '1=1';
     const params = startDate && endDate ? [startDate, endDate] : [];
+    const cancelledFilter = includeCanceled ? '' : 'AND e.deleted_at IS NULL';
 
     const byEvent = await query<any[]>(`
       SELECT
@@ -270,27 +273,48 @@ export class QueryService {
       FROM events e
       LEFT JOIN event_registrations er ON e.event_id = er.event_id
         AND (er.deleted_at IS NULL)
-        ${includeCanceled ? '' : "AND er.payment_status = 'paid'"}
+        AND er.payment_status = 'paid'
       WHERE ${dateFilter}
+        ${cancelledFilter}
         AND er.registration_id IS NOT NULL
       GROUP BY e.event_id, e.name, e.event_date, e.location, e.ticket_price, e.deleted_at, er.payment_status
       ORDER BY revenue DESC
     `, params);
 
-    // Calculate totals from the per-event data
-    // Now refunds are already separated by event in byEvent data
+    // Process the data to properly handle cancelled events
+    // For cancelled events: treat the entire revenue amount as refunded (money that was returned)
+    const processedEvents = byEvent.map(event => {
+      if (event.deleted_at !== null) {
+        // Cancelled event: the revenue becomes a refund, actual revenue is 0
+        const totalAmount = parseFloat(event.revenue || 0) + parseFloat(event.refunded_amount || 0);
+        return {
+          ...event,
+          revenue: totalAmount, // Show original revenue
+          refunded_amount: totalAmount // Entire amount is refunded (cancelled)
+        };
+      }
+      return event;
+    });
+
+    // Separate active and cancelled events
+    const activeEvents = processedEvents.filter(event => event.deleted_at === null);
+    const cancelledEvents = processedEvents.filter(event => event.deleted_at !== null);
+
     let totalRefunds = 0;
     let refundCount = 0;
 
     try {
-      // Sum refunds from all events (both active and cancelled)
-      totalRefunds = byEvent.reduce((sum, row) => sum + parseFloat(row.refunded_amount || 0), 0);
+      // Refunds from active events
+      const activeRefunds = activeEvents.reduce((sum, row) => sum + parseFloat(row.refunded_amount || 0), 0);
 
-      // Count refunded registrations by checking if any event has refunded_amount > 0
-      refundCount = byEvent.reduce((sum, row) => {
+      // Refunds from cancelled events (entire revenue amount is refunded)
+      const cancelledRefunds = cancelledEvents.reduce((sum, row) => sum + parseFloat(row.refunded_amount || 0), 0);
+
+      totalRefunds = activeRefunds + cancelledRefunds;
+
+      // Count refunded registrations
+      refundCount = processedEvents.reduce((sum, row) => {
         if (parseFloat(row.refunded_amount || 0) > 0) {
-          // This is approximate - ideally we'd count individual registrations
-          // But we can estimate from the event data
           return sum + parseInt(row.registrations || 0);
         }
         return sum;
@@ -301,19 +325,25 @@ export class QueryService {
       refundCount = 0;
     }
 
-    const grossRevenue = byEvent.reduce((sum, row) => sum + parseFloat(row.revenue || 0), 0);
-    const registrations = byEvent.reduce((sum, row) => sum + parseInt(row.registrations || 0), 0);
-    const participants = byEvent.reduce((sum, row) => sum + parseInt(row.participants || 0), 0);
+    // Gross revenue = all event revenue (active + cancelled)
+    const grossRevenue = processedEvents.reduce((sum, row) => sum + parseFloat(row.revenue || 0), 0);
+
+    // Net revenue = gross revenue - refunds
+    const netRevenue = grossRevenue - totalRefunds;
+
+    // Count registrations and participants from all events
+    const registrations = processedEvents.reduce((sum, row) => sum + parseInt(row.registrations || 0), 0);
+    const participants = processedEvents.reduce((sum, row) => sum + parseInt(row.participants || 0), 0);
 
     return {
-      gross_revenue: grossRevenue + totalRefunds, // Gross includes both actual revenue and refunds
+      gross_revenue: grossRevenue,
       total_refunds: totalRefunds,
-      net_revenue: grossRevenue, // Net is actual revenue (after refunds already deducted)
-      total: grossRevenue, // For backwards compatibility
+      net_revenue: netRevenue, // Actual money retained after refunds
+      total: netRevenue, // For backwards compatibility - return net revenue
       registrations,
       participants,
       refund_count: refundCount,
-      byEvent
+      byEvent: processedEvents
     };
   }
 
@@ -322,7 +352,7 @@ export class QueryService {
    * Detailed breakdown of gift shop sales by shop
    */
   static async getGiftShopRevenue(startDate?: string, endDate?: string, includeReturns: boolean = false) {
-    const dateFilter = startDate && endDate ? 'WHERE gst.sale_date BETWEEN ? AND ?' : 'WHERE 1=1';
+    const dateFilter = startDate && endDate ? 'WHERE DATE(gst.sale_date) BETWEEN ? AND ?' : 'WHERE 1=1';
     const params = startDate && endDate ? [startDate, endDate] : [];
 
     // Query 1: Revenue by gift shop
@@ -343,6 +373,7 @@ export class QueryService {
     `, params);
 
     // Query 2: Items sold breakdown
+    const byItemDateFilter = startDate && endDate ? 'WHERE DATE(gst.sale_date) BETWEEN ? AND ?' : 'WHERE 1=1';
     const byItem = await query<any[]>(`
       SELECT
         gsi.item_id,
@@ -354,7 +385,7 @@ export class QueryService {
       FROM gift_shop_sales_transactions gst
       JOIN gift_shop_sale_items gsi ON gst.transaction_id = gsi.transaction_id
       JOIN gift_shop_items gi ON gsi.item_id = gi.item_id
-      ${dateFilter}
+      ${byItemDateFilter}
         ${includeReturns ? '' : "AND gst.status = 'completed'"}
       GROUP BY gsi.item_id, gi.name, gi.category, gsi.unit_price
       ORDER BY total_revenue DESC
@@ -378,7 +409,7 @@ export class QueryService {
    * Detailed breakdown of cafe sales by cafe
    */
   static async getCafeRevenue(startDate?: string, endDate?: string, includeReturns: boolean = false) {
-    const dateFilter = startDate && endDate ? 'WHERE cs.sale_timestamp BETWEEN ? AND ?' : 'WHERE 1=1';
+    const dateFilter = startDate && endDate ? 'WHERE DATE(cs.sale_timestamp) BETWEEN ? AND ?' : 'WHERE 1=1';
     const params = startDate && endDate ? [startDate, endDate] : [];
 
     const byCafe = await query<any[]>(`
@@ -399,6 +430,7 @@ export class QueryService {
     `, params);
 
     // Query 2: Items sold breakdown
+    const byItemDateFilter = startDate && endDate ? 'WHERE DATE(cs.sale_timestamp) BETWEEN ? AND ?' : 'WHERE 1=1';
     const byItem = await query<any[]>(`
       SELECT
         cs.item_id,
@@ -409,7 +441,7 @@ export class QueryService {
         SUM(cs.line_total) as total_revenue
       FROM cafe_sales cs
       JOIN cafe_items ci ON cs.item_id = ci.item_id
-      ${dateFilter}
+      ${byItemDateFilter}
         ${includeReturns ? '' : "AND cs.status = 'completed'"}
       GROUP BY cs.item_id, ci.name, ci.category, ci.price
       ORDER BY total_revenue DESC
@@ -435,7 +467,7 @@ export class QueryService {
    * Detailed breakdown of membership purchases
    */
   static async getMembershipRevenue(startDate?: string, endDate?: string) {
-    const dateFilter = startDate && endDate ? 'WHERE purchase_date BETWEEN ? AND ?' : 'WHERE 1=1';
+    const dateFilter = startDate && endDate ? 'WHERE DATE(purchase_date) BETWEEN ? AND ?' : 'WHERE 1=1';
     const params = startDate && endDate ? [startDate, endDate] : [];
 
     // Query 1: Revenue by purchase type (manual vs auto-renewal)
@@ -469,7 +501,7 @@ export class QueryService {
    * Detailed breakdown of donations
    */
   static async getDonationRevenue(startDate?: string, endDate?: string) {
-    const dateFilter = startDate && endDate ? 'WHERE donation_date BETWEEN ? AND ?' : 'WHERE 1=1';
+    const dateFilter = startDate && endDate ? 'WHERE DATE(donation_date) BETWEEN ? AND ?' : 'WHERE 1=1';
     const params = startDate && endDate ? [startDate, endDate] : [];
 
     // Query 1: Total donations
@@ -499,7 +531,8 @@ export class QueryService {
       startDate,
       endDate,
       sources = ['ticket', 'event', 'gift_shop', 'cafe', 'membership', 'donation'],
-      includeReturns = false
+      includeReturns = false,
+      includeCanceled = true
     } = params;
 
     const result: any = {
@@ -524,7 +557,7 @@ export class QueryService {
     }
 
     if (sources.includes('event')) {
-      result.eventRevenue = await this.getEventRevenue(startDate, endDate, includeReturns);
+      result.eventRevenue = await this.getEventRevenue(startDate, endDate, includeCanceled);
       result.summary.totalRevenue += result.eventRevenue.total;
       result.summary.totalTransactions += result.eventRevenue.registrations;
       result.summary.sources.push({ name: 'event', revenue: result.eventRevenue.total });
