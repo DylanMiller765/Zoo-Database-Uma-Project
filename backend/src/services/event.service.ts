@@ -3,6 +3,25 @@ import { Event } from '../types/event.types';
 
 // Transform database event to frontend format
 const transformEvent = (dbEvent: any): any => {
+  // Compute status based on deleted_at and event_date
+  let status: 'scheduled' | 'ongoing' | 'completed' | 'cancelled' = 'scheduled';
+  
+  if (dbEvent.deleted_at) {
+    // If event is soft-deleted (cancelled), status is cancelled
+    status = 'cancelled';
+  } else if (dbEvent.event_date) {
+    // Check if event date has passed
+    const eventDate = new Date(dbEvent.event_date);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); // Reset time to compare dates only
+    
+    if (eventDate < today) {
+      status = 'completed';
+    } else {
+      status = 'scheduled';
+    }
+  }
+  
   return {
     event_id: dbEvent.event_id,
     event_name: dbEvent.name,
@@ -13,7 +32,7 @@ const transformEvent = (dbEvent: any): any => {
     location: dbEvent.location,
     max_capacity: dbEvent.max_participants,
     ticket_price: dbEvent.ticket_price ? parseFloat(dbEvent.ticket_price) : null,
-    status: 'scheduled', // Default status since DB doesn't have this field
+    status: status,
     created_by: dbEvent.coordinator_id,
     coordinator_name: dbEvent.coordinator_name,
     deleted_at: dbEvent.deleted_at || null,  // Include deleted_at for soft delete detection
@@ -39,7 +58,7 @@ const transformToDb = (frontendEvent: any): any => {
   return dbEvent;
 };
 
-export const getUpcomingEvents = async (): Promise<any[]> => {
+export const getAllActiveEvents = async (): Promise<any[]> => {
   const events = await EventModel.findAll();
   return events.map(transformEvent);
 };
@@ -66,6 +85,6 @@ export const updateEvent = async (eventId: number, eventData: any): Promise<any 
   return updated ? transformEvent(updated) : null;
 };
 
-export const deleteEvent = async (eventId: number, employeeInfo?: { employee_id: number; name: string }): Promise<boolean> => {
-  return await EventModel.remove(eventId, employeeInfo);
+export const deleteEvent = async (eventId: number): Promise<boolean> => {
+  return await EventModel.remove(eventId);
 };

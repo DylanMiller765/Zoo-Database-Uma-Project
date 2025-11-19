@@ -39,6 +39,7 @@ type EventRow = {
   capacity_percentage: number | null;
   coordinator_name: string | null;
   description: string | null;
+  is_past?: boolean;
 };
 
 export default function EventPerformancePage() {
@@ -99,14 +100,9 @@ export default function EventPerformancePage() {
 
   // Helper functions
   const formatDate = (dateString: string) => {
-    if (!dateString) return "";
-    // Handle MySQL date format (YYYY-MM-DD) or ISO format
-    const date = new Date(dateString + 'T00:00:00'); // Add time to avoid timezone issues
-    return date.toLocaleDateString('en-US', {
-      month: '2-digit',
-      day: '2-digit',
-      year: 'numeric'
-    });
+    // Format YYYY-MM-DD directly without timezone conversion
+    const [year, month, day] = dateString.split('-');
+    return `${month}/${day}/${year}`;
   };
 
   const formatTime = (timeString: string) => {
@@ -119,28 +115,28 @@ export default function EventPerformancePage() {
     return num.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   };
 
-  const getEventStatus = (eventDate: string): string => {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const event = new Date(eventDate + 'T00:00:00');
-
-    if (event < today) return 'Past';
-    if (event.getTime() === today.getTime()) return 'Today';
-    return 'Upcoming';
-  };
-
-  const getStatusBadgeVariant = (status: string) => {
-    if (status === 'Past') return 'secondary';
-    if (status === 'Today') return 'warning';
-    return 'success';
-  };
-
   const getCapacityBadge = (percentage: number | null) => {
     if (percentage === null) return "default";
     if (percentage >= 90) return "danger";
     if (percentage >= 70) return "warning";
     if (percentage >= 50) return "secondary";
     return "success";
+  };
+
+  const getEventStatusBadge = (eventDate: string) => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const eventDateObj = new Date(eventDate);
+    eventDateObj.setHours(0, 0, 0, 0);
+    return eventDateObj < today ? "default" : "success";
+  };
+
+  const getEventStatusLabel = (eventDate: string) => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const eventDateObj = new Date(eventDate);
+    eventDateObj.setHours(0, 0, 0, 0);
+    return eventDateObj < today ? "Past" : "Upcoming";
   };
 
   // Auth check
@@ -179,36 +175,33 @@ export default function EventPerformancePage() {
           showQuickSelect={true}
         />
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
           {/* Event Status Filter */}
-          <div>
-            <Label htmlFor="eventStatus" className="text-sm font-medium text-gray-700">
-              Event Status
-            </Label>
-            <select
-              id="eventStatus"
-              value={params.eventStatus}
-              onChange={(e) => setParams({ ...params, eventStatus: e.target.value })}
-              className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
-            >
-              <option value="all">All Events</option>
-              <option value="upcoming">Upcoming Only</option>
-              <option value="past">Past Only</option>
-            </select>
-          </div>
+          <Label htmlFor="eventStatus" className="text-sm font-medium text-gray-700">
+            Event Status
+          </Label>
+          <select
+            id="eventStatus"
+            value={params.eventStatus}
+            onChange={(e) => setParams({ ...params, eventStatus: e.target.value })}
+            className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
+          >
+            <option value="all">All Events</option>
+            <option value="upcoming">Upcoming Only</option>
+            <option value="past">Past Only</option>
+          </select>
         </div>
 
-        {/* Checkboxes */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
           <input
             type="checkbox"
             id="includeCanceled"
             checked={params.includeCanceled}
             onChange={(e) => setParams({ ...params, includeCanceled: e.target.checked })}
-            className="rounded border-gray-300 text-sea_green-600 focus:ring-sea_green-500"
+            className="rounded border-gray-300"
           />
-          <Label htmlFor="includeCanceled" className="text-sm text-gray-700 cursor-pointer">
-            Include cancelled events
+          <Label htmlFor="includeCanceled" className="text-sm font-medium text-gray-700 mb-0 cursor-pointer">
+            Show Cancelled Events
           </Label>
         </div>
 
@@ -332,8 +325,8 @@ export default function EventPerformancePage() {
 
                         {/* Status */}
                         <TableCell>
-                          <Badge variant={getStatusBadgeVariant(getEventStatus(event.event_date))}>
-                            {getEventStatus(event.event_date)}
+                          <Badge variant={getEventStatusBadge(event.event_date)}>
+                            {getEventStatusLabel(event.event_date)}
                           </Badge>
                         </TableCell>
 
@@ -343,7 +336,7 @@ export default function EventPerformancePage() {
                         </TableCell>
 
                         {/* Ticket Price */}
-                        <TableCell className="text-right font-medium">
+                        <TableCell className="text-right font-semibold">
                           {event.ticket_price !== null ? `$${formatMoney(event.ticket_price)}` : "Free"}
                         </TableCell>
 

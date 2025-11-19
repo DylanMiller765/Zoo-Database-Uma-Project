@@ -47,19 +47,42 @@ export default function HomePage() {
       try {
         const [habitatsData, eventsData, statsData] = await Promise.all([
           habitatService.getAll(),
-          eventService.getAll(),
+          eventService.getAll(true), // Include deleted (cancelled) events
           dashboardService.getPublicStats(),
         ]);
         setHabitats(habitatsData);
         
-        // Sort events by date (soonest first), then by start time
+        // Sort events: upcoming (scheduled) first, then completed, then cancelled at bottom
         const sortedEvents = [...eventsData].sort((a, b) => {
-          // First compare dates
+          // Status priority: scheduled (0) > completed (1) > cancelled (2)
+          const statusPriority: Record<string, number> = {
+            'scheduled': 0,
+            'ongoing': 0,
+            'completed': 1,
+            'cancelled': 2,
+          };
+          const priorityA = statusPriority[a.status || 'scheduled'] ?? 1;
+          const priorityB = statusPriority[b.status || 'scheduled'] ?? 1;
+          
+          // First sort by status priority
+          if (priorityA !== priorityB) {
+            return priorityA - priorityB;
+          }
+          
+          // Within same status, sort by date (soonest first for upcoming, most recent first for past)
           const dateA = a.event_date ? new Date(a.event_date).getTime() : Infinity;
           const dateB = b.event_date ? new Date(b.event_date).getTime() : Infinity;
           
-          if (dateA !== dateB) {
-            return dateA - dateB; // Ascending order (soonest first)
+          if (priorityA === 0) {
+            // For upcoming events, ascending (soonest first)
+            if (dateA !== dateB) {
+              return dateA - dateB;
+            }
+          } else {
+            // For completed/cancelled, descending (most recent first)
+            if (dateA !== dateB) {
+              return dateB - dateA;
+            }
           }
           
           // If dates are the same, sort by start time
@@ -279,23 +302,56 @@ export default function HomePage() {
           {loading ? (
             <p>Loading events...</p>
           ) : (
-            events.slice(0, 4).map((event) => (
-              <Card
-                key={event.event_id}
-                className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
-              >
-                <CardHeader className="px-6 pt-6 pb-3">
-                  <CardTitle className="text-lg text-dark_spring_green-700">{event.event_name}</CardTitle>
-                  <p className="text-xs text-sea_green-600 font-medium mt-1">
-                    {formatEventDate(event.event_date)} • {formatTime(event.start_time)}
-                    {event.location && ` • ${event.location}`}
-                  </p>
-                </CardHeader>
-                <CardContent className="px-6 pb-6 text-sm text-gray-700">
-                  <p className="leading-relaxed">{event.description}</p>
-                </CardContent>
-              </Card>
-            ))
+            events.slice(0, 4).map((event) => {
+              // Status badge styling
+              const getStatusBadge = (status?: string) => {
+                switch (status) {
+                  case 'cancelled':
+                    return (
+                      <span className="inline-flex items-center rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-medium text-red-800">
+                        Cancelled
+                      </span>
+                    );
+                  case 'completed':
+                    return (
+                      <span className="inline-flex items-center rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-medium text-gray-800">
+                        Completed
+                      </span>
+                    );
+                  case 'scheduled':
+                  case 'ongoing':
+                  default:
+                    return (
+                      <span className="inline-flex items-center rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-800">
+                        Upcoming
+                      </span>
+                    );
+                }
+              };
+
+              return (
+                <Card
+                  key={event.event_id}
+                  className={`overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md ${
+                    event.status === 'cancelled' ? 'opacity-75' : ''
+                  }`}
+                >
+                  <CardHeader className="px-6 pt-6 pb-3">
+                    <div className="flex items-start justify-between gap-2">
+                      <CardTitle className="text-lg text-dark_spring_green-700 flex-1">{event.event_name}</CardTitle>
+                      {getStatusBadge(event.status)}
+                    </div>
+                    <p className="text-xs text-sea_green-600 font-medium mt-1">
+                      {formatEventDate(event.event_date)} • {formatTime(event.start_time)}
+                      {event.location && ` • ${event.location}`}
+                    </p>
+                  </CardHeader>
+                  <CardContent className="px-6 pb-6 text-sm text-gray-700">
+                    <p className="leading-relaxed">{event.description}</p>
+                  </CardContent>
+                </Card>
+              );
+            })
           )}
         </div>
       </section>
@@ -319,10 +375,10 @@ export default function HomePage() {
             title="Hours"
             content={<>Mon–Fri: 9:00–5:00<br />Sat–Sun: 8:00–4:00</>}
           />
-          <PlanCard 
+          <PlanCard
             icon={<TicketIcon />}
             title="Admission"
-            content={<>Adults $29.95<br />Children $19.95<br />Seniors $24.95</>}
+            content={<>Adults $45.00<br />Children $30.00<br />Seniors $35.00<br />Students $38.00</>}
           />
           <PlanCard 
             icon={<LocationIcon />}

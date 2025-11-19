@@ -7,9 +7,9 @@ import { protect, restrictTo } from '../middleware/auth.middleware';
 const router = Router();
 
 // @route   GET /api/events
-// @desc    Get all upcoming events
+// @desc    Get all active events (past and upcoming, excluding cancelled)
 // @access  Public
-router.get('/', eventController.getUpcomingEvents);
+router.get('/', eventController.getAllEvents);
 
 // @route   POST /api/events
 // @desc    Create a new event

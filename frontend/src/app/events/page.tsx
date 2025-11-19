@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/componen
 import { Button } from '@/components/ui/button';
 import { useCart } from '@/context/CartContext';
 import { useAuth } from '@/context/AuthContext';
-import { ShoppingCart } from 'lucide-react';
+import { ShoppingCart, Check } from 'lucide-react';
 // Import the service and type
 import { eventService } from '@/services/event.service';
 import { Event } from '@/types'; // Import the Event type from the centralized types file [cite: dylanmiller765/zoo-database-uma-project/Zoo-Database-Uma-Project-ecc1d164d13de8e703063347a8cd967fa2ddaede/frontend/src/types/index.ts]
@@ -87,6 +87,8 @@ export default function EventsPage() {
     const [q, setQ] = useState('');
     // Use the StatusFilter type for status state
     const [statusFilter, setStatusFilter] = useState<StatusFilter>('All');
+    // State to track recently added events for the checkmark animation
+    const [addedItems, setAddedItems] = useState<Set<number>>(new Set());
     const { addItem } = useCart();
     const { isAuthenticated, user } = useAuth();
     
@@ -96,16 +98,39 @@ export default function EventsPage() {
             try {
                 setLoading(true); // Set loading true at the start
                 setError(null);
-                const data = await eventService.getAll();
+                const data = await eventService.getAll(true); // Include deleted (cancelled) events
                 
-                // Sort events by date (soonest first), then by start time
+                // Sort events: upcoming (scheduled) first, then completed, then cancelled at bottom
                 const sortedEvents = [...data].sort((a, b) => {
-                    // First compare dates
+                    // Status priority: scheduled (0) > completed (1) > cancelled (2)
+                    const statusPriority: Record<string, number> = {
+                        'scheduled': 0,
+                        'ongoing': 0,
+                        'completed': 1,
+                        'cancelled': 2,
+                    };
+                    const priorityA = statusPriority[a.status || 'scheduled'] ?? 1;
+                    const priorityB = statusPriority[b.status || 'scheduled'] ?? 1;
+                    
+                    // First sort by status priority
+                    if (priorityA !== priorityB) {
+                        return priorityA - priorityB;
+                    }
+                    
+                    // Within same status, sort by date (soonest first for upcoming, most recent first for past)
                     const dateA = a.event_date ? new Date(a.event_date).getTime() : Infinity;
                     const dateB = b.event_date ? new Date(b.event_date).getTime() : Infinity;
                     
-                    if (dateA !== dateB) {
-                        return dateA - dateB; // Ascending order (soonest first)
+                    if (priorityA === 0) {
+                        // For upcoming events, ascending (soonest first)
+                        if (dateA !== dateB) {
+                            return dateA - dateB;
+                        }
+                    } else {
+                        // For completed/cancelled, descending (most recent first)
+                        if (dateA !== dateB) {
+                            return dateB - dateA;
+                        }
                     }
                     
                     // If dates are the same, sort by start time
@@ -233,14 +258,54 @@ export default function EventsPage() {
                         <section className="mt-8 rounded-2xl bg-gray-50 p-4 sm:p-6">
                             <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
                                 {/* Map over the correctly filtered list: filteredEvents */}
-                                {filteredEvents.map((ev) => (
+                                {filteredEvents.map((ev) => {
+                                    // Status badge styling
+                                    const getStatusBadge = (status?: string) => {
+                                        switch (status) {
+                                            case 'cancelled':
+                                                return (
+                                                    <span className="inline-flex items-center rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-medium text-red-800">
+                                                        Cancelled
+                                                    </span>
+                                                );
+                                            case 'completed':
+                                                return (
+                                                    <span className="inline-flex items-center rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-medium text-gray-800">
+                                                        Completed
+                                                    </span>
+                                                );
+                                            case 'scheduled':
+                                            case 'ongoing':
+                                            default:
+                                                return (
+                                                    <span className="inline-flex items-center rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-800">
+                                                        Upcoming
+                                                    </span>
+                                                );
+                                        }
+                                    };
+
+                                    const isAdded = addedItems.has(ev.event_id);
+                                    return (
                                     <Card
                                         key={ev.event_id} // Use event_id from Event type
-                                        className="group overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md flex flex-col"
+                                        className={`group relative overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md flex flex-col ${
+                                            ev.status === 'cancelled' ? 'opacity-75' : ''
+                                        }`}
                                     >
+                                        {/* Success indicator checkmark */}
+                                        {isAdded && (
+                                            <div className="absolute top-2 right-2 z-10 bg-sea_green-500 text-white rounded-full p-1.5 shadow-lg">
+                                                <Check className="h-3 w-3" />
+                                            </div>
+                                        )}
+
                                         <CardHeader className="px-6 pt-6 pb-3">
-                                            {/* Use event_name from Event type */}
-                                            <CardTitle className="text-lg text-dark_spring_green-700">{ev.event_name}</CardTitle>
+                                            <div className="flex items-start justify-between gap-2">
+                                                {/* Use event_name from Event type */}
+                                                <CardTitle className="text-lg text-dark_spring_green-700 flex-1">{ev.event_name}</CardTitle>
+                                                {getStatusBadge(ev.status)}
+                                            </div>
                                             <div className="mt-1 text-xs text-sea_green-700">
                                                 {/* Use location from Event type */}
                                                 <span className="font-medium">{ev.location || 'N/A'}</span>
@@ -270,11 +335,35 @@ export default function EventsPage() {
                                                                 event_date: ev.event_date,
                                                             },
                                                         });
+                                                        // Show success feedback with checkmark
+                                                        setAddedItems((prev) => new Set(prev).add(ev.event_id));
+                                                        setTimeout(() => {
+                                                            setAddedItems((prev) => {
+                                                                const newSet = new Set(prev);
+                                                                newSet.delete(ev.event_id);
+                                                                return newSet;
+                                                            });
+                                                        }, 2000);
                                                     }}
-                                                    className="w-full bg-sea_green-600 hover:bg-sea_green-700 text-white"
+                                                    disabled={addedItems.has(ev.event_id)}
+                                                    className={`w-full text-xs font-semibold transition-all duration-200 ${
+                                                      addedItems.has(ev.event_id)
+                                                        ? 'bg-sea_green-500 text-white cursor-default'
+                                                        : 'bg-gradient-to-r from-sea_green-600 to-dark_spring_green-600 hover:from-sea_green-700 hover:to-dark_spring_green-700 text-white shadow-sm hover:shadow-md'
+                                                    }`}
+                                                    size="sm"
                                                 >
-                                                    <ShoppingCart className="h-4 w-4 mr-2" />
-                                                    Add to Cart (${ev.ticket_price.toFixed(2)})
+                                                    {addedItems.has(ev.event_id) ? (
+                                                        <>
+                                                            <Check className="h-3 w-3 mr-1.5" />
+                                                            Added!
+                                                        </>
+                                                    ) : (
+                                                        <>
+                                                            <ShoppingCart className="h-3 w-3 mr-1.5" />
+                                                            Add to Cart (${ev.ticket_price.toFixed(2)})
+                                                        </>
+                                                    )}
                                                 </Button>
                                             ) : ev.status !== 'scheduled' ? (
                                                 <Button
@@ -286,7 +375,8 @@ export default function EventsPage() {
                                             ) : null}
                                         </CardFooter>
                                     </Card>
-                                ))}
+                                    );
+                                })}
 
                                 {/* No results message */}
                                 {filteredEvents.length === 0 && !error && (
