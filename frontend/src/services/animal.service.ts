@@ -24,8 +24,8 @@ export const animalService = {
     return response.data;
   },
 
-  async delete(id: number, activeStatus?: 'transferred' | 'deceased'): Promise<void> {
-    await apiClient.delete(`/animals/${id}`, { data: { activeStatus } });
+  async delete(id: number, activeStatus?: 'transferred' | 'deceased', deletionNotes?: string): Promise<void> {
+    await apiClient.delete(`/animals/${id}`, { data: { activeStatus, deletionNotes } });
   },
 
   async restore(id: number): Promise<Animal> {
