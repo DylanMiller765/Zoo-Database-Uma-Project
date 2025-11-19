@@ -14,6 +14,16 @@ interface DateRangePickerProps {
 }
 
 /**
+ * Format date as YYYY-MM-DD in local timezone (no UTC conversion)
+ */
+const formatLocalDate = (date: Date): string => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
+/**
  * Reusable date range picker with quick select options
  */
 export function DateRangePicker({
@@ -31,7 +41,7 @@ export function DateRangePicker({
     const end = new Date();
     const start = new Date(end.getTime() - days * 24 * 60 * 60 * 1000);
 
-    onRangeChange(start.toISOString().split('T')[0], end.toISOString().split('T')[0]);
+    onRangeChange(formatLocalDate(start), formatLocalDate(end));
   };
 
   const handleQuickSelectFuture = (e: React.MouseEvent, days: number) => {
@@ -40,7 +50,7 @@ export function DateRangePicker({
     const start = new Date();
     const end = new Date(start.getTime() + days * 24 * 60 * 60 * 1000);
 
-    onRangeChange(start.toISOString().split('T')[0], end.toISOString().split('T')[0]);
+    onRangeChange(formatLocalDate(start), formatLocalDate(end));
   };
 
   const handleThisMonth = (e: React.MouseEvent) => {
@@ -50,7 +60,7 @@ export function DateRangePicker({
     const start = new Date(now.getFullYear(), now.getMonth(), 1);
     const end = new Date(now.getFullYear(), now.getMonth() + 1, 0);
 
-    onRangeChange(start.toISOString().split('T')[0], end.toISOString().split('T')[0]);
+    onRangeChange(formatLocalDate(start), formatLocalDate(end));
   };
 
   const handleThisYear = (e: React.MouseEvent) => {
@@ -60,7 +70,7 @@ export function DateRangePicker({
     const start = new Date(now.getFullYear(), 0, 1);
     const end = new Date(now.getFullYear(), 11, 31);
 
-    onRangeChange(start.toISOString().split('T')[0], end.toISOString().split('T')[0]);
+    onRangeChange(formatLocalDate(start), formatLocalDate(end));
   };
 
   const handleAllTime = (e: React.MouseEvent) => {
