@@ -100,7 +100,18 @@ export default function EventPerformancePage() {
 
   // Helper functions
   const formatDate = (dateString: string) => {
-    // Format YYYY-MM-DD directly without timezone conversion
+    if (!dateString) return "";
+
+    // Handle ISO format dates (e.g., "2025-09-15T00:00:00.000Z")
+    if (dateString.includes('T')) {
+      const date = new Date(dateString);
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      const year = date.getFullYear();
+      return `${month}/${day}/${year}`;
+    }
+
+    // Handle simple YYYY-MM-DD format
     const [year, month, day] = dateString.split('-');
     return `${month}/${day}/${year}`;
   };
