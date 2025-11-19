@@ -21,8 +21,8 @@ export class AnimalService {
     return await AnimalModel.update(id, updates);
   }
 
-  static async deleteAnimal(id: number, activeStatus?: 'transferred' | 'deceased'): Promise<void> {
-    return await AnimalModel.remove(id, activeStatus);
+  static async deleteAnimal(id: number, activeStatus?: 'transferred' | 'deceased', deletionNotes?: string): Promise<void> {
+    return await AnimalModel.remove(id, activeStatus, deletionNotes);
   }
 
   static async restoreAnimal(id: number): Promise<Animal | null> {

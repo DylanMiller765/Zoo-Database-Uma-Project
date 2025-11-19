@@ -99,7 +99,14 @@ export default function EventPerformancePage() {
 
   // Helper functions
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString();
+    if (!dateString) return "";
+    // Handle MySQL date format (YYYY-MM-DD) or ISO format
+    const date = new Date(dateString + 'T00:00:00'); // Add time to avoid timezone issues
+    return date.toLocaleDateString('en-US', {
+      month: '2-digit',
+      day: '2-digit',
+      year: 'numeric'
+    });
   };
 
   const formatTime = (timeString: string) => {
@@ -110,6 +117,22 @@ export default function EventPerformancePage() {
   const formatMoney = (amount: number | string) => {
     const num = parseFloat(String(amount || 0));
     return num.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  };
+
+  const getEventStatus = (eventDate: string): string => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const event = new Date(eventDate + 'T00:00:00');
+
+    if (event < today) return 'Past';
+    if (event.getTime() === today.getTime()) return 'Today';
+    return 'Upcoming';
+  };
+
+  const getStatusBadgeVariant = (status: string) => {
+    if (status === 'Past') return 'secondary';
+    if (status === 'Today') return 'warning';
+    return 'success';
   };
 
   const getCapacityBadge = (percentage: number | null) => {
@@ -273,7 +296,9 @@ export default function EventPerformancePage() {
                     <TableRow>
                       <TableHead>Event Name</TableHead>
                       <TableHead>Date & Time</TableHead>
+                      <TableHead>Status</TableHead>
                       <TableHead>Location</TableHead>
+                      <TableHead className="text-right">Ticket Price</TableHead>
                       <TableHead className="text-right">Attendees</TableHead>
                       <TableHead className="text-right">Capacity</TableHead>
                       <TableHead className="text-center">Capacity %</TableHead>
@@ -305,9 +330,21 @@ export default function EventPerformancePage() {
                           </div>
                         </TableCell>
 
+                        {/* Status */}
+                        <TableCell>
+                          <Badge variant={getStatusBadgeVariant(getEventStatus(event.event_date))}>
+                            {getEventStatus(event.event_date)}
+                          </Badge>
+                        </TableCell>
+
                         {/* Location */}
                         <TableCell className="text-sm text-gray-600">
                           {event.location || "N/A"}
+                        </TableCell>
+
+                        {/* Ticket Price */}
+                        <TableCell className="text-right font-medium">
+                          {event.ticket_price !== null ? `$${formatMoney(event.ticket_price)}` : "Free"}
                         </TableCell>
 
                         {/* Attendees */}

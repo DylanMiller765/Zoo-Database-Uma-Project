@@ -155,6 +155,7 @@ CREATE TABLE `animals` (
     `active_status` ENUM('active', 'transferred', 'deceased') DEFAULT 'active',
     `endangerment_status` ENUM('least_concern', 'near_threatened', 'vulnerable', 'endangered', 'critically_endangered', 'extinct_in_the_wild', 'extinct') DEFAULT 'least_concern',
     `weight` DECIMAL(8, 2),
+    `deletion_notes` TEXT,
     `created_date` DATETIME DEFAULT CURRENT_TIMESTAMP,
     `updated_date` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     `deleted_at` DATETIME DEFAULT NULL,

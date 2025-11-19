@@ -15,6 +15,7 @@ export interface Animal {
   active_status?: 'active' | 'transferred' | 'deceased';
   endangerment_status?: 'least_concern' | 'near_threatened' | 'vulnerable' | 'endangered' | 'critically_endangered' | 'extinct_in_the_wild' | 'extinct';
   weight?: number;
+  deletion_notes?: string;
   created_date?: string;
   updated_date?: string;
   deleted_at?: string | null;
@@ -69,13 +70,13 @@ export class AnimalModel {
     return await this.findById(id);
   }
 
-  static async remove(id: number, activeStatus?: 'transferred' | 'deceased'): Promise<void> {
+  static async remove(id: number, activeStatus?: 'transferred' | 'deceased', deletionNotes?: string): Promise<void> {
     if (activeStatus && ['transferred', 'deceased'].includes(activeStatus)) {
-      const sql = 'UPDATE animals SET active_status = ?, deleted_at = NOW() WHERE animal_id = ?';
-      await query(sql, [activeStatus, id]);
+      const sql = 'UPDATE animals SET active_status = ?, deletion_notes = ?, deleted_at = NOW() WHERE animal_id = ?';
+      await query(sql, [activeStatus, deletionNotes || null, id]);
     } else {
-      const sql = 'UPDATE animals SET deleted_at = NOW() WHERE animal_id = ?';
-      await query(sql, [id]);
+      const sql = 'UPDATE animals SET deletion_notes = ?, deleted_at = NOW() WHERE animal_id = ?';
+      await query(sql, [deletionNotes || null, id]);
     }
   }
 

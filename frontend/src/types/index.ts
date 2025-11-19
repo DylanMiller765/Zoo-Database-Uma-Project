@@ -78,6 +78,7 @@ export interface Animal {
   active_status?: 'active' | 'transferred' | 'deceased';
   endangerment_status?: 'least_concern' | 'near_threatened' | 'vulnerable' | 'endangered' | 'critically_endangered' | 'extinct_in_the_wild' | 'extinct';
   weight?: number;
+  deletion_notes?: string;
   created_date?: string;
   updated_date?: string;
   deleted_at?: string | null;
