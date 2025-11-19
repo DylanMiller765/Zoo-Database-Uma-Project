@@ -100,7 +100,9 @@ export default function EventPerformancePage() {
 
   // Helper functions
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString();
+    // Format YYYY-MM-DD directly without timezone conversion
+    const [year, month, day] = dateString.split('-');
+    return `${month}/${day}/${year}`;
   };
 
   const formatTime = (timeString: string) => {
