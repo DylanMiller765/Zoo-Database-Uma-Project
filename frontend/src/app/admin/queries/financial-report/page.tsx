@@ -95,7 +95,9 @@ export default function FinancialReportPage() {
 
   const formatDate = (dateString: string | null) => {
     if (!dateString) return 'All Time';
-    return new Date(dateString).toLocaleDateString();
+    // Format YYYY-MM-DD directly without timezone conversion
+    const [year, month, day] = dateString.split('-');
+    return `${month}/${day}/${year}`;
   };
 
   const getSourceLabel = (source: string) => {

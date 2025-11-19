@@ -381,7 +381,9 @@ export default function AnimalHealthCarePage() {
 
   const formatDate = (dateString: string | null) => {
     if (!dateString) return "N/A";
-    return new Date(dateString).toLocaleDateString();
+    // Format YYYY-MM-DD directly without timezone conversion
+    const [year, month, day] = dateString.split('-');
+    return `${month}/${day}/${year}`;
   };
 
   const formatTime = (timeString: string | null) => {
