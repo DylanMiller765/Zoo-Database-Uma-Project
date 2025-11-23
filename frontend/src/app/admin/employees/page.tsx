@@ -255,7 +255,7 @@ export default function EmployeesPage() {
             <option value="manager">Manager</option>
             <option value="veterinarian">Veterinarian</option>
             <option value="coordinator">Coordinator</option>
-            <option value="maintenance">Maintenance</option>
+
             <option value="cashier">Cashier</option>
           </Select>
         </div>

@@ -17,7 +17,7 @@ CREATE TABLE `employees` (
     `email` VARCHAR(100) UNIQUE,
     `phone` VARCHAR(20),
     `ssn` CHAR(11) UNIQUE NOT NULL,
-    `job_role` ENUM('keeper', 'manager', 'coordinator', 'cashier', 'guide', 'veterinarian', 'maintenance', 'security', 'other') NOT NULL,
+    `job_role` ENUM('keeper', 'manager', 'coordinator', 'cashier', 'guide', 'veterinarian', 'security', 'other') NOT NULL,
     `employment_type` ENUM('full_time', 'part_time') NOT NULL DEFAULT 'full_time',
     `salary` DECIMAL(10, 2),
     `status` ENUM('active', 'inactive') DEFAULT 'active',

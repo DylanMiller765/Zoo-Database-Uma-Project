@@ -169,24 +169,8 @@ export class DashboardService {
       recentTickets.forEach(ticket => {
         activities.push({
           type: 'ticket',
-          title: 'Ticket sold',
           description: `${ticket.ticket_type} ticket sold for $${ticket.price}`,
           timestamp: ticket.purchase_date,
-        });
-      });
-    }
-
-    // Maintenance sees habitat activities
-    if (userRole === 'maintenance') {
-      const recentHabitats = await query<any[]>(
-        'SELECT habitat_id, habitat_name, last_maintenance, status FROM habitats WHERE deleted_at IS NULL ORDER BY last_maintenance DESC LIMIT 8'
-      );
-      recentHabitats.forEach(habitat => {
-        activities.push({
-          type: 'habitat',
-          title: 'Habitat maintenance',
-          description: `${habitat.habitat_name} - Status: ${habitat.status}`,
-          timestamp: habitat.last_maintenance || new Date().toISOString(),
         });
       });
     }

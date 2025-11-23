@@ -180,12 +180,7 @@ export default function AdminDashboard() {
       ];
     }
 
-    // Maintenance quick actions
-    if (role === 'maintenance') {
-      return [
-        { href: '/admin/habitats', icon: MapPin, label: 'Habitat Maintenance', description: 'View habitat maintenance schedules' },
-      ];
-    }
+
 
     // Manager quick actions (full access)
     if (role === 'manager') {
@@ -269,7 +264,7 @@ export default function AdminDashboard() {
             iconColor="text-persian_orange-600"
           />
         )}
-        {(user?.job_role === 'manager' || user?.job_role === 'keeper' || user?.job_role === 'veterinarian' || user?.job_role === 'maintenance') && (
+        {(user?.job_role === 'manager' || user?.job_role === 'keeper' || user?.job_role === 'veterinarian') && (
           <StatsCard
             title="Active Habitats"
             value={stats.activeHabitats}
@@ -322,13 +317,12 @@ export default function AdminDashboard() {
                           <p className="text-xs text-dark_spring_green-600 mt-1 font-medium">Shift: {assignment.shift}</p>
                         )}
                       </div>
-                      <div className={`px-2 py-1 rounded text-xs font-medium ${
-                        assignment.health_status === 'excellent' ? 'bg-green-100 text-green-800' :
+                      <div className={`px-2 py-1 rounded text-xs font-medium ${assignment.health_status === 'excellent' ? 'bg-green-100 text-green-800' :
                         assignment.health_status === 'good' ? 'bg-blue-100 text-blue-800' :
-                        assignment.health_status === 'fair' ? 'bg-yellow-100 text-yellow-800' :
-                        assignment.health_status === 'poor' ? 'bg-orange-100 text-orange-800' :
-                        'bg-red-100 text-red-800'
-                      }`}>
+                          assignment.health_status === 'fair' ? 'bg-yellow-100 text-yellow-800' :
+                            assignment.health_status === 'poor' ? 'bg-orange-100 text-orange-800' :
+                              'bg-red-100 text-red-800'
+                        }`}>
                         {assignment.health_status}
                       </div>
                     </div>
@@ -370,13 +364,12 @@ export default function AdminDashboard() {
                       <div className="flex-1">
                         <div className="flex items-center gap-2">
                           <h3 className="font-semibold text-gray-900">{animal.name}</h3>
-                          <span className={`px-2 py-0.5 rounded text-xs font-medium ${
-                            animal.health_status === 'excellent' ? 'bg-green-100 text-green-800' :
+                          <span className={`px-2 py-0.5 rounded text-xs font-medium ${animal.health_status === 'excellent' ? 'bg-green-100 text-green-800' :
                             animal.health_status === 'good' ? 'bg-blue-100 text-blue-800' :
-                            animal.health_status === 'fair' ? 'bg-yellow-100 text-yellow-800' :
-                            animal.health_status === 'poor' ? 'bg-orange-100 text-orange-800' :
-                            'bg-red-100 text-red-800'
-                          }`}>
+                              animal.health_status === 'fair' ? 'bg-yellow-100 text-yellow-800' :
+                                animal.health_status === 'poor' ? 'bg-orange-100 text-orange-800' :
+                                  'bg-red-100 text-red-800'
+                            }`}>
                             {animal.health_status}
                           </span>
                         </div>

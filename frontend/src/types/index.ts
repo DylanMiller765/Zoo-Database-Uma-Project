@@ -17,7 +17,7 @@ export type UserRole =
   | 'cashier'
   | 'guide'
   | 'veterinarian'
-  | 'maintenance'
+
   | 'security'
   | 'other';
 
@@ -84,7 +84,7 @@ export interface Animal {
   deleted_at?: string | null;
 }
 
-export interface CreateAnimalData extends Omit<Animal, 'animal_id' | 'created_date' | 'updated_date'> {}
+export interface CreateAnimalData extends Omit<Animal, 'animal_id' | 'created_date' | 'updated_date'> { }
 
 // Event Types
 export interface Event {
@@ -169,7 +169,7 @@ export interface Ticket {
   payment_method?: 'cash' | 'credit' | 'debit';
 }
 
-export interface CreateTicketData extends Omit<Ticket, 'ticket_id' | 'purchase_date'> {}
+export interface CreateTicketData extends Omit<Ticket, 'ticket_id' | 'purchase_date'> { }
 
 // Cafe Types
 export interface Cafe {
@@ -181,7 +181,7 @@ export interface Cafe {
   manager_id?: number;
 }
 
-export interface CreateCafeData extends Omit<Cafe, 'cafe_id'> {}
+export interface CreateCafeData extends Omit<Cafe, 'cafe_id'> { }
 
 // Gift Shop Types
 export interface GiftShop {
@@ -193,7 +193,7 @@ export interface GiftShop {
   manager_id?: number;
 }
 
-export interface CreateGiftShopData extends Omit<GiftShop, 'gift_shop_id'> {}
+export interface CreateGiftShopData extends Omit<GiftShop, 'gift_shop_id'> { }
 
 // Attraction Types
 export interface Attraction {
@@ -209,7 +209,7 @@ export interface Attraction {
 }
 
 // Optional: Define a type for creating/updating attractions (without the ID)
-export interface AttractionData extends Omit<Attraction, 'attraction_id'> {}
+export interface AttractionData extends Omit<Attraction, 'attraction_id'> { }
 
 // Habitat Types
 export interface Habitat {
@@ -227,7 +227,7 @@ export interface Habitat {
   deleted_at?: string | null;
 }
 
-export interface CreateHabitatData extends Omit<Habitat, 'habitat_id' | 'created_date'> {}
+export interface CreateHabitatData extends Omit<Habitat, 'habitat_id' | 'created_date'> { }
 
 // Gift Shop Item Types
 export interface GiftShopItem {
@@ -244,7 +244,7 @@ export interface GiftShopItem {
   deleted_at?: string | null;
 }
 
-export interface CreateGiftShopItemData extends Omit<GiftShopItem, 'item_id'> {}
+export interface CreateGiftShopItemData extends Omit<GiftShopItem, 'item_id'> { }
 
 // Cafe Item Types
 export interface CafeItem {
@@ -257,7 +257,7 @@ export interface CafeItem {
   deleted_at?: string | null;
 }
 
-export interface CreateCafeItemData extends Omit<CafeItem, 'item_id'> {}
+export interface CreateCafeItemData extends Omit<CafeItem, 'item_id'> { }
 
 // Feeding Schedule Types
 export interface FeedingSchedule {
@@ -269,9 +269,9 @@ export interface FeedingSchedule {
   notes?: string | null;
 }
 
-export interface CreateFeedingScheduleData extends Omit<FeedingSchedule, 'schedule_id'> {}
+export interface CreateFeedingScheduleData extends Omit<FeedingSchedule, 'schedule_id'> { }
 
-export interface UpdateFeedingScheduleData extends Partial<Omit<FeedingSchedule, 'schedule_id' | 'animal_id'>> {}
+export interface UpdateFeedingScheduleData extends Partial<Omit<FeedingSchedule, 'schedule_id' | 'animal_id'>> { }
 
 // Feeding Log Types
 export interface FeedingLog {
@@ -289,9 +289,9 @@ export interface FeedingLogWithKeeper extends FeedingLog {
   animal_name?: string | null;
 }
 
-export interface CreateFeedingLogData extends Omit<FeedingLog, 'log_id'> {}
+export interface CreateFeedingLogData extends Omit<FeedingLog, 'log_id'> { }
 
-export interface UpdateFeedingLogData extends Partial<Omit<FeedingLog, 'log_id' | 'animal_id'>> {}
+export interface UpdateFeedingLogData extends Partial<Omit<FeedingLog, 'log_id' | 'animal_id'>> { }
 
 export interface FeedingLogFilters {
   animalId?: number;

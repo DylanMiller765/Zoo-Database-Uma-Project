@@ -5,7 +5,7 @@ export enum UserRole {
   CASHIER = 'cashier',
   GUIDE = 'guide',
   VETERINARIAN = 'veterinarian',
-  MAINTENANCE = 'maintenance',
+
   SECURITY = 'security',
   OTHER = 'other',
   CUSTOMER = 'customer'

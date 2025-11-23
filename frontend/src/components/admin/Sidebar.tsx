@@ -35,7 +35,7 @@ interface MenuItem {
 }
 
 const menuItems: MenuItem[] = [
-  { href: '/admin', icon: LayoutDashboard, label: 'Dashboard', roles: ['manager', 'keeper', 'veterinarian', 'coordinator', 'cashier', 'guide', 'maintenance', 'security', 'other'] },
+  { href: '/admin', icon: LayoutDashboard, label: 'Dashboard', roles: ['manager', 'keeper', 'veterinarian', 'coordinator', 'cashier', 'guide', 'security', 'other'] },
   { href: '/admin/animals', icon: Leaf, label: 'Animals', roles: ['manager', 'veterinarian', 'keeper'] },
   { href: '/admin/assignments', icon: UserCog, label: 'Assignments', roles: ['manager'] },
   { href: '/admin/habitats', icon: Home, label: 'Habitats', roles: ['manager', 'veterinarian', 'keeper'] },

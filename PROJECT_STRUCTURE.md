@@ -100,7 +100,6 @@ Accessible through the Admin Dashboard (`/admin`). Roles are hierarchical, with 
 | **Coordinator** | **Events Focus.** Full CRUD on `events` and `event_registrations`. Can manage event attendees. |
 | **Cashier** | **Sales Focus.** Can process sales for `tickets`, `gift_shop`, and `cafe`. Can register customers for events. Read-only access to relevant item/event details. |
 | **Guide** | **Read-only access** to informational entities like `animals`, `habitats`, and `attractions`. |
-| **Maintenance** | Can view and update the status of `habitats` and `attractions`. |
 | **Security** | Can view zoo operational data. (Further permissions can be defined). |
 
 ---

@@ -243,7 +243,7 @@ export function EmployeeForm({ employee, onSuccess, onCancel }: EmployeeFormProp
             <option value="cashier">Cashier</option>
             <option value="guide">Guide</option>
             <option value="veterinarian">Veterinarian</option>
-            <option value="maintenance">Maintenance</option>
+
             <option value="security">Security</option>
             <option value="other">Other</option>
           </Select>

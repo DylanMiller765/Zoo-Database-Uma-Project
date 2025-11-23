@@ -37,7 +37,7 @@ INSERT INTO employees (employee_id, first_name, last_name, email, phone, ssn, jo
 (5, 'Lisa', 'Thompson', 'lisa.thompson@zoo.com', '5550101105', '567-89-0123', 'cashier', 'part_time', NULL, 'active', '2023-05-15', 'female'),
 (6, 'James', 'Wilson', 'james.wilson@zoo.com', '5550101106', '678-90-1234', 'guide', 'part_time', NULL, 'active', '2023-07-01', 'male'),
 (7, 'Anna', 'Martinez', 'anna.martinez@zoo.com', '5550101107', '789-01-2345', 'keeper', 'full_time', 46000.00, 'active', '2021-09-12', 'female'),
-(8, 'Tom', 'Brown', 'tom.brown@zoo.com', '5550101108', '890-12-3456', 'maintenance', 'full_time', 42000.00, 'active', '2020-11-05', 'male'),
+(8, 'Tom', 'Brown', 'tom.brown@zoo.com', '5550101108', '890-12-3456', 'keeper', 'full_time', 42000.00, 'active', '2020-11-05', 'male'),
 (9, 'Chris', 'Green', 'chris.green@zoo.com', '5550101109', '987-65-4321', 'keeper', 'full_time', 45000.00, 'active', '2023-08-01', 'male'),
 (10, 'Jessica', 'Blue', 'jessica.blue@zoo.com', '5550101110', '876-54-3210', 'keeper', 'full_time', 45500.00, 'active', '2023-09-01', 'female'),
 (11, 'Mark', 'White', 'mark.white@zoo.com', '5550101111', '765-43-2109', 'veterinarian', 'full_time', 86000.00, 'active', '2023-07-15', 'male'),
@@ -100,7 +100,7 @@ INSERT INTO passwords (account_id, password_hash) VALUES
 (5, 'password'),  -- Lisa Thompson (Cashier)
 (6, 'password'),  -- James Wilson (Guide)
 (7, 'password'),  -- Anna Martinez (Keeper)
-(8, 'password'),  -- Tom Brown (Maintenance)
+(8, 'password'),  -- Tom Brown (Keeper)
 (9, 'password'),  -- John Smith (Customer)
 (10, 'password'), -- Maria Garcia (Customer)
 (11, 'password'), -- Robert Davis (Customer)
