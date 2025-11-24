@@ -469,8 +469,8 @@ function MembershipPageContent() {
                     onChange={handlePhoneChange}
                     maxLength={10}
                     className={`w-full px-4 py-3 border-2 rounded-xl focus:outline-none focus:ring-2 transition-all ${
-                      phoneError
-                        ? 'border-red-300 focus:ring-red-500 focus:border-red-500'
+                      phoneError || (phone && phone.length !== 10)
+                        ? 'border-red-500 focus:ring-red-500 focus:border-red-500'
                         : 'border-gray-200 focus:ring-sea_green-500 focus:border-sea_green-500'
                     }`}
                     placeholder="1234567890"
