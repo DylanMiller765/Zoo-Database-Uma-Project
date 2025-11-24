@@ -81,12 +81,13 @@ export function FeedingLogForm({ animalId, log, schedules = [], onSuccess, onCan
     setLoading(true);
 
     try {
-      // Convert datetime-local format to MySQL datetime format
+      // Convert datetime-local format to MySQL datetime format (keep as local time, don't convert to UTC)
       // Use current time as fallback if feeding_time is not set
-      const feedingTime = formData.feeding_time || new Date().toISOString().slice(0, 16);
+      const feedingTime = formData.feeding_time || getLocalDateTimeString();
       const submitData = {
         ...formData,
-        feeding_time: new Date(feedingTime).toISOString().slice(0, 19).replace('T', ' '),
+        // Format: YYYY-MM-DD HH:mm:ss in local timezone (not UTC)
+        feeding_time: feedingTime.replace('T', ' ') + ':00',
       };
 
       if (log?.log_id) {
