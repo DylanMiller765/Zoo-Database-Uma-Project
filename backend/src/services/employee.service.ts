@@ -68,6 +68,15 @@ export class EmployeeService {
   }
 
   static async deleteEmployee(id: number): Promise<void> {
+    // Check if this employee is a zookeeper before deleting
+    const employee = await EmployeeModel.findById(id);
+    
+    // If the employee is a zookeeper, delete all their assignments
+    // This makes the animals unassigned instead of keeping assignments to a deleted keeper
+    if (employee && employee.job_role === 'keeper') {
+      await query('DELETE FROM zookeeper_assignments WHERE keeper_id = ?', [id]);
+    }
+    
     return await EmployeeModel.remove(id);
   }
 
