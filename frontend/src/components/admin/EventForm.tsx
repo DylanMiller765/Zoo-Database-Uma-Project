@@ -9,6 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Select } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { formatDateForInput } from '@/lib/utils';
+import { ImageUpload } from '@/components/ImageUpload';
 
 interface EventFormProps {
   event?: Event | null;
@@ -29,6 +30,7 @@ export function EventForm({ event, onSuccess, onCancel }: EventFormProps) {
     location: '',
     max_capacity: undefined,
     ticket_price: undefined,
+    image_url: '',
     created_by: undefined,
     status: 'scheduled',
   });
@@ -44,6 +46,7 @@ export function EventForm({ event, onSuccess, onCancel }: EventFormProps) {
         location: event.location || '',
         max_capacity: event.max_capacity,
         ticket_price: event.ticket_price,
+        image_url: event.image_url || '',
         created_by: event.created_by,
         status: event.status || 'scheduled',
       });
@@ -84,6 +87,13 @@ export function EventForm({ event, onSuccess, onCancel }: EventFormProps) {
           <p className="text-sm text-red-600">{error}</p>
         </div>
       )}
+
+      {/* Image Upload - Moved to top */}
+      <ImageUpload
+        value={formData.image_url}
+        onChange={(imageUrl) => setFormData(prev => ({ ...prev, image_url: imageUrl }))}
+        label="Event Photo"
+      />
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="space-y-2 md:col-span-2">
