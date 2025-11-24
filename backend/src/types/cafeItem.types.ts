@@ -5,6 +5,7 @@ export interface CafeItem {
   description: string;
   category: string;
   price: number;
+  quantity_in_stock: number;
   image_url?: string;
   deleted_at?: string | null;
 }

@@ -40,4 +40,12 @@ export const cafeItemService = {
     const res = await apiClient.put<CafeItem>(`/cafe-items/${id}/restore`);
     return res.data;
   },
+
+  // Stock update for cashiers (only updates quantity_in_stock)
+  async updateStock(id: number, quantity_in_stock: number): Promise<CafeItem> {
+    const res = await apiClient.put<CafeItem>(`/cafe-items/${id}/stock`, {
+      quantity_in_stock,
+    });
+    return res.data;
+  },
 };

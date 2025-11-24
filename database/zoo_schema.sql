@@ -227,6 +227,7 @@ CREATE TABLE `cafe_items` (
     `description` TEXT,
     `category` VARCHAR(50),
     `price` DECIMAL(8, 2) NOT NULL,
+    `quantity_in_stock` INT DEFAULT 0,
     `is_available` BOOLEAN DEFAULT TRUE,
     `image_url` VARCHAR(500) NULL,
     `deleted_at` DATETIME DEFAULT NULL,

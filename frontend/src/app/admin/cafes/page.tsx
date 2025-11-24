@@ -18,7 +18,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { Plus, Search, Edit, Trash2, Coffee, RotateCcw } from 'lucide-react';
+import { Plus, Search, Edit, Trash2, Coffee, RotateCcw, Save } from 'lucide-react';
 import { Modal } from '@/components/ui/modal';
 import { CafeItemForm } from '@/components/admin/CafeItemForm';
 import { CafeItemDetailModal } from '@/components/admin/CafeItemDetailModal';
@@ -46,6 +46,10 @@ export default function CafesPage() {
   const [detailItem, setDetailItem] = useState<CafeItem | null>(null);
   const [isRestoreModalOpen, setIsRestoreModalOpen] = useState(false);
   const [itemToRestore, setItemToRestore] = useState<CafeItem | null>(null);
+  
+  // Stock editing states
+  const [editingStock, setEditingStock] = useState<Record<number, number>>({});
+  const [savingStock, setSavingStock] = useState<Record<number, boolean>>({});
 
   const isManager = hasRole('manager');
   const isCashier = hasRole('cashier');
@@ -150,6 +154,50 @@ export default function CafesPage() {
     setIsModalOpen(false);
     setSelectedItem(null);
     await loadItems();
+  };
+
+  const handleStockChange = (itemId: number, value: string) => {
+    const numValue = parseInt(value) || 0;
+    if (numValue < 0) return;
+    setEditingStock(prev => ({ ...prev, [itemId]: numValue }));
+  };
+
+  const handleSaveStock = async (item: CafeItem) => {
+    const newStock = editingStock[item.item_id];
+    if (newStock === undefined || newStock === item.quantity_in_stock) {
+      return;
+    }
+
+    setSavingStock(prev => ({ ...prev, [item.item_id]: true }));
+
+    try {
+      await cafeItemService.updateStock(item.item_id, newStock);
+      
+      // Update local state
+      setMenuItems(prev =>
+        prev.map(i =>
+          i.item_id === item.item_id
+            ? { ...i, quantity_in_stock: newStock }
+            : i
+        )
+      );
+      
+      // Clear editing state
+      setEditingStock(prev => {
+        const updated = { ...prev };
+        delete updated[item.item_id];
+        return updated;
+      });
+    } catch (error: any) {
+      console.error('Failed to update stock:', error);
+      alert(error.response?.data?.message || 'Failed to update stock. Please try again.');
+    } finally {
+      setSavingStock(prev => {
+        const updated = { ...prev };
+        delete updated[item.item_id];
+        return updated;
+      });
+    }
   };
 
   const isDeleted = (item: CafeItem) => item.deleted_at !== null && item.deleted_at !== undefined;
@@ -271,6 +319,7 @@ export default function CafesPage() {
               <TableHead>Name</TableHead>
               <TableHead>Category</TableHead>
               <TableHead>Price</TableHead>
+              <TableHead>Stock</TableHead>
               <TableHead>Status</TableHead>
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>
@@ -290,6 +339,40 @@ export default function CafesPage() {
                   <TableCell>{item.name}</TableCell>
                   <TableCell className="capitalize">{item.category}</TableCell>
                   <TableCell className="font-semibold">${priceNum.toFixed(2)}</TableCell>
+                  <TableCell>
+                    <div className="flex items-center gap-2">
+                      <Input
+                        type="number"
+                        min="0"
+                        value={editingStock[item.item_id] ?? item.quantity_in_stock}
+                        onChange={(e) => {
+                          e.stopPropagation();
+                          handleStockChange(item.item_id, e.target.value);
+                        }}
+                        onClick={(e) => e.stopPropagation()}
+                        disabled={savingStock[item.item_id]}
+                        className="w-20"
+                      />
+                      {editingStock[item.item_id] !== undefined && 
+                       editingStock[item.item_id] !== item.quantity_in_stock && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleSaveStock(item);
+                          }}
+                          disabled={savingStock[item.item_id]}
+                          className="h-8 w-8 p-0"
+                        >
+                          <Save className="h-4 w-4" />
+                        </Button>
+                      )}
+                    </div>
+                    {item.quantity_in_stock < 10 && !isDeleted(item) && (
+                      <p className="text-xs text-amber-600 mt-1">Low stock</p>
+                    )}
+                  </TableCell>
                   <TableCell>
                     {isDeleted(item) ? (
                       <Badge variant="danger">Deleted</Badge>
