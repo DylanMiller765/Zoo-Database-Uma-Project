@@ -26,5 +26,5 @@ export interface EventRegistration {
   registration_date: string;
   number_of_participants: number;
   total_amount: number | null;
-  payment_status: 'pending' | 'paid' | 'cancelled';
+  payment_status: 'paid' | 'cancelled';
 }
