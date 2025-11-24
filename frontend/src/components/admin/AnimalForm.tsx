@@ -10,6 +10,7 @@ import { Label } from '@/components/ui/label';
 import { Select } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { formatDateForInput } from '@/lib/utils';
+import { ImageUpload } from '@/components/ImageUpload';
 
 interface AnimalFormProps {
   animal?: Animal | null;
@@ -36,6 +37,7 @@ export function AnimalForm({ animal, onSuccess, onCancel }: AnimalFormProps) {
     active_status: 'active',
     endangerment_status: 'least_concern',
     weight: undefined,
+    image_url: '',
   });
 
   // Load habitats on component mount
@@ -53,6 +55,7 @@ export function AnimalForm({ animal, onSuccess, onCancel }: AnimalFormProps) {
 
   useEffect(() => {
     if (animal) {
+      console.log('🦁 Loading animal data:', { animal_id: animal.animal_id, image_url: animal.image_url });
       setFormData({
         name: animal.name,
         species: animal.species,
@@ -67,6 +70,7 @@ export function AnimalForm({ animal, onSuccess, onCancel }: AnimalFormProps) {
         active_status: animal.active_status || 'active',
         endangerment_status: animal.endangerment_status || 'least_concern',
         weight: animal.weight,
+        image_url: animal.image_url || '',
       });
     }
   }, [animal]);
@@ -85,10 +89,13 @@ export function AnimalForm({ animal, onSuccess, onCancel }: AnimalFormProps) {
     setLoading(true);
 
     try {
+      console.log('💾 Saving animal with image_url:', formData.image_url ? 'Has image' : 'No image');
       if (animal?.animal_id) {
-        await animalService.update(animal.animal_id, formData);
+        const updated = await animalService.update(animal.animal_id, formData);
+        console.log('✅ Animal updated, image_url:', updated.image_url ? 'Has image' : 'No image');
       } else {
-        await animalService.create(formData);
+        const created = await animalService.create(formData);
+        console.log('✅ Animal created, image_url:', created.image_url ? 'Has image' : 'No image');
       }
       onSuccess();
     } catch (err: any) {
@@ -105,6 +112,13 @@ export function AnimalForm({ animal, onSuccess, onCancel }: AnimalFormProps) {
           <p className="text-sm text-red-600">{error}</p>
         </div>
       )}
+
+      {/* Image Upload - Moved to top */}
+      <ImageUpload
+        value={formData.image_url}
+        onChange={(imageUrl) => setFormData(prev => ({ ...prev, image_url: imageUrl }))}
+        label="Animal Photo"
+      />
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* Name */}
