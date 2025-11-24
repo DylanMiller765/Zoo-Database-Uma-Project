@@ -39,6 +39,7 @@ type EventRow = {
   capacity_percentage: number | null;
   coordinator_name: string | null;
   description: string | null;
+  is_past?: boolean;
 };
 
 export default function EventPerformancePage() {
@@ -99,7 +100,20 @@ export default function EventPerformancePage() {
 
   // Helper functions
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString();
+    if (!dateString) return "";
+
+    // Handle ISO format dates (e.g., "2025-09-15T00:00:00.000Z")
+    if (dateString.includes('T')) {
+      const date = new Date(dateString);
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      const year = date.getFullYear();
+      return `${month}/${day}/${year}`;
+    }
+
+    // Handle simple YYYY-MM-DD format
+    const [year, month, day] = dateString.split('-');
+    return `${month}/${day}/${year}`;
   };
 
   const formatTime = (timeString: string) => {
@@ -118,6 +132,22 @@ export default function EventPerformancePage() {
     if (percentage >= 70) return "warning";
     if (percentage >= 50) return "secondary";
     return "success";
+  };
+
+  const getEventStatusBadge = (eventDate: string) => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const eventDateObj = new Date(eventDate);
+    eventDateObj.setHours(0, 0, 0, 0);
+    return eventDateObj < today ? "default" : "success";
+  };
+
+  const getEventStatusLabel = (eventDate: string) => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const eventDateObj = new Date(eventDate);
+    eventDateObj.setHours(0, 0, 0, 0);
+    return eventDateObj < today ? "Past" : "Upcoming";
   };
 
   // Auth check
@@ -156,36 +186,33 @@ export default function EventPerformancePage() {
           showQuickSelect={true}
         />
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
           {/* Event Status Filter */}
-          <div>
-            <Label htmlFor="eventStatus" className="text-sm font-medium text-gray-700">
-              Event Status
-            </Label>
-            <select
-              id="eventStatus"
-              value={params.eventStatus}
-              onChange={(e) => setParams({ ...params, eventStatus: e.target.value })}
-              className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
-            >
-              <option value="all">All Events</option>
-              <option value="upcoming">Upcoming Only</option>
-              <option value="past">Past Only</option>
-            </select>
-          </div>
+          <Label htmlFor="eventStatus" className="text-sm font-medium text-gray-700">
+            Event Status
+          </Label>
+          <select
+            id="eventStatus"
+            value={params.eventStatus}
+            onChange={(e) => setParams({ ...params, eventStatus: e.target.value })}
+            className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
+          >
+            <option value="all">All Events</option>
+            <option value="upcoming">Upcoming Only</option>
+            <option value="past">Past Only</option>
+          </select>
         </div>
 
-        {/* Checkboxes */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
           <input
             type="checkbox"
             id="includeCanceled"
             checked={params.includeCanceled}
             onChange={(e) => setParams({ ...params, includeCanceled: e.target.checked })}
-            className="rounded border-gray-300 text-sea_green-600 focus:ring-sea_green-500"
+            className="rounded border-gray-300"
           />
-          <Label htmlFor="includeCanceled" className="text-sm text-gray-700 cursor-pointer">
-            Include cancelled events
+          <Label htmlFor="includeCanceled" className="text-sm font-medium text-gray-700 mb-0 cursor-pointer">
+            Show Cancelled Events
           </Label>
         </div>
 
@@ -273,7 +300,9 @@ export default function EventPerformancePage() {
                     <TableRow>
                       <TableHead>Event Name</TableHead>
                       <TableHead>Date & Time</TableHead>
+                      <TableHead>Status</TableHead>
                       <TableHead>Location</TableHead>
+                      <TableHead className="text-right">Ticket Price</TableHead>
                       <TableHead className="text-right">Attendees</TableHead>
                       <TableHead className="text-right">Capacity</TableHead>
                       <TableHead className="text-center">Capacity %</TableHead>
@@ -305,9 +334,21 @@ export default function EventPerformancePage() {
                           </div>
                         </TableCell>
 
+                        {/* Status */}
+                        <TableCell>
+                          <Badge variant={getEventStatusBadge(event.event_date)}>
+                            {getEventStatusLabel(event.event_date)}
+                          </Badge>
+                        </TableCell>
+
                         {/* Location */}
                         <TableCell className="text-sm text-gray-600">
                           {event.location || "N/A"}
+                        </TableCell>
+
+                        {/* Ticket Price */}
+                        <TableCell className="text-right font-semibold">
+                          {event.ticket_price !== null ? `$${formatMoney(event.ticket_price)}` : "Free"}
                         </TableCell>
 
                         {/* Attendees */}

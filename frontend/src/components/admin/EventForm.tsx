@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { Event, CreateEventData } from '@/types';
 import { eventService } from '@/services/event.service';
+import { employeeService } from '@/services/employee.service';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -10,6 +11,12 @@ import { Select } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { formatDateForInput } from '@/lib/utils';
 import { ImageUpload } from '@/components/ImageUpload';
+
+interface Coordinator {
+  employee_id: number;
+  first_name: string;
+  last_name: string;
+}
 
 interface EventFormProps {
   event?: Event | null;
@@ -20,8 +27,10 @@ interface EventFormProps {
 export function EventForm({ event, onSuccess, onCancel }: EventFormProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [coordinators, setCoordinators] = useState<Coordinator[]>([]);
+  const [loadingCoordinators, setLoadingCoordinators] = useState(true);
 
-  const [formData, setFormData] = useState<CreateEventData>({
+  const [formData, setFormData] = useState<CreateEventData & { coordinator_id?: number }>({
     event_name: '',
     description: '',
     event_date: '',
@@ -33,7 +42,26 @@ export function EventForm({ event, onSuccess, onCancel }: EventFormProps) {
     image_url: '',
     created_by: undefined,
     status: 'scheduled',
+    coordinator_id: undefined,
   });
+
+  // Fetch coordinators on component mount
+  useEffect(() => {
+    const fetchCoordinators = async () => {
+      try {
+        setLoadingCoordinators(true);
+        const data = await employeeService.getAll();
+        // Filter for only coordinators
+        const coords = data.filter((emp: any) => emp.job_role === 'coordinator');
+        setCoordinators(coords);
+      } catch (err) {
+        console.error('Failed to fetch coordinators:', err);
+      } finally {
+        setLoadingCoordinators(false);
+      }
+    };
+    fetchCoordinators();
+  }, []);
 
   useEffect(() => {
     if (event) {
@@ -49,6 +77,7 @@ export function EventForm({ event, onSuccess, onCancel }: EventFormProps) {
         image_url: event.image_url || '',
         created_by: event.created_by,
         status: event.status || 'scheduled',
+        coordinator_id: (event as any).coordinator_id,
       });
     }
   }, [event]);
@@ -57,7 +86,9 @@ export function EventForm({ event, onSuccess, onCancel }: EventFormProps) {
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
-      [name]: (name === 'max_capacity' || name === 'ticket_price') ? (value ? Number(value) : undefined) : value,
+      [name]: (name === 'max_capacity' || name === 'ticket_price' || name === 'coordinator_id')
+        ? (value ? Number(value) : undefined)
+        : value,
     }));
   };
 
@@ -141,6 +172,24 @@ export function EventForm({ event, onSuccess, onCancel }: EventFormProps) {
             onChange={handleChange}
             placeholder="e.g., Main Amphitheater"
           />
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="coordinator_id">Coordinator</Label>
+          <Select
+            id="coordinator_id"
+            name="coordinator_id"
+            value={formData.coordinator_id || ''}
+            onChange={handleChange}
+            disabled={loadingCoordinators}
+          >
+            <option value="">-- Select Coordinator --</option>
+            {coordinators.map(coord => (
+              <option key={coord.employee_id} value={coord.employee_id}>
+                {coord.first_name} {coord.last_name}
+              </option>
+            ))}
+          </Select>
         </div>
 
         <div className="space-y-2">

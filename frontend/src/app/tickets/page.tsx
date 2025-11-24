@@ -12,9 +12,10 @@ import { useAuth } from '@/context/AuthContext';
 import { Loader2, ChevronDown, ChevronUp, Lock } from 'lucide-react';
 
 const TICKET_PRICES = {
-  adult: 29.95,
-  child: 19.95,
-  senior: 24.95,
+  adult: 45.00,
+  child: 30.00,
+  senior: 35.00,
+  student: 38.00,
 };
 
 const DONATION_AMOUNTS = [10, 25, 50, 100];
@@ -30,6 +31,7 @@ function TicketsPageContent() {
   const [adults, setAdults] = useState(0);
   const [children, setChildren] = useState(0);
   const [seniors, setSeniors] = useState(0);
+  const [students, setStudents] = useState(0);
   const [includeDonation, setIncludeDonation] = useState(isDonationMode);
   const [donationAmount, setDonationAmount] = useState(25);
   const [customDonation, setCustomDonation] = useState('');
@@ -51,6 +53,7 @@ function TicketsPageContent() {
           setAdults(data.adults || 0);
           setChildren(data.children || 0);
           setSeniors(data.seniors || 0);
+          setStudents(data.students || 0);
           setIncludeDonation(data.includeDonation || false);
           setDonationAmount(data.donationAmount || 25);
           setCustomDonation(data.customDonation || '');
@@ -68,12 +71,13 @@ function TicketsPageContent() {
     }
   }, [searchParams, router]);
 
-  const ticketsTotal = 
-    adults * TICKET_PRICES.adult + 
-    children * TICKET_PRICES.child + 
-    seniors * TICKET_PRICES.senior;
+  const ticketsTotal =
+    adults * TICKET_PRICES.adult +
+    children * TICKET_PRICES.child +
+    seniors * TICKET_PRICES.senior +
+    students * TICKET_PRICES.student;
 
-  const totalTickets = adults + children + seniors;
+  const totalTickets = adults + children + seniors + students;
 
   const finalDonation = customDonation 
     ? parseFloat(customDonation) || 0 
@@ -90,6 +94,7 @@ function TicketsPageContent() {
         adults,
         children,
         seniors,
+        students,
         includeDonation,
         donationAmount,
         customDonation,
@@ -161,6 +166,16 @@ function TicketsPageContent() {
       });
     }
 
+    for (let i = 0; i < students; i++) {
+      addItem({
+        item_type: 'ticket',
+        name: 'Student Ticket',
+        quantity: 1,
+        unit_price: TICKET_PRICES.student,
+        metadata: { visit_date: visitDate, ticket_type: 'student' }
+      });
+    }
+
     // Add donation if selected
     if (includeDonation && finalDonation > 0) {
       addItem({
@@ -179,6 +194,7 @@ function TicketsPageContent() {
     setAdults(0);
     setChildren(0);
     setSeniors(0);
+    setStudents(0);
     setVisitDate('');
     setIncludeDonation(false);
     setCustomDonation('');
@@ -410,6 +426,34 @@ function TicketsPageContent() {
                   </div>
                 </CardContent>
               </Card>
+
+              {/* Students */}
+              <Card className="rounded-xl border border-gray-200 bg-white shadow-sm">
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div className="flex-1">
+                      <h3 className="text-lg font-semibold text-gray-900">Students</h3>
+                      <p className="text-sm text-gray-600">Valid ID required</p>
+                      <p className="text-xl font-bold text-sea_green-600 mt-1">${TICKET_PRICES.student}</p>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <button
+                        onClick={() => setStudents(Math.max(0, students - 1))}
+                        className="h-10 w-10 rounded-full border-2 border-gray-300 text-gray-700 hover:border-sea_green-500 hover:text-sea_green-600 transition-colors font-semibold"
+                      >
+                        −
+                      </button>
+                      <span className="text-xl font-semibold w-8 text-center">{students}</span>
+                      <button
+                        onClick={() => setStudents(students + 1)}
+                        className="h-10 w-10 rounded-full border-2 border-gray-300 text-gray-700 hover:border-sea_green-500 hover:text-sea_green-600 transition-colors font-semibold"
+                      >
+                        +
+                      </button>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
             </div>
           </section>
           )}
@@ -509,6 +553,12 @@ function TicketsPageContent() {
                     <div className="flex justify-between text-gray-700">
                       <span>{seniors} Senior{seniors > 1 ? 's' : ''}</span>
                       <span className="font-medium">${(seniors * TICKET_PRICES.senior).toFixed(2)}</span>
+                    </div>
+                  )}
+                  {students > 0 && (
+                    <div className="flex justify-between text-gray-700">
+                      <span>{students} Student{students > 1 ? 's' : ''}</span>
+                      <span className="font-medium">${(students * TICKET_PRICES.student).toFixed(2)}</span>
                     </div>
                   )}
 

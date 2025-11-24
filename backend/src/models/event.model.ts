@@ -46,40 +46,19 @@ export class EventModel {
     return await this.findById(eventId);
   }
 
-  static async remove(eventId: number, employeeInfo?: { employee_id: number; name: string }): Promise<boolean> {
-    // Set session variable for trigger to read (who cancelled the event)
-    if (employeeInfo) {
-      await query('SET @cancelled_by_employee_id = ?, @cancelled_by_employee_name = ?', [
-        employeeInfo.employee_id,
-        employeeInfo.name
-      ]);
-    }
+  static async remove(eventId: number): Promise<boolean> {
+    // Soft delete the event by setting deleted_at timestamp
+    // The database trigger 'trigger_event_cancellation' will automatically:
+    // 1. Create notifications for all registered customers
+    // 2. Mark all event registrations as refunded
 
-    const sql = 'UPDATE events SET deleted_at = NOW() WHERE event_id = ?';
+    const sql = 'UPDATE events SET deleted_at = NOW() WHERE event_id = ? AND deleted_at IS NULL';
     const result = await query<any>(sql, [eventId]);
 
-    // Automatically refund all event registrations for this cancelled event
-    // Wrapped in try-catch since refunded_at and refund_reason may not exist in all database versions
     if (result.affectedRows > 0) {
-      try {
-        const employeeName = employeeInfo?.name || 'System';
-        const refundSql = `
-          UPDATE event_registrations
-          SET refunded_at = NOW(),
-              refund_reason = ?
-          WHERE event_id = ?
-            AND refunded_at IS NULL
-        `;
-        await query(refundSql, [`Event cancelled by ${employeeName}`, eventId]);
-      } catch (error) {
-        // If refund columns don't exist, continue anyway - event is already deleted
-        console.error('Warning: Could not update refund information for event registrations:', error);
-      }
-    }
-
-    // Clear session variables
-    if (employeeInfo) {
-      await query('SET @cancelled_by_employee_id = NULL, @cancelled_by_employee_name = NULL');
+      console.log(`[Event Cancellation] Event ${eventId} cancelled. Trigger will create notifications and process refunds.`);
+    } else {
+      console.warn(`Event ${eventId} not found or already deleted`);
     }
 
     return result.affectedRows > 0;
