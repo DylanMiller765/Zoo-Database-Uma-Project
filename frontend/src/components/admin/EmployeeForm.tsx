@@ -18,6 +18,8 @@ interface EmployeeFormProps {
 export function EmployeeForm({ employee, onSuccess, onCancel }: EmployeeFormProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [phoneError, setPhoneError] = useState('');
+  const [ssnError, setSsnError] = useState('');
 
   const [formData, setFormData] = useState<CreateEmployeeData>({
     first_name: '',
@@ -68,8 +70,36 @@ export function EmployeeForm({ employee, onSuccess, onCancel }: EmployeeFormProp
 
     let processedValue: any;
 
+    // Handle phone number - only allow digits, max 10
+    if (name === 'phone') {
+      const digitsOnly = value.replace(/\D/g, '');
+      if (digitsOnly.length <= 10) {
+        processedValue = digitsOnly;
+        if (digitsOnly.length > 0 && digitsOnly.length !== 10) {
+          setPhoneError('Phone number must be exactly 10 digits');
+        } else {
+          setPhoneError('');
+        }
+      } else {
+        return; // Don't update if exceeds 10 digits
+      }
+    } 
+    // Handle SSN - only allow digits, max 9
+    else if (name === 'ssn') {
+      const digitsOnly = value.replace(/\D/g, '');
+      if (digitsOnly.length <= 9) {
+        processedValue = digitsOnly;
+        if (digitsOnly.length > 0 && digitsOnly.length !== 9) {
+          setSsnError('SSN must be exactly 9 digits');
+        } else {
+          setSsnError('');
+        }
+      } else {
+        return; // Don't update if exceeds 9 digits
+      }
+    }
     // Handle numeric inputs
-    if (type === 'number') {
+    else if (type === 'number') {
       processedValue = value ? Number(value) : undefined;
     } else {
       processedValue = value || '';
@@ -85,6 +115,20 @@ export function EmployeeForm({ employee, onSuccess, onCancel }: EmployeeFormProp
     e.preventDefault();
     setError('');
     setLoading(true);
+
+    // Validate phone number if provided
+    if (formData.phone && formData.phone.length !== 10) {
+      setPhoneError('Phone number must be exactly 10 digits');
+      setLoading(false);
+      return;
+    }
+
+    // Validate SSN - must be exactly 9 digits
+    if (!formData.ssn || formData.ssn.length !== 9) {
+      setSsnError('SSN must be exactly 9 digits');
+      setLoading(false);
+      return;
+    }
 
     try {
       // Clean up form data: convert empty strings to undefined for optional fields
@@ -212,10 +256,16 @@ export function EmployeeForm({ employee, onSuccess, onCancel }: EmployeeFormProp
             name="phone"
             value={formData.phone}
             onChange={handleChange}
-            placeholder="123-456-7890"
-            pattern="^[\d\-\+\(\)\s]+$"
-            title="Phone number (numbers, dashes, spaces, parentheses allowed)"
+            placeholder="1234567890"
+            maxLength={10}
+            className={phoneError || (formData.phone && formData.phone.length !== 10) ? 'border-red-500' : ''}
           />
+          {phoneError && (
+            <p className="text-sm text-red-600">{phoneError}</p>
+          )}
+          {formData.phone && !phoneError && (
+            <p className="text-xs text-gray-500">10 digits (optional)</p>
+          )}
         </div>
 
         {/* SSN */}
@@ -227,10 +277,16 @@ export function EmployeeForm({ employee, onSuccess, onCancel }: EmployeeFormProp
             value={formData.ssn}
             onChange={handleChange}
             required
-            placeholder="XXX-XX-XXXX"
-            pattern="^\d{3}-?\d{2}-?\d{4}$"
-            title="Format: XXX-XX-XXXX or XXXXXXXXX"
+            placeholder="123456789"
+            maxLength={9}
+            className={ssnError || (formData.ssn && formData.ssn.length !== 9) ? 'border-red-500' : ''}
           />
+          {ssnError && (
+            <p className="text-sm text-red-600">{ssnError}</p>
+          )}
+          {formData.ssn && !ssnError && (
+            <p className="text-xs text-gray-500">9 digits</p>
+          )}
         </div>
 
         {/* Job Role */}

@@ -160,8 +160,10 @@ export default function CustomerProfilePage() {
     if (value.length <= 10) {
       setForm(prev => ({ ...prev, phone: value }));
       
-      // Clear field error when user starts typing
-      if (fieldErrors.phone) {
+      // Validate phone number - must be exactly 10 digits if provided
+      if (value.length > 0 && value.length !== 10) {
+        setFieldErrors(prev => ({ ...prev, phone: 'Phone number must be exactly 10 digits' }));
+      } else {
         setFieldErrors(prev => {
           const newErrors = { ...prev };
           delete newErrors.phone;
@@ -518,8 +520,8 @@ export default function CustomerProfilePage() {
                   value={form.phone} 
                   onChange={handlePhoneChange} 
                   className={`w-full rounded-lg border px-4 py-3 transition-all focus:outline-none focus:ring-2 ${
-                    fieldErrors.phone 
-                      ? 'border-red-300 focus:ring-red-500 focus:border-red-500' 
+                    fieldErrors.phone || (form.phone && form.phone.length !== 10)
+                      ? 'border-red-500 focus:ring-red-500 focus:border-red-500' 
                       : 'border-gray-300 focus:ring-sea_green-500 focus:border-sea_green-500'
                   }`}
                   placeholder="1234567890"

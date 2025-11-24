@@ -17,6 +17,7 @@ interface CustomerFormProps {
 export function CustomerForm({ customer, onSuccess, onCancel }: CustomerFormProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [phoneError, setPhoneError] = useState('');
 
   const [formData, setFormData] = useState<CreateCustomerData>({
     first_name: '',
@@ -52,6 +53,21 @@ export function CustomerForm({ customer, onSuccess, onCancel }: CustomerFormProp
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
+
+    // Handle phone number - only allow digits, max 10
+    if (name === 'phone') {
+      const digitsOnly = value.replace(/\D/g, '');
+      if (digitsOnly.length <= 10) {
+        setFormData(prev => ({ ...prev, [name]: digitsOnly }));
+        if (digitsOnly.length > 0 && digitsOnly.length !== 10) {
+          setPhoneError('Phone number must be exactly 10 digits');
+        } else {
+          setPhoneError('');
+        }
+      }
+      return;
+    }
+
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
@@ -59,6 +75,13 @@ export function CustomerForm({ customer, onSuccess, onCancel }: CustomerFormProp
     e.preventDefault();
     setError('');
     setLoading(true);
+
+    // Validate phone number if provided
+    if (formData.phone && formData.phone.length !== 10) {
+      setPhoneError('Phone number must be exactly 10 digits');
+      setLoading(false);
+      return;
+    }
 
     try {
       if (customer?.customer_id) {
@@ -134,11 +157,21 @@ export function CustomerForm({ customer, onSuccess, onCancel }: CustomerFormProp
         <div className="space-y-2">
           <Label htmlFor="phone">Phone</Label>
           <Input
+            type="tel"
             id="phone"
             name="phone"
             value={formData.phone}
             onChange={handleChange}
+            placeholder="1234567890"
+            maxLength={10}
+            className={phoneError || (formData.phone && formData.phone.length !== 10) ? 'border-red-500' : ''}
           />
+          {phoneError && (
+            <p className="text-sm text-red-600">{phoneError}</p>
+          )}
+          {formData.phone && !phoneError && (
+            <p className="text-xs text-gray-500">10 digits (optional)</p>
+          )}
         </div>
 
         <div className="space-y-2 md:col-span-2">
