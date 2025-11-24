@@ -78,6 +78,7 @@ export default function CustomerDashboard() {
   const [autoRenew, setAutoRenew] = React.useState<boolean>(false);
   const [loadingAutoRenew, setLoadingAutoRenew] = React.useState(false);
   const [paymentMethod, setPaymentMethod] = React.useState<any>(null);
+  const [showPaymentRequiredMessage, setShowPaymentRequiredMessage] = React.useState(false);
 
   React.useEffect(() => {
     if (!loading) {
@@ -171,6 +172,16 @@ export default function CustomerDashboard() {
 
   const handleToggleAutoRenew = async () => {
     const newValue = !autoRenew;
+    
+    // If enabling auto-renewal, check if payment method exists
+    if (newValue && !paymentMethod) {
+      // Show visible message instead of alert
+      setShowPaymentRequiredMessage(true);
+      return;
+    }
+    
+    // Clear message if successfully toggling
+    setShowPaymentRequiredMessage(false);
     setLoadingAutoRenew(true);
     
     try {
@@ -569,13 +580,20 @@ export default function CustomerDashboard() {
                   {/* Auto-Renewal Toggle */}
                   <div className="rounded-xl border border-gray-200 bg-white p-4 mb-4">
                     <div className="flex items-center justify-between">
-                      <div>
+                      <div className="flex-1">
                         <p className="font-semibold text-gray-900">Auto-Renewal</p>
                         <p className="text-sm text-gray-600 mt-1">
                           {autoRenew 
                             ? 'Your membership will automatically renew on the expiration date'
                             : 'Turn on to automatically renew your membership when it expires'}
                         </p>
+                        {showPaymentRequiredMessage && (
+                          <div className="mt-3 p-3 bg-red-50 border border-red-200 rounded-lg">
+                            <p className="text-sm text-red-800 font-medium">
+                              ⚠️ You must have a payment method on file to enable auto-renewal. Please add a payment method in the Payment Methods section below.
+                            </p>
+                          </div>
+                        )}
                       </div>
                       <button
                         onClick={handleToggleAutoRenew}
