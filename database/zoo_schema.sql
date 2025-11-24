@@ -240,7 +240,9 @@ CREATE TABLE `event_registrations` (
     `registration_date` DATETIME DEFAULT CURRENT_TIMESTAMP,
     `number_of_participants` INT DEFAULT 1,
     `total_amount` DECIMAL(10, 2),
-    `payment_status` ENUM('pending', 'paid', 'cancelled') DEFAULT 'pending',
+    -- NOTE: pending status is not used in the system. All registrations are created with 'paid' status.
+    -- The ENUM retains 'pending' for backwards compatibility but should not be used for new registrations.
+    `payment_status` ENUM('pending', 'paid', 'cancelled') DEFAULT 'paid',
     `refunded_at` DATETIME DEFAULT NULL,
     `refund_reason` VARCHAR(255) DEFAULT NULL,
     `deleted_at` DATETIME DEFAULT NULL,

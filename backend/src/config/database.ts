@@ -12,6 +12,8 @@ export const pool = mysql.createPool({
   waitForConnections: true,
   connectionLimit: 10,
   queueLimit: 0,
+  // UTC-6 (Central Standard Time) for all connections, works locally and on Railway
+  timezone: '-06:00',
 });
 
 export const query = async <T = any>(sql: string, params?: any[]): Promise<T> => {

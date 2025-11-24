@@ -5,7 +5,7 @@ export interface CreateEventRegistrationRequest {
   customer_id?: number;
   number_of_participants: number;
   total_amount: number;
-  payment_status: 'pending' | 'paid' | 'cancelled';
+  payment_status: 'paid' | 'cancelled';
 }
 
 export const eventRegistrationService = {

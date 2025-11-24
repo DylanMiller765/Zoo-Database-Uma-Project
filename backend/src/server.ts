@@ -105,6 +105,7 @@ const startServer = async () => {
     app.listen(PORT, () => {
       console.log(`✅ Server running on port ${PORT}`);
       console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
+      console.log(`🕐 Timezone: ${process.env.TZ || 'Not Set'} (UTC${Intl.DateTimeFormat().resolvedOptions().timeZone ? '' : '-6'})`);
       console.log(`📍 API Health: http://localhost:${PORT}/health`);
     });
   } catch (error) {
