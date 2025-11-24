@@ -3,16 +3,16 @@
 import { Request, Response } from 'express';
 import * as eventService from '../services/event.service';
 
-// Placeholder for get_upcoming_events
-export const getUpcomingEvents = async (req: Request, res: Response) => {
+// Get all events (both past and upcoming)
+export const getAllEvents = async (req: Request, res: Response) => {
   try {
     const includeDeleted = req.query.includeDeleted === 'true';
     const events = includeDeleted
       ? await eventService.getAllEventsIncludingDeleted()
-      : await eventService.getUpcomingEvents();
+      : await eventService.getAllActiveEvents();
     res.json(events);
   } catch (error) {
-    res.status(500).json({ message: 'Error fetching upcoming events', error });
+    res.status(500).json({ message: 'Error fetching events', error });
   }
 };
 
@@ -66,15 +66,11 @@ export const updateEvent = async (req: Request, res: Response) => {
 export const deleteEvent = async (req: Request, res: Response) => {
   try {
     const eventId = parseInt(req.params.id, 10);
-    const user = (req as any).user;
 
-    // Pass employee info to track who cancelled the event
-    const employeeInfo = user?.employee_id ? {
-      employee_id: user.employee_id,
-      name: `${user.first_name} ${user.last_name}`.trim()
-    } : undefined;
-
-    const success = await eventService.deleteEvent(eventId, employeeInfo);
+    // Event cancellation is now handled by database trigger:
+    // - Creates notifications for all registered customers
+    // - Marks all event registrations as refunded
+    const success = await eventService.deleteEvent(eventId);
     if (success) {
       res.status(204).send(); // No Content
     } else {

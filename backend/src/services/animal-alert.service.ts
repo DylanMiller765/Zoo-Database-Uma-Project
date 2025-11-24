@@ -31,19 +31,21 @@ export class AnimalAlertService {
           </p>
                 
           <p>Here are the details:</p>
-                
-          <h3>🐾 Animal Details</h3>
+          Lately ${alert.animal?.name ?? "Unknown"} was noted with the following medical alert.
+          ${alert.animal?.medical_notes ?? "No medical alerts on file."}
+          
+          <h3>Animal Details</h3>
           <ul>
             <li><strong>Name:</strong> ${alert.animal?.name ?? "Unknown"}</li>
             <li><strong>Species:</strong> ${alert.animal?.species ?? "Unknown"}</li>
-          </ul>
-                
-          <h3>🌿 Habitat Information</h3>
+          </ul>          
+
+          <h3>Habitat Information</h3>
           <ul>
             <li><strong>Habitat:</strong> ${alert.habitat?.habitat_name ?? "Unknown"}</li>
           </ul>
-                
-          <h3>⚠️ What Triggered the Alert</h3>
+
+          <h3>What Triggered the Alert</h3>
           <p>
             The system detected an event related to the animal’s
             <strong>${alert.alert_reason.replace("_", " ")}</strong>
@@ -54,7 +56,7 @@ export class AnimalAlertService {
           ${
             alert.medical_notes
               ? `
-          <h3>📝 Additional Notes</h3>
+          <h3>Additional Notes</h3>
           <p>${alert.medical_notes}</p>
           `
               : ""
@@ -89,25 +91,11 @@ export class AnimalAlertService {
           alert.veterinarian_emails === undefined ||
           alert.veterinarian_emails.length === 0
         ) {
-          try {
-            await sendMail({
-              from: `"Zoo Verse 12" <${process.env.VERIFIED_SENDER_EMAIL}>`,
-              to: "abdullahshittu.work@gmail.com",
-              subject,
-              text: `An alert has been generated for Animal ID: ${
-                alert.animal_id
-              }. Reason: ${alert.alert_reason.replace("_", " ")}. Value: ${
-                alert.alert_value
-              }. Please take the necessary actions.`,
-              html: body,
-            });
-          } catch (error) {
-            console.error(
-              "Failed to send alert email to default address:",
-              error
-            );
-            continue; //skip marking as processed if email fails
-          }
+          console.warn(
+            `⚠️  No veterinarian emails found for animal ${alert.animal_id} alert. ` +
+            `Alert will be marked as processed but no email was sent.`
+          );
+          // Still mark as processed - no point retrying if there are no vets to email
         }
 
         //Mark only if the email was truly sent
