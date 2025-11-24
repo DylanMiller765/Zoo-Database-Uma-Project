@@ -293,6 +293,16 @@ export default function EventsPage() {
                                             ev.status === 'cancelled' ? 'opacity-75' : ''
                                         }`}
                                     >
+                                        {ev.image_url && (
+                                          <div className="w-full overflow-hidden rounded-t-lg">
+                                            <img
+                                              src={ev.image_url}
+                                              alt={ev.event_name}
+                                              loading="lazy"
+                                              className="h-48 w-full object-cover"
+                                            />
+                                          </div>
+                                        )}
                                         {/* Success indicator checkmark */}
                                         {isAdded && (
                                             <div className="absolute top-2 right-2 z-10 bg-sea_green-500 text-white rounded-full p-1.5 shadow-lg">

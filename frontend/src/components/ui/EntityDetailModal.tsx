@@ -85,6 +85,17 @@ export function EntityDetailModal({
           </div>
         )}
 
+        {/* Display image if available and first section is Basic Information */}
+        {entity.image_url && sections[0]?.title === 'Basic Information' && (
+          <div className="mb-4">
+            <img
+              src={entity.image_url}
+              alt={entity.habitat_name || entity.event_name || title}
+              className="w-full max-w-md h-64 object-cover rounded-lg border border-gray-200 mx-auto"
+            />
+          </div>
+        )}
+
         {sections.map((section, sectionIndex) => (
           <Card key={sectionIndex} className="p-6">
             <h3 className="text-lg font-semibold text-gray-900 mb-4 border-b pb-2">

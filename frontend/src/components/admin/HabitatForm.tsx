@@ -10,6 +10,7 @@ import { Label } from '@/components/ui/label';
 import { Select } from '@/components/ui/select';
 import { Attraction } from '@/types';
 import { formatDateForInput } from '@/lib/utils';
+import { ImageUpload } from '@/components/ImageUpload';
 
 interface HabitatFormProps {
   habitat?: Habitat | null;
@@ -31,6 +32,7 @@ export function HabitatForm({ habitat, onSuccess, onCancel }: HabitatFormProps) 
     cleaning_schedule: '',
     last_maintenance: new Date().toISOString().split('T')[0],
     status: 'active',
+    image_url: '',
   });
 
   useEffect(() => {
@@ -48,6 +50,7 @@ export function HabitatForm({ habitat, onSuccess, onCancel }: HabitatFormProps) 
         cleaning_schedule: habitat.cleaning_schedule,
         last_maintenance: formatDateForInput(habitat.last_maintenance) || new Date().toISOString().split('T')[0],
         status: habitat.status,
+        image_url: habitat.image_url || '',
       });
     }
   }, [habitat]);
@@ -100,6 +103,13 @@ export function HabitatForm({ habitat, onSuccess, onCancel }: HabitatFormProps) 
           <p className="text-sm text-red-600">{error}</p>
         </div>
       )}
+
+      {/* Image Upload - Moved to top */}
+      <ImageUpload
+        value={formData.image_url}
+        onChange={(imageUrl) => setFormData(prev => ({ ...prev, image_url: imageUrl }))}
+        label="Habitat Photo"
+      />
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* Habitat Name */}

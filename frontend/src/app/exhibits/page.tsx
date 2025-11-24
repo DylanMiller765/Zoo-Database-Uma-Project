@@ -173,6 +173,16 @@ export default function ExhibitsPage() {
                   transition hover:-translate-y-0.5 hover:shadow-md
                 "
               >
+                {habitat.image_url && (
+                  <div className="w-full overflow-hidden rounded-t-lg">
+                    <img
+                      src={habitat.image_url}
+                      alt={habitat.habitat_name}
+                      loading="lazy"
+                      className="h-48 w-full object-cover"
+                    />
+                  </div>
+                )}
                 <CardHeader className="px-6 pt-6 pb-3">
                   <CardTitle className="text-lg text-dark_spring_green-700">
                     {habitat.habitat_name}

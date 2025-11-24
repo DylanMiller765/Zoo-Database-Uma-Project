@@ -241,6 +241,18 @@ export function AnimalDetailModal({ open, onClose, animal, onEdit, canEdit = tru
               {/* Basic Information */}
               <div>
                 <h3 className="text-lg font-semibold mb-3">Basic Information</h3>
+                
+                {/* Animal Image */}
+                {animal.image_url && (
+                  <div className="mb-4">
+                    <img
+                      src={animal.image_url}
+                      alt={animal.name}
+                      className="w-full max-w-md h-64 object-cover rounded-lg border border-gray-200"
+                    />
+                  </div>
+                )}
+                
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <p className="text-sm text-gray-500">Name</p>
