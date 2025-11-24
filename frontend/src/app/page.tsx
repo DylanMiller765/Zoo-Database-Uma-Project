@@ -388,10 +388,10 @@ export default function HomePage() {
             title="Hours"
             content={<>Mon–Fri: 9:00–5:00<br />Sat–Sun: 8:00–4:00</>}
           />
-          <PlanCard 
+          <PlanCard
             icon={<TicketIcon />}
             title="Admission"
-            content={<>Adults $45<br />Children $30<br />Seniors $35<br />Students $38<br /></>}
+            content={<>Adults $45.00<br />Children $30.00<br />Seniors $35.00<br />Students $38.00</>}
           />
           <PlanCard 
             icon={<LocationIcon />}

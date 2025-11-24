@@ -91,7 +91,8 @@ export class QueryController {
         endDate,
         sources,
         grouping,
-        includeReturns
+        includeReturns,
+        includeCanceled
       } = req.query;
 
       // Note: startDate and endDate are now optional (empty = all-time)
@@ -110,7 +111,8 @@ export class QueryController {
         endDate: endDate as string | undefined,
         sources: sourcesArray,
         grouping: grouping as string,
-        includeReturns: includeReturns === 'true'
+        includeReturns: includeReturns === 'true',
+        includeCanceled: includeCanceled === 'true'
       });
 
       res.status(200).json(report);

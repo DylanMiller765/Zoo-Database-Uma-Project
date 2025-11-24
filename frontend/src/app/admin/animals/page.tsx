@@ -39,6 +39,7 @@ export default function AnimalsPage() {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [animalToDelete, setAnimalToDelete] = useState<Animal | null>(null);
   const [deleteActiveStatus, setDeleteActiveStatus] = useState<'transferred' | 'deceased'>('deceased');
+  const [deletionNotes, setDeletionNotes] = useState('');
 
   // New state for soft delete features
   const [showDeleted, setShowDeleted] = useState(false);
@@ -130,18 +131,26 @@ export default function AnimalsPage() {
     e.stopPropagation();
     setAnimalToDelete(animal);
     setDeleteActiveStatus('deceased'); // Reset to default
+    setDeletionNotes(''); // Reset deletion notes
     setIsDeleteModalOpen(true);
   };
 
   const handleDelete = async () => {
     if (!animalToDelete?.animal_id) return;
 
+    // Validate that deletion notes are provided
+    if (!deletionNotes.trim()) {
+      alert('Please provide a reason for deleting this animal.');
+      return;
+    }
+
     try {
-      await animalService.delete(animalToDelete.animal_id, deleteActiveStatus);
+      await animalService.delete(animalToDelete.animal_id, deleteActiveStatus, deletionNotes);
       await loadAnimals();
       setIsDeleteModalOpen(false);
       setAnimalToDelete(null);
       setDeleteActiveStatus('deceased');
+      setDeletionNotes('');
     } catch (error) {
       console.error('Failed to delete animal:', error);
     }
@@ -434,6 +443,25 @@ export default function AnimalsPage() {
                 </div>
               </label>
             </div>
+          </div>
+
+          {/* Deletion Notes */}
+          <div className="space-y-2">
+            <label htmlFor="deletionNotes" className="text-sm font-medium text-gray-700">
+              Reason for deletion <span className="text-red-600">*</span>
+            </label>
+            <textarea
+              id="deletionNotes"
+              value={deletionNotes}
+              onChange={(e) => setDeletionNotes(e.target.value)}
+              placeholder="Please provide details about why this animal is being removed from the system..."
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sea_green-500 focus:border-sea_green-500"
+              rows={4}
+              required
+            />
+            {deletionNotes.trim() === '' && (
+              <p className="text-xs text-gray-500">This field is required</p>
+            )}
           </div>
 
           <div className="flex items-center gap-3 justify-end pt-4 border-t">
