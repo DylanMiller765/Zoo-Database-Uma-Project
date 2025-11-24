@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Select } from '@/components/ui/select';
+import { Label } from '@/components/ui/label';
 import {
   Table,
   TableBody,
@@ -62,10 +63,10 @@ export default function CafesPage() {
   }, [cafes, selectedCafeId]);
 
   useEffect(() => {
-    if (isAuthenticated) {
+    if (isAuthenticated && selectedCafeId > 0) {
       loadItems();
     }
-  }, [isAuthenticated, showDeleted]);
+  }, [isAuthenticated, showDeleted, selectedCafeId]);
 
   const loadCafes = async () => {
     try {
@@ -200,6 +201,27 @@ export default function CafesPage() {
           </Button>
         )}
       </div>
+
+      {/* Cafe Selector */}
+      {cafes.length > 0 && (
+        <div className="flex items-center gap-4">
+          <Label htmlFor="cafe-select" className="text-sm font-medium text-gray-700">
+            Select Café:
+          </Label>
+          <Select
+            id="cafe-select"
+            value={selectedCafeId.toString()}
+            onChange={(e) => setSelectedCafeId(parseInt(e.target.value))}
+            className="w-auto min-w-[200px]"
+          >
+            {cafes.map((cafe) => (
+              <option key={cafe.cafe_id} value={cafe.cafe_id.toString()}>
+                {cafe.name}
+              </option>
+            ))}
+          </Select>
+        </div>
+      )}
 
       {/* Search and Filters */}
       <div className="flex flex-wrap items-center gap-4">

@@ -9,6 +9,7 @@ export interface Event {
   location: string | null;
   max_participants: number | null;
   ticket_price: number | null;
+  image_url?: string;
   coordinator_id: number | null;
   created_at: string;
   deleted_at?: string | null;
@@ -25,5 +26,5 @@ export interface EventRegistration {
   registration_date: string;
   number_of_participants: number;
   total_amount: number | null;
-  payment_status: 'pending' | 'paid' | 'cancelled';
+  payment_status: 'paid' | 'cancelled';
 }

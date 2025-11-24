@@ -26,6 +26,7 @@ export default function CustomerProfilePage() {
   const [paymentMethod, setPaymentMethod] = React.useState<any>(null);
   const [deletingPayment, setDeletingPayment] = React.useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = React.useState(false);
+  const [autoRenew, setAutoRenew] = React.useState<boolean>(false);
   const [showAddPaymentModal, setShowAddPaymentModal] = React.useState(false);
   const [savingPayment, setSavingPayment] = React.useState(false);
   
@@ -100,6 +101,10 @@ export default function CustomerProfilePage() {
         state: data?.state || "",
         zip_code: data?.zip_code || "",
       });
+      // Load auto-renewal status
+      if (data?.membership_auto_renew !== undefined) {
+        setAutoRenew(data.membership_auto_renew);
+      }
       if (paymentRes.data && paymentRes.data.data) {
         setPaymentMethod(paymentRes.data.data);
         // If payment method exists, pre-fill form for editing
@@ -231,6 +236,13 @@ export default function CustomerProfilePage() {
   const handleDeletePaymentMethod = (e?: React.MouseEvent) => {
     e?.preventDefault();
     e?.stopPropagation();
+    
+    // Check if auto-renewal is enabled
+    if (autoRenew) {
+      setError('Cannot delete payment method while auto-renewal is enabled. Please disable auto-renewal first in your membership settings.');
+      return;
+    }
+    
     setShowDeleteConfirm(true);
   };
 
@@ -717,6 +729,13 @@ export default function CustomerProfilePage() {
             </div>
 
             <div className="mb-6">
+              {autoRenew && (
+                <div className="mb-4 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                  <p className="text-sm text-amber-800 font-medium">
+                    ⚠️ You cannot delete your payment method while auto-renewal is enabled. Please disable auto-renewal first in your membership settings.
+                  </p>
+                </div>
+              )}
               <p className="text-gray-700 mb-4">
                 Are you sure you want to delete your saved payment method?
               </p>
@@ -734,8 +753,8 @@ export default function CustomerProfilePage() {
             <div className="flex gap-3">
               <Button
                 onClick={confirmDeletePaymentMethod}
-                disabled={deletingPayment}
-                className="flex-1 bg-red-600 hover:bg-red-700 text-white"
+                disabled={deletingPayment || autoRenew}
+                className="flex-1 bg-red-600 hover:bg-red-700 text-white disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {deletingPayment ? (
                   <>

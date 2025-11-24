@@ -93,6 +93,7 @@ CREATE TABLE `events` (
     `location` VARCHAR(100),
     `max_participants` INT,
     `ticket_price` DECIMAL(8, 2),
+    `image_url` VARCHAR(500) NULL,
     `coordinator_id` INT,
     `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
     `deleted_at` DATETIME DEFAULT NULL,
@@ -134,6 +135,7 @@ CREATE TABLE `habitats` (
     `animal_capacity` INT DEFAULT 10,
     `cleaning_schedule` VARCHAR(100),
     `last_maintenance` DATE,
+    `image_url` VARCHAR(500) NULL,
     `status` ENUM('active', 'maintenance', 'renovation', 'closed') DEFAULT 'active',
     `created_date` DATETIME DEFAULT CURRENT_TIMESTAMP,
     `deleted_at` DATETIME DEFAULT NULL,
@@ -155,6 +157,7 @@ CREATE TABLE `animals` (
     `active_status` ENUM('active', 'transferred', 'deceased') DEFAULT 'active',
     `endangerment_status` ENUM('least_concern', 'near_threatened', 'vulnerable', 'endangered', 'critically_endangered', 'extinct_in_the_wild', 'extinct') DEFAULT 'least_concern',
     `weight` DECIMAL(8, 2),
+    `image_url` VARCHAR(500) NULL,
     `deletion_notes` TEXT,
     `created_date` DATETIME DEFAULT CURRENT_TIMESTAMP,
     `updated_date` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -212,6 +215,7 @@ CREATE TABLE `gift_shop_items` (
     `cost` DECIMAL(8, 2),
     `quantity_in_stock` INT DEFAULT 0,
     `supplier` VARCHAR(100),
+    `image_url` VARCHAR(500) NULL,
     `deleted_at` DATETIME DEFAULT NULL,
     FOREIGN KEY (`gift_shop_id`) REFERENCES `gift_shops`(`gift_shop_id`) ON DELETE CASCADE
 );
@@ -223,6 +227,8 @@ CREATE TABLE `cafe_items` (
     `description` TEXT,
     `category` VARCHAR(50),
     `price` DECIMAL(8, 2) NOT NULL,
+    `is_available` BOOLEAN DEFAULT TRUE,
+    `image_url` VARCHAR(500) NULL,
     `deleted_at` DATETIME DEFAULT NULL,
     FOREIGN KEY (`cafe_id`) REFERENCES `cafes`(`cafe_id`) ON DELETE CASCADE
 );
@@ -234,7 +240,9 @@ CREATE TABLE `event_registrations` (
     `registration_date` DATETIME DEFAULT CURRENT_TIMESTAMP,
     `number_of_participants` INT DEFAULT 1,
     `total_amount` DECIMAL(10, 2),
-    `payment_status` ENUM('pending', 'paid', 'cancelled') DEFAULT 'pending',
+    -- NOTE: pending status is not used in the system. All registrations are created with 'paid' status.
+    -- The ENUM retains 'pending' for backwards compatibility but should not be used for new registrations.
+    `payment_status` ENUM('pending', 'paid', 'cancelled') DEFAULT 'paid',
     `refunded_at` DATETIME DEFAULT NULL,
     `refund_reason` VARCHAR(255) DEFAULT NULL,
     `deleted_at` DATETIME DEFAULT NULL,

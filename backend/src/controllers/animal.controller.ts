@@ -42,14 +42,19 @@ export class AnimalController {
 
   static async updateAnimal(req: Request, res: Response): Promise<void> {
     try {
+      console.log('🦁 Updating animal with data:', JSON.stringify(req.body, null, 2));
       const updatedAnimal = await AnimalService.updateAnimal(parseInt(req.params.id), req.body);
       if (updatedAnimal) {
+        console.log('✅ Animal updated successfully:', updatedAnimal);
         res.status(200).json(updatedAnimal);
       } else {
         res.status(404).json({ message: 'Animal not found' });
       }
-    } catch (error) {
-      res.status(500).json({ message: 'Error updating animal', error });
+    } catch (error: any) {
+      console.error('❌ Error updating animal:', error);
+      console.error('Error details:', JSON.stringify(error, Object.getOwnPropertyNames(error), 2));
+      const errorMessage = error.message || 'Error updating animal';
+      res.status(500).json({ message: errorMessage, error: error.message });
     }
   }
 

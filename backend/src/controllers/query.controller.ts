@@ -83,9 +83,21 @@ export class QueryController {
 
   /**
    * Report 3: Financial Report
+   * Restricted to managers only
    */
   static async getFinancialReport(req: Request, res: Response): Promise<void> {
     try {
+      // Check if user is a manager
+      const jobRole = (req as any).user?.job_role;
+      
+      if (jobRole !== 'manager') {
+        res.status(403).json({
+          success: false,
+          message: 'Access denied. Financial reports are only available to managers.'
+        });
+        return;
+      }
+
       const {
         startDate,
         endDate,

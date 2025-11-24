@@ -98,38 +98,62 @@ class AuthService {
   async register(userData: any) {
     const { first_name, last_name, email, phone, address, city, state, zip_code, password } = userData;
 
-    // Step 1: Create a new customer
-    const customerResult = await query<any>(
-      'INSERT INTO customers (first_name, last_name, email, phone, address, city, state, zip_code, registration_date) VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW())',
-      [first_name, last_name, email, phone, address, city, state, zip_code]
-    );
-    const customerId = customerResult.insertId;
+    try {
+      // Step 1: Create a new customer
+      const customerResult = await query<any>(
+        'INSERT INTO customers (first_name, last_name, email, phone, address, city, state, zip_code, registration_date) VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW())',
+        [first_name, last_name, email, phone, address, city, state, zip_code]
+      );
+      const customerId = customerResult.insertId;
 
-    // Step 2: Create a user account (use email as username)
-    const userAccountResult = await query<any>(
-      'INSERT INTO user_accounts (username, email, role, customer_id) VALUES (?, ?, ?, ?)',
-      [email, email, 'customer', customerId]
-    );
-    const accountId = userAccountResult.insertId;
+      // Step 2: Create a user account (use email as username)
+      const userAccountResult = await query<any>(
+        'INSERT INTO user_accounts (username, email, role, customer_id) VALUES (?, ?, ?, ?)',
+        [email, email, 'customer', customerId]
+      );
+      const accountId = userAccountResult.insertId;
 
-    // Step 3: Save the password (plain text)
-    await query('INSERT INTO passwords (account_id, password_hash) VALUES (?, ?)', [accountId, password]);
+      // Step 3: Save the password (plain text)
+      await query('INSERT INTO passwords (account_id, password_hash) VALUES (?, ?)', [accountId, password]);
 
-    // Step 4: Generate JWT
-    const token = signToken({ id: accountId, role: 'customer' });
+      // Step 4: Generate JWT
+      const token = signToken({ id: accountId, role: 'customer' });
 
-    return {
-      token,
-      user: {
-        account_id: accountId,
-        email,
-        role: 'customer',
-        first_name,
-        last_name,
-        customer_id: customerId,
-        username: email
+      return {
+        token,
+        user: {
+          account_id: accountId,
+          email,
+          role: 'customer',
+          first_name,
+          last_name,
+          customer_id: customerId,
+          username: email
+        }
+      };
+    } catch (error: any) {
+      // Handle duplicate entry errors
+      if (error.code === 'ER_DUP_ENTRY') {
+        let field = 'email'; // default
+        let fieldName = 'email';
+        
+        // Extract the field name from the error message
+        if (error.message.includes('email') || error.message.includes('customer_email')) {
+          field = 'email';
+          fieldName = 'email';
+        } else if (error.message.includes('username')) {
+          field = 'username';
+          fieldName = 'email'; // username is same as email
+        } else if (error.message.includes('phone')) {
+          field = 'phone';
+          fieldName = 'phone number';
+        }
+        
+        throw new Error(`There is already an account with this ${fieldName}`);
       }
-    };
+      // Re-throw other errors
+      throw error;
+    }
   }
 
   async updateProfile(userId: number, role: 'employee' | 'customer', data: any) {

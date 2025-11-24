@@ -39,6 +39,7 @@ export default function CustomersPage() {
   const [isRestoreModalOpen, setIsRestoreModalOpen] = useState(false);
   const [customerToRestore, setCustomerToRestore] = useState<Customer | null>(null);
   const isManager = hasRole('manager');
+  const isCashier = hasRole('cashier');
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -147,6 +148,12 @@ export default function CustomersPage() {
   }
 
   if (!isAuthenticated) return null;
+
+  // Restrict access to managers only
+  if (isCashier) {
+    router.push("/admin");
+    return null;
+  }
 
   return (
     <div className="space-y-6">
