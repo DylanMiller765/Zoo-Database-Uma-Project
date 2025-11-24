@@ -112,14 +112,9 @@ export function ImageUpload({ value, onChange, label = 'Image URL', className = 
 
         {/* Helper Text */}
         {!url && (
-          <div className="text-xs text-gray-500 space-y-1">
-            <p>Enter an image URL. Best sources:</p>
-            <ul className="list-disc list-inside">
-              <li><code className="bg-gray-100 px-1 rounded">https://commons.wikimedia.org/wiki/Special:FilePath/[filename]</code></li>
-              <li><code className="bg-gray-100 px-1 rounded">https://via.placeholder.com/600x400?text=...</code></li>
-            </ul>
-            <p className="pt-1">Note: Use <code className="bg-gray-100 px-1 rounded">commons.wikimedia.org</code> instead of <code className="bg-gray-100 px-1 rounded">upload.wikimedia.org</code> for better compatibility.</p>
-          </div>
+          <p className="text-xs text-gray-500">
+            e.g., https://commons.wikimedia.org or https://via.placeholder.com/600x400
+          </p>
         )}
       </div>
     </div>
