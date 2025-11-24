@@ -121,7 +121,7 @@ INSERT INTO attractions (name, location, human_capacity, opening_time, closing_t
 -- HABITATS
 -- =======================================
 INSERT INTO habitats (habitat_name, attraction_id, size, environment_type, animal_capacity, status, image_url) VALUES
-('Lion Pride Rock', 1, 'Large', 'Grassland', 8, 'active', 'https://images.unsplash.com/photo-1517649281323-b4c901198696?auto=format&fit=crop&w=800&q=80'),
+('Lion Pride Rock', 1, 'Large', 'Grassland', 8, 'active', 'https://images.unsplash.com/photo-1583587067350-2c49115673c9?auto=format&fit=crop&w=600&q=80'),
 ('Elephant Plains', 1, 'Extra Large', 'Savanna', 12, 'active', 'https://images.unsplash.com/photo-1557050543-4d5f4e07ef46?auto=format&fit=crop&w=800&q=80'),
 ('Gorilla Forest', 2, 'Large', 'Tropical Forest', 6, 'active', 'https://images.unsplash.com/photo-1614528767034-70de9fe166e0?auto=format&fit=crop&w=800&q=80'),
 ('Penguin Cove', 3, 'Medium', 'Arctic', 25, 'active', 'https://images.unsplash.com/photo-1598439210625-5067c578f3f6?auto=format&fit=crop&w=800&q=80'),
