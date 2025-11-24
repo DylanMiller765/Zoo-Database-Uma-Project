@@ -44,6 +44,10 @@ function MembershipPageContent() {
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [showRestoreMessage, setShowRestoreMessage] = useState(false);
   const [autoRenew, setAutoRenew] = useState(true); // Default ON
+  const [paymentMethod, setPaymentMethod] = useState<any>(null);
+  const [showPaymentWarning, setShowPaymentWarning] = useState(false);
+  const [membershipStatus, setMembershipStatus] = useState<any>(null);
+  const [membershipError, setMembershipError] = useState<string | null>(null);
 
   // Check for restore purchase flag
   useEffect(() => {
@@ -83,8 +87,12 @@ function MembershipPageContent() {
         if (!token) return; // Not logged in, skip auto-populate
 
         setLoadingProfile(true);
-        const response = await apiClient.get('/auth/profile');
-        const profile = response.data.data;
+        const [profileRes, paymentRes, summaryRes] = await Promise.all([
+          apiClient.get('/auth/profile'),
+          apiClient.get('/me/payment-method').catch(() => ({ data: { success: true, data: null } })),
+          apiClient.get('/me/summary').catch(() => ({ data: { success: true, data: { membership: null } } }))
+        ]);
+        const profile = profileRes.data.data;
 
         // Auto-populate fields from profile
         if (profile) {
@@ -92,6 +100,14 @@ function MembershipPageContent() {
           setLastName(profile.customer_last_name || profile.employee_last_name || '');
           setEmail(profile.customer_email || profile.email || '');
           setPhone(profile.customer_phone || profile.employee_phone || '');
+        }
+        
+        // Load payment method
+        setPaymentMethod(paymentRes.data.data);
+        
+        // Load membership status
+        if (summaryRes.data?.data?.membership) {
+          setMembershipStatus(summaryRes.data.data.membership);
         }
       } catch (error) {
         // Silently fail - user just fills form manually
@@ -135,6 +151,25 @@ function MembershipPageContent() {
       setPhoneError('Phone number must be exactly 10 digits');
       return;
     }
+
+    // Check if user already has an active membership
+    if (membershipStatus && membershipStatus.status === 'Active') {
+      const endDate = membershipStatus.membership_end_date ? new Date(membershipStatus.membership_end_date) : null;
+      if (endDate) {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const expiryDate = new Date(endDate);
+        expiryDate.setHours(0, 0, 0, 0);
+        const daysUntilExpiry = Math.ceil((expiryDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+        
+        if (daysUntilExpiry > 30) {
+          setMembershipError(`You already have an active membership that expires in ${daysUntilExpiry} days. You can only renew your membership within 30 days of expiration.`);
+          return;
+        }
+      }
+    }
+    
+    setMembershipError(null);
 
     // Check if user is logged in
     if (!isAuthenticated || user?.role !== 'customer') {
@@ -215,6 +250,40 @@ function MembershipPageContent() {
           </p>
         </div>
       )}
+      
+      {/* Membership error message */}
+      {membershipError && (
+        <div className="max-w-5xl mx-auto mb-6 rounded-xl bg-red-50 border-2 border-red-200 p-4 flex items-center gap-3">
+          <div className="flex-shrink-0">
+            <svg className="h-5 w-5 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
+          <p className="text-sm font-medium text-red-800">{membershipError}</p>
+        </div>
+      )}
+
+      {/* Membership renewal info message */}
+      {isAuthenticated && membershipStatus && membershipStatus.status === 'Active' && (
+        <div className="max-w-5xl mx-auto mb-6 rounded-xl bg-blue-50 border-2 border-blue-200 p-4">
+          <div className="flex items-start gap-3">
+            <div className="flex-shrink-0">
+              <svg className="h-5 w-5 text-blue-600 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+            <div className="flex-1">
+              <p className="text-sm font-semibold text-blue-900 mb-1">Membership Renewal Information</p>
+              <p className="text-sm text-blue-800">
+                You currently have an active membership. You can only renew your membership within 30 days of its expiration date. 
+                {membershipStatus.membership_end_date && (
+                  <> Your current membership expires on <span className="font-semibold">{new Date(membershipStatus.membership_end_date).toLocaleDateString()}</span>.</>
+                )}
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Login Modal - Simple & Cute */}
       {showLoginModal && (
@@ -291,6 +360,15 @@ function MembershipPageContent() {
           {/* Membership Plans */}
           <section className="rounded-2xl bg-gray-50 p-6">
             <h2 className="text-xl font-bold mb-4">Your Membership</h2>
+            
+            {/* General renewal info for all users */}
+            {(!isAuthenticated || !membershipStatus || membershipStatus.status !== 'Active') && (
+              <div className="mb-6 rounded-lg bg-amber-50 border border-amber-200 p-4">
+                <p className="text-sm text-amber-800">
+                  <span className="font-semibold">Note:</span> If you already have an active membership, you can only renew it within 30 days of its expiration date.
+                </p>
+              </div>
+            )}
             <Card className="relative overflow-hidden rounded-2xl border-2 border-sea_green-200 bg-gradient-to-br from-sea_green-50 to-white shadow-md">
               <div className="pointer-events-none absolute -right-16 -top-16 h-40 w-40 rounded-full bg-sea_green-200/30 blur-2xl" />
               <div className="pointer-events-none absolute right-0 bottom-0 h-24 w-24 rounded-full bg-dark_spring_green-100/40 blur-xl" />
@@ -417,10 +495,19 @@ function MembershipPageContent() {
                           ? 'Your membership will automatically renew each year. You can turn this off anytime in your account settings.'
                           : 'Turn on to automatically renew your membership when it expires. You can change this anytime.'}
                       </p>
+                      {autoRenew && isAuthenticated && !paymentMethod && (
+                        <p className="text-xs text-amber-600 mt-2 font-medium">
+                          ⚠️ A payment method is required to enable auto-renewal. You can add one during checkout or in your account settings.
+                        </p>
+                      )}
                     </div>
                     <button
                       type="button"
-                      onClick={() => setAutoRenew(!autoRenew)}
+                      onClick={() => {
+                        // Always allow toggling - the warning message is just informational
+                        setAutoRenew(!autoRenew);
+                        setShowPaymentWarning(false);
+                      }}
                       className={`relative ml-4 inline-flex h-6 w-11 flex-shrink-0 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-sea_green-500 focus:ring-offset-2 ${
                         autoRenew ? 'bg-sea_green-600' : 'bg-gray-200'
                       }`}
@@ -555,6 +642,13 @@ function MembershipPageContent() {
                         : 'Perfect for families who visit regularly'}
                     </p>
                   </div>
+                </div>
+
+                {/* No Refund Notice */}
+                <div className="mt-4 p-3 bg-gray-50 rounded-lg border border-gray-200">
+                  <p className="text-xs text-gray-600 text-center">
+                    ⚠️ <span className="font-semibold">No refunds</span> - All membership purchases are final
+                  </p>
                 </div>
 
                 {/* Checkout Button */}
