@@ -302,7 +302,7 @@ export default function GiftShopsPage() {
               <TableHead>Stock</TableHead>
               <TableHead>Supplier</TableHead>
               <TableHead>Status</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
+              {isManager && <TableHead className="text-right">Actions</TableHead>}
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -371,32 +371,28 @@ export default function GiftShopsPage() {
                       <Badge variant="success">Available</Badge>
                     )}
                   </TableCell>
-                  <TableCell className="text-right">
-                    <div className="flex items-center justify-end gap-2">
-                      {!isDeleted(item) ? (
-                        <>
-                          {isManager && (
-                            <>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={(e) => handleEdit(item, e)}
-                              >
-                                <Edit className="h-4 w-4" />
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={(e) => handleDeleteClick(item, e)}
-                                className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            </>
-                          )}
-                        </>
-                      ) : (
-                        isManager && (
+                  {isManager && (
+                    <TableCell className="text-right">
+                      <div className="flex items-center justify-end gap-2">
+                        {!isDeleted(item) ? (
+                          <>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={(e) => handleEdit(item, e)}
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={(e) => handleDeleteClick(item, e)}
+                              className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </>
+                        ) : (
                           <Button
                             variant="ghost"
                             size="sm"
@@ -405,10 +401,10 @@ export default function GiftShopsPage() {
                           >
                             <RotateCcw className="h-4 w-4" />
                           </Button>
-                        )
-                      )}
-                    </div>
-                  </TableCell>
+                        )}
+                      </div>
+                    </TableCell>
+                  )}
                 </TableRow>
               );
             })}

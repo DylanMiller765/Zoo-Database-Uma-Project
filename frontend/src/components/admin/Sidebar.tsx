@@ -41,13 +41,13 @@ const menuItems: MenuItem[] = [
   { href: '/admin/habitats', icon: Home, label: 'Habitats', roles: ['manager', 'veterinarian', 'keeper'] },
   { href: '/admin/employees', icon: Users, label: 'Employees', roles: ['manager'] },
   { href: '/admin/events', icon: Calendar, label: 'Events', roles: ['manager', 'coordinator', 'guide'] },
-  { href: '/admin/customers', icon: UserCircle, label: 'Customers', roles: ['manager', 'cashier'] },
-  { href: '/admin/transactions', icon: DollarSign, label: 'Transactions', roles: ['manager', 'cashier'] },
+  { href: '/admin/customers', icon: UserCircle, label: 'Customers', roles: ['manager'] },
+  { href: '/admin/transactions', icon: DollarSign, label: 'Transactions', roles: ['manager'] },
   { href: '/admin/gift-shops', icon: Store, label: 'Gift Shops', roles: ['manager', 'cashier'] },
   { href: '/admin/cafes', icon: Coffee, label: 'Cafes', roles: ['manager', 'cashier'] },
   { href: '/admin/queries/animal-health-care', icon: Activity, label: 'Animal Health & Care', roles: ['manager', 'keeper', 'veterinarian'] },
   { href: '/admin/queries/event-performance', icon: TrendingUp, label: 'Event Performance', roles: ['manager', 'coordinator'] },
-  { href: '/admin/queries/financial-report', icon: DollarSign, label: 'Financial Report', roles: ['manager', 'cashier'] },
+  { href: '/admin/queries/financial-report', icon: DollarSign, label: 'Financial Report', roles: ['manager'] },
 ];
 
 export function Sidebar({ className }: SidebarProps) {

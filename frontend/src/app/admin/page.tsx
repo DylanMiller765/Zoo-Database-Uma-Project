@@ -21,6 +21,8 @@ import {
   TrendingUp,
   Heart,
   Briefcase,
+  Store,
+  Coffee,
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -166,10 +168,8 @@ export default function AdminDashboard() {
     // Cashier quick actions
     if (role === 'cashier') {
       return [
-        { href: '/admin/transactions?type=Ticket&autoOpen=true', icon: DollarSign, label: 'Sell Tickets', description: 'Process ticket sales' },
-        { href: '/admin/customers', icon: UserCircle, label: 'Manage Customers', description: 'View and manage customer accounts' },
-        { href: '/admin/transactions?type=Gift+Shop&autoOpen=true', icon: DollarSign, label: 'Gift Shop Sales', description: 'Process gift shop transactions' },
-        { href: '/admin/transactions?type=Cafe&autoOpen=true', icon: DollarSign, label: 'Café Sales', description: 'Process café transactions' },
+        { href: '/admin/gift-shops', icon: Store, label: 'Gift Shop Inventory', description: 'Manage gift shop items and stock' },
+        { href: '/admin/cafes', icon: Coffee, label: 'Café Menu Items', description: 'Manage café menu and inventory' },
       ];
     }
 
@@ -238,54 +238,74 @@ export default function AdminDashboard() {
     <div className="space-y-6">
       {/* Page Header */}
       <div>
-        <h1 className="text-3xl font-bold text-gray-900">Dashboard Overview</h1>
-        <p className="text-gray-600 mt-1">Welcome to Zoo Admin Dashboard</p>
+        <h1 className="text-3xl font-bold text-gray-900">
+          {user?.job_role === 'cashier' ? 'Sales Dashboard' : 'Dashboard Overview'}
+        </h1>
+        <p className="text-gray-600 mt-1">
+          {user?.job_role === 'cashier'
+            ? 'Manage sales transactions and inventory'
+            : 'Welcome to Zoo Admin Dashboard'}
+        </p>
       </div>
 
-      {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {/* Show relevant stats based on role */}
-        {(user?.job_role === 'manager' || user?.job_role === 'keeper' || user?.job_role === 'veterinarian') && (
-          <StatsCard
-            title="Total Animals"
-            value={stats.totalAnimals}
-            icon={Leaf}
-            iconColor="text-sea_green-600"
-          />
-        )}
-        {user?.job_role === 'manager' && (
-          <StatsCard
-            title="Total Employees"
-            value={stats.totalEmployees}
-            icon={Users}
-            iconColor="text-dark_spring_green-600"
-          />
-        )}
-        {(user?.job_role === 'manager' || user?.job_role === 'coordinator' || user?.job_role === 'guide' || user?.job_role === 'security') && (
-          <StatsCard
-            title="Upcoming Events"
-            value={stats.upcomingEvents}
-            icon={Calendar}
-            iconColor="text-persian_orange-600"
-          />
-        )}
-        {(user?.job_role === 'manager' || user?.job_role === 'keeper' || user?.job_role === 'veterinarian' || user?.job_role === 'maintenance') && (
-          <StatsCard
-            title="Active Habitats"
-            value={stats.activeHabitats}
-            icon={MapPin}
-            iconColor="text-sea_green-600"
-          />
-        )}
-        {(user?.job_role === 'manager' || user?.job_role === 'cashier') && (
+      {/* Stats Grid - Show for non-cashiers only */}
+      {user?.job_role !== 'cashier' && (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {/* Show relevant stats based on role */}
+          {(user?.job_role === 'manager' || user?.job_role === 'keeper' || user?.job_role === 'veterinarian') && (
+            <StatsCard
+              title="Total Animals"
+              value={stats.totalAnimals}
+              icon={Leaf}
+              iconColor="text-sea_green-600"
+            />
+          )}
+          {user?.job_role === 'manager' && (
+            <StatsCard
+              title="Total Employees"
+              value={stats.totalEmployees}
+              icon={Users}
+              iconColor="text-dark_spring_green-600"
+            />
+          )}
+          {(user?.job_role === 'manager' || user?.job_role === 'coordinator' || user?.job_role === 'guide' || user?.job_role === 'security') && (
+            <StatsCard
+              title="Upcoming Events"
+              value={stats.upcomingEvents}
+              icon={Calendar}
+              iconColor="text-persian_orange-600"
+            />
+          )}
+          {(user?.job_role === 'manager' || user?.job_role === 'keeper' || user?.job_role === 'veterinarian' || user?.job_role === 'maintenance') && (
+            <StatsCard
+              title="Active Habitats"
+              value={stats.activeHabitats}
+              icon={MapPin}
+              iconColor="text-sea_green-600"
+            />
+          )}
+          {user?.job_role === 'manager' && (
+            <StatsCard
+              title="Today's Visitors"
+              value={stats.todaysVisitors}
+              icon={UserCircle}
+              iconColor="text-dark_spring_green-600"
+            />
+          )}
+        </div>
+      )}
+
+      {/* Cashier-specific Stats */}
+      {user?.job_role === 'cashier' && (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           <StatsCard
             title="Today's Visitors"
             value={stats.todaysVisitors}
             icon={UserCircle}
             iconColor="text-dark_spring_green-600"
           />
-        )}
-      </div>
+        </div>
+      )}
 
       {/* Keeper Assignments Section - Appears near top for keepers */}
       {user?.job_role === 'keeper' && (
@@ -397,94 +417,32 @@ export default function AdminDashboard() {
         </Card>
       )}
 
-      {/* Main Content Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Recent Activity - Takes 2 columns */}
-        <Card
-          className={`lg:col-span-2 ${recentActivities.length > 5 ? 'cursor-pointer hover:shadow-lg transition-shadow' : ''}`}
-          onClick={() => recentActivities.length > 5 && setShowActivityModal(true)}
-        >
-          <CardHeader>
-            <CardTitle className="flex items-center justify-between">
-              <div className="flex items-center space-x-2">
-                <TrendingUp className="h-5 w-5 text-dark_spring_green-600" />
-                <span>Recent Activity</span>
-              </div>
-              {recentActivities.length > 5 && (
-                <span className="text-xs text-gray-500 font-normal">Click to see all</span>
-              )}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {activitiesLoading ? (
-              <div className="flex items-center justify-center py-8">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-dark_spring_green-600"></div>
-              </div>
-            ) : recentActivities.length === 0 ? (
-              <div className="text-center py-8">
-                <p className="text-gray-500">No recent activity</p>
-              </div>
-            ) : (
-              <>
-                <div className="space-y-4">
-                  {recentActivities.slice(0, 5).map((activity, index) => {
-                    const Icon = getActivityIcon(activity.type);
-                    const iconColor = getActivityIconColor(activity.type);
-                    return (
-                      <div key={index} className="flex items-start space-x-3 pb-4 border-b border-gray-100 last:border-0 last:pb-0">
-                        <div className={`p-2 rounded-lg bg-gray-50`}>
-                          <Icon className={`h-4 w-4 ${iconColor}`} />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-gray-900">{activity.title}</p>
-                          <p className="text-sm text-gray-600 mt-0.5">{activity.description}</p>
-                          <p className="text-xs text-gray-500 mt-1">{getTimeAgo(activity.timestamp)}</p>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-                {recentActivities.length > 5 && (
-                  <div className="mt-4 pt-4 border-t border-gray-200">
-                    <div className="text-center">
-                      <p className="text-sm text-dark_spring_green-600 font-medium">
-                        +{recentActivities.length - 5} more {recentActivities.length - 5 === 1 ? 'item' : 'items'}
-                      </p>
-                      <p className="text-xs text-gray-500 mt-1">Click card to view all</p>
-                    </div>
-                  </div>
-                )}
-              </>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Event Cancellation Widget or Quick Actions */}
-        {(user?.job_role === 'manager' || user?.job_role === 'coordinator') ? (
-          <EventCancellationWidget limit={5} />
-        ) : (
-          <Card>
+      {/* Cashier Layout - Quick Actions First */}
+      {user?.job_role === 'cashier' ? (
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Quick Actions - More prominent for cashiers */}
+          <Card className="lg:col-span-2">
             <CardHeader>
               <CardTitle className="flex items-center space-x-2">
-                <Plus className="h-5 w-5 text-dark_spring_green-600" />
+                <DollarSign className="h-5 w-5 text-dark_spring_green-600" />
                 <span>Quick Actions</span>
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="space-y-3">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {quickActions.map((action) => {
                   const Icon = action.icon;
                   return (
                     <Link key={action.href} href={action.href}>
-                      <div className="flex items-center space-x-3 p-4 rounded-lg border-2 border-gray-300 hover:border-dark_spring_green-400 hover:bg-dark_spring_green-50 transition-all cursor-pointer group shadow-sm hover:shadow-md">
-                        <div className="p-2 rounded-lg bg-dark_spring_green-100 group-hover:bg-dark_spring_green-200 transition-colors">
-                          <Icon className="h-5 w-5 text-dark_spring_green-600" />
+                      <div className="flex items-center space-x-3 p-6 rounded-lg border-2 border-gray-300 hover:border-dark_spring_green-400 hover:bg-dark_spring_green-50 transition-all cursor-pointer group shadow-sm hover:shadow-md">
+                        <div className="p-3 rounded-lg bg-dark_spring_green-100 group-hover:bg-dark_spring_green-200 transition-colors">
+                          <Icon className="h-6 w-6 text-dark_spring_green-600" />
                         </div>
                         <div className="flex-1">
-                          <p className="text-sm font-medium text-gray-900 group-hover:text-dark_spring_green-700">
+                          <p className="text-base font-semibold text-gray-900 group-hover:text-dark_spring_green-700">
                             {action.label}
                           </p>
-                          <p className="text-xs text-gray-600">{action.description}</p>
+                          <p className="text-sm text-gray-600 mt-1">{action.description}</p>
                         </div>
                       </div>
                     </Link>
@@ -493,8 +451,177 @@ export default function AdminDashboard() {
               </div>
             </CardContent>
           </Card>
-        )}
-      </div>
+
+          {/* Recent Activity - Filtered for gift shop and café sales only */}
+          <Card
+            className={`${recentActivities.filter(a =>
+              (a.description.toLowerCase().includes('gift shop') ||
+               a.description.toLowerCase().includes('café') ||
+               a.description.toLowerCase().includes('cafe')) &&
+              !a.title.toLowerCase().includes('ticket')
+            ).length > 5 ? 'cursor-pointer hover:shadow-lg transition-shadow' : ''}`}
+            onClick={() => recentActivities.filter(a =>
+              (a.description.toLowerCase().includes('gift shop') ||
+               a.description.toLowerCase().includes('café') ||
+               a.description.toLowerCase().includes('cafe')) &&
+              !a.title.toLowerCase().includes('ticket')
+            ).length > 5 && setShowActivityModal(true)}
+          >
+            <CardHeader>
+              <CardTitle className="flex items-center justify-between">
+                <div className="flex items-center space-x-2">
+                  <TrendingUp className="h-5 w-5 text-dark_spring_green-600" />
+                  <span>Recent Sales</span>
+                </div>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {activitiesLoading ? (
+                <div className="flex items-center justify-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-dark_spring_green-600"></div>
+                </div>
+              ) : recentActivities.filter(a =>
+                (a.description.toLowerCase().includes('gift shop') ||
+                 a.description.toLowerCase().includes('café') ||
+                 a.description.toLowerCase().includes('cafe')) &&
+                !a.title.toLowerCase().includes('ticket')
+              ).length === 0 ? (
+                <div className="text-center py-8">
+                  <p className="text-gray-500">No recent sales</p>
+                </div>
+              ) : (
+                <>
+                  <div className="space-y-4">
+                    {recentActivities
+                      .filter(a =>
+                        (a.description.toLowerCase().includes('gift shop') ||
+                         a.description.toLowerCase().includes('café') ||
+                         a.description.toLowerCase().includes('cafe')) &&
+                        !a.title.toLowerCase().includes('ticket')
+                      )
+                      .slice(0, 5)
+                      .map((activity, index) => {
+                        const Icon = getActivityIcon(activity.type);
+                        const iconColor = getActivityIconColor(activity.type);
+                        return (
+                          <div key={index} className="flex items-start space-x-3 pb-4 border-b border-gray-100 last:border-0 last:pb-0">
+                            <div className={`p-2 rounded-lg bg-gray-50`}>
+                              <Icon className={`h-4 w-4 ${iconColor}`} />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-medium text-gray-900">{activity.title}</p>
+                              <p className="text-sm text-gray-600 mt-0.5">{activity.description}</p>
+                              <p className="text-xs text-gray-500 mt-1">{getTimeAgo(activity.timestamp)}</p>
+                            </div>
+                          </div>
+                        );
+                      })}
+                  </div>
+                </>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+      ) : (
+        /* Non-cashier Layout */
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Recent Activity - Takes 2 columns */}
+          <Card
+            className={`lg:col-span-2 ${recentActivities.length > 5 ? 'cursor-pointer hover:shadow-lg transition-shadow' : ''}`}
+            onClick={() => recentActivities.length > 5 && setShowActivityModal(true)}
+          >
+            <CardHeader>
+              <CardTitle className="flex items-center justify-between">
+                <div className="flex items-center space-x-2">
+                  <TrendingUp className="h-5 w-5 text-dark_spring_green-600" />
+                  <span>Recent Activity</span>
+                </div>
+                {recentActivities.length > 5 && (
+                  <span className="text-xs text-gray-500 font-normal">Click to see all</span>
+                )}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {activitiesLoading ? (
+                <div className="flex items-center justify-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-dark_spring_green-600"></div>
+                </div>
+              ) : recentActivities.length === 0 ? (
+                <div className="text-center py-8">
+                  <p className="text-gray-500">No recent activity</p>
+                </div>
+              ) : (
+                <>
+                  <div className="space-y-4">
+                    {recentActivities.slice(0, 5).map((activity, index) => {
+                      const Icon = getActivityIcon(activity.type);
+                      const iconColor = getActivityIconColor(activity.type);
+                      return (
+                        <div key={index} className="flex items-start space-x-3 pb-4 border-b border-gray-100 last:border-0 last:pb-0">
+                          <div className={`p-2 rounded-lg bg-gray-50`}>
+                            <Icon className={`h-4 w-4 ${iconColor}`} />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium text-gray-900">{activity.title}</p>
+                            <p className="text-sm text-gray-600 mt-0.5">{activity.description}</p>
+                            <p className="text-xs text-gray-500 mt-1">{getTimeAgo(activity.timestamp)}</p>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                  {recentActivities.length > 5 && (
+                    <div className="mt-4 pt-4 border-t border-gray-200">
+                      <div className="text-center">
+                        <p className="text-sm text-dark_spring_green-600 font-medium">
+                          +{recentActivities.length - 5} more {recentActivities.length - 5 === 1 ? 'item' : 'items'}
+                        </p>
+                        <p className="text-xs text-gray-500 mt-1">Click card to view all</p>
+                      </div>
+                    </div>
+                  )}
+                </>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Event Cancellation Widget or Quick Actions */}
+          {(user?.job_role === 'manager' || user?.job_role === 'coordinator') ? (
+            <EventCancellationWidget limit={5} />
+          ) : (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center space-x-2">
+                  <Plus className="h-5 w-5 text-dark_spring_green-600" />
+                  <span>Quick Actions</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  {quickActions.map((action) => {
+                    const Icon = action.icon;
+                    return (
+                      <Link key={action.href} href={action.href}>
+                        <div className="flex items-center space-x-3 p-4 rounded-lg border-2 border-gray-300 hover:border-dark_spring_green-400 hover:bg-dark_spring_green-50 transition-all cursor-pointer group shadow-sm hover:shadow-md">
+                          <div className="p-2 rounded-lg bg-dark_spring_green-100 group-hover:bg-dark_spring_green-200 transition-colors">
+                            <Icon className="h-5 w-5 text-dark_spring_green-600" />
+                          </div>
+                          <div className="flex-1">
+                            <p className="text-sm font-medium text-gray-900 group-hover:text-dark_spring_green-700">
+                              {action.label}
+                            </p>
+                            <p className="text-xs text-gray-600">{action.description}</p>
+                          </div>
+                        </div>
+                      </Link>
+                    );
+                  })}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+        </div>
+      )}
 
 
       {/* Recent Activity Modal */}
