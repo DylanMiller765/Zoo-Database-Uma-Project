@@ -88,14 +88,14 @@ export class QueryController {
   static async getFinancialReport(req: Request, res: Response): Promise<void> {
     try {
       // Check if user is a manager
-      const userRole = (req as any).user?.role;
       const jobRole = (req as any).user?.job_role;
       
       if (jobRole !== 'manager') {
-        return res.status(403).json({
+        res.status(403).json({
           success: false,
           message: 'Access denied. Financial reports are only available to managers.'
         });
+        return;
       }
 
       const {
