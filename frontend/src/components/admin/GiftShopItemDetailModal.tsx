@@ -45,6 +45,17 @@ export function GiftShopItemDetailModal({ open, onClose, item, onEdit, canEdit =
           )}
         </div>
 
+        {/* Item Image */}
+        {item.image_url && (
+          <div className="mb-4">
+            <img
+              src={item.image_url}
+              alt={item.name}
+              className="w-full max-w-md h-64 object-cover rounded-lg border border-gray-200 mx-auto"
+            />
+          </div>
+        )}
+
         {/* Item Details Grid */}
         <div className="grid grid-cols-2 gap-6">
           {/* Category */}

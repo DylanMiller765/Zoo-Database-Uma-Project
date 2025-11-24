@@ -78,6 +78,7 @@ export interface Animal {
   active_status?: 'active' | 'transferred' | 'deceased';
   endangerment_status?: 'least_concern' | 'near_threatened' | 'vulnerable' | 'endangered' | 'critically_endangered' | 'extinct_in_the_wild' | 'extinct';
   weight?: number;
+  image_url?: string;
   created_date?: string;
   updated_date?: string;
   deleted_at?: string | null;
@@ -96,6 +97,7 @@ export interface Event {
   location?: string;
   max_capacity?: number;
   ticket_price?: number;
+  image_url?: string;
   status?: 'scheduled' | 'ongoing' | 'completed' | 'cancelled';
   created_by?: number;
   coordinator_id?: number;
@@ -221,6 +223,7 @@ export interface Habitat {
   animal_capacity: number;
   cleaning_schedule: string;
   last_maintenance: string;
+  image_url?: string;
   status: 'active' | 'maintenance' | 'renovation' | 'closed';
   created_date: string;
   deleted_at?: string | null;
@@ -240,6 +243,7 @@ export interface GiftShopItem {
   cost: number | string;
   quantity_in_stock: number;
   supplier: string;
+  image_url?: string;
   deleted_at?: string | null;
 }
 
@@ -253,6 +257,7 @@ export interface CafeItem {
   description: string;
   category: string;
   price: number | string;
+  image_url?: string;
   deleted_at?: string | null;
 }
 

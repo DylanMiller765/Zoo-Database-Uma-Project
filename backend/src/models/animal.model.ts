@@ -15,6 +15,7 @@ export interface Animal {
   active_status?: 'active' | 'transferred' | 'deceased';
   endangerment_status?: 'least_concern' | 'near_threatened' | 'vulnerable' | 'endangered' | 'critically_endangered' | 'extinct_in_the_wild' | 'extinct';
   weight?: number;
+  image_url?: string;
   created_date?: string;
   updated_date?: string;
   deleted_at?: string | null;
@@ -61,8 +62,23 @@ export class AnimalModel {
   }
 
   static async update(id: number, updates: Partial<Animal>): Promise<Animal | null> {
-    const setClause = Object.keys(updates).map(key => `${key} = ?`).join(', ');
-    const values = [...Object.values(updates), id];
+    // Filter out undefined values and empty strings for optional fields (except image_url which can be empty to clear)
+    const filteredUpdates = Object.entries(updates).reduce((acc, [key, value]) => {
+      if (value !== undefined) {
+        // Allow empty string for image_url to clear the image
+        if (key === 'image_url' || value !== '') {
+          acc[key] = value;
+        }
+      }
+      return acc;
+    }, {} as Record<string, any>);
+
+    if (Object.keys(filteredUpdates).length === 0) {
+      return await this.findById(id);
+    }
+
+    const setClause = Object.keys(filteredUpdates).map(key => `${key} = ?`).join(', ');
+    const values = [...Object.values(filteredUpdates), id];
 
     const sql = `UPDATE animals SET ${setClause} WHERE animal_id = ?`;
     await query(sql, values);

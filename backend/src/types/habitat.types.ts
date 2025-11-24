@@ -7,6 +7,7 @@ export interface Habitat {
   animal_capacity: number;
   cleaning_schedule: string;
   last_maintenance: string;
+  image_url?: string;
   status: 'active' | 'maintenance' | 'renovation' | 'closed';
   created_date: string;
   deleted_at?: string | null;

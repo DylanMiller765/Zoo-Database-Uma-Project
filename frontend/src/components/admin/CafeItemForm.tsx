@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { ImageUpload } from '@/components/ImageUpload';
 
 interface CafeItemFormProps {
   item?: CafeItem | null;
@@ -25,6 +26,7 @@ export function CafeItemForm({ item, cafeId, onSuccess, onCancel }: CafeItemForm
     description: '',
     category: '',
     price: 0,
+    image_url: '',
   });
 
   useEffect(() => {
@@ -35,6 +37,7 @@ export function CafeItemForm({ item, cafeId, onSuccess, onCancel }: CafeItemForm
         description: item.description || '',
         category: item.category || '',
         price: typeof item.price === 'string' ? parseFloat(item.price) : item.price,
+        image_url: item.image_url || '',
       });
     } else {
       // Reset to defaults for new item
@@ -44,6 +47,7 @@ export function CafeItemForm({ item, cafeId, onSuccess, onCancel }: CafeItemForm
         description: '',
         category: '',
         price: 0,
+        image_url: '',
       });
     }
   }, [item, cafeId]);
@@ -82,6 +86,13 @@ export function CafeItemForm({ item, cafeId, onSuccess, onCancel }: CafeItemForm
           {error}
         </div>
       )}
+
+      {/* Image Upload - Moved to top */}
+      <ImageUpload
+        value={formData.image_url}
+        onChange={(imageUrl) => setFormData(prev => ({ ...prev, image_url: imageUrl }))}
+        label="Item Photo"
+      />
 
       <div className="grid grid-cols-2 gap-4">
         <div>

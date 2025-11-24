@@ -9,6 +9,7 @@ export interface Event {
   location: string | null;
   max_participants: number | null;
   ticket_price: number | null;
+  image_url?: string;
   coordinator_id: number | null;
   created_at: string;
   deleted_at?: string | null;

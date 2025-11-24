@@ -290,6 +290,16 @@ export default function EventsPage() {
                                             ev.status === 'cancelled' ? 'opacity-75' : ''
                                         }`}
                                     >
+                                        {ev.image_url && (
+                                          <div className="w-full overflow-hidden rounded-t-lg">
+                                            <img
+                                              src={ev.image_url}
+                                              alt={ev.event_name}
+                                              loading="lazy"
+                                              className="h-48 w-full object-cover"
+                                            />
+                                          </div>
+                                        )}
                                         <CardHeader className="px-6 pt-6 pb-3">
                                             <div className="flex items-start justify-between gap-2">
                                                 {/* Use event_name from Event type */}
