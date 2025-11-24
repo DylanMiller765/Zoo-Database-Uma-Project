@@ -1,29 +1,40 @@
--- Zoo Management System - Seed Data
--- Comprehensive test data for the Zoo Management System
+-- Zoo Management System - Comprehensive Seed Data
+-- Consolidated database initialization with all test data
+-- Includes real image URLs for visual demonstrations
 
 USE zoo_database;
 
 SET FOREIGN_KEY_CHECKS = 0;
+
+-- =======================================
+-- TRUNCATE ALL TABLES
+-- =======================================
 TRUNCATE TABLE notifications;
-TRUNCATE TABLE donations;
-TRUNCATE TABLE customer_payment_methods;
-TRUNCATE TABLE membership_purchases;
-TRUNCATE TABLE cafe_items;
-TRUNCATE TABLE cafes;
-TRUNCATE TABLE event_registrations;
-TRUNCATE TABLE events;
+TRUNCATE TABLE animals_alert_queue;
+TRUNCATE TABLE cafe_sales;
+TRUNCATE TABLE gift_shop_sale_items;
+TRUNCATE TABLE gift_shop_sales_transactions;
 TRUNCATE TABLE feeding_logs;
 TRUNCATE TABLE feeding_schedules;
+TRUNCATE TABLE zookeeper_assignments;
+TRUNCATE TABLE event_registrations;
+TRUNCATE TABLE tickets;
+TRUNCATE TABLE cafe_items;
+TRUNCATE TABLE cafes;
 TRUNCATE TABLE gift_shop_items;
 TRUNCATE TABLE gift_shops;
-TRUNCATE TABLE zookeeper_assignments;
 TRUNCATE TABLE animals;
 TRUNCATE TABLE habitats;
 TRUNCATE TABLE attractions;
+TRUNCATE TABLE donations;
+TRUNCATE TABLE membership_purchases;
+TRUNCATE TABLE customer_payment_methods;
 TRUNCATE TABLE passwords;
 TRUNCATE TABLE user_accounts;
 TRUNCATE TABLE customers;
 TRUNCATE TABLE employees;
+TRUNCATE TABLE events;
+
 SET FOREIGN_KEY_CHECKS = 1;
 
 -- =======================================
@@ -47,7 +58,6 @@ INSERT INTO employees (employee_id, first_name, last_name, email, phone, ssn, jo
 -- =======================================
 -- CUSTOMERS
 -- =======================================
--- Maria Garcia has membership expiring in 20 days (for notification testing)
 INSERT INTO customers (customer_id, first_name, last_name, email, phone, address, city, state, zip_code, annual_pass, membership_start_date, membership_end_date, registration_date) VALUES
 (1, 'John', 'Smith', 'john.smith@email.com', '5551001101', '123 Main St', 'Springfield', 'IL', '62701', 'no', NULL, NULL, '2024-01-10'),
 (2, 'Maria', 'Garcia', 'maria.garcia@email.com', '5551001102', '456 Oak Ave', 'Springfield', 'IL', '62702', 'yes', '2024-01-01', '2025-01-01', '2023-11-15'),
@@ -65,7 +75,6 @@ WHERE customer_id = 2;
 -- =======================================
 -- USER ACCOUNTS
 -- =======================================
--- Employees
 INSERT INTO user_accounts (account_id, username, email, role, employee_id) VALUES
 (1, 'sarah.johnson', 'sarah.johnson@zoo.com', 'employee', 1),
 (2, 'mike.chen', 'mike.chen@zoo.com', 'employee', 2),
@@ -81,7 +90,6 @@ INSERT INTO user_accounts (account_id, username, email, role, employee_id) VALUE
 (15, 'laura.black', 'laura.black@zoo.com', 'employee', 12),
 (18, 'sky.jones', 'skyjones.vet@gmail.com', 'employee', 13);
 
--- Customers
 INSERT INTO user_accounts (account_id, username, email, role, customer_id) VALUES
 (9, 'john.smith', 'john.smith@email.com', 'customer', 1),
 (10, 'maria.garcia', 'maria.garcia@email.com', 'customer', 2),
@@ -93,24 +101,11 @@ INSERT INTO user_accounts (account_id, username, email, role, customer_id) VALUE
 -- PASSWORDS
 -- =======================================
 INSERT INTO passwords (account_id, password_hash) VALUES
-(1, 'password'),  -- Sarah Johnson (Manager)
-(2, 'password'),  -- Mike Chen (Keeper)
-(3, 'password'),  -- Emily Rodriguez (Veterinarian)
-(4, 'password'),  -- David Kim (Coordinator)
-(5, 'password'),  -- Lisa Thompson (Cashier)
-(6, 'password'),  -- James Wilson (Guide)
-(7, 'password'),  -- Anna Martinez (Keeper)
-(8, 'password'),  -- Tom Brown (Maintenance)
-(9, 'password'),  -- John Smith (Customer)
-(10, 'password'), -- Maria Garcia (Customer)
-(11, 'password'), -- Robert Davis (Customer)
-(12, 'password'),
-(13, 'password'),
-(14, 'password'),
-(15, 'password'),
-(16, 'password'), -- Sarah Wilson (Customer)
-(17, 'password'), -- Michael Johnson (Customer)
-(18, 'password'); -- Sky Jones (veterinarian)
+(1, 'password'), (2, 'password'), (3, 'password'), (4, 'password'), 
+(5, 'password'), (6, 'password'), (7, 'password'), (8, 'password'), 
+(9, 'password'), (10, 'password'), (11, 'password'), (12, 'password'), 
+(13, 'password'), (14, 'password'), (15, 'password'), (16, 'password'), 
+(17, 'password'), (18, 'password');
 
 -- =======================================
 -- ATTRACTIONS
@@ -125,77 +120,73 @@ INSERT INTO attractions (name, location, human_capacity, opening_time, closing_t
 -- =======================================
 -- HABITATS
 -- =======================================
-INSERT INTO habitats (habitat_name, attraction_id, size, environment_type, animal_capacity, status) VALUES
-('Lion Pride Rock', 1, 'Large', 'Grassland', 8, 'active'),
-('Elephant Plains', 1, 'Extra Large', 'Savanna', 12, 'active'),
-('Gorilla Forest', 2, 'Large', 'Tropical Forest', 6, 'active'),
-('Penguin Cove', 3, 'Medium', 'Arctic', 25, 'active'),
-('Polar Bear Den', 3, 'Large', 'Arctic', 4, 'active'),
-('Dolphin Pool', 4, 'Extra Large', 'Aquatic', 8, 'active'),
-('Snake Sanctuary', 5, 'Medium', 'Desert', 15, 'active'),
-('Aviary', 2, 'Large', 'Tropical Forest', 50, 'active');
+INSERT INTO habitats (habitat_name, attraction_id, size, environment_type, animal_capacity, status, image_url) VALUES
+('Lion Pride Rock', 1, 'Large', 'Grassland', 8, 'active', 'https://images.unsplash.com/photo-1517649281323-b4c901198696?auto=format&fit=crop&w=800&q=80'),
+('Elephant Plains', 1, 'Extra Large', 'Savanna', 12, 'active', 'https://images.unsplash.com/photo-1557050543-4d5f4e07ef46?auto=format&fit=crop&w=800&q=80'),
+('Gorilla Forest', 2, 'Large', 'Tropical Forest', 6, 'active', 'https://images.unsplash.com/photo-1543152733-5c24e6c38a4a?auto=format&fit=crop&w=800&q=80'),
+('Penguin Cove', 3, 'Medium', 'Arctic', 25, 'active', 'https://images.unsplash.com/photo-1598439210625-5067c578f3f6?auto=format&fit=crop&w=800&q=80'),
+('Polar Bear Den', 3, 'Large', 'Arctic', 4, 'active', 'https://images.unsplash.com/photo-1589656966895-2f33e7653819?auto=format&fit=crop&w=800&q=80'),
+('Dolphin Pool', 4, 'Extra Large', 'Aquatic', 8, 'active', 'https://images.unsplash.com/photo-1629737979624-912df082dc86?auto=format&fit=crop&w=800&q=80'),
+('Snake Sanctuary', 5, 'Medium', 'Desert', 15, 'active', 'https://images.unsplash.com/photo-1531386816488-969248b940ce?auto=format&fit=crop&w=800&q=80'),
+('Aviary', 2, 'Large', 'Tropical Forest', 50, 'active', 'https://images.unsplash.com/photo-1452570053594-1b985d6ea890?auto=format&fit=crop&w=800&q=80');
 
 -- =======================================
 -- ANIMALS
 -- =======================================
-INSERT INTO animals (name, scientific_name, species, date_of_birth, arrival_date, gender, place_of_origin, habitat_id, health_status, active_status, endangerment_status, weight) VALUES
-('Simba', 'Panthera leo', 'African Lion', '2018-05-12', '2019-06-15', 'male', 'South Africa', 1, 'excellent', 'active', 'vulnerable', 190.5),
-('Nala', 'Panthera leo', 'African Lion', '2019-03-20', '2019-06-15', 'female', 'South Africa', 1, 'good', 'active', 'vulnerable', 130.2),
-('Dumbo', 'Loxodonta africana', 'African Elephant', '2015-08-10', '2016-09-20', 'male', 'Kenya', 2, 'excellent', 'active', 'endangered', 5500.0),
-('Koko', 'Gorilla gorilla', 'Western Gorilla', '2012-11-05', '2013-12-10', 'female', 'Congo', 3, 'good', 'active', 'critically_endangered', 85.0),
-('Skipper', 'Aptenodytes forsteri', 'Emperor Penguin', '2020-07-15', '2021-01-10', 'male', 'Antarctica', 4, 'excellent', 'active', 'near_threatened', 23.5),
-('Snowball', 'Ursus maritimus', 'Polar Bear', '2016-12-20', '2018-03-15', 'female', 'Arctic Circle', 5, 'good', 'active', 'vulnerable', 250.0),
-('Flipper', 'Tursiops truncatus', 'Bottlenose Dolphin', '2017-09-08', '2019-04-20', 'male', 'Florida', 6, 'excellent', 'active', 'least_concern', 200.0),
-('Monty', 'Python regius', 'Ball Python', '2021-03-15', '2022-05-10', 'male', 'Ghana', 7, 'good', 'active', 'least_concern', 1.8),
-('Zazu', 'Panthera leo', 'African Lion', '2020-01-01', '2021-01-01', 'male', 'Tanzania', 1, 'excellent', 'active', 'vulnerable', 180.0),
-('Sarabi', 'Panthera leo', 'African Lion', '2019-05-20', '2021-01-01', 'female', 'Tanzania', 1, 'good', 'active', 'vulnerable', 120.5),
-('Tantor', 'Loxodonta africana', 'African Elephant', '2010-02-15', '2012-03-01', 'male', 'Botswana', 2, 'excellent', 'active', 'endangered', 6000.0),
-('Kala', 'Loxodonta africana', 'African Elephant', '2012-07-22', '2014-08-01', 'female', 'Botswana', 2, 'good', 'active', 'endangered', 4500.0),
-('Kerchak', 'Gorilla gorilla', 'Western Gorilla', '2010-09-10', '2012-10-01', 'male', 'Cameroon', 3, 'excellent', 'active', 'critically_endangered', 150.0),
-('Terk', 'Gorilla gorilla', 'Western Gorilla', '2011-11-05', '2013-12-01', 'female', 'Cameroon', 3, 'good', 'active', 'critically_endangered', 90.0),
-('Pingu', 'Aptenodytes forsteri', 'Emperor Penguin', '2021-06-01', '2022-01-10', 'male', 'Antarctica', 4, 'excellent', 'active', 'near_threatened', 24.0),
-('Pingi', 'Aptenodytes forsteri', 'Emperor Penguin', '2021-06-05', '2022-01-10', 'female', 'Antarctica', 4, 'excellent', 'active', 'near_threatened', 22.0),
-('Pinga', 'Aptenodytes forsteri', 'Emperor Penguin', '2022-08-01', '2023-02-10', 'female', 'Antarctica', 4, 'good', 'active', 'near_threatened', 15.0),
-('Kowalski', 'Aptenodytes forsteri', 'Emperor Penguin', '2020-07-15', '2021-01-10', 'male', 'Antarctica', 4, 'excellent', 'active', 'near_threatened', 23.5),
-('Rico', 'Aptenodytes forsteri', 'Emperor Penguin', '2020-07-15', '2021-01-10', 'male', 'Antarctica', 4, 'excellent', 'active', 'near_threatened', 23.5),
-('Lars', 'Ursus maritimus', 'Polar Bear', '2015-11-10', '2017-02-15', 'male', 'Norway', 5, 'good', 'active', 'vulnerable', 450.0),
-('Echo', 'Tursiops truncatus', 'Bottlenose Dolphin', '2018-08-01', '2020-09-01', 'female', 'Mexico', 6, 'excellent', 'active', 'least_concern', 180.0),
-('Coral', 'Tursiops truncatus', 'Bottlenose Dolphin', '2019-05-20', '2021-06-01', 'female', 'Mexico', 6, 'good', 'active', 'least_concern', 170.0),
-('Kaa', 'Python reticulatus', 'Reticulated Python', '2020-01-15', '2021-02-10', 'male', 'Indonesia', 7, 'good', 'active', 'least_concern', 2.5),
-('Nagini', 'Python bivittatus', 'Burmese Python', '2019-03-10', '2020-04-05', 'female', 'Myanmar', 7, 'excellent', 'active', 'vulnerable', 3.0),
-('Salazar', 'Boa constrictor', 'Boa Constrictor', '2021-08-20', '2022-09-15', 'male', 'Colombia', 7, 'good', 'active', 'least_concern', 2.0),
-('Medusa', 'Eunectes murinus', 'Green Anaconda', '2018-06-12', '2019-07-20', 'female', 'Brazil', 7, 'excellent', 'active', 'least_concern', 4.5),
-('Basilisk', 'Varanus komodoensis', 'Komodo Dragon', '2017-09-30', '2018-11-01', 'male', 'Indonesia', 7, 'good', 'active', 'endangered', 70.0),
-('Iago', 'Ara macao', 'Scarlet Macaw', '2022-01-10', '2023-02-01', 'male', 'Brazil', 8, 'excellent', 'active', 'least_concern', 1.0),
-('Blu', 'Ara ararauna', 'Blue-and-yellow Macaw', '2022-02-15', '2023-03-01', 'male', 'Brazil', 8, 'excellent', 'active', 'least_concern', 1.2),
-('Jewel', 'Ara ararauna', 'Blue-and-yellow Macaw', '2022-03-20', '2023-04-01', 'female', 'Brazil', 8, 'good', 'active', 'least_concern', 1.1),
-('Touki', 'Ramphastos toco', 'Toco Toucan', '2021-05-10', '2022-06-01', 'male', 'Brazil', 8, 'excellent', 'active', 'least_concern', 0.6),
-('Hedwig', 'Bubo scandiacus', 'Snowy Owl', '2020-08-01', '2021-09-01', 'female', 'Arctic', 8, 'good', 'active', 'vulnerable', 2.0),
-('Errol', 'Cacatua galerita', 'Sulphur-crested Cockatoo', '2019-04-12', '2020-05-01', 'male', 'Australia', 8, 'excellent', 'active', 'least_concern', 0.9),
-('Kevin', 'Phoenicopterus roseus', 'Greater Flamingo', '2022-06-30', '2023-07-01', 'male', 'Africa', 8, 'good', 'active', 'least_concern', 3.5),
-('Becky', 'Gypaetus barbatus', 'Bearded Vulture', '2018-09-10', '2019-10-01', 'female', 'Himalayas', 8, 'excellent', 'active', 'near_threatened', 6.0),
-('Nigel', 'Pelecanus conspicillatus', 'Australian Pelican', '2021-11-05', '2022-12-01', 'male', 'Australia', 8, 'good', 'active', 'least_concern', 5.0),
-('Scuttle', 'Larus argentatus', 'Herring Gull', '2023-01-01', '2024-02-01', 'male', 'North America', 8, 'excellent', 'active', 'least_concern', 1.5);
-
+INSERT INTO animals (name, scientific_name, species, date_of_birth, arrival_date, gender, place_of_origin, habitat_id, health_status, active_status, endangerment_status, weight, image_url) VALUES
+('Simba', 'Panthera leo', 'African Lion', '2018-05-12', '2019-06-15', 'male', 'South Africa', 1, 'excellent', 'active', 'vulnerable', 190.5, 'https://images.unsplash.com/photo-1614027164847-1b28cfe1df60?auto=format&fit=crop&w=600&q=80'),
+('Nala', 'Panthera leo', 'African Lion', '2019-03-20', '2019-06-15', 'female', 'South Africa', 1, 'good', 'active', 'vulnerable', 130.2, 'https://images.unsplash.com/photo-1599839575945-a9e5af0c3fa5?auto=format&fit=crop&w=600&q=80'),
+('Dumbo', 'Loxodonta africana', 'African Elephant', '2015-08-10', '2016-09-20', 'male', 'Kenya', 2, 'excellent', 'active', 'endangered', 5500.0, 'https://images.unsplash.com/photo-1581852017103-68ac6550d80c?auto=format&fit=crop&w=600&q=80'),
+('Koko', 'Gorilla gorilla', 'Western Gorilla', '2012-11-05', '2013-12-10', 'female', 'Congo', 3, 'good', 'active', 'critically_endangered', 85.0, 'https://images.unsplash.com/photo-1580982512684-2a13f0194451?auto=format&fit=crop&w=600&q=80'),
+('Skipper', 'Aptenodytes forsteri', 'Emperor Penguin', '2020-07-15', '2021-01-10', 'male', 'Antarctica', 4, 'excellent', 'active', 'near_threatened', 23.5, 'https://images.unsplash.com/photo-1551093122-f190e3868297?auto=format&fit=crop&w=600&q=80'),
+('Snowball', 'Ursus maritimus', 'Polar Bear', '2016-12-20', '2018-03-15', 'female', 'Arctic Circle', 5, 'good', 'active', 'vulnerable', 250.0, 'https://images.unsplash.com/photo-1589656966895-2f33e7653819?auto=format&fit=crop&w=600&q=80'),
+('Flipper', 'Tursiops truncatus', 'Bottlenose Dolphin', '2017-09-08', '2019-04-20', 'male', 'Florida', 6, 'excellent', 'active', 'least_concern', 200.0, 'https://images.unsplash.com/photo-1570481662006-a3a1374699e8?auto=format&fit=crop&w=600&q=80'),
+('Monty', 'Python regius', 'Ball Python', '2021-03-15', '2022-05-10', 'male', 'Ghana', 7, 'good', 'active', 'least_concern', 1.8, 'https://images.unsplash.com/photo-1610444565784-0994f305db43?auto=format&fit=crop&w=600&q=80'),
+('Zazu', 'Panthera leo', 'African Lion', '2020-01-01', '2021-01-01', 'male', 'Tanzania', 1, 'excellent', 'active', 'vulnerable', 180.0, 'https://images.unsplash.com/photo-1534188753412-3e26d0d618d6?auto=format&fit=crop&w=600&q=80'),
+('Sarabi', 'Panthera leo', 'African Lion', '2019-05-20', '2021-01-01', 'female', 'Tanzania', 1, 'good', 'active', 'vulnerable', 120.5, 'https://images.unsplash.com/photo-1510443048560-afc531d04135?auto=format&fit=crop&w=600&q=80'),
+('Tantor', 'Loxodonta africana', 'African Elephant', '2010-02-15', '2012-03-01', 'male', 'Botswana', 2, 'excellent', 'active', 'endangered', 6000.0, 'https://images.unsplash.com/photo-1503919005314-30d93d07d823?auto=format&fit=crop&w=600&q=80'),
+('Kala', 'Loxodonta africana', 'African Elephant', '2012-07-22', '2014-08-01', 'female', 'Botswana', 2, 'good', 'active', 'endangered', 4500.0, 'https://images.unsplash.com/photo-1564760055278-8d551e5e408c?auto=format&fit=crop&w=600&q=80'),
+('Kerchak', 'Gorilla gorilla', 'Western Gorilla', '2010-09-10', '2012-10-01', 'male', 'Cameroon', 3, 'excellent', 'active', 'critically_endangered', 150.0, 'https://images.unsplash.com/photo-1533202127271-e2311756543b?auto=format&fit=crop&w=600&q=80'),
+('Terk', 'Gorilla gorilla', 'Western Gorilla', '2011-11-05', '2013-12-01', 'female', 'Cameroon', 3, 'good', 'active', 'critically_endangered', 90.0, 'https://images.unsplash.com/photo-1535497274640-f4728cb17029?auto=format&fit=crop&w=600&q=80'),
+('Pingu', 'Aptenodytes forsteri', 'Emperor Penguin', '2021-06-01', '2022-01-10', 'male', 'Antarctica', 4, 'excellent', 'active', 'near_threatened', 24.0, 'https://images.unsplash.com/photo-1517783999520-f068d343e95e?auto=format&fit=crop&w=600&q=80'),
+('Pingi', 'Aptenodytes forsteri', 'Emperor Penguin', '2021-06-05', '2022-01-10', 'female', 'Antarctica', 4, 'excellent', 'active', 'near_threatened', 22.0, 'https://images.unsplash.com/photo-1540880190529-688c226fc0c7?auto=format&fit=crop&w=600&q=80'),
+('Pinga', 'Aptenodytes forsteri', 'Emperor Penguin', '2022-08-01', '2023-02-10', 'female', 'Antarctica', 4, 'good', 'active', 'near_threatened', 15.0, 'https://images.unsplash.com/photo-1462888461757-d218206d2039?auto=format&fit=crop&w=600&q=80'),
+('Kowalski', 'Aptenodytes forsteri', 'Emperor Penguin', '2020-07-15', '2021-01-10', 'male', 'Antarctica', 4, 'excellent', 'active', 'near_threatened', 23.5, 'https://images.unsplash.com/photo-1518063319789-7217e6706b04?auto=format&fit=crop&w=600&q=80'),
+('Rico', 'Aptenodytes forsteri', 'Emperor Penguin', '2020-07-15', '2021-01-10', 'male', 'Antarctica', 4, 'excellent', 'active', 'near_threatened', 23.5, 'https://images.unsplash.com/photo-1470165439527-33eb9777f98d?auto=format&fit=crop&w=600&q=80'),
+('Lars', 'Ursus maritimus', 'Polar Bear', '2015-11-10', '2017-02-15', 'male', 'Norway', 5, 'good', 'active', 'vulnerable', 450.0, 'https://images.unsplash.com/photo-1547781958-b1187425264b?auto=format&fit=crop&w=600&q=80'),
+('Echo', 'Tursiops truncatus', 'Bottlenose Dolphin', '2018-08-01', '2020-09-01', 'female', 'Mexico', 6, 'excellent', 'active', 'least_concern', 180.0, 'https://images.unsplash.com/photo-1629737979624-912df082dc86?auto=format&fit=crop&w=600&q=80'),
+('Coral', 'Tursiops truncatus', 'Bottlenose Dolphin', '2019-05-20', '2021-06-01', 'female', 'Mexico', 6, 'good', 'active', 'least_concern', 170.0, 'https://images.unsplash.com/photo-1570341773099-04c861295e8e?auto=format&fit=crop&w=600&q=80'),
+('Kaa', 'Python reticulatus', 'Reticulated Python', '2020-01-15', '2021-02-10', 'male', 'Indonesia', 7, 'good', 'active', 'least_concern', 2.5, 'https://images.unsplash.com/photo-1623862800407-357563065842?auto=format&fit=crop&w=600&q=80'),
+('Nagini', 'Python bivittatus', 'Burmese Python', '2019-03-10', '2020-04-05', 'female', 'Myanmar', 7, 'excellent', 'active', 'vulnerable', 3.0, 'https://images.unsplash.com/photo-1582239335805-3de131920875?auto=format&fit=crop&w=600&q=80'),
+('Salazar', 'Boa constrictor', 'Boa Constrictor', '2021-08-20', '2022-09-15', 'male', 'Colombia', 7, 'good', 'active', 'least_concern', 2.0, 'https://images.unsplash.com/photo-1531386816488-969248b940ce?auto=format&fit=crop&w=600&q=80'),
+('Medusa', 'Eunectes murinus', 'Green Anaconda', '2018-06-12', '2019-07-20', 'female', 'Brazil', 7, 'excellent', 'active', 'least_concern', 4.5, 'https://images.unsplash.com/photo-1568285935759-42b78995a560?auto=format&fit=crop&w=600&q=80'),
+('Basilisk', 'Varanus komodoensis', 'Komodo Dragon', '2017-09-30', '2018-11-01', 'male', 'Indonesia', 7, 'good', 'active', 'endangered', 70.0, 'https://images.unsplash.com/photo-1545283996-01d78278784d?auto=format&fit=crop&w=600&q=80'),
+('Iago', 'Ara macao', 'Scarlet Macaw', '2022-01-10', '2023-02-01', 'male', 'Brazil', 8, 'excellent', 'active', 'least_concern', 1.0, 'https://images.unsplash.com/photo-1550503023-e6922dfd37c5?auto=format&fit=crop&w=600&q=80'),
+('Blu', 'Ara ararauna', 'Blue-and-yellow Macaw', '2022-02-15', '2023-03-01', 'male', 'Brazil', 8, 'excellent', 'active', 'least_concern', 1.2, 'https://images.unsplash.com/photo-1452570053594-1b985d6ea890?auto=format&fit=crop&w=600&q=80'),
+('Jewel', 'Ara ararauna', 'Blue-and-yellow Macaw', '2022-03-20', '2023-04-01', 'female', 'Brazil', 8, 'good', 'active', 'least_concern', 1.1, 'https://images.unsplash.com/photo-1590426189576-9c424df39c4a?auto=format&fit=crop&w=600&q=80'),
+('Touki', 'Ramphastos toco', 'Toco Toucan', '2021-05-10', '2022-06-01', 'male', 'Brazil', 8, 'excellent', 'active', 'least_concern', 0.6, 'https://images.unsplash.com/photo-1579549320876-0f305047b779?auto=format&fit=crop&w=600&q=80'),
+('Hedwig', 'Bubo scandiacus', 'Snowy Owl', '2020-08-01', '2021-09-01', 'female', 'Arctic', 8, 'good', 'active', 'vulnerable', 2.0, 'https://images.unsplash.com/photo-1589467647242-4f35e40645c9?auto=format&fit=crop&w=600&q=80'),
+('Errol', 'Cacatua galerita', 'Sulphur-crested Cockatoo', '2019-04-12', '2020-05-01', 'male', 'Australia', 8, 'excellent', 'active', 'least_concern', 0.9, 'https://images.unsplash.com/photo-1533166579294-811c75949d8c?auto=format&fit=crop&w=600&q=80'),
+('Kevin', 'Phoenicopterus roseus', 'Greater Flamingo', '2022-06-30', '2023-07-01', 'male', 'Africa', 8, 'good', 'active', 'least_concern', 3.5, 'https://images.unsplash.com/photo-1596708766432-614b7e98d197?auto=format&fit=crop&w=600&q=80'),
+('Becky', 'Gypaetus barbatus', 'Bearded Vulture', '2018-09-10', '2019-10-01', 'female', 'Himalayas', 8, 'excellent', 'active', 'near_threatened', 6.0, 'https://images.unsplash.com/photo-1627917711466-963e634731a5?auto=format&fit=crop&w=600&q=80'),
+('Nigel', 'Pelecanus conspicillatus', 'Australian Pelican', '2021-11-05', '2022-12-01', 'male', 'Australia', 8, 'good', 'active', 'least_concern', 5.0, 'https://images.unsplash.com/photo-1549608276-5786777e6587?auto=format&fit=crop&w=600&q=80'),
+('Scuttle', 'Larus argentatus', 'Herring Gull', '2023-01-01', '2024-02-01', 'male', 'North America', 8, 'excellent', 'active', 'least_concern', 1.5, 'https://images.unsplash.com/photo-1616428740177-3e6f540700c2?auto=format&fit=crop&w=600&q=80');
 
 -- =======================================
 -- EVENTS
 -- =======================================
-INSERT INTO events (name, description, event_date, start_time, end_time, location, max_participants, ticket_price, coordinator_id) VALUES
--- Past Events
-('Tiger Feeding Demonstration', 'Watch our experts safely feed the tigers with specialized techniques', '2025-09-15', '10:00:00', '11:00:00', 'Big Cat Arena', 200, 12.00, 4),
-('Reptile Exhibition', 'Explore the world of snakes, lizards, and other reptiles up close', '2025-09-28', '14:00:00', '15:30:00', 'Reptile House', 100, 8.00, 4),
-('Primate Discovery Walk', 'Guided tour through our primate exhibits with interactive experiences', '2025-10-10', '11:00:00', '12:30:00', 'Primate Territory', 75, 10.00, 4),
-('Butterfly Garden Workshop', 'Learn about monarch butterflies and pollination in our gardens', '2025-10-22', '13:00:00', '14:00:00', 'Botanical Garden', 60, 7.00, 4),
-('Avian Training Show', 'See our trained birds perform impressive aerial displays', '2025-11-05', '15:00:00', '16:00:00', 'Bird Sanctuary Theater', 150, 15.00, 4),
-('Aquatic Creature Talk', 'Educational presentation about marine conservation and aquatic life', '2025-11-12', '10:30:00', '11:30:00', 'Aquatic Center Amphitheater', 250, 10.00, 4),
-
--- Upcoming Events
-('Dolphin Show', 'Watch our amazing dolphins perform tricks and learn about marine conservation', '2025-11-21', '14:00:00', '15:00:00', 'Aquatic Center Amphitheater', 400, 15.00, 4),
-('Penguin Feeding Time', 'Help our keepers feed the penguins and learn about their diet', '2025-11-28', '11:00:00', '11:30:00', 'Penguin Cove', 50, 10.00, 4),
-('Lion Encounter', 'Get up close with our lions through the safe viewing area', '2025-12-05', '13:00:00', '14:00:00', 'African Savanna', 100, 20.00, 4),
-('Kids Zoo Camp', 'Week-long summer camp for children ages 8-12', '2025-12-15', '09:00:00', '15:00:00', 'Education Center', 30, 250.00, 4),
-('Night at the Zoo', 'Special after-hours tour experience with nocturnal animals', '2025-12-22', '19:00:00', '22:00:00', 'Various Locations', 150, 35.00, 4);
+INSERT INTO events (name, description, event_date, start_time, end_time, location, max_participants, ticket_price, coordinator_id, image_url) VALUES
+('Tiger Feeding Demonstration', 'Watch our experts safely feed the tigers with specialized techniques', '2025-09-15', '10:00:00', '11:00:00', 'Big Cat Arena', 200, 12.00, 4, 'https://images.unsplash.com/photo-1615820986348-73599b8296a8?auto=format&fit=crop&w=800&q=80'),
+('Reptile Exhibition', 'Explore the world of snakes, lizards, and other reptiles up close', '2025-09-28', '14:00:00', '15:30:00', 'Reptile House', 100, 8.00, 4, 'https://images.unsplash.com/photo-1533756919927-4402eb06a24c?auto=format&fit=crop&w=800&q=80'),
+('Primate Discovery Walk', 'Guided tour through our primate exhibits with interactive experiences', '2025-10-10', '11:00:00', '12:30:00', 'Primate Territory', 75, 10.00, 4, 'https://images.unsplash.com/photo-1588661706680-e374567e45f9?auto=format&fit=crop&w=800&q=80'),
+('Butterfly Garden Workshop', 'Learn about monarch butterflies and pollination in our gardens', '2025-10-22', '13:00:00', '14:00:00', 'Botanical Garden', 60, 7.00, 4, 'https://images.unsplash.com/photo-1457466840742-1e909564c7f0?auto=format&fit=crop&w=800&q=80'),
+('Avian Training Show', 'See our trained birds perform impressive aerial displays', '2025-11-05', '15:00:00', '16:00:00', 'Bird Sanctuary Theater', 150, 15.00, 4, 'https://images.unsplash.com/photo-1516719702602-0692f80c5878?auto=format&fit=crop&w=800&q=80'),
+('Aquatic Creature Talk', 'Educational presentation about marine conservation and aquatic life', '2025-11-12', '10:30:00', '11:30:00', 'Aquatic Center Amphitheater', 250, 10.00, 4, 'https://images.unsplash.com/photo-1551980349-75d992b49c86?auto=format&fit=crop&w=800&q=80'),
+('Dolphin Show', 'Watch our amazing dolphins perform tricks and learn about marine conservation', '2025-11-21', '14:00:00', '15:00:00', 'Aquatic Center Amphitheater', 400, 15.00, 4, 'https://images.unsplash.com/photo-1570481662006-a3a1374699e8?auto=format&fit=crop&w=800&q=80'),
+('Penguin Feeding Time', 'Help our keepers feed the penguins and learn about their diet', '2025-11-28', '11:00:00', '11:30:00', 'Penguin Cove', 50, 10.00, 4, 'https://images.unsplash.com/photo-1598439210625-5067c578f3f6?auto=format&fit=crop&w=800&q=80'),
+('Lion Encounter', 'Get up close with our lions through the safe viewing area', '2025-12-05', '13:00:00', '14:00:00', 'African Savanna', 100, 20.00, 4, 'https://images.unsplash.com/photo-1623916960867-27b925b34006?auto=format&fit=crop&w=800&q=80'),
+('Kids Zoo Camp', 'Week-long summer camp for children ages 8-12', '2025-12-15', '09:00:00', '15:00:00', 'Education Center', 30, 250.00, 4, 'https://images.unsplash.com/photo-1502086223501-8351e33e8a0c?auto=format&fit=crop&w=800&q=80'),
+('Night at the Zoo', 'Special after-hours tour experience with nocturnal animals', '2025-12-22', '19:00:00', '22:00:00', 'Various Locations', 150, 35.00, 4, 'https://images.unsplash.com/photo-1519074069444-1ba4fff66d16?auto=format&fit=crop&w=800&q=80');
 
 -- =======================================
 -- GIFT SHOPS
@@ -212,34 +203,121 @@ INSERT INTO cafes (cafe_id, name, location, opening_time, closing_time, manager_
 -- =======================================
 -- GIFT SHOP ITEMS
 -- =======================================
-INSERT INTO gift_shop_items (gift_shop_id, name, description, category, price, cost, quantity_in_stock, supplier) VALUES
-(1, 'Plush Lion', 'Soft and cuddly lion plushie', 'Toys', 19.99, 8.00, 150, 'ToyWorld Inc'),
-(1, 'Zoo T-Shirt', 'Cotton t-shirt with zoo logo', 'Apparel', 24.99, 10.00, 200, 'Apparel Plus'),
-(1, 'Animal Stickers', 'Pack of 20 animal stickers', 'Souvenirs', 4.99, 1.50, 500, 'Sticker Co'),
-(1, 'Tropical Bird Poster', 'Beautiful rainforest bird poster', 'Art', 12.99, 5.00, 75, 'Art Prints Ltd'),
-(1, 'Plush Penguin', 'Soft and cuddly penguin plushie', 'Toys', 19.99, 8.00, 120, 'ToyWorld Inc'),
-(1, 'Dolphin Keychain', 'Metal keychain with a dolphin charm', 'Souvenirs', 7.99, 2.50, 300, 'Sticker Co'),
-(1, 'Zoo Mug', 'Ceramic mug with zoo animal illustrations', 'Homeware', 14.99, 6.00, 100, 'Apparel Plus'),
-(1, 'Savanna Hat', 'Wide-brimmed hat for sun protection', 'Apparel', 29.99, 12.00, 80, 'Apparel Plus'),
-(1, 'Plush Elephant', 'Adorable elephant stuffed animal', 'Toys', 22.99, 9.00, 100, 'ToyWorld Inc'),
-(1, 'Zoo Backpack', 'Canvas backpack with animal prints', 'Apparel', 34.99, 15.00, 60, 'Apparel Plus');
+INSERT INTO gift_shop_items (gift_shop_id, name, description, category, price, cost, quantity_in_stock, supplier, image_url) VALUES
+(1, 'Plush Lion', 'Soft and cuddly lion plushie', 'Toys', 19.99, 8.00, 150, 'ToyWorld Inc', 'https://images.unsplash.com/photo-1559454403-b8fb88521f11?auto=format&fit=crop&w=600&q=80'),
+(1, 'Zoo T-Shirt', 'Cotton t-shirt with zoo logo', 'Apparel', 24.99, 10.00, 200, 'Apparel Plus', 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?auto=format&fit=crop&w=600&q=80'),
+(1, 'Animal Stickers', 'Pack of 20 animal stickers', 'Souvenirs', 4.99, 1.50, 500, 'Sticker Co', 'https://images.unsplash.com/photo-1572375992501-6057ac8566d5?auto=format&fit=crop&w=600&q=80'),
+(1, 'Tropical Bird Poster', 'Beautiful rainforest bird poster', 'Art', 12.99, 5.00, 75, 'Art Prints Ltd', 'https://images.unsplash.com/photo-1452570053594-1b985d6ea890?auto=format&fit=crop&w=600&q=80'),
+(1, 'Plush Penguin', 'Soft and cuddly penguin plushie', 'Toys', 19.99, 8.00, 120, 'ToyWorld Inc', 'https://images.unsplash.com/photo-1551108525-c51379b71e92?auto=format&fit=crop&w=600&q=80'),
+(1, 'Dolphin Keychain', 'Metal keychain with a dolphin charm', 'Souvenirs', 7.99, 2.50, 300, 'Sticker Co', 'https://images.unsplash.com/photo-1616035977322-90231920da7d?auto=format&fit=crop&w=600&q=80'),
+(1, 'Zoo Mug', 'Ceramic mug with zoo animal illustrations', 'Homeware', 14.99, 6.00, 100, 'Apparel Plus', 'https://images.unsplash.com/photo-1514228742587-6b1558fcca3d?auto=format&fit=crop&w=600&q=80'),
+(1, 'Savanna Hat', 'Wide-brimmed hat for sun protection', 'Apparel', 29.99, 12.00, 80, 'Apparel Plus', 'https://images.unsplash.com/photo-1521369909029-2afed882baee?auto=format&fit=crop&w=600&q=80'),
+(1, 'Plush Elephant', 'Adorable elephant stuffed animal', 'Toys', 22.99, 9.00, 100, 'ToyWorld Inc', 'https://images.unsplash.com/photo-1582298538104-fe2e74c2ed54?auto=format&fit=crop&w=600&q=80'),
+(1, 'Zoo Backpack', 'Canvas backpack with animal prints', 'Apparel', 34.99, 15.00, 60, 'Apparel Plus', 'https://images.unsplash.com/photo-1553062407-98eeb64c6a62?auto=format&fit=crop&w=600&q=80');
 
 -- =======================================
 -- CAFE ITEMS
 -- =======================================
-INSERT INTO cafe_items (cafe_id, name, description, category, price) VALUES
-(1, 'Burger', 'Classic beef burger with fries', 'Entrees', 12.99),
-(1, 'Hot Dog', 'All-beef hot dog', 'Entrees', 8.99),
-(1, 'French Fries', 'Crispy golden fries', 'Sides', 4.99),
-(1, 'Soda', 'Fountain drink', 'Beverages', 2.99),
-(1, 'Chicken Nuggets', 'Kids meal chicken nuggets', 'Entrees', 7.99),
-(1, 'Ice Cream', 'Soft serve ice cream cone', 'Desserts', 3.99),
-(1, 'Pizza Slice', 'Slice of cheese or pepperoni pizza', 'Entrees', 6.99),
-(1, 'Salad', 'Fresh garden salad with choice of dressing', 'Sides', 7.49),
-(1, 'Coffee', 'Freshly brewed hot coffee', 'Beverages', 3.49),
-(1, 'Bottled Water', '500ml bottled water', 'Beverages', 2.49),
-(1, 'Sandwich', 'Turkey and cheese sandwich', 'Entrees', 9.99),
-(1, 'Cookies', 'Chocolate chip cookies (3 pack)', 'Desserts', 4.99);
+INSERT INTO cafe_items (cafe_id, name, description, category, price, image_url) VALUES
+(1, 'Burger', 'Classic beef burger with fries', 'Entrees', 12.99, 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&w=600&q=80'),
+(1, 'Hot Dog', 'All-beef hot dog', 'Entrees', 8.99, 'https://images.unsplash.com/photo-1627054238580-b0d10d9f456c?auto=format&fit=crop&w=600&q=80'),
+(1, 'French Fries', 'Crispy golden fries', 'Sides', 4.99, 'https://images.unsplash.com/photo-1630384060421-cb20d0e0649d?auto=format&fit=crop&w=600&q=80'),
+(1, 'Soda', 'Fountain drink', 'Beverages', 2.99, 'https://images.unsplash.com/photo-1513558161293-cdaf765ed2fd?auto=format&fit=crop&w=600&q=80'),
+(1, 'Chicken Nuggets', 'Kids meal chicken nuggets', 'Entrees', 7.99, 'https://images.unsplash.com/photo-1562967914-608f82629710?auto=format&fit=crop&w=600&q=80'),
+(1, 'Ice Cream', 'Soft serve ice cream cone', 'Desserts', 3.99, 'https://images.unsplash.com/photo-1497034825429-c343d7c6a68f?auto=format&fit=crop&w=600&q=80'),
+(1, 'Pizza Slice', 'Slice of cheese or pepperoni pizza', 'Entrees', 6.99, 'https://images.unsplash.com/photo-1574071318508-1cdbab80d002?auto=format&fit=crop&w=600&q=80'),
+(1, 'Salad', 'Fresh garden salad with choice of dressing', 'Sides', 7.49, 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?auto=format&fit=crop&w=600&q=80'),
+(1, 'Coffee', 'Freshly brewed hot coffee', 'Beverages', 3.49, 'https://images.unsplash.com/photo-1509042239860-f550ce710b93?auto=format&fit=crop&w=600&q=80'),
+(1, 'Bottled Water', '500ml bottled water', 'Beverages', 2.49, 'https://images.unsplash.com/photo-1560697529-722a5929d009?auto=format&fit=crop&w=600&q=80'),
+(1, 'Sandwich', 'Turkey and cheese sandwich', 'Entrees', 9.99, 'https://images.unsplash.com/photo-1528735602780-2552fd46c7af?auto=format&fit=crop&w=600&q=80'),
+(1, 'Cookies', 'Chocolate chip cookies (3 pack)', 'Desserts', 4.99, 'https://images.unsplash.com/photo-1499636138143-bd649043ea52?auto=format&fit=crop&w=600&q=80');
+
+-- =======================================
+-- TICKETS (SALES DATA)
+-- =======================================
+INSERT INTO tickets (customer_id, visit_date, ticket_type, price, payment_method, purchase_date) VALUES
+(1, '2025-01-15', 'adult', 45.00, 'credit', '2025-01-15 10:00:00'),
+(1, '2025-01-15', 'child', 30.00, 'credit', '2025-01-15 10:00:00'),
+(2, '2025-01-20', 'adult', 45.00, 'credit', '2025-01-18 14:30:00'),
+(3, '2025-01-25', 'senior', 35.00, 'cash', '2025-01-25 11:00:00'),
+(NULL, '2025-02-05', 'adult', 45.00, 'cash', '2025-02-05 09:15:00'),
+(NULL, '2025-02-05', 'adult', 45.00, 'cash', '2025-02-05 09:15:00'),
+(1, '2025-02-14', 'adult', 45.00, 'credit', '2025-02-12 11:00:00'),
+(1, '2025-02-14', 'adult', 45.00, 'credit', '2025-02-12 11:00:00'),
+(3, '2025-02-20', 'senior', 35.00, 'debit', '2025-02-20 10:00:00'),
+(NULL, '2025-03-05', 'child', 30.00, 'cash', '2025-03-05 14:00:00'),
+(1, '2025-03-10', 'adult', 45.00, 'debit', '2025-03-10 09:30:00'),
+(2, '2025-03-12', 'adult', 45.00, 'credit', '2025-03-12 12:00:00'),
+(2, '2025-03-12', 'child', 30.00, 'credit', '2025-03-12 12:00:00'),
+(3, '2025-03-18', 'student', 38.00, 'credit', '2025-03-15 18:00:00'),
+(NULL, '2025-04-01', 'child', 30.00, 'cash', '2025-04-01 13:45:00'),
+(NULL, '2025-04-01', 'child', 30.00, 'cash', '2025-04-01 13:45:00'),
+(NULL, '2025-04-01', 'adult', 45.00, 'cash', '2025-04-01 13:45:00'),
+(2, '2025-04-15', 'adult', 45.00, 'credit', '2025-04-15 11:30:00'),
+(2, '2025-04-15', 'child', 30.00, 'credit', '2025-04-15 11:30:00'),
+(NULL, '2025-05-02', 'student', 38.00, 'debit', '2025-05-02 12:15:00'),
+(NULL, '2025-05-10', 'adult', 45.00, 'credit', '2025-05-08 16:00:00'),
+(3, '2025-05-25', 'senior', 35.00, 'cash', '2025-05-25 09:45:00'),
+(NULL, '2025-06-05', 'adult', 45.00, 'credit', '2025-06-05 10:30:00'),
+(NULL, '2025-06-05', 'adult', 45.00, 'credit', '2025-06-05 10:30:00'),
+(NULL, '2025-06-12', 'child', 30.00, 'cash', '2025-06-12 14:00:00'),
+(1, '2025-06-20', 'adult', 45.00, 'debit', '2025-06-20 11:00:00'),
+(NULL, '2025-06-28', 'student', 38.00, 'credit', '2025-06-25 20:00:00'),
+(NULL, '2025-07-01', 'adult', 45.00, 'cash', '2025-07-01 09:00:00'),
+(NULL, '2025-07-02', 'adult', 45.00, 'cash', '2025-07-02 09:05:00'),
+(NULL, '2025-07-03', 'adult', 45.00, 'credit', '2025-07-03 09:10:00'),
+(NULL, '2025-07-03', 'adult', 45.00, 'credit', '2025-07-03 09:10:00'),
+(NULL, '2025-07-03', 'child', 30.00, 'credit', '2025-07-03 09:10:00'),
+(NULL, '2025-07-03', 'child', 30.00, 'credit', '2025-07-03 09:10:00'),
+(NULL, '2025-07-04', 'adult', 45.00, 'credit', '2025-07-01 10:00:00'),
+(NULL, '2025-07-04', 'adult', 45.00, 'credit', '2025-07-01 10:00:00'),
+(NULL, '2025-07-04', 'child', 30.00, 'credit', '2025-07-01 10:00:00'),
+(NULL, '2025-07-05', 'adult', 45.00, 'debit', '2025-07-05 09:15:00'),
+(2, '2025-07-08', 'adult', 45.00, 'credit', '2025-07-06 13:00:00'),
+(NULL, '2025-07-10', 'adult', 45.00, 'credit', '2025-07-10 09:00:00'),
+(NULL, '2025-07-11', 'child', 30.00, 'cash', '2025-07-11 09:20:00'),
+(NULL, '2025-07-12', 'child', 30.00, 'cash', '2025-07-12 09:25:00'),
+(3, '2025-07-15', 'senior', 35.00, 'cash', '2025-07-15 10:30:00'),
+(3, '2025-07-15', 'child', 30.00, 'cash', '2025-07-15 10:30:00'),
+(3, '2025-07-18', 'senior', 35.00, 'credit', '2025-07-18 09:30:00'),
+(NULL, '2025-07-22', 'student', 38.00, 'debit', '2025-07-22 09:35:00'),
+(NULL, '2025-07-25', 'adult', 45.00, 'cash', '2025-07-25 09:40:00'),
+(1, '2025-08-01', 'adult', 45.00, 'credit', '2025-07-30 17:00:00'),
+(NULL, '2025-08-05', 'adult', 45.00, 'credit', '2025-08-05 10:15:00'),
+(NULL, '2025-08-05', 'adult', 45.00, 'credit', '2025-08-05 10:15:00'),
+(NULL, '2025-08-05', 'child', 30.00, 'credit', '2025-08-05 10:15:00'),
+(NULL, '2025-08-05', 'child', 30.00, 'credit', '2025-08-05 10:15:00'),
+(NULL, '2025-08-10', 'adult', 45.00, 'debit', '2025-08-10 10:20:00'),
+(NULL, '2025-08-15', 'child', 30.00, 'cash', '2025-08-15 10:25:00'),
+(2, '2025-08-20', 'adult', 45.00, 'credit', '2025-08-20 10:30:00'),
+(NULL, '2025-08-25', 'student', 38.00, 'debit', '2025-08-25 10:35:00'),
+(3, '2025-09-01', 'senior', 35.00, 'cash', '2025-09-01 11:00:00'),
+(NULL, '2025-09-07', 'adult', 45.00, 'credit', '2025-09-07 11:05:00'),
+(NULL, '2025-09-14', 'child', 30.00, 'debit', '2025-09-14 11:10:00'),
+(1, '2025-09-21', 'adult', 45.00, 'credit', '2025-09-19 19:00:00'),
+(NULL, '2025-09-28', 'adult', 45.00, 'credit', '2025-09-28 11:15:00'),
+(NULL, '2025-09-28', 'adult', 45.00, 'credit', '2025-09-28 11:15:00'),
+(NULL, '2025-09-28', 'child', 30.00, 'credit', '2025-09-28 11:15:00'),
+(NULL, '2025-09-28', 'child', 30.00, 'credit', '2025-09-28 11:15:00'),
+(NULL, '2025-10-05', 'adult', 45.00, 'cash', '2025-10-05 12:00:00'),
+(2, '2025-10-12', 'adult', 45.00, 'debit', '2025-10-12 12:05:00'),
+(NULL, '2025-10-19', 'student', 38.00, 'credit', '2025-10-19 12:10:00'),
+(3, '2025-10-26', 'senior', 35.00, 'cash', '2025-10-26 12:15:00'),
+(1, '2025-10-26', 'adult', 45.00, 'credit', '2025-10-26 11:00:00'),
+(2, '2025-10-31', 'student', 38.00, 'debit', '2025-10-31 13:00:00'),
+(NULL, '2025-11-02', 'adult', 45.00, 'debit', '2025-11-02 13:00:00'),
+(1, '2025-11-09', 'adult', 45.00, 'credit', '2025-11-07 21:00:00'),
+(NULL, '2025-11-10', 'child', 30.00, 'cash', '2025-11-10 13:05:00'),
+(NULL, '2025-11-11', 'adult', 45.00, 'credit', '2025-11-11 13:10:00'),
+(NULL, '2025-11-11', 'adult', 45.00, 'credit', '2025-11-11 13:10:00'),
+(NULL, '2025-11-11', 'child', 30.00, 'credit', '2025-11-11 13:10:00'),
+(NULL, '2025-11-11', 'child', 30.00, 'credit', '2025-11-11 13:10:00'),
+(NULL, '2025-11-12', 'adult', 45.00, 'debit', '2025-11-12 13:15:00'),
+(NULL, '2025-11-01', 'adult', 45.00, 'cash', '2025-11-01 10:00:00'),
+(NULL, '2025-11-03', 'adult', 45.00, 'credit', '2025-11-03 11:00:00'),
+(1, '2025-11-14', 'adult', 45.00, 'credit', '2025-11-13 15:00:00'),
+(NULL, '2025-11-05', 'child', 30.00, 'debit', '2025-11-05 12:00:00'),
+(NULL, '2025-11-06', 'student', 38.00, 'cash', '2025-11-06 09:30:00');
 
 -- =======================================
 -- EVENT REGISTRATIONS
@@ -347,45 +425,38 @@ INSERT INTO event_registrations (event_id, customer_id, number_of_participants, 
 (3, 1, 3, 60.00, 'paid', '2024-12-10 09:00:00'),
 (4, NULL, 1, 250.00, 'cancelled', '2024-12-15 10:45:00'),
 (5, 3, 2, 70.00, 'paid', '2024-12-20 12:15:00'),
--- Event 6: Aquatic Creature Talk (2025-11-12) - $10.00 per person
 (6, 1, 2, 20.00, 'paid', '2025-10-25 10:00:00'),
 (6, 2, 1, 10.00, 'paid', '2025-10-28 14:30:00'),
 (6, 3, 3, 30.00, 'paid', '2025-11-01 09:15:00'),
 (6, NULL, 2, 20.00, 'paid', '2025-11-03 11:00:00'),
 (6, 1, 4, 40.00, 'pending', '2025-11-05 13:45:00'),
 (6, 2, 1, 10.00, 'paid', '2025-11-08 10:30:00'),
--- Event 7: Dolphin Show (2025-11-21) - $15.00 per person
 (7, 1, 2, 30.00, 'paid', '2025-11-10 10:00:00'),
 (7, 2, 1, 15.00, 'paid', '2025-11-12 14:00:00'),
 (7, 3, 3, 45.00, 'paid', '2025-11-13 09:30:00'),
 (7, NULL, 2, 30.00, 'pending', '2025-11-14 11:15:00'),
 (7, 1, 4, 60.00, 'paid', '2025-11-15 13:00:00'),
 (7, NULL, 1, 15.00, 'paid', '2025-11-16 10:45:00'),
--- Event 8: Penguin Feeding Time (2025-11-28) - $10.00 per person
 (8, 2, 2, 20.00, 'paid', '2025-11-12 10:00:00'),
 (8, 3, 1, 10.00, 'paid', '2025-11-14 13:30:00'),
 (8, 1, 3, 30.00, 'paid', '2025-11-15 09:45:00'),
 (8, NULL, 2, 20.00, 'pending', '2025-11-16 12:00:00'),
 (8, 2, 1, 10.00, 'paid', '2025-11-17 14:15:00'),
--- Event 9: Lion Encounter (2025-12-05) - $20.00 per person
 (9, 1, 2, 40.00, 'paid', '2025-11-15 10:00:00'),
 (9, 2, 2, 40.00, 'paid', '2025-11-16 14:30:00'),
 (9, 3, 1, 20.00, 'paid', '2025-11-17 09:15:00'),
 (9, NULL, 3, 60.00, 'pending', '2025-11-18 11:00:00'),
 (9, 1, 1, 20.00, 'paid', '2025-11-18 13:45:00'),
--- Event 10: Kids Zoo Camp (2025-12-15) - $250.00 per person
 (10, 1, 1, 250.00, 'paid', '2025-10-20 10:00:00'),
 (10, 2, 2, 500.00, 'paid', '2025-11-01 14:30:00'),
 (10, NULL, 1, 250.00, 'paid', '2025-11-10 09:45:00'),
 (10, 3, 1, 250.00, 'pending', '2025-11-15 11:15:00'),
--- Event 11: Night at the Zoo (2025-12-22) - $35.00 per person
 (11, 1, 2, 70.00, 'paid', '2025-11-10 10:00:00'),
 (11, 2, 1, 35.00, 'paid', '2025-11-13 14:00:00'),
 (11, 3, 3, 105.00, 'paid', '2025-11-14 09:30:00'),
 (11, NULL, 2, 70.00, 'pending', '2025-11-15 12:00:00'),
 (11, 1, 4, 140.00, 'paid', '2025-11-16 13:45:00'),
 (11, NULL, 1, 35.00, 'paid', '2025-11-17 10:30:00');
-
 
 -- =======================================
 -- DONATIONS
@@ -413,6 +484,24 @@ INSERT INTO donations (customer_id, amount, donation_date, message) VALUES
 (2, 85.00, '2024-03-22 10:45:00', NULL);
 
 -- =======================================
+-- CUSTOMER PAYMENT METHODS
+-- =======================================
+INSERT INTO customer_payment_methods (payment_method_id, customer_id, card_number, cardholder_name, expiry_month, expiry_year, cvv, billing_address, billing_city, billing_state, billing_zip) VALUES
+(1, 2, '4532123456789012', 'Maria Garcia', 12, 2026, '456', '456 Oak Ave', 'Springfield', 'IL', '62702'),
+(2, 4, '5412876543210987', 'Sarah Wilson', 6, 2027, '789', '321 Elm St', 'Springfield', 'IL', '62704'),
+(3, 5, '6011234567890123', 'Michael Johnson', 3, 2028, '234', '654 Maple Dr', 'Springfield', 'IL', '62705');
+
+-- =======================================
+-- MEMBERSHIP PURCHASES
+-- =======================================
+INSERT INTO membership_purchases (customer_id, purchase_date, start_date, end_date, price, payment_method, auto_renewed, payment_method_id) VALUES
+(2, '2023-11-15 10:00:00', '2023-11-15', '2024-11-15', 149.00, 'credit', 0, 1),
+(2, '2024-11-15 09:30:00', '2024-11-15', '2025-11-15', 149.00, 'credit', 1, 1),
+(4, '2024-05-15 14:20:00', '2024-06-01', '2025-06-01', 149.00, 'credit', 0, 2),
+(5, '2024-02-15 11:45:00', '2024-03-15', '2025-03-15', 149.00, 'credit', 0, 3),
+(5, '2024-03-10 10:00:00', '2024-03-15', '2025-03-15', 149.00, 'credit', 1, 3);
+
+-- =======================================
 -- ZOOKEEPER ASSIGNMENTS
 -- =======================================
 INSERT INTO zookeeper_assignments (keeper_id, animal_id, shift) VALUES
@@ -427,8 +516,6 @@ INSERT INTO zookeeper_assignments (keeper_id, animal_id, shift) VALUES
 (2, 28, 'Morning'), (2, 31, 'Morning'),
 (7, 32, 'Morning'), (7, 33, 'Afternoon'), (7, 34, 'Afternoon'), (7, 35, 'Afternoon'),
 (7, 36, 'Afternoon'), (7, 37, 'Afternoon');
-
-
 
 -- =======================================
 -- FEEDING SCHEDULES
@@ -451,9 +538,7 @@ INSERT INTO feeding_schedules (animal_id, food_description, frequency, scheduled
 (7, 'Fresh fish 18kg', 'Three times daily', '09:00:00', 'Herring, capelin with vitamin E'),
 (7, 'Mid-day feeding', 'Daily', '13:00:00', 'Monitor weight'),
 (7, 'Evening feeding with training', 'Daily', '17:00:00', 'Enrichment and training'),
-(8, 'Frozen-thawed rat (adult)', 'Weekly', '19:00:00', 'Feed Fridays, monitor strike');
-
-INSERT INTO feeding_schedules (animal_id, food_description, frequency, scheduled_time, notes) VALUES
+(8, 'Frozen-thawed rat (adult)', 'Weekly', '19:00:00', 'Feed Fridays, monitor strike'),
 (9, 'Raw beef 15kg', 'Daily', '09:00:00', 'Vary protein sources'),
 (10, 'Raw chicken 10kg', 'Daily', '09:30:00', 'Monitor consumption'),
 (11, 'Hay 60kg and Fruits 40kg', 'Daily', '07:00:00', 'Timothy hay primary'),
@@ -483,8 +568,6 @@ INSERT INTO feeding_schedules (animal_id, food_description, frequency, scheduled
 (35, 'Bone marrow and meat scraps', 'Daily', '11:00:00', 'Specialized'),
 (36, 'Whole fish', 'Daily', '10:00:00', 'Herring/mackerel'),
 (37, 'Fish and insects', 'Daily', '10:30:00', 'Opportunistic');
-
-
 
 -- =======================================
 -- FEEDING LOGS
@@ -652,28 +735,118 @@ INSERT INTO feeding_logs (animal_id, keeper_id, feeding_time, food_given, quanti
 (37, 7, DATE_SUB(NOW(), INTERVAL 3 DAY) + INTERVAL 10 HOUR + INTERVAL 30 MINUTE, 'Fish and insects', '180g', 'Normal'),
 (37, 7, DATE_SUB(NOW(), INTERVAL 4 DAY) + INTERVAL 10 HOUR + INTERVAL 30 MINUTE, 'Fish and insects', '180g', 'Excellent');
 
+-- =======================================
+-- GIFT SHOP SALES TRANSACTIONS
+-- =======================================
+INSERT INTO gift_shop_sales_transactions (gift_shop_id, customer_id, employee_id, sale_date, total_amount, payment_method)
+VALUES
+(1, 1, 5, '2025-01-15 15:30:00', 44.98, 'credit'),
+(1, 2, 5, '2025-03-12 16:00:00', 12.99, 'credit'),
+(1, NULL, 5, '2025-07-04 14:00:00', 24.97, 'cash'),
+(1, 3, 5, '2025-10-26 16:30:00', 54.97, 'debit'),
+(1, 2, 5, '2025-04-15 14:00:00', 27.98, 'credit'),
+(1, NULL, 5, '2025-05-02 15:00:00', 14.99, 'debit'),
+(1, 1, 5, '2025-06-20 12:30:00', 34.98, 'debit'),
+(1, NULL, 5, '2025-07-11 11:00:00', 19.99, 'cash'),
+(1, 3, 5, '2025-08-20 16:00:00', 22.98, 'credit'),
+(1, NULL, 5, '2025-09-07 13:00:00', 49.98, 'credit'),
+(1, 1, 5, '2025-11-09 15:30:00', 37.98, 'debit'),
+(1, NULL, 5, '2025-11-11 14:30:00', 32.97, 'credit'),
+(1, 2, 5, '2025-02-14 14:00:00', 29.98, 'debit'),
+(1, 1, 5, '2025-02-28 15:30:00', 39.98, 'credit'),
+(1, 3, 5, '2025-03-30 13:15:00', 19.99, 'cash'),
+(1, NULL, 5, '2025-04-25 16:45:00', 44.97, 'debit'),
+(1, 2, 5, '2025-05-18 14:20:00', 24.98, 'credit'),
+(1, NULL, 5, '2025-06-10 11:30:00', 34.98, 'cash'),
+(1, 3, 5, '2025-07-15 15:00:00', 27.98, 'debit'),
+(1, 1, 5, '2025-08-10 13:45:00', 49.98, 'credit'),
+(1, NULL, 5, '2025-09-20 16:00:00', 24.97, 'cash'),
+(1, 2, 5, '2025-10-10 14:15:00', 42.97, 'debit'),
+(1, 3, 5, '2025-10-30 15:30:00', 37.98, 'credit'),
+(1, NULL, 5, '2025-11-01 12:00:00', 54.97, 'debit'),
+(1, 1, 5, '2025-11-14 14:45:00', 29.98, 'cash');
 
+-- =======================================
+-- GIFT SHOP SALE ITEMS
+-- =======================================
+INSERT INTO gift_shop_sale_items (transaction_id, item_id, quantity, unit_price)
+VALUES
+(1, 1, 1, 19.99), (1, 2, 1, 24.99),
+(2, 4, 1, 12.99),
+(3, 1, 1, 19.99), (3, 3, 1, 4.99),
+(4, 2, 1, 24.99), (4, 1, 1, 19.99), (4, 3, 2, 4.99),
+(5, 5, 1, 19.99), (5, 6, 1, 7.99),
+(6, 7, 1, 14.99),
+(7, 8, 1, 29.99), (7, 3, 1, 4.99),
+(8, 5, 1, 19.99),
+(9, 7, 1, 14.99), (9, 6, 1, 7.99),
+(10, 1, 1, 19.99), (10, 2, 1, 24.99),
+(11, 8, 1, 29.99), (11, 6, 1, 7.99),
+(12, 4, 1, 12.99), (12, 7, 1, 14.99), (12, 3, 1, 4.99),
+(13, 1, 1, 19.99), (13, 5, 1, 9.99),
+(14, 2, 1, 24.99), (14, 4, 1, 14.99),
+(15, 5, 2, 9.99),
+(16, 1, 2, 19.99), (16, 6, 1, 4.99),
+(17, 8, 1, 24.99),
+(18, 4, 1, 12.99), (18, 3, 2, 11.00),
+(19, 1, 1, 19.99), (19, 7, 1, 7.99),
+(20, 2, 2, 24.99),
+(21, 5, 1, 19.99), (21, 6, 1, 4.98),
+(22, 8, 1, 29.99), (22, 4, 1, 12.98),
+(23, 1, 2, 19.99), (23, 2, 1, 14.99),
+(24, 4, 1, 12.99), (24, 7, 1, 14.99), (24, 6, 1, 7.99);
 
 -- =======================================
--- CUSTOMER PAYMENT METHODS
+-- CAFE SALES
 -- =======================================
-INSERT INTO customer_payment_methods (payment_method_id, customer_id, card_number, cardholder_name, expiry_month, expiry_year, cvv, billing_address, billing_city, billing_state, billing_zip) VALUES
-(1, 2, '4532123456789012', 'Maria Garcia', 12, 2026, '456', '456 Oak Ave', 'Springfield', 'IL', '62702'),
-(2, 4, '5412876543210987', 'Sarah Wilson', 6, 2027, '789', '321 Elm St', 'Springfield', 'IL', '62704'),
-(3, 5, '6011234567890123', 'Michael Johnson', 3, 2028, '234', '654 Maple Dr', 'Springfield', 'IL', '62705');
+INSERT INTO cafe_sales (cafe_id, transaction_id, customer_id, employee_id, item_id, quantity, line_total, sale_timestamp)
+VALUES
+(1, 'TXN001', 1, 5, 1, 2, 25.98, '2025-01-15 12:30:00'),
+(1, 'TXN001', 1, 5, 4, 2, 5.98, '2025-01-15 12:30:00'),
+(1, 'TXN002', 2, 5, 5, 2, 15.98, '2025-03-12 13:00:00'),
+(1, 'TXN002', 2, 5, 6, 2, 7.98, '2025-03-12 13:00:00'),
+(1, 'TXN003', NULL, 5, 2, 1, 8.99, '2025-07-04 12:00:00'),
+(1, 'TXN003', NULL, 5, 3, 2, 9.98, '2025-07-04 12:00:00'),
+(1, 'TXN003', NULL, 5, 4, 1, 2.99, '2025-07-04 12:00:00'),
+(1, 'TXN004', 1, 5, 6, 1, 3.99, '2025-10-26 14:00:00'),
+(1, 'TXN005', 1, 5, 9, 2, 6.98, '2025-02-14 13:00:00'),
+(1, 'TXN005', 1, 5, 10, 1, 2.49, '2025-02-14 13:00:00'),
+(1, 'TXN006', NULL, 5, 5, 1, 7.99, '2025-04-01 14:00:00'),
+(1, 'TXN006', NULL, 5, 4, 1, 2.99, '2025-04-01 14:00:00'),
+(1, 'TXN007', 3, 5, 8, 1, 7.49, '2025-05-25 12:00:00'),
+(1, 'TXN007', 3, 5, 10, 1, 2.49, '2025-05-25 12:00:00'),
+(1, 'TXN008', NULL, 5, 5, 1, 7.99, '2025-06-12 14:30:00'),
+(1, 'TXN008', NULL, 5, 6, 1, 3.99, '2025-06-12 14:30:00'),
+(1, 'TXN009', NULL, 5, 1, 4, 51.96, '2025-08-05 12:30:00'),
+(1, 'TXN009', NULL, 5, 7, 2, 13.98, '2025-08-05 12:30:00'),
+(1, 'TXN010', 1, 5, 9, 1, 3.49, '2025-09-21 15:00:00'),
+(1, 'TXN011', NULL, 5, 1, 1, 12.99, '2025-11-02 13:30:00'),
+(1, 'TXN011', NULL, 5, 3, 1, 4.99, '2025-11-02 13:30:00'),
+(1, 'TXN011', NULL, 5, 4, 1, 2.99, '2025-11-02 13:30:00'),
+(1, 'TXN012', NULL, 5, 9, 2, 6.98, '2025-11-05 14:00:00'),
+(1, 'TXN012', NULL, 5, 10, 2, 4.98, '2025-11-05 14:00:00'),
+(1, 'TXN013', 2, 5, 2, 1, 8.99, '2025-01-20 11:30:00'),
+(1, 'TXN013', 2, 5, 3, 1, 4.99, '2025-01-20 11:30:00'),
+(1, 'TXN014', NULL, 5, 5, 2, 15.98, '2025-02-10 12:45:00'),
+(1, 'TXN014', NULL, 5, 9, 1, 3.49, '2025-02-10 12:45:00'),
+(1, 'TXN015', 3, 5, 1, 1, 12.99, '2025-03-25 13:15:00'),
+(1, 'TXN015', 3, 5, 8, 1, 7.49, '2025-03-25 13:15:00'),
+(1, 'TXN016', NULL, 5, 6, 3, 11.97, '2025-04-08 14:20:00'),
+(1, 'TXN017', 1, 5, 7, 2, 13.98, '2025-05-12 12:30:00'),
+(1, 'TXN018', NULL, 5, 9, 2, 6.98, '2025-06-18 15:00:00'),
+(1, 'TXN018', NULL, 5, 10, 2, 4.98, '2025-06-18 15:00:00'),
+(1, 'TXN019', 2, 5, 2, 1, 8.99, '2025-07-22 13:00:00'),
+(1, 'TXN019', 2, 5, 3, 1, 4.99, '2025-07-22 13:00:00'),
+(1, 'TXN020', NULL, 5, 5, 1, 7.99, '2025-08-15 12:15:00'),
+(1, 'TXN021', 3, 5, 1, 2, 25.98, '2025-09-05 14:30:00'),
+(1, 'TXN022', NULL, 5, 6, 1, 3.99, '2025-10-08 11:45:00'),
+(1, 'TXN022', NULL, 5, 9, 1, 3.49, '2025-10-08 11:45:00'),
+(1, 'TXN023', 1, 5, 2, 1, 8.99, '2025-11-12 12:20:00'),
+(1, 'TXN024', NULL, 5, 8, 2, 14.98, '2025-11-02 13:45:00'),
+(1, 'TXN024', NULL, 5, 10, 1, 2.49, '2025-11-02 13:45:00');
 
 -- =======================================
--- MEMBERSHIP PURCHASES
--- =======================================
-INSERT INTO membership_purchases (customer_id, purchase_date, start_date, end_date, price, payment_method, auto_renewed, payment_method_id) VALUES
-(2, '2023-11-15 10:00:00', '2023-11-15', '2024-11-15', 149.00, 'credit', 0, 1),
-(2, '2024-11-15 09:30:00', '2024-11-15', '2025-11-15', 149.00, 'credit', 1, 1),
-(4, '2024-05-15 14:20:00', '2024-06-01', '2025-06-01', 149.00, 'credit', 0, 2),
-(5, '2024-02-15 11:45:00', '2024-03-15', '2025-03-15', 149.00, 'credit', 0, 3),
-(5, '2024-03-10 10:00:00', '2024-03-15', '2025-03-15', 149.00, 'credit', 1, 3);
-
--- =======================================
--- Display Summary
+-- SUMMARY
 -- =======================================
 SELECT '========================================' as '';
 SELECT 'SEED DATA LOADED SUCCESSFULLY' as '';

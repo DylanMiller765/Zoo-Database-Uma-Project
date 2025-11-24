@@ -8,6 +8,7 @@ import { animalService } from '@/services/animal.service';
 import { Modal } from '@/components/ui/modal';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { SimpleImageLoader } from '@/components/ImageLoader';
 import { FeedingScheduleForm } from './FeedingScheduleForm';
 import { FeedingLogForm } from './FeedingLogForm';
 import { Edit, Plus, Trash2, Calendar, ClipboardList } from 'lucide-react';
@@ -245,10 +246,10 @@ export function AnimalDetailModal({ open, onClose, animal, onEdit, canEdit = tru
                 {/* Animal Image */}
                 {animal.image_url && (
                   <div className="mb-4">
-                    <img
+                    <SimpleImageLoader
                       src={animal.image_url}
                       alt={animal.name}
-                      className="w-full max-w-md h-64 object-cover rounded-lg border border-gray-200"
+                      className="w-full max-w-md h-64 rounded-lg border border-gray-200"
                     />
                   </div>
                 )}
