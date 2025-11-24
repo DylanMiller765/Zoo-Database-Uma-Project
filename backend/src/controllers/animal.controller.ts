@@ -61,7 +61,8 @@ export class AnimalController {
   static async deleteAnimal(req: Request, res: Response): Promise<void> {
     try {
       const activeStatus = req.body?.activeStatus as 'transferred' | 'deceased' | undefined;
-      await AnimalService.deleteAnimal(parseInt(req.params.id), activeStatus);
+      const deletionNotes = req.body?.deletionNotes as string | undefined;
+      await AnimalService.deleteAnimal(parseInt(req.params.id), activeStatus, deletionNotes);
       res.status(204).send();
     } catch (error) {
       res.status(500).json({ message: 'Error deleting animal', error });

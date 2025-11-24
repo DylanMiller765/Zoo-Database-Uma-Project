@@ -41,7 +41,8 @@ INSERT INTO employees (employee_id, first_name, last_name, email, phone, ssn, jo
 (9, 'Chris', 'Green', 'chris.green@zoo.com', '5550101109', '987-65-4321', 'keeper', 'full_time', 45000.00, 'active', '2023-08-01', 'male'),
 (10, 'Jessica', 'Blue', 'jessica.blue@zoo.com', '5550101110', '876-54-3210', 'keeper', 'full_time', 45500.00, 'active', '2023-09-01', 'female'),
 (11, 'Mark', 'White', 'mark.white@zoo.com', '5550101111', '765-43-2109', 'veterinarian', 'full_time', 86000.00, 'active', '2023-07-15', 'male'),
-(12, 'Laura', 'Black', 'laura.black@zoo.com', '5550101112', '654-32-1098', 'keeper', 'part_time', NULL, 'active', '2024-01-10', 'female');
+(12, 'Laura', 'Black', 'laura.black@zoo.com', '5550101112', '999-32-1098', 'keeper', 'part_time', NULL, 'active', '2024-01-10', 'female'),
+(13, 'Sky', 'Jones', 'skyjones.vet@gmail.com', '5550101113', '654-32-1098', 'veterinarian', 'full_time', 86000.00, 'active', '2023-07-15', 'female');
 
 -- =======================================
 -- CUSTOMERS
@@ -77,7 +78,8 @@ INSERT INTO user_accounts (account_id, username, email, role, employee_id) VALUE
 (12, 'chris.green', 'chris.green@zoo.com', 'employee', 9),
 (13, 'jessica.blue', 'jessica.blue@zoo.com', 'employee', 10),
 (14, 'mark.white', 'mark.white@zoo.com', 'employee', 11),
-(15, 'laura.black', 'laura.black@zoo.com', 'employee', 12);
+(15, 'laura.black', 'laura.black@zoo.com', 'employee', 12),
+(18, 'sky.jones', 'skyjones.vet@gmail.com', 'employee', 13);
 
 -- Customers
 INSERT INTO user_accounts (account_id, username, email, role, customer_id) VALUES
@@ -107,7 +109,8 @@ INSERT INTO passwords (account_id, password_hash) VALUES
 (14, 'password'),
 (15, 'password'),
 (16, 'password'), -- Sarah Wilson (Customer)
-(17, 'password'); -- Michael Johnson (Customer)
+(17, 'password'), -- Michael Johnson (Customer)
+(18, 'password'); -- Sky Jones (veterinarian)
 
 -- =======================================
 -- ATTRACTIONS
@@ -179,6 +182,15 @@ INSERT INTO animals (name, scientific_name, species, date_of_birth, arrival_date
 -- EVENTS
 -- =======================================
 INSERT INTO events (name, description, event_date, start_time, end_time, location, max_participants, ticket_price, coordinator_id) VALUES
+-- Past Events
+('Tiger Feeding Demonstration', 'Watch our experts safely feed the tigers with specialized techniques', '2025-09-15', '10:00:00', '11:00:00', 'Big Cat Arena', 200, 12.00, 4),
+('Reptile Exhibition', 'Explore the world of snakes, lizards, and other reptiles up close', '2025-09-28', '14:00:00', '15:30:00', 'Reptile House', 100, 8.00, 4),
+('Primate Discovery Walk', 'Guided tour through our primate exhibits with interactive experiences', '2025-10-10', '11:00:00', '12:30:00', 'Primate Territory', 75, 10.00, 4),
+('Butterfly Garden Workshop', 'Learn about monarch butterflies and pollination in our gardens', '2025-10-22', '13:00:00', '14:00:00', 'Botanical Garden', 60, 7.00, 4),
+('Avian Training Show', 'See our trained birds perform impressive aerial displays', '2025-11-05', '15:00:00', '16:00:00', 'Bird Sanctuary Theater', 150, 15.00, 4),
+('Aquatic Creature Talk', 'Educational presentation about marine conservation and aquatic life', '2025-11-12', '10:30:00', '11:30:00', 'Aquatic Center Amphitheater', 250, 10.00, 4),
+
+-- Upcoming Events
 ('Dolphin Show', 'Watch our amazing dolphins perform tricks and learn about marine conservation', '2025-11-21', '14:00:00', '15:00:00', 'Aquatic Center Amphitheater', 400, 15.00, 4),
 ('Penguin Feeding Time', 'Help our keepers feed the penguins and learn about their diet', '2025-11-28', '11:00:00', '11:30:00', 'Penguin Cove', 50, 10.00, 4),
 ('Lion Encounter', 'Get up close with our lions through the safe viewing area', '2025-12-05', '13:00:00', '14:00:00', 'African Savanna', 100, 20.00, 4),
@@ -334,7 +346,45 @@ INSERT INTO event_registrations (event_id, customer_id, number_of_participants, 
 (2, 2, 2, 20.00, 'paid', '2024-12-05 13:30:00'),
 (3, 1, 3, 60.00, 'paid', '2024-12-10 09:00:00'),
 (4, NULL, 1, 250.00, 'cancelled', '2024-12-15 10:45:00'),
-(5, 3, 2, 70.00, 'paid', '2024-12-20 12:15:00');
+(5, 3, 2, 70.00, 'paid', '2024-12-20 12:15:00'),
+-- Event 6: Aquatic Creature Talk (2025-11-12) - $10.00 per person
+(6, 1, 2, 20.00, 'paid', '2025-10-25 10:00:00'),
+(6, 2, 1, 10.00, 'paid', '2025-10-28 14:30:00'),
+(6, 3, 3, 30.00, 'paid', '2025-11-01 09:15:00'),
+(6, NULL, 2, 20.00, 'paid', '2025-11-03 11:00:00'),
+(6, 1, 4, 40.00, 'pending', '2025-11-05 13:45:00'),
+(6, 2, 1, 10.00, 'paid', '2025-11-08 10:30:00'),
+-- Event 7: Dolphin Show (2025-11-21) - $15.00 per person
+(7, 1, 2, 30.00, 'paid', '2025-11-10 10:00:00'),
+(7, 2, 1, 15.00, 'paid', '2025-11-12 14:00:00'),
+(7, 3, 3, 45.00, 'paid', '2025-11-13 09:30:00'),
+(7, NULL, 2, 30.00, 'pending', '2025-11-14 11:15:00'),
+(7, 1, 4, 60.00, 'paid', '2025-11-15 13:00:00'),
+(7, NULL, 1, 15.00, 'paid', '2025-11-16 10:45:00'),
+-- Event 8: Penguin Feeding Time (2025-11-28) - $10.00 per person
+(8, 2, 2, 20.00, 'paid', '2025-11-12 10:00:00'),
+(8, 3, 1, 10.00, 'paid', '2025-11-14 13:30:00'),
+(8, 1, 3, 30.00, 'paid', '2025-11-15 09:45:00'),
+(8, NULL, 2, 20.00, 'pending', '2025-11-16 12:00:00'),
+(8, 2, 1, 10.00, 'paid', '2025-11-17 14:15:00'),
+-- Event 9: Lion Encounter (2025-12-05) - $20.00 per person
+(9, 1, 2, 40.00, 'paid', '2025-11-15 10:00:00'),
+(9, 2, 2, 40.00, 'paid', '2025-11-16 14:30:00'),
+(9, 3, 1, 20.00, 'paid', '2025-11-17 09:15:00'),
+(9, NULL, 3, 60.00, 'pending', '2025-11-18 11:00:00'),
+(9, 1, 1, 20.00, 'paid', '2025-11-18 13:45:00'),
+-- Event 10: Kids Zoo Camp (2025-12-15) - $250.00 per person
+(10, 1, 1, 250.00, 'paid', '2025-10-20 10:00:00'),
+(10, 2, 2, 500.00, 'paid', '2025-11-01 14:30:00'),
+(10, NULL, 1, 250.00, 'paid', '2025-11-10 09:45:00'),
+(10, 3, 1, 250.00, 'pending', '2025-11-15 11:15:00'),
+-- Event 11: Night at the Zoo (2025-12-22) - $35.00 per person
+(11, 1, 2, 70.00, 'paid', '2025-11-10 10:00:00'),
+(11, 2, 1, 35.00, 'paid', '2025-11-13 14:00:00'),
+(11, 3, 3, 105.00, 'paid', '2025-11-14 09:30:00'),
+(11, NULL, 2, 70.00, 'pending', '2025-11-15 12:00:00'),
+(11, 1, 4, 140.00, 'paid', '2025-11-16 13:45:00'),
+(11, NULL, 1, 35.00, 'paid', '2025-11-17 10:30:00');
 
 
 -- =======================================

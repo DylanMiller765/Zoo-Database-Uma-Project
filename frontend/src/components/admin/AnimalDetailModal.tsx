@@ -45,6 +45,12 @@ export function AnimalDetailModal({ open, onClose, animal, onEdit, canEdit = tru
   const [editingSchedule, setEditingSchedule] = useState<FeedingSchedule | null>(null);
   const [editingLog, setEditingLog] = useState<FeedingLogWithKeeper | null>(null);
 
+  // Delete modal states
+  const [isDeleteScheduleModalOpen, setIsDeleteScheduleModalOpen] = useState(false);
+  const [scheduleToDelete, setScheduleToDelete] = useState<FeedingSchedule | null>(null);
+  const [isDeleteLogModalOpen, setIsDeleteLogModalOpen] = useState(false);
+  const [logToDelete, setLogToDelete] = useState<FeedingLogWithKeeper | null>(null);
+
   // Medical tab states
   const [editingMedical, setEditingMedical] = useState(false);
   const [medicalForm, setMedicalForm] = useState({
@@ -55,7 +61,7 @@ export function AnimalDetailModal({ open, onClose, animal, onEdit, canEdit = tru
   const canManageFeeding = hasRole('keeper') || hasRole('veterinarian') || hasRole('manager');
   const canViewLogs = hasRole('keeper') || hasRole('veterinarian') || hasRole('manager');
   const canDeleteSchedule = hasRole('veterinarian') || hasRole('manager');
-  const canDeleteLog = hasRole('manager');
+  const canDeleteLog = hasRole('keeper') || hasRole('manager');
 
   // Reset tab to default when modal opens
   useEffect(() => {
@@ -99,21 +105,35 @@ export function AnimalDetailModal({ open, onClose, animal, onEdit, canEdit = tru
     }
   };
 
-  const handleDeleteSchedule = async (scheduleId: number) => {
-    if (!confirm('Are you sure you want to delete this feeding schedule?')) return;
+  const handleDeleteScheduleClick = (schedule: FeedingSchedule) => {
+    setScheduleToDelete(schedule);
+    setIsDeleteScheduleModalOpen(true);
+  };
+
+  const handleDeleteSchedule = async () => {
+    if (!scheduleToDelete) return;
     try {
-      await feedingScheduleService.delete(scheduleId);
+      await feedingScheduleService.delete(scheduleToDelete.schedule_id);
       await loadSchedules();
+      setIsDeleteScheduleModalOpen(false);
+      setScheduleToDelete(null);
     } catch (error) {
       console.error('Failed to delete schedule:', error);
     }
   };
 
-  const handleDeleteLog = async (logId: number) => {
-    if (!confirm('Are you sure you want to delete this feeding log?')) return;
+  const handleDeleteLogClick = (log: FeedingLogWithKeeper) => {
+    setLogToDelete(log);
+    setIsDeleteLogModalOpen(true);
+  };
+
+  const handleDeleteLog = async () => {
+    if (!logToDelete) return;
     try {
-      await feedingLogService.delete(logId);
+      await feedingLogService.delete(logToDelete.log_id);
       await loadLogs();
+      setIsDeleteLogModalOpen(false);
+      setLogToDelete(null);
     } catch (error) {
       console.error('Failed to delete log:', error);
     }
@@ -154,12 +174,13 @@ export function AnimalDetailModal({ open, onClose, animal, onEdit, canEdit = tru
   if (!animal) return null;
 
   return (
-    <Modal
-      open={open}
-      onClose={onClose}
-      title={`Animal: ${animal.name}`}
-      size="xl"
-    >
+    <>
+      <Modal
+        open={open}
+        onClose={onClose}
+        title={`Animal: ${animal.name}`}
+        size="xl"
+      >
       <div className="space-y-4">
         {/* Tabs */}
         <div className="border-b border-gray-200">
@@ -386,7 +407,7 @@ export function AnimalDetailModal({ open, onClose, animal, onEdit, canEdit = tru
                               <Button
                                 variant="ghost"
                                 size="sm"
-                                onClick={() => handleDeleteSchedule(schedule.schedule_id)}
+                                onClick={() => handleDeleteScheduleClick(schedule)}
                                 className="text-red-600 hover:text-red-700"
                               >
                                 <Trash2 className="h-4 w-4" />
@@ -484,7 +505,7 @@ export function AnimalDetailModal({ open, onClose, animal, onEdit, canEdit = tru
                               <Button
                                 variant="ghost"
                                 size="sm"
-                                onClick={() => handleDeleteLog(log.log_id)}
+                                onClick={() => handleDeleteLogClick(log)}
                                 className="text-red-600 hover:text-red-700"
                               >
                                 <Trash2 className="h-4 w-4" />
@@ -692,5 +713,64 @@ export function AnimalDetailModal({ open, onClose, animal, onEdit, canEdit = tru
         </div>
       </div>
     </Modal>
+
+    {/* Delete Schedule Confirmation Modal */}
+    <Modal
+      open={isDeleteScheduleModalOpen}
+      onClose={() => setIsDeleteScheduleModalOpen(false)}
+      title="Delete Feeding Schedule"
+      description="Are you sure you want to delete this feeding schedule?"
+    >
+      <div className="space-y-4">
+        {scheduleToDelete && (
+          <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
+            <p className="text-sm text-gray-900">
+              <span className="font-semibold">{scheduleToDelete.food_description}</span>
+              {scheduleToDelete.scheduled_time && ` at ${scheduleToDelete.scheduled_time}`}
+            </p>
+          </div>
+        )}
+        <div className="flex items-center gap-3 justify-end">
+          <Button variant="outline" onClick={() => setIsDeleteScheduleModalOpen(false)}>
+            Cancel
+          </Button>
+          <Button variant="destructive" onClick={handleDeleteSchedule}>
+            Delete
+          </Button>
+        </div>
+      </div>
+    </Modal>
+
+    {/* Delete Log Confirmation Modal */}
+    <Modal
+      open={isDeleteLogModalOpen}
+      onClose={() => setIsDeleteLogModalOpen(false)}
+      title="Delete Feeding Log"
+      description="Are you sure you want to delete this feeding log entry?"
+    >
+      <div className="space-y-4">
+        {logToDelete && (
+          <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
+            <p className="text-sm text-gray-900">
+              <span className="font-semibold">{logToDelete.food_given}</span> - {new Date(logToDelete.feeding_time).toLocaleString()}
+            </p>
+            {logToDelete.keeper_name && (
+              <p className="text-sm text-gray-600 mt-1">
+                Fed by: {logToDelete.keeper_name}
+              </p>
+            )}
+          </div>
+        )}
+        <div className="flex items-center gap-3 justify-end">
+          <Button variant="outline" onClick={() => setIsDeleteLogModalOpen(false)}>
+            Cancel
+          </Button>
+          <Button variant="destructive" onClick={handleDeleteLog}>
+            Delete
+          </Button>
+        </div>
+      </div>
+    </Modal>
+  </>
   );
 }
