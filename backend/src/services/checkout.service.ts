@@ -1,5 +1,5 @@
 import { DonationModel } from '../models/donation.model';
-import { query } from '../config/database';
+import { query, getCurrentDateTime } from '../config/database';
 import { CheckoutRequest, CheckoutResponse, CheckoutCartItem } from '../types/checkout.types';
 
 export class CheckoutService {
@@ -110,12 +110,13 @@ export class CheckoutService {
     paymentMethod: 'credit' | 'debit'
   ): Promise<void> {
     const metadata = item.metadata || {};
+    const currentDateTime = getCurrentDateTime();
 
     for (let i = 0; i < item.quantity; i++) {
       await query(
-        `INSERT INTO tickets (customer_id, visit_date, ticket_type, price, payment_method)
-         VALUES (?, ?, ?, ?, ?)`,
-        [customerId, metadata.visit_date, metadata.ticket_type, item.unit_price, paymentMethod]
+        `INSERT INTO tickets (customer_id, visit_date, ticket_type, price, payment_method, purchase_date)
+         VALUES (?, ?, ?, ?, ?, ?)`,
+        [customerId, metadata.visit_date, metadata.ticket_type, item.unit_price, paymentMethod, currentDateTime]
       );
     }
   }
@@ -129,11 +130,12 @@ export class CheckoutService {
   ): Promise<void> {
     const metadata = item.metadata || {};
     const totalAmount = item.unit_price * (metadata.participants || 1);
+    const currentDateTime = getCurrentDateTime();
 
     await query(
-      `INSERT INTO event_registrations (event_id, customer_id, number_of_participants, total_amount, payment_status)
-       VALUES (?, ?, ?, ?, 'paid')`,
-      [metadata.event_id || item.item_id, customerId, metadata.participants || 1, totalAmount]
+      `INSERT INTO event_registrations (event_id, customer_id, number_of_participants, total_amount, payment_status, registration_date)
+       VALUES (?, ?, ?, ?, 'paid', ?)`,
+      [metadata.event_id || item.item_id, customerId, metadata.participants || 1, totalAmount, currentDateTime]
     );
   }
 
@@ -148,11 +150,12 @@ export class CheckoutService {
     const cafeId = metadata.cafe_id || 1;
     const transactionId = `CAFE-WEB-${customerId}-${Date.now()}`;
     const lineTotal = item.unit_price * item.quantity;
+    const currentDateTime = getCurrentDateTime();
 
     await query(
-      `INSERT INTO cafe_sales (cafe_id, transaction_id, customer_id, employee_id, item_id, quantity, line_total, status)
-       VALUES (?, ?, ?, NULL, ?, ?, ?, 'completed')`,
-      [cafeId, transactionId, customerId, item.item_id, item.quantity, lineTotal]
+      `INSERT INTO cafe_sales (cafe_id, transaction_id, customer_id, employee_id, item_id, quantity, line_total, sale_timestamp, status)
+       VALUES (?, ?, ?, NULL, ?, ?, ?, ?, 'completed')`,
+      [cafeId, transactionId, customerId, item.item_id, item.quantity, lineTotal, currentDateTime]
     );
   }
 
@@ -167,12 +170,13 @@ export class CheckoutService {
     const metadata = item.metadata || {};
     const giftShopId = metadata.gift_shop_id || 1;
     const totalAmount = item.unit_price * item.quantity;
+    const currentDateTime = getCurrentDateTime();
 
     // Create transaction
     const transactionResult = await query<any>(
-      `INSERT INTO gift_shop_sales_transactions (gift_shop_id, customer_id, employee_id, total_amount, payment_method, status)
-       VALUES (?, ?, NULL, ?, ?, 'completed')`,
-      [giftShopId, customerId, totalAmount, paymentMethod]
+      `INSERT INTO gift_shop_sales_transactions (gift_shop_id, customer_id, employee_id, total_amount, payment_method, sale_date, status)
+       VALUES (?, ?, NULL, ?, ?, ?, 'completed')`,
+      [giftShopId, customerId, totalAmount, paymentMethod, currentDateTime]
     );
 
     const transactionId = transactionResult.insertId;
@@ -194,13 +198,14 @@ export class CheckoutService {
     paymentMethod: 'credit' | 'debit'
   ): Promise<void> {
     const metadata = item.metadata || {};
+    const currentDateTime = getCurrentDateTime();
 
     await DonationModel.create({
       customer_id: customerId,
       amount: item.unit_price,
       message: metadata.donation_message,
       payment_method: paymentMethod,
-    });
+    }, currentDateTime);
   }
 
   /**
@@ -344,11 +349,12 @@ export class CheckoutService {
     );
 
     // Record purchase in history table
+    const currentDateTime = getCurrentDateTime();
     await query(
-      `INSERT INTO membership_purchases 
+      `INSERT INTO membership_purchases
        (customer_id, purchase_date, start_date, end_date, price, payment_method, payment_method_id)
-       VALUES (?, NOW(), ?, ?, ?, ?, ?)`,
-      [customerId, actualStartDate, actualEndDate, membershipPrice, paymentMethod, paymentMethodId]
+       VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      [customerId, currentDateTime, actualStartDate, actualEndDate, membershipPrice, paymentMethod, paymentMethodId]
     );
   }
 
