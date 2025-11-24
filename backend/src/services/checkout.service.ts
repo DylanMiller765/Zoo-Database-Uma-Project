@@ -14,6 +14,26 @@ export class CheckoutService {
       throw new Error('Cart is empty');
     }
 
+    // Check if any membership has auto-renewal enabled
+    const hasAutoRenewMembership = checkoutData.items.some(
+      item => item.item_type === 'membership' && 
+              (item.metadata?.auto_renew !== undefined ? item.metadata.auto_renew : true)
+    );
+
+    // If auto-renewal is enabled, ensure payment method will be saved
+    if (hasAutoRenewMembership) {
+      // Check if customer already has a payment method
+      const [existingPayment] = await query<any[]>(
+        'SELECT payment_method_id FROM customer_payment_methods WHERE customer_id = ?',
+        [customerId]
+      );
+
+      // If no existing payment method and not saving one now, throw error
+      if (!existingPayment && (!checkoutData.save_payment_method || !checkoutData.payment_data)) {
+        throw new Error('A payment method must be saved to enable auto-renewal. Please check "Save payment method" during checkout.');
+      }
+    }
+
     // Save payment method if requested
     if (checkoutData.save_payment_method && checkoutData.payment_data) {
       await this.savePaymentMethod(customerId, checkoutData.payment_data);
@@ -58,7 +78,7 @@ export class CheckoutService {
           break;
 
         case 'membership':
-          await this.createMembership(item, customerId, checkoutData.payment_method, checkoutData.payment_data);
+          await this.createMembership(item, customerId, checkoutData.payment_method, checkoutData.payment_data, checkoutData.save_payment_method);
           summary.memberships++;
           break;
 
@@ -190,14 +210,39 @@ export class CheckoutService {
     item: CheckoutCartItem,
     customerId: number,
     paymentMethod: 'credit' | 'debit',
-    paymentData?: any
+    paymentData?: any,
+    shouldSavePaymentMethod: boolean = false
   ): Promise<void> {
     const metadata = item.metadata || {};
     const membershipPrice = 149.00; // Individual membership price
     let paymentMethodId: number | null = null;
 
-    // Save payment method if provided
-    if (paymentData) {
+    // Check if customer already has an active membership
+    const [existingMembership] = await query<any[]>(
+      `SELECT membership_end_date, annual_pass 
+       FROM customers 
+       WHERE customer_id = ? AND annual_pass = 'yes' AND membership_end_date >= CURDATE()`,
+      [customerId]
+    );
+
+    if (existingMembership) {
+      // Check if membership expires within 30 days
+      const [dateCheck] = await query<any[]>(
+        `SELECT DATEDIFF(membership_end_date, CURDATE()) as days_until_expiry
+         FROM customers 
+         WHERE customer_id = ?`,
+        [customerId]
+      );
+
+      const daysUntilExpiry = dateCheck?.days_until_expiry || 0;
+
+      if (daysUntilExpiry > 30) {
+        throw new Error(`You already have an active membership that expires in ${daysUntilExpiry} days. You can only renew your membership within 30 days of expiration.`);
+      }
+    }
+
+    // Save payment method only if explicitly requested by user
+    if (shouldSavePaymentMethod && paymentData) {
       const [existing] = await query<any[]>(
         'SELECT payment_method_id FROM customer_payment_methods WHERE customer_id = ?',
         [customerId]
@@ -258,6 +303,34 @@ export class CheckoutService {
 
     // Get auto-renewal preference from metadata (default to TRUE if not specified)
     const autoRenew = metadata.auto_renew !== undefined ? metadata.auto_renew : true;
+
+    // If auto-renewal is enabled, ensure payment method exists
+    if (autoRenew) {
+      // Check if payment method was just saved or already exists
+      if (!paymentMethodId) {
+        // Check if customer already has a saved payment method
+        const [existingPayment] = await query<any[]>(
+          'SELECT payment_method_id FROM customer_payment_methods WHERE customer_id = ?',
+          [customerId]
+        );
+        
+        if (!existingPayment) {
+          throw new Error('A payment method must be saved to enable auto-renewal. Please check "Save payment method" during checkout.');
+        }
+        paymentMethodId = existingPayment.payment_method_id;
+      }
+    } else {
+      // If auto-renewal is off and payment method wasn't saved, try to use existing one for the purchase record
+      if (!paymentMethodId && paymentData) {
+        const [existingPayment] = await query<any[]>(
+          'SELECT payment_method_id FROM customer_payment_methods WHERE customer_id = ?',
+          [customerId]
+        );
+        if (existingPayment) {
+          paymentMethodId = existingPayment.payment_method_id;
+        }
+      }
+    }
 
     // Update customer membership
     await query(
@@ -336,3 +409,4 @@ export class CheckoutService {
     }
   }
 }
+
