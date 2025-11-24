@@ -474,6 +474,19 @@ export class MeController {
         return res.status(400).json({ success: false, message: 'Customer not found' });
       }
 
+      // Check if customer has auto-renewal enabled
+      const [customer] = await query<any[]>(
+        'SELECT membership_auto_renew FROM customers WHERE customer_id = ?',
+        [customerId]
+      );
+
+      if (customer && customer.membership_auto_renew) {
+        return res.status(400).json({ 
+          success: false, 
+          message: 'Cannot delete payment method while auto-renewal is enabled. Please disable auto-renewal first in your membership settings.' 
+        });
+      }
+
       await query(
         'DELETE FROM customer_payment_methods WHERE customer_id = ?',
         [customerId]

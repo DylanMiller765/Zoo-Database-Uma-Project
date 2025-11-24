@@ -211,10 +211,13 @@ export default function HomePage() {
                 <CardHeader className="px-0 pt-0 pb-3">
                   <div className="w-full overflow-hidden rounded-t-lg">
                     <img
-                      src={getHabitatImage(habitat.habitat_name)}
+                      src={habitat.image_url || getHabitatImage(habitat.habitat_name)}
                       alt={habitat.habitat_name}
                       loading="lazy"
                       className="h-44 w-full object-cover"
+                      onError={(e) => {
+                        e.currentTarget.src = getHabitatImage(habitat.habitat_name);
+                      }}
                     />
                   </div>
                   <div className="px-6 pt-4">
@@ -336,6 +339,16 @@ export default function HomePage() {
                     event.status === 'cancelled' ? 'opacity-75' : ''
                   }`}
                 >
+                  {event.image_url && (
+                    <div className="w-full overflow-hidden rounded-t-lg">
+                      <img
+                        src={event.image_url}
+                        alt={event.event_name}
+                        loading="lazy"
+                        className="h-44 w-full object-cover"
+                      />
+                    </div>
+                  )}
                   <CardHeader className="px-6 pt-6 pb-3">
                     <div className="flex items-start justify-between gap-2">
                       <CardTitle className="text-lg text-dark_spring_green-700 flex-1">{event.event_name}</CardTitle>

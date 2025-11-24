@@ -16,6 +16,7 @@ type ShopItem = {
   price: number | string; // DECIMAL may arrive as string
   description?: string;
   category?: string;
+  image_url?: string;
 };
 
 export default function GiftShopPage() {
@@ -215,6 +216,18 @@ export default function GiftShopPage() {
                           key={item.item_id} 
                           className="group relative overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm hover:shadow-lg hover:border-sea_green-300 transition-all duration-300 flex flex-col transform hover:-translate-y-0.5"
                         >
+                          {/* Item Image */}
+                          {item.image_url && (
+                            <div className="w-full overflow-hidden rounded-t-lg">
+                              <img
+                                src={item.image_url}
+                                alt={item.name}
+                                loading="lazy"
+                                className="h-48 w-full object-cover"
+                              />
+                            </div>
+                          )}
+                          
                           {/* Decorative gradient overlay on hover */}
                           <div className="absolute inset-0 bg-gradient-to-br from-sea_green-50/0 to-dark_spring_green-50/0 group-hover:from-sea_green-50/40 group-hover:to-dark_spring_green-50/20 transition-all duration-300 pointer-events-none" />
                           

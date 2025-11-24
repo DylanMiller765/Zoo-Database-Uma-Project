@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { ImageUpload } from '@/components/ImageUpload';
 
 interface GiftShopItemFormProps {
   item?: GiftShopItem | null;
@@ -28,6 +29,7 @@ export function GiftShopItemForm({ item, giftShopId, onSuccess, onCancel }: Gift
     cost: 0,
     quantity_in_stock: 0,
     supplier: '',
+    image_url: '',
   });
 
   useEffect(() => {
@@ -41,6 +43,7 @@ export function GiftShopItemForm({ item, giftShopId, onSuccess, onCancel }: Gift
         cost: typeof item.cost === 'string' ? parseFloat(item.cost) : item.cost,
         quantity_in_stock: item.quantity_in_stock,
         supplier: item.supplier || '',
+        image_url: item.image_url || '',
       });
     } else {
       // Reset to defaults for new item
@@ -53,6 +56,7 @@ export function GiftShopItemForm({ item, giftShopId, onSuccess, onCancel }: Gift
         cost: 0,
         quantity_in_stock: 0,
         supplier: '',
+        image_url: '',
       });
     }
   }, [item, giftShopId]);
@@ -93,6 +97,13 @@ export function GiftShopItemForm({ item, giftShopId, onSuccess, onCancel }: Gift
           {error}
         </div>
       )}
+
+      {/* Image Upload - Moved to top */}
+      <ImageUpload
+        value={formData.image_url}
+        onChange={(imageUrl) => setFormData(prev => ({ ...prev, image_url: imageUrl }))}
+        label="Item Photo"
+      />
 
       <div className="grid grid-cols-2 gap-4">
         <div>

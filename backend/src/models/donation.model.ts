@@ -1,19 +1,20 @@
-import { query } from '../config/database';
+import { query, getCurrentDateTime } from '../config/database';
 import { Donation } from '../types/donation.types';
 
 export class DonationModel {
   /**
    * Create a donation
    */
-  static async create(donation: Omit<Donation, 'donation_id' | 'donation_date'>): Promise<number> {
+  static async create(donation: Omit<Donation, 'donation_id' | 'donation_date'>, donationDate?: string): Promise<number> {
     const result = await query<any>(
-      `INSERT INTO donations (customer_id, amount, message, payment_method)
-       VALUES (?, ?, ?, ?)`,
+      `INSERT INTO donations (customer_id, amount, message, payment_method, donation_date)
+       VALUES (?, ?, ?, ?, ?)`,
       [
         donation.customer_id,
         donation.amount,
         donation.message,
         donation.payment_method,
+        donationDate || getCurrentDateTime(),
       ]
     );
 

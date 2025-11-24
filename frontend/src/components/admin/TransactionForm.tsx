@@ -42,7 +42,7 @@ export function TransactionForm({ initialType, onSuccess, onCancel }: Transactio
   const [events, setEvents] = useState<any[]>([]);
   const [selectedEventId, setSelectedEventId] = useState('');
   const [numParticipants, setNumParticipants] = useState('1');
-  const [eventPaymentStatus, setEventPaymentStatus] = useState<'pending' | 'paid' | 'cancelled'>('paid');
+  const [eventPaymentStatus, setEventPaymentStatus] = useState<'paid' | 'cancelled'>('paid');
 
   // Gift Shop fields
   const [giftShopItems, setGiftShopItems] = useState<any[]>([]);
@@ -343,7 +343,6 @@ export function TransactionForm({ initialType, onSuccess, onCancel }: Transactio
               <label className="block text-sm font-medium mb-1">Payment Status *</label>
               <Select value={eventPaymentStatus} onChange={(e) => setEventPaymentStatus(e.target.value as any)}>
                 <option value="paid">Paid</option>
-                <option value="pending">Pending</option>
                 <option value="cancelled">Cancelled</option>
               </Select>
             </div>

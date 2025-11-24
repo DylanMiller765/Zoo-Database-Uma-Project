@@ -1,5 +1,5 @@
 import { DonationModel } from '../models/donation.model';
-import { query } from '../config/database';
+import { query, getCurrentDateTime } from '../config/database';
 import { CheckoutRequest, CheckoutResponse, CheckoutCartItem } from '../types/checkout.types';
 
 export class CheckoutService {
@@ -12,6 +12,26 @@ export class CheckoutService {
   ): Promise<CheckoutResponse> {
     if (!checkoutData.items || checkoutData.items.length === 0) {
       throw new Error('Cart is empty');
+    }
+
+    // Check if any membership has auto-renewal enabled
+    const hasAutoRenewMembership = checkoutData.items.some(
+      item => item.item_type === 'membership' && 
+              (item.metadata?.auto_renew !== undefined ? item.metadata.auto_renew : true)
+    );
+
+    // If auto-renewal is enabled, ensure payment method will be saved
+    if (hasAutoRenewMembership) {
+      // Check if customer already has a payment method
+      const [existingPayment] = await query<any[]>(
+        'SELECT payment_method_id FROM customer_payment_methods WHERE customer_id = ?',
+        [customerId]
+      );
+
+      // If no existing payment method and not saving one now, throw error
+      if (!existingPayment && (!checkoutData.save_payment_method || !checkoutData.payment_data)) {
+        throw new Error('A payment method must be saved to enable auto-renewal. Please check "Save payment method" during checkout.');
+      }
     }
 
     // Save payment method if requested
@@ -58,7 +78,7 @@ export class CheckoutService {
           break;
 
         case 'membership':
-          await this.createMembership(item, customerId, checkoutData.payment_method, checkoutData.payment_data);
+          await this.createMembership(item, customerId, checkoutData.payment_method, checkoutData.payment_data, checkoutData.save_payment_method);
           summary.memberships++;
           break;
 
@@ -90,12 +110,13 @@ export class CheckoutService {
     paymentMethod: 'credit' | 'debit'
   ): Promise<void> {
     const metadata = item.metadata || {};
+    const currentDateTime = getCurrentDateTime();
 
     for (let i = 0; i < item.quantity; i++) {
       await query(
-        `INSERT INTO tickets (customer_id, visit_date, ticket_type, price, payment_method)
-         VALUES (?, ?, ?, ?, ?)`,
-        [customerId, metadata.visit_date, metadata.ticket_type, item.unit_price, paymentMethod]
+        `INSERT INTO tickets (customer_id, visit_date, ticket_type, price, payment_method, purchase_date)
+         VALUES (?, ?, ?, ?, ?, ?)`,
+        [customerId, metadata.visit_date, metadata.ticket_type, item.unit_price, paymentMethod, currentDateTime]
       );
     }
   }
@@ -109,11 +130,12 @@ export class CheckoutService {
   ): Promise<void> {
     const metadata = item.metadata || {};
     const totalAmount = item.unit_price * (metadata.participants || 1);
+    const currentDateTime = getCurrentDateTime();
 
     await query(
-      `INSERT INTO event_registrations (event_id, customer_id, number_of_participants, total_amount, payment_status)
-       VALUES (?, ?, ?, ?, 'paid')`,
-      [metadata.event_id || item.item_id, customerId, metadata.participants || 1, totalAmount]
+      `INSERT INTO event_registrations (event_id, customer_id, number_of_participants, total_amount, payment_status, registration_date)
+       VALUES (?, ?, ?, ?, 'paid', ?)`,
+      [metadata.event_id || item.item_id, customerId, metadata.participants || 1, totalAmount, currentDateTime]
     );
   }
 
@@ -128,11 +150,12 @@ export class CheckoutService {
     const cafeId = metadata.cafe_id || 1;
     const transactionId = `CAFE-WEB-${customerId}-${Date.now()}`;
     const lineTotal = item.unit_price * item.quantity;
+    const currentDateTime = getCurrentDateTime();
 
     await query(
-      `INSERT INTO cafe_sales (cafe_id, transaction_id, customer_id, employee_id, item_id, quantity, line_total, status)
-       VALUES (?, ?, ?, NULL, ?, ?, ?, 'completed')`,
-      [cafeId, transactionId, customerId, item.item_id, item.quantity, lineTotal]
+      `INSERT INTO cafe_sales (cafe_id, transaction_id, customer_id, employee_id, item_id, quantity, line_total, sale_timestamp, status)
+       VALUES (?, ?, ?, NULL, ?, ?, ?, ?, 'completed')`,
+      [cafeId, transactionId, customerId, item.item_id, item.quantity, lineTotal, currentDateTime]
     );
   }
 
@@ -147,12 +170,13 @@ export class CheckoutService {
     const metadata = item.metadata || {};
     const giftShopId = metadata.gift_shop_id || 1;
     const totalAmount = item.unit_price * item.quantity;
+    const currentDateTime = getCurrentDateTime();
 
     // Create transaction
     const transactionResult = await query<any>(
-      `INSERT INTO gift_shop_sales_transactions (gift_shop_id, customer_id, employee_id, total_amount, payment_method, status)
-       VALUES (?, ?, NULL, ?, ?, 'completed')`,
-      [giftShopId, customerId, totalAmount, paymentMethod]
+      `INSERT INTO gift_shop_sales_transactions (gift_shop_id, customer_id, employee_id, total_amount, payment_method, sale_date, status)
+       VALUES (?, ?, NULL, ?, ?, ?, 'completed')`,
+      [giftShopId, customerId, totalAmount, paymentMethod, currentDateTime]
     );
 
     const transactionId = transactionResult.insertId;
@@ -174,13 +198,14 @@ export class CheckoutService {
     paymentMethod: 'credit' | 'debit'
   ): Promise<void> {
     const metadata = item.metadata || {};
+    const currentDateTime = getCurrentDateTime();
 
     await DonationModel.create({
       customer_id: customerId,
       amount: item.unit_price,
       message: metadata.donation_message,
       payment_method: paymentMethod,
-    });
+    }, currentDateTime);
   }
 
   /**
@@ -190,14 +215,39 @@ export class CheckoutService {
     item: CheckoutCartItem,
     customerId: number,
     paymentMethod: 'credit' | 'debit',
-    paymentData?: any
+    paymentData?: any,
+    shouldSavePaymentMethod: boolean = false
   ): Promise<void> {
     const metadata = item.metadata || {};
     const membershipPrice = 149.00; // Individual membership price
     let paymentMethodId: number | null = null;
 
-    // Save payment method if provided
-    if (paymentData) {
+    // Check if customer already has an active membership
+    const [existingMembership] = await query<any[]>(
+      `SELECT membership_end_date, annual_pass 
+       FROM customers 
+       WHERE customer_id = ? AND annual_pass = 'yes' AND membership_end_date >= CURDATE()`,
+      [customerId]
+    );
+
+    if (existingMembership) {
+      // Check if membership expires within 30 days
+      const [dateCheck] = await query<any[]>(
+        `SELECT DATEDIFF(membership_end_date, CURDATE()) as days_until_expiry
+         FROM customers 
+         WHERE customer_id = ?`,
+        [customerId]
+      );
+
+      const daysUntilExpiry = dateCheck?.days_until_expiry || 0;
+
+      if (daysUntilExpiry > 30) {
+        throw new Error(`You already have an active membership that expires in ${daysUntilExpiry} days. You can only renew your membership within 30 days of expiration.`);
+      }
+    }
+
+    // Save payment method only if explicitly requested by user
+    if (shouldSavePaymentMethod && paymentData) {
       const [existing] = await query<any[]>(
         'SELECT payment_method_id FROM customer_payment_methods WHERE customer_id = ?',
         [customerId]
@@ -259,6 +309,34 @@ export class CheckoutService {
     // Get auto-renewal preference from metadata (default to TRUE if not specified)
     const autoRenew = metadata.auto_renew !== undefined ? metadata.auto_renew : true;
 
+    // If auto-renewal is enabled, ensure payment method exists
+    if (autoRenew) {
+      // Check if payment method was just saved or already exists
+      if (!paymentMethodId) {
+        // Check if customer already has a saved payment method
+        const [existingPayment] = await query<any[]>(
+          'SELECT payment_method_id FROM customer_payment_methods WHERE customer_id = ?',
+          [customerId]
+        );
+        
+        if (!existingPayment) {
+          throw new Error('A payment method must be saved to enable auto-renewal. Please check "Save payment method" during checkout.');
+        }
+        paymentMethodId = existingPayment.payment_method_id;
+      }
+    } else {
+      // If auto-renewal is off and payment method wasn't saved, try to use existing one for the purchase record
+      if (!paymentMethodId && paymentData) {
+        const [existingPayment] = await query<any[]>(
+          'SELECT payment_method_id FROM customer_payment_methods WHERE customer_id = ?',
+          [customerId]
+        );
+        if (existingPayment) {
+          paymentMethodId = existingPayment.payment_method_id;
+        }
+      }
+    }
+
     // Update customer membership
     await query(
       `UPDATE customers 
@@ -271,11 +349,12 @@ export class CheckoutService {
     );
 
     // Record purchase in history table
+    const currentDateTime = getCurrentDateTime();
     await query(
-      `INSERT INTO membership_purchases 
+      `INSERT INTO membership_purchases
        (customer_id, purchase_date, start_date, end_date, price, payment_method, payment_method_id)
-       VALUES (?, NOW(), ?, ?, ?, ?, ?)`,
-      [customerId, actualStartDate, actualEndDate, membershipPrice, paymentMethod, paymentMethodId]
+       VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      [customerId, currentDateTime, actualStartDate, actualEndDate, membershipPrice, paymentMethod, paymentMethodId]
     );
   }
 
@@ -336,3 +415,4 @@ export class CheckoutService {
     }
   }
 }
+

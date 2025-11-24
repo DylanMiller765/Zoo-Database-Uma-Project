@@ -24,9 +24,9 @@ export class EventModel {
   }
 
   static async create(eventData: Omit<Event, 'event_id'>): Promise<Event> {
-    const { name, description, event_date, start_time, end_time, location, max_participants, ticket_price, coordinator_id } = eventData;
-    const sql = 'INSERT INTO events (name, description, event_date, start_time, end_time, location, max_participants, ticket_price, coordinator_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)';
-    const result = await query<any>(sql, [name, description, event_date, start_time, end_time, location, max_participants, ticket_price, coordinator_id]);
+    const { name, description, event_date, start_time, end_time, location, max_participants, ticket_price, image_url, coordinator_id } = eventData;
+    const sql = 'INSERT INTO events (name, description, event_date, start_time, end_time, location, max_participants, ticket_price, image_url, coordinator_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
+    const result = await query<any>(sql, [name, description, event_date, start_time, end_time, location, max_participants, ticket_price, image_url || null, coordinator_id]);
     const insertedId = result.insertId;
     return { event_id: insertedId, ...eventData };
   }

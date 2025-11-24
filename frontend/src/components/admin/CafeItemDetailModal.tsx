@@ -5,6 +5,7 @@ import { Modal } from '@/components/ui/modal';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Edit } from 'lucide-react';
+import { SimpleImageLoader } from '@/components/ImageLoader';
 
 interface CafeItemDetailModalProps {
   open: boolean;
@@ -42,6 +43,17 @@ export function CafeItemDetailModal({ open, onClose, item, onEdit, canEdit = tru
             </Button>
           )}
         </div>
+
+        {/* Item Image */}
+        {item.image_url && (
+          <div className="mb-4">
+            <SimpleImageLoader
+              src={item.image_url}
+              alt={item.name}
+              className="w-full max-w-md h-64 object-cover rounded-lg border border-gray-200 mx-auto"
+            />
+          </div>
+        )}
 
         {/* Item Details Grid */}
         <div className="grid grid-cols-2 gap-6">

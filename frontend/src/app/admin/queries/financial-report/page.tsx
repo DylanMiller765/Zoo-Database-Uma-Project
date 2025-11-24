@@ -38,7 +38,7 @@ type FinancialReportData = {
 };
 
 export default function FinancialReportPage() {
-  const { isAuthenticated, loading: authLoading } = useAuth();
+  const { isAuthenticated, loading: authLoading, user } = useAuth();
   const router = useRouter();
 
   // Report state
@@ -165,6 +165,12 @@ export default function FinancialReportPage() {
 
   if (!isAuthenticated) {
     router.push("/login");
+    return null;
+  }
+
+  // Restrict access to managers only
+  if (user?.job_role !== 'manager') {
+    router.push("/admin");
     return null;
   }
 

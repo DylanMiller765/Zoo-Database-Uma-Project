@@ -252,7 +252,7 @@ export class QueryService {
    * Detailed breakdown of event registrations by event
    */
   static async getEventRevenue(startDate?: string, endDate?: string, includeCanceled: boolean = false) {
-    const dateFilter = startDate && endDate ? 'e.event_date BETWEEN ? AND ?' : '1=1';
+    const dateFilter = startDate && endDate ? 'DATE(er.registration_date) BETWEEN ? AND ?' : '1=1';
     const params = startDate && endDate ? [startDate, endDate] : [];
     const cancelledFilter = includeCanceled ? '' : 'AND e.deleted_at IS NULL';
 
