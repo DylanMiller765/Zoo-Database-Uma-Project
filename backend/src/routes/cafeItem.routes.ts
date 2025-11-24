@@ -10,8 +10,10 @@ router.get('/public', CafeItemController.getAllItems);
 // Protect all subsequent routes
 router.use(protect);
 
-// Routes for managers
-router.get('/', restrictTo('manager'), CafeItemController.getAllItems);
+// Routes for managers and cashiers (read-only for cashiers)
+router.get('/', restrictTo('manager', 'cashier'), CafeItemController.getAllItems);
+
+// Routes for managers only
 router.post('/', restrictTo('manager'), CafeItemController.createItem);
 router.put('/:id', restrictTo('manager'), CafeItemController.updateItem);
 router.delete('/:id', restrictTo('manager'), CafeItemController.deleteItem);
