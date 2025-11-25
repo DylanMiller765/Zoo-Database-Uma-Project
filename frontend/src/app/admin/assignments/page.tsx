@@ -7,6 +7,7 @@ import { assignmentService, ZookeeperAssignmentWithDetails } from '@/services/as
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import { Alert } from '@/components/ui/alert';
 import {
   Table,
   TableBody,
@@ -24,6 +25,7 @@ export default function AssignmentsPage() {
   const router = useRouter();
   const [assignments, setAssignments] = useState<ZookeeperAssignmentWithDetails[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -81,13 +83,14 @@ export default function AssignmentsPage() {
     if (!assignmentToDelete) return;
 
     try {
+      setError(null);
       await assignmentService.delete(assignmentToDelete.assignment_id);
       await loadAssignments();
       setIsDeleteModalOpen(false);
       setAssignmentToDelete(null);
-    } catch (error) {
-      console.error('Failed to delete assignment:', error);
-      alert('Failed to delete assignment. Please try again.');
+    } catch (err) {
+      console.error('Failed to delete assignment:', err);
+      setError('Failed to delete assignment. Please try again.');
     }
   };
 
@@ -132,6 +135,16 @@ export default function AssignmentsPage() {
 
   return (
     <div className="p-6 space-y-6">
+      {/* Error Alert */}
+      {error && (
+        <Alert
+          type="error"
+          message={error}
+          onClose={() => setError(null)}
+          dismissible={true}
+        />
+      )}
+
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold flex items-center gap-2">

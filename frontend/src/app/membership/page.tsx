@@ -142,7 +142,7 @@ function MembershipPageContent() {
 
   const handleCheckout = () => {
     if (!firstName || !lastName || !email) {
-      alert('Please fill in all required fields');
+      setMembershipError('Please fill in all required fields');
       return;
     }
 

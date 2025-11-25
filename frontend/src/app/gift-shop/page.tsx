@@ -4,6 +4,7 @@ import { useEffect, useState, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Toast } from '@/components/ui/alert';
 import { useCart } from '@/context/CartContext';
 import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
@@ -23,6 +24,7 @@ export default function GiftShopPage() {
   const [items, setItems] = useState<ShopItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [authError, setAuthError] = useState<string | null>(null);
   const [addedItems, setAddedItems] = useState<Set<number>>(new Set());
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
@@ -32,7 +34,7 @@ export default function GiftShopPage() {
 
   const handleAddToCart = (item: ShopItem) => {
     if (!isAuthenticated || user?.role !== 'customer') {
-      alert('Please log in as a customer to add items to cart');
+      setAuthError('Please log in as a customer to add items to cart');
       router.push('/login');
       return;
     }
@@ -100,6 +102,16 @@ export default function GiftShopPage() {
 
   return (
     <div className="min-h-[calc(100vh-6rem)] py-10">
+      {/* Auth Error Toast */}
+      {authError && (
+        <Toast
+          type="warning"
+          message={authError}
+          onClose={() => setAuthError(null)}
+          autoClose={5000}
+        />
+      )}
+
       {/* Banner */}
       <section className="relative overflow-hidden rounded-2xl border">
         <div className="absolute inset-0 -z-10 bg-gradient-to-br from-dark_spring_green-500 via-sea_green-400 to-dark_spring_green-600" />

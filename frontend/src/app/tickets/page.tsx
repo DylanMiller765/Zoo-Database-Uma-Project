@@ -4,6 +4,7 @@ import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Alert } from '@/components/ui/alert';
 import Link from 'next/link';
 import { ticketService } from '@/services/ticket.service';
 import { authService } from '@/services/auth.service';
@@ -108,13 +109,13 @@ function TicketsPageContent() {
 
     // Allow donation-only purchases (no tickets required)
     if (totalTickets === 0 && (!includeDonation || finalDonation === 0)) {
-      alert('Please select at least one ticket or add a donation');
+      setError('Please select at least one ticket or add a donation');
       return;
     }
 
     // Only require visit date if purchasing tickets
     if (totalTickets > 0 && !visitDate) {
-      alert('Please select a visit date');
+      setError('Please select a visit date');
       return;
     }
 
@@ -292,6 +293,16 @@ function TicketsPageContent() {
       <div className="mt-8 grid gap-6 lg:grid-cols-3">
         {/* Left Column - Ticket Selection */}
         <div className="lg:col-span-2 space-y-6">
+          {/* Error Alert */}
+          {error && (
+            <Alert
+              type="error"
+              message={error}
+              onClose={() => setError(null)}
+              dismissible={true}
+            />
+          )}
+
           {/* Collapsible Ticket Sections (in donation mode) */}
           {isDonationMode && (
             <section className="rounded-2xl bg-blue-50 border-2 border-blue-200 p-4">

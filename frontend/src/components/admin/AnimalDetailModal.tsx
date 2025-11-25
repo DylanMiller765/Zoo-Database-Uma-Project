@@ -8,6 +8,7 @@ import { animalService } from '@/services/animal.service';
 import { Modal } from '@/components/ui/modal';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Alert } from '@/components/ui/alert';
 import { SimpleImageLoader } from '@/components/ImageLoader';
 import { FeedingScheduleForm } from './FeedingScheduleForm';
 import { FeedingLogForm } from './FeedingLogForm';
@@ -39,6 +40,7 @@ export function AnimalDetailModal({ open, onClose, animal, onEdit, canEdit = tru
   const [logs, setLogs] = useState<FeedingLogWithKeeper[]>([]);
   const [loadingSchedules, setLoadingSchedules] = useState(false);
   const [loadingLogs, setLoadingLogs] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   // Form states
   const [showScheduleForm, setShowScheduleForm] = useState(false);
@@ -183,6 +185,16 @@ export function AnimalDetailModal({ open, onClose, animal, onEdit, canEdit = tru
         size="xl"
       >
       <div className="space-y-4">
+        {/* Error Alert */}
+        {error && (
+          <Alert
+            type="error"
+            message={error}
+            onClose={() => setError(null)}
+            dismissible={true}
+          />
+        )}
+
         {/* Tabs */}
         <div className="border-b border-gray-200">
           <nav className="-mb-px flex gap-6">
@@ -594,6 +606,7 @@ export function AnimalDetailModal({ open, onClose, animal, onEdit, canEdit = tru
                       <Button
                         onClick={async () => {
                           try {
+                            setError(null);
                             await animalService.update(animal.animal_id, medicalForm);
                             setEditingMedical(false);
                             // Update local animal object
@@ -601,9 +614,9 @@ export function AnimalDetailModal({ open, onClose, animal, onEdit, canEdit = tru
                             animal.medical_notes = medicalForm.medical_notes;
                             // Force reload by closing and reopening would be better, but this works
                             onClose();
-                          } catch (error) {
-                            console.error('Failed to update medical info:', error);
-                            alert('Failed to update medical information. Please try again.');
+                          } catch (err) {
+                            console.error('Failed to update medical info:', err);
+                            setError('Failed to update medical information. Please try again.');
                           }
                         }}
                       >
