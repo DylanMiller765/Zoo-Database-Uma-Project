@@ -161,6 +161,7 @@ export class CheckoutService {
 
   /**
    * Create gift shop sale and deplete stock
+   * Validates stock availability before processing
    */
   private static async createGiftShopSale(
     item: CheckoutCartItem,
@@ -171,6 +172,25 @@ export class CheckoutService {
     const giftShopId = metadata.gift_shop_id || 1;
     const totalAmount = item.unit_price * item.quantity;
     const currentDateTime = getCurrentDateTime();
+
+    // Validate item exists and check stock availability
+    const [itemData] = await query<any[]>(
+      `SELECT item_id, quantity_in_stock, name FROM gift_shop_items
+       WHERE item_id = ? AND deleted_at IS NULL`,
+      [item.item_id]
+    );
+
+    if (!itemData) {
+      throw new Error(`Gift shop item #${item.item_id} not found or has been deleted`);
+    }
+
+    if (itemData.quantity_in_stock <= 0) {
+      throw new Error(`"${itemData.name}" is out of stock`);
+    }
+
+    if (itemData.quantity_in_stock < item.quantity) {
+      throw new Error(`Only ${itemData.quantity_in_stock} of "${itemData.name}" available (requested: ${item.quantity})`);
+    }
 
     // Create transaction
     const transactionResult = await query<any>(
@@ -189,10 +209,21 @@ export class CheckoutService {
     );
 
     // Deplete stock - reduce quantity_in_stock by purchased quantity
+    // This is atomic in MySQL and prevents race conditions
     await query(
-      `UPDATE gift_shop_items SET quantity_in_stock = quantity_in_stock - ? WHERE item_id = ?`,
-      [item.quantity, item.item_id]
+      `UPDATE gift_shop_items SET quantity_in_stock = quantity_in_stock - ? WHERE item_id = ? AND quantity_in_stock >= ?`,
+      [item.quantity, item.item_id, item.quantity]
     );
+
+    // Verify the update was successful (in case another customer bought the last item)
+    const [updatedItem] = await query<any[]>(
+      `SELECT quantity_in_stock FROM gift_shop_items WHERE item_id = ?`,
+      [item.item_id]
+    );
+
+    if (updatedItem.quantity_in_stock < 0) {
+      throw new Error(`"${itemData.name}" sold out - unable to complete purchase. Please remove from cart and try again.`);
+    }
   }
 
   /**

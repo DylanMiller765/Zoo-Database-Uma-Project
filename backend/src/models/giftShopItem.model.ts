@@ -70,6 +70,20 @@ export class GiftShopItemModel {
     }
   }
 
+  static async findAllPublicAvailable(): Promise<GiftShopItem[]> {
+    try {
+      const sql = 'SELECT * FROM gift_shop_items WHERE deleted_at IS NULL AND quantity_in_stock > 0';
+      return await query<GiftShopItem[]>(sql);
+    } catch (error: any) {
+      // If deleted_at column doesn't exist, fall back to simple availability query
+      if (error.code === 'ER_BAD_FIELD_ERROR' && error.message.includes('deleted_at')) {
+        const sql = 'SELECT * FROM gift_shop_items WHERE quantity_in_stock > 0';
+        return await query<GiftShopItem[]>(sql);
+      }
+      throw error;
+    }
+  }
+
   static async findLowStock(limit: number = 10): Promise<GiftShopItem[]> {
     try {
       const sql = 'SELECT * FROM gift_shop_items WHERE quantity_in_stock < ? AND deleted_at IS NULL';

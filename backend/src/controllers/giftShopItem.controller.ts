@@ -6,12 +6,22 @@ export class GiftShopItemController {
     try {
       const user = (req as any).user;
       const isManager = user?.role === 'employee' && user?.job_role === 'manager';
-      
+
       // Only managers can see deleted items
       const includeDeleted = isManager && req.query.includeDeleted === 'true';
       const items = includeDeleted
         ? await GiftShopItemService.getAllItemsIncludingDeleted()
         : await GiftShopItemService.getAllItems();
+      res.status(200).json(items);
+    } catch (error) {
+      res.status(500).json({ message: 'Error fetching items', error });
+    }
+  }
+
+  static async getPublicAvailableItems(req: Request, res: Response): Promise<void> {
+    try {
+      // Return all items including out-of-stock (frontend will handle button state)
+      const items = await GiftShopItemService.getAllItems();
       res.status(200).json(items);
     } catch (error) {
       res.status(500).json({ message: 'Error fetching items', error });
