@@ -6,6 +6,7 @@ import { useAuth } from "@/context/AuthContext";
 import apiClient from "@/lib/api";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Alert } from "@/components/ui/alert";
 import {
   Home,
   Ticket,
@@ -65,6 +66,7 @@ export default function CustomerDashboard() {
   const router = useRouter();
   const { user, isAuthenticated, loading } = useAuth();
   const [fetching, setFetching] = React.useState(true);
+  const [error, setError] = React.useState<string | null>(null);
   const [profile, setProfile] = React.useState<any>(null);
   const [membershipData, setMembershipData] = React.useState<SummaryResponse['data']['membership'] | null>(null);
   const [active, setActive] = React.useState<string>("dashboard");
@@ -172,31 +174,32 @@ export default function CustomerDashboard() {
 
   const handleToggleAutoRenew = async () => {
     const newValue = !autoRenew;
-    
+
     // If enabling auto-renewal, check if payment method exists
     if (newValue && !paymentMethod) {
       // Show visible message instead of alert
       setShowPaymentRequiredMessage(true);
       return;
     }
-    
+
     // Clear message if successfully toggling
     setShowPaymentRequiredMessage(false);
     setLoadingAutoRenew(true);
-    
+    setError(null);
+
     try {
       const response = await apiClient.put('/me/membership/auto-renew', {
         autoRenew: newValue,
       });
-      
+
       if (response.data.success) {
         setAutoRenew(newValue);
       } else {
-        alert(response.data.message || 'Failed to update auto-renewal');
+        setError(response.data.message || 'Failed to update auto-renewal');
       }
-    } catch (error: any) {
-      console.error('Failed to toggle auto-renew:', error);
-      alert(error.response?.data?.message || 'Failed to update auto-renewal. Please try again.');
+    } catch (err: any) {
+      console.error('Failed to toggle auto-renew:', err);
+      setError(err.response?.data?.message || 'Failed to update auto-renewal. Please try again.');
     } finally {
       setLoadingAutoRenew(false);
     }
@@ -220,6 +223,18 @@ export default function CustomerDashboard() {
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-[260px_1fr] gap-6">
+      {/* Error Alert */}
+      {error && (
+        <div className="lg:col-span-2">
+          <Alert
+            type="error"
+            message={error}
+            onClose={() => setError(null)}
+            dismissible={true}
+          />
+        </div>
+      )}
+
       {/* Sidebar */}
       <aside className="hidden lg:block">
         <Card>

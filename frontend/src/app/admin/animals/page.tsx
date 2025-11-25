@@ -40,6 +40,7 @@ export default function AnimalsPage() {
   const [animalToDelete, setAnimalToDelete] = useState<Animal | null>(null);
   const [deleteActiveStatus, setDeleteActiveStatus] = useState<'transferred' | 'deceased'>('deceased');
   const [deletionNotes, setDeletionNotes] = useState('');
+  const [deletionError, setDeletionError] = useState('');
 
   // New state for soft delete features
   const [showDeleted, setShowDeleted] = useState(false);
@@ -132,6 +133,7 @@ export default function AnimalsPage() {
     setAnimalToDelete(animal);
     setDeleteActiveStatus('deceased'); // Reset to default
     setDeletionNotes(''); // Reset deletion notes
+    setDeletionError(''); // Clear any previous error
     setIsDeleteModalOpen(true);
   };
 
@@ -140,7 +142,7 @@ export default function AnimalsPage() {
 
     // Validate that deletion notes are provided
     if (!deletionNotes.trim()) {
-      alert('Please provide a reason for deleting this animal.');
+      setDeletionError('Please provide a reason for deleting this animal.');
       return;
     }
 
@@ -151,6 +153,7 @@ export default function AnimalsPage() {
       setAnimalToDelete(null);
       setDeleteActiveStatus('deceased');
       setDeletionNotes('');
+      setDeletionError('');
     } catch (error) {
       console.error('Failed to delete animal:', error);
     }
@@ -453,13 +456,21 @@ export default function AnimalsPage() {
             <textarea
               id="deletionNotes"
               value={deletionNotes}
-              onChange={(e) => setDeletionNotes(e.target.value)}
+              onChange={(e) => {
+                setDeletionNotes(e.target.value);
+                if (deletionError) setDeletionError(''); // Clear error when user starts typing
+              }}
               placeholder="Please provide details about why this animal is being removed from the system..."
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sea_green-500 focus:border-sea_green-500"
+              className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-sea_green-500 focus:border-sea_green-500 ${
+                deletionError ? 'border-red-500 bg-red-50' : 'border-gray-300'
+              }`}
               rows={4}
               required
             />
-            {deletionNotes.trim() === '' && (
+            {deletionError && (
+              <p className="text-sm text-red-600 font-medium">{deletionError}</p>
+            )}
+            {!deletionError && deletionNotes.trim() === '' && (
               <p className="text-xs text-gray-500">This field is required</p>
             )}
           </div>

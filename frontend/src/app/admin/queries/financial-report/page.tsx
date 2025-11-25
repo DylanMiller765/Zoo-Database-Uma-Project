@@ -5,6 +5,7 @@ import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
 import { queryService, type FinancialReportParams } from "@/services/query.service";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Alert } from "@/components/ui/alert";
 import { Label } from "@/components/ui/label";
 import { DollarSign, Calendar, Database } from "lucide-react";
 import {
@@ -45,6 +46,7 @@ export default function FinancialReportPage() {
   const [hasGenerated, setHasGenerated] = useState(false);
   const [reportData, setReportData] = useState<FinancialReportData | null>(null);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   // Parameters
   const [params, setParams] = useState<FinancialReportParams>({
@@ -58,18 +60,19 @@ export default function FinancialReportPage() {
   const handleGenerate = async () => {
     // Allow empty dates for all-time report
     if (!params.sources || params.sources.length === 0) {
-      alert("Please select at least one revenue source");
+      setError("Please select at least one revenue source");
       return;
     }
 
     try {
       setLoading(true);
+      setError(null);
       const result = await queryService.getFinancialReport(params);
       setReportData(result);
       setHasGenerated(true);
-    } catch (error) {
-      console.error("Failed to generate report:", error);
-      alert("Failed to generate report. Please try again.");
+    } catch (err) {
+      console.error("Failed to generate report:", err);
+      setError("Failed to generate report. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -85,6 +88,7 @@ export default function FinancialReportPage() {
     });
     setHasGenerated(false);
     setReportData(null);
+    setError(null);
   };
 
   // Helper functions
@@ -176,6 +180,16 @@ export default function FinancialReportPage() {
 
   return (
     <div className="space-y-6">
+      {/* Error Alert */}
+      {error && (
+        <Alert
+          type="error"
+          message={error}
+          onClose={() => setError(null)}
+          dismissible={true}
+        />
+      )}
+
       {/* Header */}
       <div>
         <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-2">

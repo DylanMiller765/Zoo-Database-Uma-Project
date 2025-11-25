@@ -17,6 +17,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { MapPin, Leaf, Heart, Calendar, User, AlertTriangle, ArrowUpDown, ArrowUp, ArrowDown, Filter, X, Search } from "lucide-react";
+import { Alert } from "@/components/ui/alert";
 import {
   ReportParametersCard,
   DateRangePicker,
@@ -72,6 +73,7 @@ export default function AnimalHealthCarePage() {
   const [hasGenerated, setHasGenerated] = useState(false);
   const [data, setData] = useState<AnimalRow[]>([]);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   // View options
   const [groupBy, setGroupBy] = useState<'habitat' | 'keeper' | 'none'>('keeper');
@@ -323,15 +325,16 @@ export default function AnimalHealthCarePage() {
   const handleGenerate = async () => {
     try {
       setLoading(true);
+      setError(null);
       // Reset selections to force re-initialization with new data
       setSelectedHabitats([]);
       setSelectedKeepers([]);
       const result = await queryService.getAnimalHealthAndCare(params);
       setData(result);
       setHasGenerated(true);
-    } catch (error) {
-      console.error("Failed to generate report:", error);
-      alert("Failed to generate report. Please try again.");
+    } catch (err) {
+      console.error("Failed to generate report:", err);
+      setError("Failed to generate report. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -351,6 +354,7 @@ export default function AnimalHealthCarePage() {
     setData([]);
     setSelectedHabitats([]);
     setSelectedKeepers([]);
+    setError(null);
   };
 
   // Toggle helper for multi-select
@@ -440,6 +444,16 @@ export default function AnimalHealthCarePage() {
 
   return (
     <div className="space-y-6">
+      {/* Error Alert */}
+      {error && (
+        <Alert
+          type="error"
+          message={error}
+          onClose={() => setError(null)}
+          dismissible={true}
+        />
+      )}
+
       {/* Header */}
       <div>
         <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-2">
