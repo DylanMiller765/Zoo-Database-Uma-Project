@@ -106,30 +106,19 @@ export default function HomePage() {
   return (
     <>
         <div className="space-y-16 pb-16">
-      {/* HERO - Beautiful Gradient Design */}
+      {/* HERO - Beautiful Image Background */}
       <section className="relative isolate overflow-hidden rounded-3xl border shadow-sm
                     min-h-[50vh] px-6 sm:px-10 lg:px-14 py-12 sm:py-16">
-        {/* Gradient background */}
-        <div className="absolute inset-0 -z-10 bg-gradient-to-br
-                      from-dark_spring_green-500 via-sea_green-400 to-dark_spring_green-600 rounded-3xl" />
-
-        {/* Soft blobs */}
-        <div className="pointer-events-none absolute -top-6 right-10 h-24 w-24 rounded-full bg-light_yellow-300/25 blur-3xl" />
-        <div className="pointer-events-none absolute top-20 right-24 h-16 w-16 rounded-full bg-melon-300/25 blur-2xl" />
-        <div className="pointer-events-none absolute -bottom-10 left-10 h-36 w-36 rounded-full bg-white/5 blur-3xl" />
-
-        {/* Subtle pattern overlay */}
-        <div
-          className="absolute inset-0 opacity-15 rounded-3xl"
-          style={{
-            backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M30 0c-8.284 0-15 6.716-15 15 0 8.284 6.716 15 15 15 8.284 0 15-6.716 15-15 0-8.284-6.716-15-15-15zm0 25c-5.523 0-10-4.477-10-10s4.477-10 10-10 10 4.477 10 10-4.477 10-10 10z' fill='%23ffffff'/%3E%3C/svg%3E")`,
-            backgroundSize: "30px 30px",
-          }}
-        />
-
-        {/* Vignette effect - light edges */}
-        <div className="absolute inset-0 -z-5 rounded-3xl bg-gradient-to-b from-transparent via-transparent to-dark_spring_green-900/8" />
-        <div className="absolute inset-0 -z-5 rounded-3xl bg-gradient-to-r from-dark_spring_green-900/8 via-transparent to-dark_spring_green-900/8" />
+        {/* Unsplash background image */}
+        <div className="absolute inset-0 -z-10 rounded-3xl">
+          <img
+            src="https://images.unsplash.com/photo-1584706368162-73c7dab84d68?q=80&w=2274&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
+            alt="Zoo background"
+            className="w-full h-full object-cover rounded-3xl"
+          />
+          {/* Dark overlay for better text readability */}
+          <div className="absolute inset-0 bg-black/30 rounded-3xl" />
+        </div>
 
         {/* Centered content */}
         <div className="relative z-10 mx-auto max-w-4xl text-center text-white">
@@ -139,9 +128,6 @@ export default function HomePage() {
           <h1 className="text-4xl font-extrabold tracking-tight sm:text-5xl lg:text-6xl drop-shadow-lg">
             ZooVerse 12
           </h1>
-          <p className="mx-auto mt-5 max-w-2xl text-base sm:text-lg text-white/90 drop-shadow-md">
-            Explore the wild—discover amazing animals, habitats, and family-friendly attractions.
-          </p>
 
           <div className="mt-8 flex justify-center gap-3 sm:gap-4">
             <Button
