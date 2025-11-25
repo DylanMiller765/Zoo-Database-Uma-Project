@@ -23,7 +23,7 @@ cd Zoo-Database-Uma-Project
 
 2. Install dependencies:
 ```bash
-npm install
+npm install all
 ```
 
 3. Configure environment variables:
