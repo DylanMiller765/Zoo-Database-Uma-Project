@@ -160,7 +160,7 @@ export class CheckoutService {
   }
 
   /**
-   * Create gift shop sale
+   * Create gift shop sale and deplete stock
    */
   private static async createGiftShopSale(
     item: CheckoutCartItem,
@@ -186,6 +186,12 @@ export class CheckoutService {
       `INSERT INTO gift_shop_sale_items (transaction_id, item_id, quantity, unit_price)
        VALUES (?, ?, ?, ?)`,
       [transactionId, item.item_id, item.quantity, item.unit_price]
+    );
+
+    // Deplete stock - reduce quantity_in_stock by purchased quantity
+    await query(
+      `UPDATE gift_shop_items SET quantity_in_stock = quantity_in_stock - ? WHERE item_id = ?`,
+      [item.quantity, item.item_id]
     );
   }
 
