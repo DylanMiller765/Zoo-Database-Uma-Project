@@ -42,6 +42,31 @@ function TicketsPageContent() {
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [showRestoreMessage, setShowRestoreMessage] = useState(false);
 
+  // Easter egg state
+  const [easterEggActive, setEasterEggActive] = useState(false);
+  const [clickCount, setClickCount] = useState(0);
+  const [lastClickTime, setLastClickTime] = useState(0);
+
+  const handleEasterEggClick = () => {
+    const now = Date.now();
+    // Reset count if more than 500ms since last click
+    if (now - lastClickTime > 500) {
+      setClickCount(1);
+    } else {
+      setClickCount(prev => prev + 1);
+    }
+    setLastClickTime(now);
+
+    // Activate on 7th click (lucky number!)
+    if (clickCount + 1 >= 7) {
+      setEasterEggActive(true);
+      setDonationAmount(15123);
+      setCustomDonation('');
+      setIncludeDonation(true);
+      setClickCount(0);
+    }
+  };
+
   // Check for restore purchase flag
   useEffect(() => {
     const restorePurchase = searchParams.get('restorePurchase');
@@ -71,6 +96,15 @@ function TicketsPageContent() {
       }
     }
   }, [searchParams, router]);
+
+  useEffect(() => {
+    if (easterEggActive) {
+      window.scrollTo({
+        top: document.body.scrollHeight,
+        behavior: 'smooth',
+      });
+    }
+  }, [easterEggActive]);
 
   const ticketsTotal =
     adults * TICKET_PRICES.adult +
@@ -276,7 +310,10 @@ function TicketsPageContent() {
           }}
         />
         <div className="relative z-10 px-6 py-10 text-white sm:px-10">
-          <div className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 mb-3">
+          <div
+            className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 mb-3 cursor-pointer select-none hover:bg-white/20 transition-colors"
+            onClick={isDonationMode ? handleEasterEggClick : undefined}
+          >
             <span className="text-sm">{isDonationMode ? '💚 Support Conservation' : '🎫 Get Tickets'}</span>
           </div>
           <h1 className="text-3xl font-bold sm:text-4xl">
@@ -501,9 +538,10 @@ function TicketsPageContent() {
                         onClick={() => {
                           setDonationAmount(amount);
                           setCustomDonation('');
+                          setEasterEggActive(false);
                         }}
                         className={`py-3 rounded-xl border-2 font-semibold transition-all ${
-                          donationAmount === amount && !customDonation
+                          donationAmount === amount && !customDonation && !easterEggActive
                             ? 'border-sea_green-500 bg-sea_green-50 text-sea_green-700'
                             : 'border-gray-200 text-gray-700 hover:border-sea_green-300'
                         }`}
@@ -524,7 +562,10 @@ function TicketsPageContent() {
                         type="number"
                         id="custom-donation"
                         value={customDonation}
-                        onChange={(e) => setCustomDonation(e.target.value)}
+                        onChange={(e) => {
+                          setCustomDonation(e.target.value);
+                          setEasterEggActive(false);
+                        }}
                         placeholder="0.00"
                         min="1"
                         step="0.01"
@@ -532,6 +573,37 @@ function TicketsPageContent() {
                       />
                     </div>
                   </div>
+
+                  {/* Easter Egg Section */}
+                  {easterEggActive && (
+                    <div className="mt-6 p-6 rounded-xl border-4 border-light_yellow-400 bg-gradient-to-br from-light_yellow-50 via-melon-50 to-sea_green-50 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                      <div className="text-center mb-4">
+                        <h3 className="text-2xl font-extrabold text-dark_spring_green-700 mb-2 flex items-center justify-center gap-2">
+                          You found us!
+                        </h3>
+                        <p className="text-lg text-sea_green-600 font-semibold">
+                          You found us! and now owe us $15,123 in donations :)
+                        </p>
+
+                      </div>
+
+                      {/* Team Photo */}
+                      <div className="flex justify-center">
+                        <div className="relative rounded-xl overflow-hidden shadow-xl border-4 border-sea_green-300 max-w-md">
+                          <img
+                            src="/images/IMG_1117_1.jpg"
+                            alt="ZooVerse 12 Project Team"
+                            className="w-full h-auto"
+                          />
+
+                        </div>
+                      </div>
+
+                      <p className="text-xs text-gray-500 mt-4 text-center">
+                        (The Houston Zoo - 2025)
+                      </p>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             )}
