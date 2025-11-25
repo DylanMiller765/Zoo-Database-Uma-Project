@@ -18,6 +18,7 @@ type ShopItem = {
   description?: string;
   category?: string;
   image_url?: string;
+  quantity_in_stock?: number;
 };
 
 export default function GiftShopPage() {
@@ -39,12 +40,22 @@ export default function GiftShopPage() {
       return;
     }
 
+    // Check stock availability
+    if (!item.quantity_in_stock || item.quantity_in_stock <= 0) {
+      setAuthError('This item is out of stock');
+      setTimeout(() => setAuthError(null), 5000);
+      return;
+    }
+
+    // Check if trying to add more than available stock
+    const quantityToAdd = Math.min(1, item.quantity_in_stock);
+
     addItem({
       item_type: 'gift_shop_item',
       item_id: item.item_id,
       name: item.name,
       description: item.description,
-      quantity: 1,
+      quantity: quantityToAdd,
       unit_price: typeof item.price === 'number' ? item.price : Number(item.price),
       metadata: { gift_shop_id: 1 }
     });
@@ -278,10 +289,12 @@ export default function GiftShopPage() {
                             {isAuthenticated && user?.role === 'customer' && (
                               <Button
                                 onClick={() => handleAddToCart(item)}
-                                disabled={isAdded}
+                                disabled={isAdded || !item.quantity_in_stock || item.quantity_in_stock <= 0}
                                 className={`w-full mt-auto text-xs font-semibold transition-all duration-200 ${
                                   isAdded
                                     ? 'bg-sea_green-500 text-white cursor-default'
+                                    : !item.quantity_in_stock || item.quantity_in_stock <= 0
+                                    ? 'bg-gray-300 text-gray-600 cursor-not-allowed'
                                     : 'bg-gradient-to-r from-sea_green-600 to-dark_spring_green-600 hover:from-sea_green-700 hover:to-dark_spring_green-700 text-white shadow-sm hover:shadow-md'
                                 }`}
                                 size="sm"
@@ -290,6 +303,11 @@ export default function GiftShopPage() {
                                   <>
                                     <Check className="h-3 w-3 mr-1.5" />
                                     Added!
+                                  </>
+                                ) : !item.quantity_in_stock || item.quantity_in_stock <= 0 ? (
+                                  <>
+                                    <Package className="h-3 w-3 mr-1.5" />
+                                    Out of Stock
                                   </>
                                 ) : (
                                   <>
@@ -303,8 +321,8 @@ export default function GiftShopPage() {
                             {(!isAuthenticated || user?.role !== 'customer') && (
                               <div className="mt-auto pt-3 border-t border-gray-100">
                                 <p className="text-xs text-center text-gray-500">
-                                  <a 
-                                    href="/login" 
+                                  <a
+                                    href="/login"
                                     className="text-sea_green-600 hover:text-sea_green-700 font-medium underline"
                                   >
                                     Sign in

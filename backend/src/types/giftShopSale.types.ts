@@ -12,5 +12,6 @@ export interface GiftShopSale {
   sale_date?: string;
   total_amount: number;
   payment_method: 'cash' | 'credit' | 'debit';
+  status?: 'completed' | 'returned';
   items: GiftShopSaleItem[];
 }
