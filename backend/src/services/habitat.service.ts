@@ -1,5 +1,6 @@
 import { HabitatModel } from '../models/habitat.model';
 import { Habitat } from '../types/habitat.types';
+import { query } from '../config/database';
 
 export class HabitatService {
   static async getAllHabitats(): Promise<Habitat[]> {
@@ -23,6 +24,9 @@ export class HabitatService {
   }
 
   static async deleteHabitat(id: number): Promise<void> {
+    // Clear habitat assignments for all active animals in this habitat
+    await query('UPDATE animals SET habitat_id = NULL WHERE habitat_id = ? AND deleted_at IS NULL', [id]);
+    // Then soft delete the habitat
     return await HabitatModel.remove(id);
   }
 

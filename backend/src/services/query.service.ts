@@ -128,17 +128,92 @@ export class QueryService {
         ${endDate ? 'AND (a.animal_id IS NULL OR a.arrival_date <= ?)' : ''}
         AND (h.deleted_at IS NULL ${includeDeleted ? 'OR 1=1' : ''})
 
-      ORDER BY h.habitat_name, a.name
+      UNION ALL
+
+      SELECT
+        -- Habitat data (NULL for animals without habitat)
+        NULL as habitat_id,
+        'No Habitat Assigned' as habitat_name,
+        NULL as environment_type,
+        NULL as animal_capacity,
+        NULL as habitat_status,
+        NULL as size,
+        NULL as last_maintenance,
+
+        -- Animal data
+        a.animal_id,
+        a.name as animal_name,
+        a.species,
+        a.date_of_birth,
+        a.arrival_date,
+        a.health_status,
+        a.active_status,
+        a.endangerment_status,
+        a.weight,
+        a.medical_notes,
+
+        -- Keeper assignment
+        e.employee_id as keeper_id,
+        CONCAT(e.first_name, ' ', e.last_name) as keeper_name,
+        za.shift as keeper_shift,
+
+        -- Feeding schedule
+        fs.schedule_id,
+        fs.food_description as scheduled_food,
+        fs.frequency as feeding_frequency,
+        fs.scheduled_time,
+
+        -- Recent feeding activity (last 30 days)
+        (SELECT COUNT(*)
+         FROM feeding_logs fl
+         WHERE fl.animal_id = a.animal_id
+         AND fl.feeding_time >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)
+        ) as feeding_logs_count,
+
+        (SELECT MAX(fl.feeding_time)
+         FROM feeding_logs fl
+         WHERE fl.animal_id = a.animal_id
+        ) as last_fed_time,
+
+        (SELECT fl.food_given
+         FROM feeding_logs fl
+         WHERE fl.animal_id = a.animal_id
+         ORDER BY fl.feeding_time DESC
+         LIMIT 1
+        ) as last_food_given
+
+      FROM animals a
+      LEFT JOIN zookeeper_assignments za ON a.animal_id = za.animal_id
+      LEFT JOIN employees e ON za.keeper_id = e.employee_id AND e.deleted_at IS NULL
+      LEFT JOIN feeding_schedules fs ON a.animal_id = fs.animal_id
+
+      WHERE
+        a.habitat_id IS NULL
+        AND (a.deleted_at IS NULL ${includeDeleted ? 'OR 1=1' : ''})
+        AND (${healthWhere.replace('a.health_status', 'a.health_status')})
+        AND (${endangermentWhere.replace('a.endangerment_status', 'a.endangerment_status')})
+        ${startDate ? 'AND a.arrival_date >= ?' : ''}
+        ${endDate ? 'AND a.arrival_date <= ?' : ''}
+
+      ORDER BY habitat_name, animal_name
     `;
 
     const queryParams: any[] = [];
 
-    // Add filter array values
+    // Add filter array values for first SELECT (with habitats)
     queryParams.push(...habitatStatuses);
     queryParams.push(...healthStatuses);
     queryParams.push(...endangermentStatuses);
 
-    // Add arrival date filters if provided
+    // Add arrival date filters if provided for first SELECT
+    if (startDate) queryParams.push(startDate);
+    if (endDate) queryParams.push(endDate);
+
+    // Add filter array values for second SELECT (animals without habitat) in UNION
+    queryParams.push(...healthStatuses);
+    queryParams.push(...endangermentStatuses);
+
+    // Add arrival date filters if provided for second SELECT
     if (startDate) queryParams.push(startDate);
     if (endDate) queryParams.push(endDate);
 

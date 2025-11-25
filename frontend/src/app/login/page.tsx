@@ -41,9 +41,6 @@ function LoginPageContent() {
         <div className="absolute bottom-60 left-40 w-20 h-20 bg-persian_orange-300/20 rounded-full blur-xl"></div>
 
         <div className="relative z-10">
-          <div className="inline-flex items-center gap-2 mb-6">
-            <span className="text-5xl">🦁</span>
-          </div>
           <h1 className="text-5xl font-bold text-white mb-4 leading-tight">
             ZooVerse
           </h1>
