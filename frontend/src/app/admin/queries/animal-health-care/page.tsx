@@ -568,35 +568,35 @@ export default function AnimalHealthCarePage() {
       {hasGenerated && (
         <>
           {/* Summary Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7 gap-2">
             <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-gray-600">Total Animals</CardTitle>
+              <CardHeader className="pb-1 pt-2 px-3">
+                <CardTitle className="text-xs font-medium text-gray-600">Total Animals</CardTitle>
               </CardHeader>
-              <CardContent>
-                <p className="text-2xl font-bold text-sea_green-600">
+              <CardContent className="px-3 py-1">
+                <p className="text-lg font-bold text-sea_green-600">
                   {habitats.reduce((sum, h) => sum + h.animals.length, 0)}
                 </p>
               </CardContent>
             </Card>
 
             <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-gray-600">Total Habitats</CardTitle>
+              <CardHeader className="pb-1 pt-2 px-3">
+                <CardTitle className="text-xs font-medium text-gray-600">Total Habitats</CardTitle>
               </CardHeader>
-              <CardContent>
-                <p className="text-2xl font-bold text-dark_spring_green-600">
+              <CardContent className="px-3 py-1">
+                <p className="text-lg font-bold text-dark_spring_green-600">
                   {habitats.length}
                 </p>
               </CardContent>
             </Card>
 
             <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-gray-600">Health Alerts</CardTitle>
+              <CardHeader className="pb-1 pt-2 px-3">
+                <CardTitle className="text-xs font-medium text-gray-600">Health Alerts</CardTitle>
               </CardHeader>
-              <CardContent>
-                <p className="text-2xl font-bold text-persian_orange-600">
+              <CardContent className="px-3 py-1">
+                <p className="text-lg font-bold text-persian_orange-600">
                   {habitats.reduce((sum, h) =>
                     sum + h.animals.filter(a =>
                       ['fair', 'poor', 'critical'].includes(a.health_status || '')
@@ -607,11 +607,11 @@ export default function AnimalHealthCarePage() {
             </Card>
 
             <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-gray-600">Endangered Species</CardTitle>
+              <CardHeader className="pb-1 pt-2 px-3">
+                <CardTitle className="text-xs font-medium text-gray-600">Endangered Species</CardTitle>
               </CardHeader>
-              <CardContent>
-                <p className="text-2xl font-bold text-red-600">
+              <CardContent className="px-3 py-1">
+                <p className="text-lg font-bold text-red-600">
                   {habitats.reduce((sum, h) =>
                     sum + h.animals.filter(a =>
                       ['endangered', 'critically_endangered', 'extinct_in_the_wild'].includes(a.endangerment_status || '')
@@ -622,11 +622,22 @@ export default function AnimalHealthCarePage() {
             </Card>
 
             <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-gray-600">Unassigned Animals</CardTitle>
+              <CardHeader className="pb-1 pt-2 px-3">
+                <CardTitle className="text-xs font-medium text-gray-600">No Habitat Assigned</CardTitle>
               </CardHeader>
-              <CardContent>
-                <p className="text-2xl font-bold text-persian_orange-600">
+              <CardContent className="px-3 py-1">
+                <p className="text-lg font-bold text-red-600">
+                  {allAnimals.filter(a => !a.habitat_id).length}
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="pb-1 pt-2 px-3">
+                <CardTitle className="text-xs font-medium text-gray-600">Unassigned Keeper</CardTitle>
+              </CardHeader>
+              <CardContent className="px-3 py-1">
+                <p className="text-lg font-bold text-persian_orange-600">
                   {habitats.reduce((sum, h) =>
                     sum + h.animals.filter(a => !a.keeper_name).length, 0
                   )}
@@ -635,11 +646,11 @@ export default function AnimalHealthCarePage() {
             </Card>
 
             <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-gray-600">Habitat Capacity</CardTitle>
+              <CardHeader className="pb-1 pt-2 px-3">
+                <CardTitle className="text-xs font-medium text-gray-600">Habitat Capacity</CardTitle>
               </CardHeader>
-              <CardContent>
-                <p className="text-2xl font-bold text-dark_spring_green-600">
+              <CardContent className="px-3 py-1">
+                <p className="text-lg font-bold text-dark_spring_green-600">
                   {(() => {
                     const totalAnimals = habitats.reduce((sum, h) => sum + h.animals.length, 0);
                     const totalCapacity = habitats.reduce((sum, h) => sum + h.animal_capacity, 0);
