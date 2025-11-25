@@ -121,13 +121,13 @@ INSERT INTO attractions (name, location, human_capacity, opening_time, closing_t
 -- HABITATS
 -- =======================================
 INSERT INTO habitats (habitat_name, attraction_id, size, environment_type, animal_capacity, status, image_url) VALUES
-('Lion Pride Rock', 1, 'Large', 'Grassland', 8, 'active', 'https://images.unsplash.com/photo-1517649281323-b4c901198696?auto=format&fit=crop&w=800&q=80'),
+('Lion Pride Rock', 1, 'Large', 'Grassland', 8, 'active', 'https://images.unsplash.com/photo-1583587067350-2c49115673c9?auto=format&fit=crop&w=600&q=80'),
 ('Elephant Plains', 1, 'Extra Large', 'Savanna', 12, 'active', 'https://images.unsplash.com/photo-1557050543-4d5f4e07ef46?auto=format&fit=crop&w=800&q=80'),
-('Gorilla Forest', 2, 'Large', 'Tropical Forest', 6, 'active', 'https://images.unsplash.com/photo-1543152733-5c24e6c38a4a?auto=format&fit=crop&w=800&q=80'),
+('Gorilla Forest', 2, 'Large', 'Tropical Forest', 6, 'active', 'https://images.unsplash.com/photo-1614528767034-70de9fe166e0?auto=format&fit=crop&w=800&q=80'),
 ('Penguin Cove', 3, 'Medium', 'Arctic', 25, 'active', 'https://images.unsplash.com/photo-1598439210625-5067c578f3f6?auto=format&fit=crop&w=800&q=80'),
 ('Polar Bear Den', 3, 'Large', 'Arctic', 4, 'active', 'https://images.unsplash.com/photo-1589656966895-2f33e7653819?auto=format&fit=crop&w=800&q=80'),
-('Dolphin Pool', 4, 'Extra Large', 'Aquatic', 8, 'active', 'https://images.unsplash.com/photo-1629737979624-912df082dc86?auto=format&fit=crop&w=800&q=80'),
-('Snake Sanctuary', 5, 'Medium', 'Desert', 15, 'active', 'https://images.unsplash.com/photo-1531386816488-969248b940ce?auto=format&fit=crop&w=800&q=80'),
+('Dolphin Pool', 4, 'Extra Large', 'Aquatic', 8, 'active', 'https://images.unsplash.com/photo-1763920848955-4b3873ec85cf?auto=format&fit=crop&w=800&q=80'),
+('Snake Sanctuary', 5, 'Medium', 'Desert', 15, 'active', 'https://images.unsplash.com/photo-1686110448055-5446817f6ac9?auto=format&fit=crop&w=800&q=80'),
 ('Aviary', 2, 'Large', 'Tropical Forest', 50, 'active', 'https://images.unsplash.com/photo-1452570053594-1b985d6ea890?auto=format&fit=crop&w=800&q=80');
 
 -- =======================================
@@ -176,17 +176,17 @@ INSERT INTO animals (name, scientific_name, species, date_of_birth, arrival_date
 -- EVENTS
 -- =======================================
 INSERT INTO events (name, description, event_date, start_time, end_time, location, max_participants, ticket_price, coordinator_id, image_url) VALUES
-('Tiger Feeding Demonstration', 'Watch our experts safely feed the tigers with specialized techniques', '2025-09-15', '10:00:00', '11:00:00', 'Big Cat Arena', 200, 12.00, 4, 'https://images.unsplash.com/photo-1615820986348-73599b8296a8?auto=format&fit=crop&w=800&q=80'),
-('Reptile Exhibition', 'Explore the world of snakes, lizards, and other reptiles up close', '2025-09-28', '14:00:00', '15:30:00', 'Reptile House', 100, 8.00, 4, 'https://images.unsplash.com/photo-1533756919927-4402eb06a24c?auto=format&fit=crop&w=800&q=80'),
-('Primate Discovery Walk', 'Guided tour through our primate exhibits with interactive experiences', '2025-10-10', '11:00:00', '12:30:00', 'Primate Territory', 75, 10.00, 4, 'https://images.unsplash.com/photo-1588661706680-e374567e45f9?auto=format&fit=crop&w=800&q=80'),
-('Butterfly Garden Workshop', 'Learn about monarch butterflies and pollination in our gardens', '2025-10-22', '13:00:00', '14:00:00', 'Botanical Garden', 60, 7.00, 4, 'https://images.unsplash.com/photo-1457466840742-1e909564c7f0?auto=format&fit=crop&w=800&q=80'),
-('Avian Training Show', 'See our trained birds perform impressive aerial displays', '2025-11-05', '15:00:00', '16:00:00', 'Bird Sanctuary Theater', 150, 15.00, 4, 'https://images.unsplash.com/photo-1516719702602-0692f80c5878?auto=format&fit=crop&w=800&q=80'),
+('Tiger Feeding Demonstration', 'Watch our experts safely feed the tigers with specialized techniques', '2025-09-15', '10:00:00', '11:00:00', 'Big Cat Arena', 200, 12.00, 4, 'https://images.unsplash.com/photo-1503335165261-a1d723f1d0e6?auto=format&fit=crop&w=800&q=80'),
+('Reptile Exhibition', 'Explore the world of snakes, lizards, and other reptiles up close', '2025-09-28', '14:00:00', '15:30:00', 'Reptile House', 100, 8.00, 4, 'https://images.unsplash.com/photo-1444947173422-9737546c41a5?auto=format&fit=crop&w=800&q=80'),
+('Primate Discovery Walk', 'Guided tour through our primate exhibits with interactive experiences', '2025-10-10', '11:00:00', '12:30:00', 'Primate Territory', 75, 10.00, 4, 'https://images.unsplash.com/photo-1463852247062-1bbca38f7805?auto=format&fit=crop&w=800&q=80'),
+('Butterfly Garden Workshop', 'Learn about monarch butterflies and pollination in our gardens', '2025-10-22', '13:00:00', '14:00:00', 'Botanical Garden', 60, 7.00, 4, 'https://images.unsplash.com/photo-1548701822-320aba03ab0f?auto=format&fit=crop&w=800&q=80'),
+('Avian Training Show', 'See our trained birds perform impressive aerial displays', '2025-11-05', '15:00:00', '16:00:00', 'Bird Sanctuary Theater', 150, 15.00, 4, 'https://images.unsplash.com/photo-1664790423583-0d72e6ce77fa?auto=format&fit=crop&w=800&q=80'),
 ('Aquatic Creature Talk', 'Educational presentation about marine conservation and aquatic life', '2025-11-12', '10:30:00', '11:30:00', 'Aquatic Center Amphitheater', 250, 10.00, 4, 'https://images.unsplash.com/photo-1551980349-75d992b49c86?auto=format&fit=crop&w=800&q=80'),
 ('Dolphin Show', 'Watch our amazing dolphins perform tricks and learn about marine conservation', '2025-11-21', '14:00:00', '15:00:00', 'Aquatic Center Amphitheater', 400, 15.00, 4, 'https://images.unsplash.com/photo-1570481662006-a3a1374699e8?auto=format&fit=crop&w=800&q=80'),
 ('Penguin Feeding Time', 'Help our keepers feed the penguins and learn about their diet', '2025-11-28', '11:00:00', '11:30:00', 'Penguin Cove', 50, 10.00, 4, 'https://images.unsplash.com/photo-1598439210625-5067c578f3f6?auto=format&fit=crop&w=800&q=80'),
-('Lion Encounter', 'Get up close with our lions through the safe viewing area', '2025-12-05', '13:00:00', '14:00:00', 'African Savanna', 100, 20.00, 4, 'https://images.unsplash.com/photo-1623916960867-27b925b34006?auto=format&fit=crop&w=800&q=80'),
-('Kids Zoo Camp', 'Week-long summer camp for children ages 8-12', '2025-12-15', '09:00:00', '15:00:00', 'Education Center', 30, 250.00, 4, 'https://images.unsplash.com/photo-1502086223501-8351e33e8a0c?auto=format&fit=crop&w=800&q=80'),
-('Night at the Zoo', 'Special after-hours tour experience with nocturnal animals', '2025-12-22', '19:00:00', '22:00:00', 'Various Locations', 150, 35.00, 4, 'https://images.unsplash.com/photo-1519074069444-1ba4fff66d16?auto=format&fit=crop&w=800&q=80');
+('Lion Encounter', 'Get up close with our lions through the safe viewing area', '2025-12-05', '13:00:00', '14:00:00', 'African Savanna', 100, 20.00, 4, 'https://images.unsplash.com/photo-1634875979174-20afffe447b7?auto=format&fit=crop&w=800&q=80'),
+('Kids Zoo Camp', 'Week-long summer camp for children ages 8-12', '2025-12-15', '09:00:00', '15:00:00', 'Education Center', 30, 250.00, 4, 'https://images.unsplash.com/photo-1504280390367-361c6d9f38f4?auto=format&fit=crop&w=800&q=80'),
+('Night at the Zoo', 'Special after-hours tour experience with nocturnal animals', '2025-12-22', '19:00:00', '22:00:00', 'Various Locations', 150, 35.00, 4, 'https://images.unsplash.com/photo-1478131143081-80f7f84ca84d?auto=format&fit=crop&w=600&q=80');
 
 -- =======================================
 -- GIFT SHOPS
@@ -206,13 +206,13 @@ INSERT INTO cafes (cafe_id, name, location, opening_time, closing_time, manager_
 INSERT INTO gift_shop_items (gift_shop_id, name, description, category, price, cost, quantity_in_stock, supplier, image_url) VALUES
 (1, 'Plush Lion', 'Soft and cuddly lion plushie', 'Toys', 19.99, 8.00, 150, 'ToyWorld Inc', 'https://images.unsplash.com/photo-1559454403-b8fb88521f11?auto=format&fit=crop&w=600&q=80'),
 (1, 'Zoo T-Shirt', 'Cotton t-shirt with zoo logo', 'Apparel', 24.99, 10.00, 200, 'Apparel Plus', 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?auto=format&fit=crop&w=600&q=80'),
-(1, 'Animal Stickers', 'Pack of 20 animal stickers', 'Souvenirs', 4.99, 1.50, 500, 'Sticker Co', 'https://images.unsplash.com/photo-1572375992501-6057ac8566d5?auto=format&fit=crop&w=600&q=80'),
+(1, 'Animal Stickers', 'Pack of 20 animal stickers', 'Souvenirs', 4.99, 1.50, 500, 'Sticker Co', 'https://images.unsplash.com/photo-1604590496881-c5b5b4e877f1?auto=format&fit=crop&w=800&q=80'),
 (1, 'Tropical Bird Poster', 'Beautiful rainforest bird poster', 'Art', 12.99, 5.00, 75, 'Art Prints Ltd', 'https://images.unsplash.com/photo-1452570053594-1b985d6ea890?auto=format&fit=crop&w=600&q=80'),
-(1, 'Plush Penguin', 'Soft and cuddly penguin plushie', 'Toys', 19.99, 8.00, 120, 'ToyWorld Inc', 'https://images.unsplash.com/photo-1551108525-c51379b71e92?auto=format&fit=crop&w=600&q=80'),
-(1, 'Dolphin Keychain', 'Metal keychain with a dolphin charm', 'Souvenirs', 7.99, 2.50, 300, 'Sticker Co', 'https://images.unsplash.com/photo-1616035977322-90231920da7d?auto=format&fit=crop&w=600&q=80'),
+(1, 'Plush Penguin', 'Soft and cuddly penguin plushie', 'Toys', 19.99, 8.00, 120, 'ToyWorld Inc', 'https://images.unsplash.com/photo-1728321653765-c2901aa9305a?auto=format&fit=crop&w=800&q=80'),
+(1, 'Dolphin Keychain', 'Metal keychain with a dolphin charm', 'Souvenirs', 7.99, 2.50, 300, 'Sticker Co', 'https://images.unsplash.com/photo-1644065745907-e6bc5bf990c1?auto=format&fit=crop&w=800&q=80'),
 (1, 'Zoo Mug', 'Ceramic mug with zoo animal illustrations', 'Homeware', 14.99, 6.00, 100, 'Apparel Plus', 'https://images.unsplash.com/photo-1514228742587-6b1558fcca3d?auto=format&fit=crop&w=600&q=80'),
 (1, 'Savanna Hat', 'Wide-brimmed hat for sun protection', 'Apparel', 29.99, 12.00, 80, 'Apparel Plus', 'https://images.unsplash.com/photo-1521369909029-2afed882baee?auto=format&fit=crop&w=600&q=80'),
-(1, 'Plush Elephant', 'Adorable elephant stuffed animal', 'Toys', 22.99, 9.00, 100, 'ToyWorld Inc', 'https://images.unsplash.com/photo-1582298538104-fe2e74c2ed54?auto=format&fit=crop&w=600&q=80'),
+(1, 'Plush Elephant', 'Adorable elephant stuffed animal', 'Toys', 22.99, 9.00, 100, 'ToyWorld Inc', 'https://images.unsplash.com/photo-1759004543851-ee3c44f6582c?auto=format&fit=crop&w=800&q=80'),
 (1, 'Zoo Backpack', 'Canvas backpack with animal prints', 'Apparel', 34.99, 15.00, 60, 'Apparel Plus', 'https://images.unsplash.com/photo-1553062407-98eeb64c6a62?auto=format&fit=crop&w=600&q=80');
 
 -- =======================================
@@ -220,7 +220,7 @@ INSERT INTO gift_shop_items (gift_shop_id, name, description, category, price, c
 -- =======================================
 INSERT INTO cafe_items (cafe_id, name, description, category, price, image_url) VALUES
 (1, 'Burger', 'Classic beef burger with fries', 'Entrees', 12.99, 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&w=600&q=80'),
-(1, 'Hot Dog', 'All-beef hot dog', 'Entrees', 8.99, 'https://images.unsplash.com/photo-1627054238580-b0d10d9f456c?auto=format&fit=crop&w=600&q=80'),
+(1, 'Hot Dog', 'All-beef hot dog', 'Entrees', 8.99, 'https://images.unsplash.com/photo-1613482084286-41f25b486fa2?auto=format&fit=crop&w=800&q=80'),
 (1, 'French Fries', 'Crispy golden fries', 'Sides', 4.99, 'https://images.unsplash.com/photo-1630384060421-cb20d0e0649d?auto=format&fit=crop&w=600&q=80'),
 (1, 'Soda', 'Fountain drink', 'Beverages', 2.99, 'https://images.unsplash.com/photo-1513558161293-cdaf765ed2fd?auto=format&fit=crop&w=600&q=80'),
 (1, 'Chicken Nuggets', 'Kids meal chicken nuggets', 'Entrees', 7.99, 'https://images.unsplash.com/photo-1562967914-608f82629710?auto=format&fit=crop&w=600&q=80'),
@@ -228,9 +228,9 @@ INSERT INTO cafe_items (cafe_id, name, description, category, price, image_url) 
 (1, 'Pizza Slice', 'Slice of cheese or pepperoni pizza', 'Entrees', 6.99, 'https://images.unsplash.com/photo-1574071318508-1cdbab80d002?auto=format&fit=crop&w=600&q=80'),
 (1, 'Salad', 'Fresh garden salad with choice of dressing', 'Sides', 7.49, 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?auto=format&fit=crop&w=600&q=80'),
 (1, 'Coffee', 'Freshly brewed hot coffee', 'Beverages', 3.49, 'https://images.unsplash.com/photo-1509042239860-f550ce710b93?auto=format&fit=crop&w=600&q=80'),
-(1, 'Bottled Water', '500ml bottled water', 'Beverages', 2.49, 'https://images.unsplash.com/photo-1560697529-722a5929d009?auto=format&fit=crop&w=600&q=80'),
+(1, 'Bottled Water', '500ml bottled water', 'Beverages', 2.49, 'https://images.unsplash.com/photo-1550505095-81378a674395?auto=format&fit=crop&w=800&q=80'),
 (1, 'Sandwich', 'Turkey and cheese sandwich', 'Entrees', 9.99, 'https://images.unsplash.com/photo-1528735602780-2552fd46c7af?auto=format&fit=crop&w=600&q=80'),
-(1, 'Cookies', 'Chocolate chip cookies (3 pack)', 'Desserts', 4.99, 'https://images.unsplash.com/photo-1499636138143-bd649043ea52?auto=format&fit=crop&w=600&q=80');
+(1, 'Cookies', 'Chocolate chip cookies (3 pack)', 'Desserts', 4.99, 'https://images.unsplash.com/photo-1622467827417-bbe2237067a9?auto=format&fit=crop&w=800&q=80');
 
 -- =======================================
 -- TICKETS (SALES DATA)
