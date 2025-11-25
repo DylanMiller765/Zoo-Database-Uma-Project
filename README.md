@@ -1,6 +1,10 @@
 # Zoo Database Management System
 
-A web-based database system for managing zoo operations including animals, staff, customers, ticket sales, events, and facilities. Built with Next.js, Express, and MySQL.
+A web-based database system for managing zoo operations including animals, staff, customers, ticket sales, events, and facilities. Built with node.js, React, and MySQL.
+
+#Files in Submission
+- SQL Dump File of Populated Database
+- Project Document: What Data can be Added/Modified/Deleted, User Roles, Semantic Constraints and Triggers, Queries/Reports
 
 ## Setup
 
@@ -13,7 +17,7 @@ A web-based database system for managing zoo operations including animals, staff
 
 1. Clone the repo:
 ```bash
-git clone <your-repository-url>
+git clone https://github.com/DylanMiller765/Zoo-Database-Uma-Project
 cd Zoo-Database-Uma-Project
 ```
 
@@ -59,8 +63,10 @@ This starts:
 All passwords are `password`:
 - **Manager**: sarah.johnson@zoo.com
 - **Keeper**: mike.chen@zoo.com
-- **Veterinarian**: emily.rodriguez@zoo.com
-- **Customer**: maria.garcia@email.com
+- **Veterinarian**: emily.rodriguez@zoo.com or skyjones.vet@gmail.com
+- **Coordinator**: david.kim@zoo.com
+- **Cashier**: lisa,thompson@zoo.com
+- **Customer**: maria.garcia@email.com or john.smth@email.com or create new account
 
 ### Database
 
