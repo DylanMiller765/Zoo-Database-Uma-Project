@@ -8,6 +8,7 @@ import { GiftShop, GiftShopItem } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import { Alert } from '@/components/ui/alert';
 import { Select } from '@/components/ui/select';
 import {
   Table,
@@ -30,6 +31,7 @@ export default function GiftShopsPage() {
   const [loading, setLoading] = useState(true);
   const [items, setItems] = useState<GiftShopItem[]>([]);
   const [itemsLoading, setItemsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [selectedShopId, setSelectedShopId] = useState<number>(0);
   const [searchTerm, setSearchTerm] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('all');
@@ -170,8 +172,9 @@ export default function GiftShopsPage() {
     setSavingStock(prev => ({ ...prev, [item.item_id]: true }));
 
     try {
+      setError(null);
       await giftShopItemService.updateStock(item.item_id, newStock);
-      
+
       // Update local state
       setItems(prev =>
         prev.map(i =>
@@ -180,16 +183,16 @@ export default function GiftShopsPage() {
             : i
         )
       );
-      
+
       // Clear editing state
       setEditingStock(prev => {
         const updated = { ...prev };
         delete updated[item.item_id];
         return updated;
       });
-    } catch (error: any) {
-      console.error('Failed to update stock:', error);
-      alert(error.response?.data?.message || 'Failed to update stock. Please try again.');
+    } catch (err: any) {
+      console.error('Failed to update stock:', err);
+      setError(err.response?.data?.message || 'Failed to update stock. Please try again.');
     } finally {
       setSavingStock(prev => {
         const updated = { ...prev };
@@ -227,6 +230,16 @@ export default function GiftShopsPage() {
 
   return (
     <div className="space-y-6">
+      {/* Error Alert */}
+      {error && (
+        <Alert
+          type="error"
+          message={error}
+          onClose={() => setError(null)}
+          dismissible={true}
+        />
+      )}
+
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
