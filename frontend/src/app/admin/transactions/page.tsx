@@ -1,11 +1,9 @@
 "use client";
 
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
-import { useSearchParams } from 'next/navigation';
 import { transactionService } from '@/services/transaction.service';
 import { UnifiedTransaction } from '@/types/transaction.types';
-import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Select } from '@/components/ui/select';
@@ -17,9 +15,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { Plus, Search, DollarSign } from 'lucide-react';
-import { Modal } from '@/components/ui/modal';
-import { TransactionForm } from '@/components/admin/TransactionForm';
+import { Search, DollarSign } from 'lucide-react';
 
 export default function TransactionsPage() {
   const { isAuthenticated, loading: authLoading } = useAuth();
@@ -29,22 +25,6 @@ export default function TransactionsPage() {
   const [typeFilter, setTypeFilter] = useState('all');
   const [dateFilter, setDateFilter] = useState('all');
   const [sortBy, setSortBy] = useState('date');
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [initialTransactionType, setInitialTransactionType] = useState<string | null>(null);
-  const hasOpenedModal = useRef(false);
-  const searchParams = useSearchParams();
-
-  useEffect(() => {
-    if (hasOpenedModal.current) return;
-    if (searchParams.get('autoOpen') === 'true') {
-      const type = searchParams.get('type');
-      if (type) {
-        setInitialTransactionType(type);
-      }
-      handleAdd();
-      hasOpenedModal.current = true;
-    }
-  }, [searchParams]);
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -62,15 +42,6 @@ export default function TransactionsPage() {
     } finally {
       setLoading(false);
     }
-  };
-
-  const handleAdd = () => {
-    setIsModalOpen(true);
-  };
-
-  const handleFormSuccess = async () => {
-    setIsModalOpen(false);
-    await loadTransactions();
   };
 
   const filteredTransactions = transactions
@@ -116,10 +87,6 @@ export default function TransactionsPage() {
           </h1>
           <p className="text-gray-600 mt-1">View and manage all sales and donations</p>
         </div>
-        <Button onClick={handleAdd} className="flex items-center gap-2">
-          <Plus className="h-4 w-4" />
-          Add Transaction
-        </Button>
       </div>
 
       <div className="flex flex-wrap items-center gap-4">
@@ -205,20 +172,6 @@ export default function TransactionsPage() {
           </TableBody>
         </Table>
       </div>
-
-      <Modal
-        open={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        title="Add New Transaction"
-        description="Manually add a new sale or donation"
-        size="lg"
-      >
-        <TransactionForm
-          initialType={initialTransactionType}
-          onSuccess={handleFormSuccess}
-          onCancel={() => setIsModalOpen(false)}
-        />
-      </Modal>
     </div>
   );
 }
