@@ -42,7 +42,7 @@ cp .env.local.example .env.local
 ```
 Make sure it points to `http://localhost:5000/api`
 
-4. Run the application by starting both servers in separate terminals:
+4. Run the application by starting both servers with (in the root of the project):
 
 ```bash
 npm run dev
