@@ -99,10 +99,13 @@ function TicketsPageContent() {
 
   useEffect(() => {
     if (easterEggActive) {
-      window.scrollTo({
-        top: document.body.scrollHeight,
-        behavior: 'smooth',
-      });
+      // Delay the scroll to allow the animation to finish
+      setTimeout(() => {
+        window.scrollTo({
+          top: document.body.scrollHeight,
+          behavior: 'smooth',
+        });
+      }, 500); // Match the animation duration
     }
   }, [easterEggActive]);
 
