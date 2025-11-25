@@ -65,7 +65,7 @@ All passwords are `password`:
 - **Keeper**: mike.chen@zoo.com
 - **Veterinarian**: emily.rodriguez@zoo.com or skyjones.vet@gmail.com
 - **Coordinator**: david.kim@zoo.com
-- **Cashier**: lisa,thompson@zoo.com
+- **Cashier**: lisa.thompson@zoo.com
 - **Customer**: maria.garcia@email.com or john.smth@email.com or create new account
 
 ### Database
