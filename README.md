@@ -23,7 +23,7 @@ cd Zoo-Database-Uma-Project
 
 2. Install dependencies:
 ```bash
-npm install all
+npm run install:all
 ```
 
 3. Configure environment variables:
@@ -33,7 +33,7 @@ npm install all
 cd backend
 cp .env.example .env
 ```
-The default values connect to the shared Railway database and work out of the box.
+The default values connect to the shared Railway database and work out of the box. Note: Brevo is used to send emails, and works in the hosted version of the website. To send emails with a local build, you need to add a brevo API key to the .env
 
 **Frontend** (`frontend/.env.local`):
 ```bash
@@ -44,12 +44,6 @@ Make sure it points to `http://localhost:5000/api`
 
 4. Run the application by starting both servers in separate terminals:
 
-Open a terminal in the `backend` folder:
-```bash
-npm run dev
-```
-
-Open another terminal in the `frontend` folder:
 ```bash
 npm run dev
 ```
@@ -67,11 +61,3 @@ All passwords are `password`:
 - **Coordinator**: david.kim@zoo.com
 - **Cashier**: lisa.thompson@zoo.com
 - **Customer**: maria.garcia@email.com or john.smth@email.com or create new account
-
-### Database
-
-The database is hosted on Railway. No local setup needed. To apply schema changes:
-
-```bash
-mysql -h nozomi.proxy.rlwy.net -P 43756 -u root -p"tPLlbwDQnpriZFlWvJThTwkBStwJVmvc" zoo_database < database/zoo_schema.sql
-```
