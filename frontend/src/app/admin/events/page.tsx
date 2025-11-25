@@ -345,7 +345,7 @@ export default function EventsPage() {
           {eventToDelete && (
             <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
               <p className="text-sm text-gray-900">
-                <span className="font-semibold">{eventToDelete.event_name}</span> on {eventToDelete.event_date}
+                <span className="font-semibold">{eventToDelete.event_name}</span> on {formatDate(eventToDelete.event_date)}
               </p>
             </div>
           )}
