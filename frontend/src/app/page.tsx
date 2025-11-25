@@ -108,48 +108,52 @@ export default function HomePage() {
         <div className="space-y-16 pb-16">
       {/* HERO - Beautiful Gradient Design */}
       <section className="relative isolate overflow-hidden rounded-3xl border shadow-sm
-                    min-h-[70vh] px-6 sm:px-10 lg:px-14 py-16 sm:py-20">
+                    min-h-[50vh] px-6 sm:px-10 lg:px-14 py-12 sm:py-16">
         {/* Gradient background */}
         <div className="absolute inset-0 -z-10 bg-gradient-to-br
                       from-dark_spring_green-500 via-sea_green-400 to-dark_spring_green-600 rounded-3xl" />
 
         {/* Soft blobs */}
-        <div className="pointer-events-none absolute -top-6 right-10 h-24 w-24 rounded-full bg-light_yellow-300/30 blur-2xl" />
-        <div className="pointer-events-none absolute top-20 right-24 h-16 w-16 rounded-full bg-melon-300/30 blur-xl" />
-        <div className="pointer-events-none absolute -bottom-10 left-10 h-36 w-36 rounded-full bg-white/10 blur-3xl" />
+        <div className="pointer-events-none absolute -top-6 right-10 h-24 w-24 rounded-full bg-light_yellow-300/25 blur-3xl" />
+        <div className="pointer-events-none absolute top-20 right-24 h-16 w-16 rounded-full bg-melon-300/25 blur-2xl" />
+        <div className="pointer-events-none absolute -bottom-10 left-10 h-36 w-36 rounded-full bg-white/5 blur-3xl" />
 
         {/* Subtle pattern overlay */}
         <div
-          className="absolute inset-0 opacity-10 rounded-3xl"
+          className="absolute inset-0 opacity-15 rounded-3xl"
           style={{
             backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M30 0c-8.284 0-15 6.716-15 15 0 8.284 6.716 15 15 15 8.284 0 15-6.716 15-15 0-8.284-6.716-15-15-15zm0 25c-5.523 0-10-4.477-10-10s4.477-10 10-10 10 4.477 10 10-4.477 10-10 10z' fill='%23ffffff'/%3E%3C/svg%3E")`,
             backgroundSize: "30px 30px",
           }}
         />
 
+        {/* Vignette effect - light edges */}
+        <div className="absolute inset-0 -z-5 rounded-3xl bg-gradient-to-b from-transparent via-transparent to-dark_spring_green-900/8" />
+        <div className="absolute inset-0 -z-5 rounded-3xl bg-gradient-to-r from-dark_spring_green-900/8 via-transparent to-dark_spring_green-900/8" />
+
         {/* Centered content */}
         <div className="relative z-10 mx-auto max-w-4xl text-center text-white">
-          <span className="mb-3 inline-block rounded-full bg-white/10 px-3 py-1 text-xs">
+          <span className="mb-3 inline-block rounded-full bg-white/10 px-3 py-1 text-xs backdrop-blur-sm">
             Welcome to
           </span>
-          <h1 className="text-5xl font-extrabold tracking-tight sm:text-6xl">
+          <h1 className="text-4xl font-extrabold tracking-tight sm:text-5xl lg:text-6xl drop-shadow-lg">
             ZooVerse 12
           </h1>
-          <p className="mx-auto mt-4 max-w-2xl text-white/90">
+          <p className="mx-auto mt-5 max-w-2xl text-base sm:text-lg text-white/90 drop-shadow-md">
             Explore the wild—discover amazing animals, habitats, and family-friendly attractions.
           </p>
 
-          <div className="mt-7 flex justify-center gap-4">
+          <div className="mt-8 flex justify-center gap-3 sm:gap-4">
             <Button
               asChild
-              className="rounded-full bg-sea_green-500 hover:bg-sea_green-600 text-white px-5 py-2 text-sm font-medium shadow-sm"
+              className="rounded-full bg-sea_green-500 hover:bg-sea_green-600 text-white px-6 py-2 text-sm font-medium shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all duration-200"
             >
               <Link href="/exhibits">Explore Exhibits</Link>
             </Button>
             <Button
               asChild
               variant="outline"
-              className="rounded-full border-sea_green-500/70 bg-sea_green-500/60 text-white hover:bg-sea_green-500/70 px-5 py-2 text-sm font-medium"
+              className="rounded-full border-sea_green-500/70 bg-sea_green-500/60 text-white hover:bg-sea_green-500/75 px-6 py-2 text-sm font-medium shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all duration-200 backdrop-blur-sm"
             >
               <Link href="/tickets">Get Tickets</Link>
             </Button>
@@ -446,7 +450,7 @@ export default function HomePage() {
 
 function Stat({ value, label }: { value: string; label: string }) {
   return (
-    <div className="rounded-2xl bg-white px-6 py-6 shadow-lg">
+    <div className="rounded-2xl bg-white px-6 py-6 shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all duration-200">
       <div className="text-3xl font-bold text-sea_green-600">{value}</div>
       <div className="mt-1 text-sm text-gray-600">{label}</div>
     </div>
@@ -466,8 +470,8 @@ function SimpleCard({ title, children }: { title: string; children: React.ReactN
 
 function PlanCard({ icon, title, content }: { icon: React.ReactNode; title: string; content: React.ReactNode }) {
   return (
-    <div className="flex flex-col items-center rounded-2xl bg-white p-8 shadow-lg text-center">
-      <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-sea_green-100">
+    <div className="flex flex-col items-center rounded-2xl bg-white p-8 shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all duration-200 text-center">
+      <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-sea_green-100 group-hover:bg-sea_green-200 transition-colors">
         {icon}
       </div>
       <h3 className="mb-3 text-xl font-bold text-gray-800">{title}</h3>
