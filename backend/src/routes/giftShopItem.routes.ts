@@ -4,8 +4,8 @@ import { protect, restrictTo } from '../middleware/auth.middleware';
 
 const router = Router();
 
-// Public read-only listing (no auth needed)
-router.get('/public', GiftShopItemController.getAllItems);
+// Public read-only listing (no auth needed) - shows all items including out-of-stock
+router.get('/public', GiftShopItemController.getPublicAvailableItems);
 
 // Protect all subsequent routes
 router.use(protect);

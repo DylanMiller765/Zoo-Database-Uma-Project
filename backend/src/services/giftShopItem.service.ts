@@ -10,6 +10,10 @@ export class GiftShopItemService {
     return await GiftShopItemModel.findAllIncludingDeleted();
   }
 
+  static async getPublicAvailableItems(): Promise<GiftShopItem[]> {
+    return await GiftShopItemModel.findAllPublicAvailable();
+  }
+
   static async createItem(item: Omit<GiftShopItem, 'item_id'>): Promise<GiftShopItem> {
     return await GiftShopItemModel.create(item);
   }
